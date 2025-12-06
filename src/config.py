@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     discord_bot_token: str | None = None
     discord_webhook_url: str = "https://discord.com/api/webhooks/test/test"
 
+    # Frontend
+    frontend_url: str = "http://localhost:5173"
+
     # JWT
     jwt_secret_key: str = "test-secret-key-for-testing"
     jwt_algorithm: str = "HS256"
