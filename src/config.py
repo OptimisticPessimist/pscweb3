@@ -26,10 +26,6 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 10080  # 7日間
 
-    # Azure Blob Storage
-    azure_storage_connection_string: str = "DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net"
-    azure_storage_container_name: str = "scripts"
-
     # 環境
     environment: str = "development"
 

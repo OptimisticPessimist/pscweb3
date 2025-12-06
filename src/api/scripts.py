@@ -6,9 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.jwt import get_current_user
 from src.db import get_db
-from src.db.models import ProjectMember, Script, User
+from src.db.models import ProjectMember, Script
 from src.schemas.script import ScriptListResponse, ScriptResponse
-from src.services.blob_storage import blob_storage_service
 from src.services.fountain_parser import parse_fountain_and_create_models
 
 router = APIRouter()
@@ -56,12 +55,12 @@ async def upload_script(
     file_content = await file.read()
     fountain_text = file_content.decode("utf-8")
 
-    # Blob Storageにアップロード
-    blob_name = f"scripts/{project_id}/{title}.fountain"
-    await blob_storage_service.upload_file(file_content, blob_name)
-
-    # Scriptモデル作成
-    script = Script(project_id=project_id, title=title, blob_path=blob_name)
+    # Scriptモデル作成（DB に直接保存）
+    script = Script(
+        project_id=project_id,
+        title=title,
+        content=fountain_text,  # Fountain内容を直接保存
+    )
     db.add(script)
     await db.flush()
 

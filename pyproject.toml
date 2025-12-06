@@ -16,7 +16,6 @@ dependencies = [
     "passlib[bcrypt]",
     "python-multipart",
     "httpx",
-    "azure-storage-blob",
     "azure-functions",
     "fountain",
     "alembic",

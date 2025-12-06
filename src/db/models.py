@@ -86,7 +86,7 @@ class Script(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("theater_projects.id"))
     title: Mapped[str] = mapped_column(String(200))
-    blob_path: Mapped[str] = mapped_column(String(500))  # Blob Storage パス
+    content: Mapped[str] = mapped_column(Text)  # Fountain脚本の内容を直接保存
     uploaded_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
