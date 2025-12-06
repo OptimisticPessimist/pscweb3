@@ -54,17 +54,40 @@ select = [
     "D",      # pydocstyle
 ]
 ignore = [
-    "ANN101", # missing-type-self
-    "ANN102", # missing-type-cls
-    "D203",   # one-blank-line-before-class
-    "D213",   # multi-line-summary-second-line
+    # Type annotation
+    "ANN101",  # missing-type-self
+    "ANN102",  # missing-type-cls
+    
+    # Format compatibility
+    "COM812",  # trailing-comma-missing
+    "ISC001",  # single-line-implicit-string-concatenation
+    
+    # Docstring formatting (conflicts or Japanese compatibility)
+    "D100",    # undocumented-public-module
+    "D104",    # undocumented-public-package
+    "D200",    # fits-on-one-line
+    "D203",    # one-blank-line-before-class
+    "D205",    # blank-line-after-summary  
+    "D207",    # docstring-under-indented
+    "D208",    # docstring-over-indented
+    "D209",    # newline-before-docstring
+    "D212",    # multi-line-summary-first-line
+    "D213",    # multi-line-summary-second-line
+    
+    # Docstring content (Japanese compatibility)
+    "D400",    # ends-in-period
+    "D401",    # non-imperative-mood
+    "D404",    # docstring-starts-with-this
+    "D415",    # ends-in-punctuation
+    "D417",    # undocumented-param
 ]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "ANN"]
+"tests/*" = ["ANN", "D"]
+"alembic/*" = ["ANN", "D"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
