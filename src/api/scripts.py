@@ -1,14 +1,15 @@
 """脚本管理APIエンドポイント - 権限チェック付き."""
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import get_current_user
+from src.db.models import ProjectMember, Script, User, TheaterProject
+from src.dependencies.auth import get_current_user_dep, get_optional_current_user_dep
 from src.db import get_db
-from src.db.models import ProjectMember, Script, User
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.fountain_parser import parse_fountain_and_create_models
+from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
 
@@ -52,21 +53,25 @@ async def _check_script_access(
 @router.post("/{project_id}/upload", response_model=ScriptResponse)
 async def upload_script(
     project_id: int,
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     file: UploadFile = File(...),
     is_public: bool = Form(False),
-    token: str = Form(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ) -> ScriptResponse:
     """Fountain脚本をアップロード.
 
     Args:
         project_id: プロジェクトID
+        background_tasks: バックグラウンドタスク
         title: 脚本タイトル
         file: Fountainファイル
         is_public: 全体公開するか（デフォルト: False）
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
+        discord_service: Discordサービス
 
     Returns:
         ScriptResponse: アップロードされた脚本
@@ -75,14 +80,13 @@ async def upload_script(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # プロジェクトメンバーシップチェック
     result = await db.execute(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user.id
+            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
         )
     )
     member = result.scalar_one_or_none()
@@ -96,7 +100,7 @@ async def upload_script(
     # Scriptモデル作成（DB に直接保存）
     script = Script(
         project_id=project_id,
-        uploaded_by=user.id,  # アップロードユーザーを記録
+        uploaded_by=current_user.id,  # アップロードユーザーを記録
         title=title,
         content=fountain_text,  # Fountain内容を直接保存
         is_public=is_public,
@@ -109,6 +113,14 @@ async def upload_script(
 
     await db.commit()
     await db.refresh(script)
+    
+    # Discord通知
+    project = await db.get(TheaterProject, project_id)
+    background_tasks.add_task(
+        discord_service.send_notification,
+        content=f"📝 **新しい脚本がアップロードされました**\nプロジェクト: {project.name}\nタイトル: {title}\nアップロード: {current_user.discord_username}",
+        webhook_url=project.discord_webhook_url,
+    )
 
     return ScriptResponse.model_validate(script)
 
@@ -116,14 +128,14 @@ async def upload_script(
 @router.get("/{project_id}", response_model=ScriptListResponse)
 async def list_scripts(
     project_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> ScriptListResponse:
     """プロジェクトの脚本一覧を取得.
 
     Args:
         project_id: プロジェクトID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -133,14 +145,13 @@ async def list_scripts(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # プロジェクトメンバーシップチェック
     result = await db.execute(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == user.id
+            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
         )
     )
     member = result.scalar_one_or_none()
@@ -158,7 +169,7 @@ async def list_scripts(
 async def get_script(
     project_id: int,
     script_id: int,
-    token: str = Query(None),  # 公開脚本の場合は認証不要
+    user: User | None = Depends(get_optional_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> ScriptResponse:
     """脚本詳細を取得.
@@ -168,7 +179,7 @@ async def get_script(
     Args:
         project_id: プロジェクトID
         script_id: 脚本ID
-        token: JWT トークン（公開脚本の場合は省略可）
+        user: 認証ユーザー（非必須）
         db: データベースセッション
 
     Returns:
@@ -185,10 +196,7 @@ async def get_script(
     if script is None:
         raise HTTPException(status_code=404, detail="脚本が見つかりません")
 
-    # 認証チェック（tokenがある場合のみ）
-    user = None
-    if token:
-        user = await get_current_user(token, db)
+    # 認証チェック（Depsで完了済み）
 
     # アクセス権チェック
     has_access = await _check_script_access(script, user, db)
@@ -202,7 +210,7 @@ async def get_script(
 async def update_script_publicity(
     script_id: int,
     is_public: bool = Form(...),
-    token: str = Form(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """脚本の公開/非公開を切り替え.
@@ -210,7 +218,7 @@ async def update_script_publicity(
     Args:
         script_id: 脚本ID
         is_public: 公開するか
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -220,8 +228,7 @@ async def update_script_publicity(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 脚本取得
@@ -231,12 +238,12 @@ async def update_script_publicity(
         raise HTTPException(status_code=404, detail="脚本が見つかりません")
 
     # アップロードユーザーまたはプロジェクトオーナーのみ変更可能
-    is_uploader = script.uploaded_by == user.id
+    is_uploader = script.uploaded_by == current_user.id
 
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == script.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -257,7 +264,7 @@ async def update_script_publicity(
 async def download_script_pdf(
     project_id: int,
     script_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ):
     """脚本をPDFとしてダウンロード.
@@ -265,7 +272,7 @@ async def download_script_pdf(
     Args:
         project_id: プロジェクトID
         script_id: 脚本ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -275,8 +282,7 @@ async def download_script_pdf(
     from src.services.pdf_generator import generate_script_pdf
 
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 脚本取得
@@ -289,7 +295,7 @@ async def download_script_pdf(
 
     # アクセス権チェック
     # PDFダウンロードは閲覧権限があれば可能とする
-    has_access = await _check_script_access(script, user, db)
+    has_access = await _check_script_access(script, current_user, db)
     if not has_access:
         raise HTTPException(status_code=403, detail="この脚本へのアクセス権がありません")
 

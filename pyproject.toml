@@ -20,6 +20,7 @@ dependencies = [
     "fountain",
     "alembic",
     "playscript",
+    "structlog>=25.5.0",
 ]
 
 [project.optional-dependencies]

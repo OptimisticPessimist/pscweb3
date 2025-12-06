@@ -2,15 +2,31 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from src.api import auth, castings, invitations, projects, rehearsals, scene_charts, scripts
 from src.config import settings
+from src.core.logger import configure_logger
+from src.middleware.request_logging import RequestLoggingMiddleware
+
+# ロガー初期化
+configure_logger()
+
 
 app = FastAPI(
     title="PSC Web 3 API",
     description="演劇制作管理システム - Fountain脚本管理、香盤表、稽古スケジュール",
     version="0.1.0",
 )
+
+# ミドルウェア登録 (実行順序: 下から上)
+# 1. TrustedHostMiddlewareがあれば一番外側
+# 2. ProxyHeadersMiddleware (Azure App Serviceなどのリバースプロキシ対応)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
+# 3. RequestLoggingMiddleware
+app.add_middleware(RequestLoggingMiddleware)
+
 
 # CORS設定
 app.add_middleware(

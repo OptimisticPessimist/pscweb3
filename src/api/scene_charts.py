@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import get_current_user
+from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
-from src.db.models import ProjectMember, SceneChart, Script
+from src.db.models import ProjectMember, SceneChart, Script, User
 from src.schemas.scene_chart import CharacterInScene, SceneChartResponse, SceneInChart
 from src.services.scene_chart_generator import generate_scene_chart
 
@@ -16,14 +16,14 @@ router = APIRouter()
 @router.post("/{script_id}/generate-scene-chart", response_model=SceneChartResponse)
 async def create_scene_chart(
     script_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> SceneChartResponse:
     """脚本から香盤表を自動生成.
 
     Args:
         script_id: 脚本ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -33,8 +33,7 @@ async def create_scene_chart(
         HTTPException: 認証エラー、権限エラー、または脚本が見つからない
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 脚本取得
@@ -47,7 +46,7 @@ async def create_scene_chart(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == script.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -66,14 +65,14 @@ async def create_scene_chart(
 @router.get("/{script_id}/scene-chart", response_model=SceneChartResponse)
 async def get_scene_chart(
     script_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> SceneChartResponse:
     """香盤表を取得.
 
     Args:
         script_id: 脚本ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -83,8 +82,7 @@ async def get_scene_chart(
         HTTPException: 認証エラー、権限エラー、または香盤表が見つからない
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 脚本取得
@@ -97,7 +95,7 @@ async def get_scene_chart(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == script.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
