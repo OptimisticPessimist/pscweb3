@@ -101,3 +101,10 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
     # オーバーライドの解除
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def test_user_token(test_user: User) -> str:
+    """テストユーザー用のJWTトークンフィクスチャ."""
+    from src.auth.jwt import create_access_token
+    return create_access_token(data={"sub": str(test_user.id)})

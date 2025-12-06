@@ -1,15 +1,16 @@
 from datetime import datetime, timedelta, timezone
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.auth.jwt import get_current_user_dep
+from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
 from src.db.models import ProjectInvitation, ProjectMember, TheaterProject, User
 from src.schemas.invitation import InvitationCreate, InvitationResponse, InvitationAcceptResponse
+from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
 
@@ -102,8 +103,10 @@ async def get_invitation(
 @router.post("/invitations/{token}/accept", response_model=InvitationAcceptResponse)
 async def accept_invitation(
     token: str,
+    background_tasks: BackgroundTasks,
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ):
     """招待を受諾してプロジェクトに参加する。"""
     if not current_user:
@@ -152,6 +155,13 @@ async def accept_invitation(
     invitation.used_count += 1
     
     await db.commit()
+
+    # Discord通知
+    background_tasks.add_task(
+        discord_service.send_notification,
+        content=f"👋 **新しいメンバーが参加しました**\nプロジェクト: {project.name}\nユーザー: {current_user.discord_username}",
+        webhook_url=project.discord_webhook_url,
+    )
     
     return InvitationAcceptResponse(
         project_id=project.id,

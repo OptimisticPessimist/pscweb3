@@ -56,6 +56,7 @@ class TheaterProject(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    discord_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
@@ -335,3 +336,22 @@ class ProjectInvitation(Base):
     # リレーション
     project: Mapped["TheaterProject"] = relationship()
     creator: Mapped["User"] = relationship()
+
+
+class AuditLog(Base):
+    """監査ログ."""
+
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event: Mapped[str] = mapped_column(String(100))  # イベント名 (e.g. "project.create")
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    project_id: Mapped[int | None] = mapped_column(ForeignKey("theater_projects.id"), nullable=True)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON形式の詳細情報
+    ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    # リレーション
+    user: Mapped["User | None"] = relationship()
+    project: Mapped["TheaterProject | None"] = relationship()
+

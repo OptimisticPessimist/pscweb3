@@ -1,6 +1,6 @@
 """Fountain脚本パーサーサービス."""
 
-import fountain
+from fountain import fountain
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Line, Scene, Script
@@ -23,7 +23,10 @@ async def parse_fountain_and_create_models(
     character_map: dict[str, Character] = {}
     for element in f.elements:
         if element.element_type == "Character":
-            char_name = element.text.strip()
+            char_name = element.original_content.strip()
+            if char_name.startswith("@"):
+                char_name = char_name[1:]
+            
             if char_name and char_name not in character_map:
                 character = Character(script_id=script.id, name=char_name)
                 db.add(character)
@@ -45,14 +48,16 @@ async def parse_fountain_and_create_models(
             current_scene = Scene(
                 script_id=script.id,
                 scene_number=scene_number,
-                heading=element.text.strip(),
+                heading=element.original_content.strip(),
             )
             db.add(current_scene)
             await db.flush()
 
         elif element.element_type == "Character":
             # セリフを言う登場人物
-            char_name = element.text.strip()
+            char_name = element.original_content.strip()
+            if char_name.startswith("@"):
+                char_name = char_name[1:]
             current_character = character_map.get(char_name)
 
         elif element.element_type == "Dialogue":
@@ -62,7 +67,7 @@ async def parse_fountain_and_create_models(
                 line = Line(
                     scene_id=current_scene.id,
                     character_id=current_character.id,
-                    content=element.text.strip(),
+                    content=element.original_content.strip(),
                     order=line_order,
                 )
                 db.add(line)

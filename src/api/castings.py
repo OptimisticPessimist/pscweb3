@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import get_current_user
+from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
 from src.db.models import Character, CharacterCasting, ProjectMember, Script, User
 from src.schemas.casting import (
@@ -20,7 +20,7 @@ router = APIRouter()
 async def assign_character_casting(
     character_id: int,
     casting_data: CharacterCastingCreate,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> CharacterCastingResponse:
     """登場人物にユーザーをキャスティング.
@@ -28,7 +28,7 @@ async def assign_character_casting(
     Args:
         character_id: 登場人物ID
         casting_data: キャスティングデータ
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -38,7 +38,6 @@ async def assign_character_casting(
         HTTPException: 認証エラー、権限エラー、または登場人物が見つからない
     """
     # 認証チェック
-    current_user = await get_current_user(token, db)
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
@@ -96,14 +95,14 @@ async def assign_character_casting(
 @router.get("/scripts/{script_id}/castings", response_model=ScriptCastingResponse)
 async def list_script_castings(
     script_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> ScriptCastingResponse:
     """脚本のキャスティング一覧を取得.
 
     Args:
         script_id: 脚本ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -113,7 +112,6 @@ async def list_script_castings(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    current_user = await get_current_user(token, db)
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
@@ -174,14 +172,14 @@ async def list_script_castings(
 @router.delete("/castings/{casting_id}")
 async def delete_character_casting(
     casting_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """キャスティングを削除.
 
     Args:
         casting_id: キャスティングID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -191,7 +189,6 @@ async def delete_character_casting(
         HTTPException: 認証エラー、権限エラー、またはキャスティングが見つからない
     """
     # 認証チェック
-    current_user = await get_current_user(token, db)
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 

@@ -8,8 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.db.models import User
-from src.db import get_db
-from fastapi import Depends, Query
 
 
 def create_access_token(data: dict[str, str | int]) -> str:
@@ -22,6 +20,8 @@ def create_access_token(data: dict[str, str | int]) -> str:
         str: JWT トークン
     """
     to_encode = data.copy()
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
     expire = datetime.now(UTC) + timedelta(minutes=settings.jwt_expire_minutes)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
@@ -39,22 +39,21 @@ async def get_current_user(token: str, db: AsyncSession) -> User | None:
     """
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-        user_id: int | None = payload.get("sub")
-        if user_id is None:
+        user_id_str: str | None = payload.get("sub")
+        
+        if user_id_str is None:
             return None
-    except JWTError:
+        
+        user_id = int(user_id_str)
+        
+    except (JWTError, ValueError):
         return None
 
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
 
 
-async def get_current_user_dep(
-    auth_token: str = Query(..., alias="token", description="JWT Token"),
-    db: AsyncSession = Depends(get_db),
-) -> User | None:
-    """FastAPI Depends用 ユーザー取得関数."""
-    return await get_current_user(auth_token, db)
+
 
 
 

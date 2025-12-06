@@ -1,20 +1,21 @@
 """稽古スケジュール管理APIエンドポイント."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.jwt import get_current_user
+from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
+from src.services.discord import DiscordService, get_discord_service
 from src.db.models import (
     ProjectMember,
     Rehearsal,
-    RehearsalCast,
     RehearsalParticipant,
     RehearsalSchedule,
     Scene,
     Script,
     User,
+    TheaterProject
 )
 from src.schemas.rehearsal import (
     RehearsalCastResponse,
@@ -31,17 +32,21 @@ router = APIRouter()
 @router.post("/projects/{project_id}/rehearsal-schedule", response_model=RehearsalScheduleResponse)
 async def create_rehearsal_schedule(
     project_id: int,
+    background_tasks: BackgroundTasks,
     script_id: int = Query(...),
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ) -> RehearsalScheduleResponse:
     """稽古スケジュールを作成.
 
     Args:
         project_id: プロジェクトID
+        background_tasks: バックグラウンドタスク
         script_id: 脚本ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
+        discord_service: Discordサービス
 
     Returns:
         RehearsalScheduleResponse: 作成されたスケジュール
@@ -50,15 +55,14 @@ async def create_rehearsal_schedule(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # プロジェクトメンバーシップチェック
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -82,6 +86,14 @@ async def create_rehearsal_schedule(
     await db.commit()
     await db.refresh(schedule)
 
+    # Discord通知
+    project = await db.get(TheaterProject, project_id)
+    background_tasks.add_task(
+        discord_service.send_notification,
+        content=f"📅 **新しい稽古スケジュールが作成されました**\nプロジェクト: {project.name}\n対象脚本: {script.title}",
+        webhook_url=project.discord_webhook_url,
+    )
+
     return RehearsalScheduleResponse(
         id=schedule.id,
         project_id=schedule.project_id,
@@ -95,14 +107,14 @@ async def create_rehearsal_schedule(
 @router.get("/projects/{project_id}/rehearsal-schedule", response_model=RehearsalScheduleResponse)
 async def get_rehearsal_schedule(
     project_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> RehearsalScheduleResponse:
     """稽古スケジュールを取得.
 
     Args:
         project_id: プロジェクトID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -112,15 +124,14 @@ async def get_rehearsal_schedule(
         HTTPException: 認証エラーまたはスケジュールが見つからない
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # プロジェクトメンバーシップチェック
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -203,16 +214,20 @@ async def get_rehearsal_schedule(
 async def add_rehearsal(
     schedule_id: int,
     rehearsal_data: RehearsalCreate,
-    token: str = Query(...),
+    background_tasks: BackgroundTasks,
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ) -> RehearsalResponse:
     """稽古を追加.
 
     Args:
         schedule_id: スケジュールID
         rehearsal_data: 稽古データ
-        token: JWT トークン
+        background_tasks: バックグラウンドタスク
+        current_user: 認証ユーザー
         db: データベースセッション
+        discord_service: Discordサービス
 
     Returns:
         RehearsalResponse: 追加された稽古
@@ -221,8 +236,7 @@ async def add_rehearsal(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # スケジュール取得
@@ -237,7 +251,7 @@ async def add_rehearsal(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == schedule.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -265,6 +279,20 @@ async def add_rehearsal(
         if scene:
             scene_heading = scene.heading
 
+    # Discord通知
+    project = await db.get(TheaterProject, schedule.project_id)
+    
+    date_str = rehearsal.date.strftime("%Y/%m/%d %H:%M")
+    content = f"📅 **実習(稽古)が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+    if scene_heading:
+        content += f"\nシーン: {scene_heading}"
+        
+    background_tasks.add_task(
+        discord_service.send_notification,
+        content=content,
+        webhook_url=project.discord_webhook_url,
+    )
+
     return RehearsalResponse(
         id=rehearsal.id,
         schedule_id=rehearsal.schedule_id,
@@ -283,7 +311,7 @@ async def add_rehearsal(
 async def update_rehearsal(
     rehearsal_id: int,
     rehearsal_data: RehearsalUpdate,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> RehearsalResponse:
     """稽古を更新.
@@ -291,7 +319,7 @@ async def update_rehearsal(
     Args:
         rehearsal_id: 稽古ID
         rehearsal_data: 更新データ
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -301,8 +329,7 @@ async def update_rehearsal(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 稽古取得
@@ -321,7 +348,7 @@ async def update_rehearsal(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == schedule.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
@@ -369,7 +396,7 @@ async def update_rehearsal(
 async def add_participant(
     rehearsal_id: int,
     user_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """稽古に参加者を追加.
@@ -377,7 +404,7 @@ async def add_participant(
     Args:
         rehearsal_id: 稽古ID
         user_id: ユーザーID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -387,7 +414,6 @@ async def add_participant(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    current_user = await get_current_user(token, db)
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
@@ -411,14 +437,14 @@ async def add_participant(
 @router.delete("/rehearsals/{rehearsal_id}")
 async def delete_rehearsal(
     rehearsal_id: int,
-    token: str = Query(...),
+    current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """稽古を削除.
 
     Args:
         rehearsal_id: 稽古ID
-        token: JWT トークン
+        current_user: 認証ユーザー
         db: データベースセッション
 
     Returns:
@@ -428,8 +454,7 @@ async def delete_rehearsal(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
-    user = await get_current_user(token, db)
-    if user is None:
+    if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 稽古取得
@@ -448,7 +473,7 @@ async def delete_rehearsal(
     result = await db.execute(
         select(ProjectMember).where(
             ProjectMember.project_id == schedule.project_id,
-            ProjectMember.user_id == user.id,
+            ProjectMember.user_id == current_user.id,
         )
     )
     member = result.scalar_one_or_none()
