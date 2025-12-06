@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api import auth, castings, projects, scene_charts, scripts
+from src.api import auth, castings, projects, rehearsals, scene_charts, scripts
 from src.config import settings
 
 app = FastAPI(
@@ -27,6 +27,7 @@ app.include_router(projects.router, prefix="/projects", tags=["プロジェク�
 app.include_router(scripts.router, prefix="/scripts", tags=["脚本"])
 app.include_router(scene_charts.router, prefix="/scripts", tags=["香盤表"])
 app.include_router(castings.router, prefix="/scripts", tags=["キャスティング"])
+app.include_router(rehearsals.router, prefix="/rehearsals", tags=["稽古スケジュール"])
 
 
 @app.get("/")
