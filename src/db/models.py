@@ -34,7 +34,6 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     discord_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     discord_username: Mapped[str] = mapped_column(String(100))
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
@@ -91,12 +90,15 @@ class Script(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("theater_projects.id"))
+    uploaded_by: Mapped[int] = mapped_column(ForeignKey("users.id"))  # アップロードユーザー
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(Text)  # Fountain脚本の内容を直接保存
+    is_public: Mapped[bool] = mapped_column(default=False)  # 全体公開フラグ
     uploaded_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")
+    uploader: Mapped["User"] = relationship()
     scenes: Mapped[list["Scene"]] = relationship(
         back_populates="script", lazy="selectin", cascade="all, delete-orphan"
     )
