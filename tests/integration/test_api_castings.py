@@ -1,5 +1,9 @@
 """キャスティングAPIの統合テスト."""
+import pytest
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+"""キャスティングAPIの統合テスト."""
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,14 +13,17 @@ from src.main import app
 
 
 @pytest.mark.asyncio
-async def test_assign_casting(db: AsyncSession, test_project: TheaterProject, test_user: User) -> None:
+async def test_assign_casting(
+    db: AsyncSession, test_project: TheaterProject, test_user: User, client: AsyncClient
+) -> None:
     """キャスト割り当てのテスト."""
+    
     # Arrange: 脚本と登場人物を作成
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
         title="テスト脚本",
-        content="テスト内容",
+        content="Title: テスト脚本\n\nINT. シーン - DAY\n\n主人公\nセリフ。",
     )
     db.add(script)
     await db.flush()
@@ -29,16 +36,15 @@ async def test_assign_casting(db: AsyncSession, test_project: TheaterProject, te
     await db.commit()
     await db.refresh(character)
 
-    # JWTトークンを取得（簡易版：実際にはauth.jwtから生成）
+    # JWTトークンを取得
     from src.auth.jwt import create_access_token
-    token = create_access_token({"sub": str(test_user.discord_id)})
-
+    token = create_access_token({"sub": str(test_user.id)})
+    
     # Act: キャスト割り当てAPI呼び出し
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post(
-            f"/scripts/characters/{character.id}/casting?token={token}",
-            json={"user_id": test_user.id, "cast_name": "Aキャスト"},
-        )
+    response = await client.post(
+        f"/scripts/characters/{character.id}/casting?token={token}",
+        json={"user_id": test_user.id, "cast_name": "Aキャスト"},
+    )
 
     # Assert
     assert response.status_code == 200

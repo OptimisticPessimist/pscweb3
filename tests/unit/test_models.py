@@ -65,18 +65,19 @@ async def test_create_project(db: AsyncSession, test_user: User) -> None:
 
 @pytest.mark.asyncio
 async def test_create_script_with_scenes_and_characters(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """脚本、シーン、登場人物の作成テスト."""
     # Arrange
     script_title = "ハムレット"
-    blob_path = "scripts/1/hamlet.fountain"
+    content = "INT. ELSINORE CASTLE - DAY\n\nHAMLET\nTo be, or not to be..."
 
     # Act: 脚本作成
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title=script_title,
-        blob_path=blob_path,
+        content=content,
     )
     db.add(script)
     await db.flush()
@@ -128,8 +129,9 @@ async def test_character_casting_double_cast(
     # Arrange: 脚本と登場人物を作成
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="テスト脚本",
-        blob_path="scripts/1/test.fountain",
+        content="テスト内容",
     )
     db.add(script)
     await db.flush()
