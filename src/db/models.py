@@ -316,3 +316,22 @@ class RehearsalCast(Base):
     __table_args__ = (
         UniqueConstraint("rehearsal_id", "character_id", name="uq_rehearsal_character"),
     )
+
+
+class ProjectInvitation(Base):
+    """プロジェクト招待トークン."""
+
+    __tablename__ = "project_invitations"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("theater_projects.id"))
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    max_uses: Mapped[int | None] = mapped_column(default=None)  # Noneなら無制限
+    used_count: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship()
+    creator: Mapped["User"] = relationship()

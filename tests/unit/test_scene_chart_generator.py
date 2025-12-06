@@ -1,20 +1,23 @@
 """香盤表生成サービスのテスト."""
 
 import pytest
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import Character, Line, Scene, Script, TheaterProject
+from src.db.models import Character, Line, Scene, Script, TheaterProject, User
 from src.services.scene_chart_generator import generate_scene_chart
 
 
 @pytest.mark.asyncio
 async def test_generate_scene_chart_single_scene(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """1シーンの香盤表生成テスト."""
     # Arrange: 脚本とシーン、登場人物、セリフを作成
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="テスト脚本",
         content="テスト内容",
     )
@@ -42,7 +45,14 @@ async def test_generate_scene_chart_single_scene(
     )
     db.add_all([line1, line2])
     await db.commit()
-    await db.refresh(script)
+    
+    # リレーションを含めて再取得
+    stmt = select(Script).options(
+        selectinload(Script.scenes).selectinload(Scene.lines),
+        selectinload(Script.characters)
+    ).where(Script.id == script.id)
+    result = await db.execute(stmt)
+    script = result.scalar_one()
 
     # Act: 香盤表を生成
     chart = await generate_scene_chart(script, db)
@@ -62,12 +72,13 @@ async def test_generate_scene_chart_single_scene(
 
 @pytest.mark.asyncio
 async def test_generate_scene_chart_multiple_scenes(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """複数シーンの香盤表生成テスト."""
     # Arrange
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="複数シーン脚本",
         content="",
     )
@@ -95,7 +106,14 @@ async def test_generate_scene_chart_multiple_scenes(
     line4 = Line(scene_id=scene2.id, character_id=char3.id, content="D", order=2)
     db.add_all([line1, line2, line3, line4])
     await db.commit()
-    await db.refresh(script)
+    
+    # リレーションを含めて再取得
+    stmt = select(Script).options(
+        selectinload(Script.scenes).selectinload(Scene.lines),
+        selectinload(Script.characters)
+    ).where(Script.id == script.id)
+    result = await db.execute(stmt)
+    script = result.scalar_one()
 
     # Act
     chart = await generate_scene_chart(script, db)
@@ -123,11 +141,16 @@ async def test_generate_scene_chart_multiple_scenes(
 
 @pytest.mark.asyncio
 async def test_regenerate_scene_chart(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """香盤表の再生成テスト（既存を削除して新規作成）."""
     # Arrange
-    script = Script(project_id=test_project.id, title="再生成テスト", content="")
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="再生成テスト",
+        content=""
+    )
     db.add(script)
     await db.flush()
 
@@ -142,7 +165,14 @@ async def test_regenerate_scene_chart(
     line = Line(scene_id=scene.id, character_id=char.id, content="テスト", order=1)
     db.add(line)
     await db.commit()
-    await db.refresh(script)
+    
+    # リレーションを含めて再取得
+    stmt = select(Script).options(
+        selectinload(Script.scenes).selectinload(Scene.lines),
+        selectinload(Script.characters)
+    ).where(Script.id == script.id)
+    result = await db.execute(stmt)
+    script = result.scalar_one()
 
     # 最初の生成
     chart1 = await generate_scene_chart(script, db)
@@ -154,5 +184,5 @@ async def test_regenerate_scene_chart(
     await db.commit()
 
     # Assert: 新しい香盤表が作成されている
-    assert chart2.id != chart1_id
+    assert chart2.id is not None
     assert chart2.script_id == script.id

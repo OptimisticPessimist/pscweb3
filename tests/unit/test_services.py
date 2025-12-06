@@ -3,13 +3,13 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import Script, TheaterProject
+from src.db.models import Script, TheaterProject, User
 from src.services.fountain_parser import parse_fountain_and_create_models
 
 
 @pytest.mark.asyncio
 async def test_parse_simple_fountain_script(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """シンプルなFountain脚本のパーステスト."""
     # Arrange: Fountain形式の脚本
@@ -17,22 +17,21 @@ async def test_parse_simple_fountain_script(
 
 INT. テスト部屋 - DAY
 
-少年と少女が会話している。
-
-少年
+@少年
 こんにちは。
 
-少女
+@少女
 こんにちは、元気？
 
-少年
+@少年
 うん、元気だよ。
 """
-
+    
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="テスト脚本",
-        blob_path="test.fountain",
+        content=fountain_content,
     )
     db.add(script)
     await db.flush()
@@ -54,7 +53,7 @@ INT. テスト部屋 - DAY
 
 @pytest.mark.asyncio
 async def test_parse_fountain_with_multiple_scenes(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """複数シーンを持つFountain脚本のパーステスト."""
     # Arrange
@@ -62,19 +61,20 @@ async def test_parse_fountain_with_multiple_scenes(
 
 INT. リビング - DAY
 
-母
+@母
 ご飯できたわよ。
 
 EXT. 公園 - DAY
 
-子供たち
+@子供たち
 わーい！
 """
-
+    
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="マルチシーン脚本",
-        blob_path="multi.fountain",
+        content=fountain_content,
     )
     db.add(script)
     await db.flush()
@@ -90,16 +90,17 @@ EXT. 公園 - DAY
 
 @pytest.mark.asyncio
 async def test_parse_fountain_empty_script(
-    db: AsyncSession, test_project: TheaterProject
+    db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """空のFountain脚本のパーステスト."""
     # Arrange
     fountain_content = "Title: 空の脚本"
-
+    
     script = Script(
         project_id=test_project.id,
+        uploaded_by=test_user.id,
         title="空の脚本",
-        blob_path="empty.fountain",
+        content=fountain_content,
     )
     db.add(script)
     await db.flush()
