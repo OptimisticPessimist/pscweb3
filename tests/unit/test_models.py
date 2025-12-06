@@ -23,13 +23,11 @@ async def test_create_user(db: AsyncSession) -> None:
     # Arrange: テストデータを準備
     discord_id = "987654321"
     discord_username = "newuser"
-    email = "newuser@example.com"
 
     # Act: ユーザーを作成
     user = User(
         discord_id=discord_id,
         discord_username=discord_username,
-        email=email,
     )
     db.add(user)
     await db.commit()
@@ -39,7 +37,6 @@ async def test_create_user(db: AsyncSession) -> None:
     assert user.id is not None
     assert user.discord_id == discord_id
     assert user.discord_username == discord_username
-    assert user.email == email
     assert user.created_at is not None
 
 
