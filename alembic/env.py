@@ -11,9 +11,13 @@ from alembic import context
 from src.config import settings
 from src.db.base import Base
 from src.db.models import (  # noqa: F401 - モデルをインポートしてマイグレーション対象にする
+    Character,
     CharacterCasting,
+    Line,
     NotificationSettings,
     ProjectMember,
+    Scene,
+    Script,
     TheaterProject,
     User,
 )

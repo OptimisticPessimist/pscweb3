@@ -9,11 +9,19 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db.base import Base
 
 if TYPE_CHECKING:
-    from src.db.models import CharacterCasting, NotificationSettings, ProjectMember
+    from src.db.models import (
+        Character,
+        CharacterCasting,
+        Line,
+        NotificationSettings,
+        ProjectMember,
+        Scene,
+        Script,
+    )
 
 
 class User(Base):
-    """ユーザーモデル（Discord OAuth連携）."""
+    """ユーザーモデル（Discord OAuth連携)."""
 
     __tablename__ = "users"
 
@@ -46,11 +54,16 @@ class TheaterProject(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
-    members: Mapped[list["ProjectMember"]] = relationship(back_populates="project", lazy="selectin")
+    members: Mapped[list["ProjectMember"]] = relationship(
+        back_populates="project", lazy="selectin"
+    )
+    scripts: Mapped[list["Script"]] = relationship(
+        back_populates="project", lazy="selectin"
+    )
 
 
 class ProjectMember(Base):
-    """プロジェクトメンバー（権限管理）."""
+    """プロジェクトメンバー（権限管理)."""
 
     __tablename__ = "project_members"
 
@@ -65,8 +78,82 @@ class ProjectMember(Base):
     user: Mapped["User"] = relationship(back_populates="project_members")
 
 
+class Script(Base):
+    """Fountain脚本."""
+
+    __tablename__ = "scripts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("theater_projects.id"))
+    title: Mapped[str] = mapped_column(String(200))
+    blob_path: Mapped[str] = mapped_column(String(500))  # Blob Storage パス
+    uploaded_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship(back_populates="scripts")
+    scenes: Mapped[list["Scene"]] = relationship(
+        back_populates="script", lazy="selectin", cascade="all, delete-orphan"
+    )
+    characters: Mapped[list["Character"]] = relationship(
+        back_populates="script", lazy="selectin", cascade="all, delete-orphan"
+    )
+
+
+class Scene(Base):
+    """シーン."""
+
+    __tablename__ = "scenes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    script_id: Mapped[int] = mapped_column(ForeignKey("scripts.id"))
+    scene_number: Mapped[int]
+    heading: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # リレーション
+    script: Mapped["Script"] = relationship(back_populates="scenes")
+    lines: Mapped[list["Line"]] = relationship(
+        back_populates="scene", lazy="selectin", cascade="all, delete-orphan"
+    )
+
+
+class Character(Base):
+    """登場人物."""
+
+    __tablename__ = "characters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    script_id: Mapped[int] = mapped_column(ForeignKey("scripts.id"))
+    name: Mapped[str] = mapped_column(String(100))
+
+    # リレーション
+    script: Mapped["Script"] = relationship(back_populates="characters")
+    castings: Mapped[list["CharacterCasting"]] = relationship(
+        back_populates="character", lazy="selectin"
+    )
+    lines: Mapped[list["Line"]] = relationship(
+        back_populates="character", lazy="selectin"
+    )
+
+
+class Line(Base):
+    """セリフ."""
+
+    __tablename__ = "lines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scene_id: Mapped[int] = mapped_column(ForeignKey("scenes.id"))
+    character_id: Mapped[int] = mapped_column(ForeignKey("characters.id"))
+    content: Mapped[str] = mapped_column(Text)
+    order: Mapped[int]
+
+    # リレーション
+    scene: Mapped["Scene"] = relationship(back_populates="lines")
+    character: Mapped["Character"] = relationship(back_populates="lines")
+
+
 class CharacterCasting(Base):
-    """登場人物とユーザーの紐付け（キャスティング）.
+    """登場人物とユーザーの紐付け（キャスティング).
 
     ダブルキャスト対応：同一の character_id に対して複数の user_id を登録可能。
     """
@@ -81,6 +168,7 @@ class CharacterCasting(Base):
     )  # "A キャスト", "B キャスト" 等
 
     # リレーション
+    character: Mapped["Character"] = relationship(back_populates="castings")
     user: Mapped["User"] = relationship(back_populates="character_castings")
 
 

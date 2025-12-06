@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api import auth, projects
+from src.api import auth, projects, scripts
 from src.config import settings
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.add_middleware(
 # ルーター登録
 app.include_router(auth.router, prefix="/auth", tags=["認証"])
 app.include_router(projects.router, prefix="/projects", tags=["プロジェクト"])
+app.include_router(scripts.router, prefix="/scripts", tags=["脚本"])
 
 
 @app.get("/")
