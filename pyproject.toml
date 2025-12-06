@@ -28,6 +28,7 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
+    "aiosqlite",
 ]
 
 [build-system]
@@ -93,6 +94,12 @@ convention = "google"
 asyncio_mode = "auto"
 pythonpath = ["."]
 testpaths = ["tests"]
+addopts = [
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=80",
+]
 
 [tool.coverage.run]
 source = ["src"]
