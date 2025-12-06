@@ -17,6 +17,8 @@ from src.db.models import (  # noqa: F401 - モデルをインポートしてマ
     NotificationSettings,
     ProjectMember,
     Scene,
+    SceneChart,
+    SceneCharacterMapping,
     Script,
     TheaterProject,
     User,
