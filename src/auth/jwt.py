@@ -20,6 +20,8 @@ def create_access_token(data: dict[str, str | int]) -> str:
         str: JWT トークン
     """
     to_encode = data.copy()
+    if "sub" in to_encode:
+        to_encode["sub"] = str(to_encode["sub"])
     expire = datetime.now(UTC) + timedelta(minutes=settings.jwt_expire_minutes)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
@@ -37,10 +39,14 @@ async def get_current_user(token: str, db: AsyncSession) -> User | None:
     """
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
-        user_id: int | None = payload.get("sub")
-        if user_id is None:
+        user_id_str: str | None = payload.get("sub")
+        
+        if user_id_str is None:
             return None
-    except JWTError:
+        
+        user_id = int(user_id_str)
+        
+    except (JWTError, ValueError):
         return None
 
     result = await db.execute(select(User).where(User.id == user_id))

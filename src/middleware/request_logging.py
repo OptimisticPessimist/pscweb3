@@ -36,9 +36,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(request_id=request_id)
         
+        
         start_time = time.time()
         
-        # リクエストログ (詳細なヘッダーなどはセキュリティ上控えるか、必要に応じて追加)
         logger.info(
             "Request started",
             method=request.method,
@@ -65,6 +65,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             
         except Exception as e:
             process_time = time.time() - start_time
+
             logger.error(
                 "Request failed",
                 error=str(e),
