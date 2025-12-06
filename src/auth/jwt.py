@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.db.models import User
+from src.db import get_db
+from fastapi import Depends, Query
 
 
 def create_access_token(data: dict[str, str | int]) -> str:
@@ -45,3 +47,15 @@ async def get_current_user(token: str, db: AsyncSession) -> User | None:
 
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
+
+
+async def get_current_user_dep(
+    auth_token: str = Query(..., alias="token", description="JWT Token"),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """FastAPI Depends用 ユーザー取得関数."""
+    return await get_current_user(auth_token, db)
+
+
+
+

@@ -251,3 +251,72 @@ async def update_script_publicity(
 
     status = "公開" if is_public else "非公開"
     return {"message": f"脚本を{status}に設定しました"}
+
+
+@router.get("/{project_id}/{script_id}/pdf")
+async def download_script_pdf(
+    project_id: int,
+    script_id: int,
+    token: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """脚本をPDFとしてダウンロード.
+
+    Args:
+        project_id: プロジェクトID
+        script_id: 脚本ID
+        token: JWT トークン
+        db: データベースセッション
+
+    Returns:
+        Response: PDFファイルバイナリ
+    """
+    from fastapi import Response
+    from src.services.pdf_generator import generate_script_pdf
+
+    # 認証チェック
+    user = await get_current_user(token, db)
+    if user is None:
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    # 脚本取得
+    result = await db.execute(
+        select(Script).where(Script.id == script_id, Script.project_id == project_id)
+    )
+    script = result.scalar_one_or_none()
+    if script is None:
+        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+
+    # アクセス権チェック
+    # PDFダウンロードは閲覧権限があれば可能とする
+    has_access = await _check_script_access(script, user, db)
+    if not has_access:
+        raise HTTPException(status_code=403, detail="この脚本へのアクセス権がありません")
+
+    # PDF生成
+    # script.content にFountainテキストが入っている前提
+    if not script.content:
+         raise HTTPException(status_code=400, detail="脚本コンテンツが空です")
+
+    try:
+        pdf_bytes = generate_script_pdf(script.content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF生成に失敗しました: {e}")
+
+    # 日本語ファイル名の文字化け対策（URLエンコードなど）は必要だが、
+    # 簡易的にASCIIファイル名にするか、またはブラウザ周りの挙動に任せる
+    # ここでは単純にタイトルを使用
+    filename = f"{script.title}.pdf"
+    
+    # ascii以外の文字を含む場合のContent-Disposition対応は複雑なため、
+    # シンプルに quote して渡すのが安全（RFC 5987）
+    from urllib.parse import quote
+    encoded_filename = quote(filename)
+
+    return Response(
+        content=pdf_bytes, 
+        media_type="application/pdf", 
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+        }
+    )
