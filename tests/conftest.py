@@ -51,7 +51,6 @@ async def test_user(db: AsyncSession) -> User:
     user = User(
         discord_id="123456789",
         discord_username="testuser",
-        email="test@example.com",
     )
     db.add(user)
     await db.commit()
