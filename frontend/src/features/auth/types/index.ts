@@ -1,0 +1,17 @@
+export interface User {
+    id: number;
+    discord_id: string;
+    discord_username: string;
+    created_at: string;
+}
+
+export interface LoginResponse {
+    access_token: string;
+    token_type: string;
+}
+
+export interface AuthState {
+    user: User | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+}
