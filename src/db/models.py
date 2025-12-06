@@ -46,9 +46,7 @@ class TheaterProject(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
-    members: Mapped[list["ProjectMember"]] = relationship(
-        back_populates="project", lazy="selectin"
-    )
+    members: Mapped[list["ProjectMember"]] = relationship(back_populates="project", lazy="selectin")
 
 
 class ProjectMember(Base):
@@ -69,7 +67,7 @@ class ProjectMember(Base):
 
 class CharacterCasting(Base):
     """登場人物とユーザーの紐付け（キャスティング）.
-    
+
     ダブルキャスト対応：同一の character_id に対して複数の user_id を登録可能。
     """
 

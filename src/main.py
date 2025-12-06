@@ -29,7 +29,7 @@ app.include_router(projects.router, prefix="/projects", tags=["プロジェク�
 @app.get("/")
 async def root() -> dict[str, str]:
     """ルートエンドポイント.
-    
+
     Returns:
         dict[str, str]: ウェルカムメッセージ
     """
@@ -39,7 +39,7 @@ async def root() -> dict[str, str]:
 @app.get("/health")
 async def health() -> dict[str, str]:
     """ヘルスチェックエンドポイント.
-    
+
     Returns:
         dict[str, str]: ステータス
     """

@@ -23,7 +23,7 @@ async_session_maker = async_sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """データベースセッションの依存性注入.
-    
+
     Yields:
         AsyncSession: データベースセッション
     """

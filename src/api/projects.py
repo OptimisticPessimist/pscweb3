@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.jwt import get_current_user
 from src.db import get_db
-from src.db.models import ProjectMember, TheaterProject, User
+from src.db.models import ProjectMember, TheaterProject
 
 router = APIRouter()
 
@@ -36,15 +36,15 @@ async def create_project(
     db: AsyncSession = Depends(get_db),
 ) -> ProjectResponse:
     """プロジェクトを作成.
-    
+
     Args:
         project_data: プロジェクト作成データ
         token: JWT トークン
         db: データベースセッション
-        
+
     Returns:
         ProjectResponse: 作成されたプロジェクト
-        
+
     Raises:
         HTTPException: 認証エラー
     """
@@ -80,14 +80,14 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
 ) -> list[ProjectResponse]:
     """参加中のプロジェクト一覧を取得.
-    
+
     Args:
         token: JWT トークン
         db: データベースセッション
-        
+
     Returns:
         list[ProjectResponse]: プロジェクトリスト
-        
+
     Raises:
         HTTPException: 認証エラー
     """
@@ -97,9 +97,7 @@ async def list_projects(
 
     # ユーザーが参加しているプロジェクト一覧を取得
     result = await db.execute(
-        select(TheaterProject)
-        .join(ProjectMember)
-        .where(ProjectMember.user_id == user.id)
+        select(TheaterProject).join(ProjectMember).where(ProjectMember.user_id == user.id)
     )
     projects = result.scalars().all()
 

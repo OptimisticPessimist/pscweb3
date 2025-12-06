@@ -1,7 +1,6 @@
 """Discord OAuth 2.0 認証サービス."""
 
 import httpx
-from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,13 +23,13 @@ oauth.register(
 
 async def get_discord_user_info(access_token: str) -> dict[str, str]:
     """Discord APIからユーザー情報を取得.
-    
+
     Args:
         access_token: Discord アクセストークン
-        
+
     Returns:
         dict[str, str]: ユーザー情報
-        
+
     Raises:
         httpx.HTTPError: API呼び出しエラー
     """
@@ -47,11 +46,11 @@ async def get_or_create_user_from_discord(
     discord_user_data: dict[str, str], db: AsyncSession
 ) -> User:
     """Discord ユーザーデータからユーザーを取得または作成.
-    
+
     Args:
         discord_user_data: Discord API から取得したユーザーデータ
         db: データベースセッション
-        
+
     Returns:
         User: ユーザーオブジェクト
     """

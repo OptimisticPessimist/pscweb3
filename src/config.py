@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """アプリケーション設定.
-    
+
     環境変数から設定を読み込む。
     """
 

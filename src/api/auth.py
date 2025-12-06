@@ -17,10 +17,10 @@ router = APIRouter()
 @router.get("/login")
 async def login(request: Request) -> RedirectResponse:
     """Discord OAuth ログイン開始.
-    
+
     Args:
         request: FastAPI リクエスト
-        
+
     Returns:
         RedirectResponse: Discord 認証ページへのリダイレクト
     """
@@ -31,16 +31,16 @@ async def login(request: Request) -> RedirectResponse:
 @router.get("/callback", response_model=TokenResponse)
 async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> TokenResponse:
     """Discord OAuth コールバック.
-    
+
     Discord認証後のコールバックを処理し、JWT トークンを発行。
-    
+
     Args:
         request: FastAPI リクエスト
         db: データベースセッション
-        
+
     Returns:
         TokenResponse: JWT トークン
-        
+
     Raises:
         HTTPException: 認証エラー
     """
@@ -66,18 +66,16 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> Toke
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    token: str, db: AsyncSession = Depends(get_db)
-) -> UserResponse:
+async def get_current_user_info(token: str, db: AsyncSession = Depends(get_db)) -> UserResponse:
     """現在のユーザー情報を取得.
-    
+
     Args:
         token: JWT トークン（クエリパラメータ）
         db: データベースセッション
-        
+
     Returns:
         UserResponse: ユーザー情報
-        
+
     Raises:
         HTTPException: 認証エラー
     """
