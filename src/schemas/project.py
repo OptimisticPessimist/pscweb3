@@ -15,6 +15,9 @@ class ProjectResponse(BaseModel):
     id: int = Field(..., description="プロジェクトID")
     name: str = Field(..., description="プロジェクト名")
     description: str | None = Field(None, description="説明")
+    discord_webhook_url: str | None = Field(None, description="Discord Webhook URL")
+    created_at: datetime = Field(..., description="作成日時")
+    role: str | None = Field(None, description="ユーザーのロール (一覧取得時など)")
 
     model_config = {"from_attributes": True}
 

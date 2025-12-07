@@ -75,7 +75,14 @@ async def create_project(
         webhook_url=project.discord_webhook_url, # 現状はNoneだが将来的に設定可能
     )
 
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        discord_webhook_url=project.discord_webhook_url,
+        created_at=project.created_at,
+        role="owner"
+    )
 
 
 @router.get("/", response_model=list[ProjectResponse])
@@ -100,11 +107,23 @@ async def list_projects(
 
     # ユーザーが参加しているプロジェクト一覧を取得
     result = await db.execute(
-        select(TheaterProject).join(ProjectMember).where(ProjectMember.user_id == current_user.id)
+        select(TheaterProject, ProjectMember.role)
+        .join(ProjectMember)
+        .where(ProjectMember.user_id == current_user.id)
     )
-    projects = result.scalars().all()
+    
+    projects_response = []
+    for project, role in result.all():
+        projects_response.append(ProjectResponse(
+            id=project.id,
+            name=project.name,
+            description=project.description,
+            discord_webhook_url=project.discord_webhook_url,
+            created_at=project.created_at,
+            role=role
+        ))
 
-    return [ProjectResponse.model_validate(p) for p in projects]
+    return projects_response
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
@@ -127,7 +146,14 @@ async def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
     
-    return ProjectResponse.model_validate(project)
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        discord_webhook_url=project.discord_webhook_url,
+        created_at=project.created_at,
+        role=current_member.role
+    )
 
 
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])

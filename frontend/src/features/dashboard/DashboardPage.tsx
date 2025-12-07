@@ -1,16 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+
 import { dashboardApi } from './api/dashboard';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 export const DashboardPage = () => {
-    const { user, logout } = useAuth();
+    // const { user, logout } = useAuth(); // Header removed, so these are unused now
     const queryClient = useQueryClient();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const { data: projects, isLoading } = useQuery({
+    const { data: projects, isLoading, isError, error } = useQuery({
         queryKey: ['projects'],
         queryFn: dashboardApi.getProjects,
     });
@@ -31,99 +31,86 @@ export const DashboardPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white shadow">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <div className="flex items-center space-x-4">
-                        <span className="text-sm text-gray-600">
-                            {user?.discord_username}
-                        </span>
-                        <button
-                            onClick={logout}
-                            className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+        <div className="min-h-full">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm transition-colors"
+                >
+                    <span className="mr-2">+</span> New Project
+                </button>
+            </div>
+
+            {isError && (
+                <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                    <p className="font-bold">Error loading projects</p>
+                    <p>{error instanceof Error ? error.message : 'Unknown error occurred'}</p>
+                </div>
+            )}
+
+            {/* Project List */}
+            {isLoading ? (
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+            ) : projects && projects.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {projects.map((project) => (
+                        <Link
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                            className="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer group"
                         >
-                            Sign out
+                            <div className="px-4 py-5 sm:p-6 group-hover:bg-gray-50">
+                                <h3 className="text-lg leading-6 font-medium text-gray-900 truncate">
+                                    {project.name}
+                                </h3>
+                                <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                                    {project.description || 'No description'}
+                                </p>
+                                <div className="mt-4 flex items-center justify-between">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.role === 'owner' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'
+                                        }`}>
+                                        {project.role}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(project.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            ) : !isError && (
+                <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            vectorEffect="non-scaling-stroke"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                        />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No projects</h3>
+                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+                    <div className="mt-6">
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            Create New Project
                         </button>
                     </div>
                 </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Actions */}
-                <div className="flex justify-end mb-6">
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm transition-colors"
-                    >
-                        <span className="mr-2">+</span> New Project
-                    </button>
-                </div>
-
-                {/* Project List */}
-                {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                    </div>
-                ) : projects && projects.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {projects.map((project) => (
-                            <Link
-                                key={project.id}
-                                to={`/projects/${project.id}`}
-                                className="block bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200"
-                            >
-                                <div className="px-4 py-5 sm:p-6">
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900 truncate">
-                                        {project.name}
-                                    </h3>
-                                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                                        {project.description || 'No description'}
-                                    </p>
-                                    <div className="mt-4 flex items-center justify-between">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.role === 'owner' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'
-                                            }`}>
-                                            {project.role}
-                                        </span>
-                                        <span className="text-xs text-gray-400">
-                                            {new Date(project.created_at).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                vectorEffect="non-scaling-stroke"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                            />
-                        </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No projects</h3>
-                        <p className="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
-                        <div className="mt-6">
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                            >
-                                Create New Project
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </main>
+            )}
 
             {/* Create Project Modal */}
             {isModalOpen && (

@@ -6,6 +6,8 @@ import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { ProjectDetailsPage } from '@/features/projects/ProjectDetailsPage';
 import { ProtectedLayout } from '@/layouts/ProtectedLayout';
+import { AppLayout } from '@/layouts/AppLayout';
+import { ScriptsPage, SceneChartPage, CastPage, SchedulePage, ProjectSettingsPage } from '@/features/projects/Placeholders';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,9 +30,15 @@ function App() {
 
             {/* Protected Routes */}
             <Route element={<ProtectedLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/projects/:projectId" element={<ProjectDetailsPage />}>
-                {/* Nested routes will be added later */}
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+                <Route path="/projects/:projectId/scripts" element={<ScriptsPage />} />
+                <Route path="/projects/:projectId/chart" element={<SceneChartPage />} />
+                <Route path="/projects/:projectId/cast" element={<CastPage />} />
+                <Route path="/projects/:projectId/schedule" element={<SchedulePage />} />
+                <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
               </Route>
             </Route>
 
