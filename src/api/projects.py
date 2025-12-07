@@ -107,6 +107,29 @@ async def list_projects(
     return [ProjectResponse.model_validate(p) for p in projects]
 
 
+@router.get("/{project_id}", response_model=ProjectResponse)
+async def get_project(
+    project_id: int,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectResponse:
+    """プロジェクト詳細を取得.
+
+    Args:
+        project_id: プロジェクトID
+        current_member: 現在のメンバー情報（権限チェック済み）
+        db: データベースセッション
+
+    Returns:
+        ProjectResponse: プロジェクト詳細
+    """
+    project = await db.get(TheaterProject, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
+    
+    return ProjectResponse.model_validate(project)
+
+
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_project_members(
     project_id: int,

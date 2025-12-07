@@ -25,3 +25,4 @@
     - [x] Remove `debug_panic.log` writers
     - [x] Remove logging from `auth_helper.py`
     - [x] Create walkthrough documentation
+    - [x] Push rules and config updates
