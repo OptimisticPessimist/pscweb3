@@ -7,10 +7,17 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db
-from src.db.models import AuditLog, ProjectMember, TheaterProject, User
+from src.db.models import AuditLog, ProjectMember, TheaterProject, User, Milestone
 from src.dependencies.auth import get_current_user_dep
 from src.dependencies.permissions import get_project_member_dep, get_project_owner_dep
-from src.schemas.project import ProjectCreate, ProjectResponse, ProjectMemberResponse, MemberRoleUpdate
+from src.schemas.project import (
+    ProjectCreate,
+    ProjectResponse,
+    ProjectMemberResponse,
+    MemberRoleUpdate,
+    MilestoneCreate,
+    MilestoneResponse,
+)
 from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
@@ -414,3 +421,65 @@ async def delete_project(
     return {"message": "プロジェクトを削除しました"}
 
 
+
+
+@router.post("/{project_id}/milestones", response_model=MilestoneResponse)
+async def create_milestone(
+    project_id: UUID,
+    milestone_data: MilestoneCreate,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> MilestoneResponse:
+    """マイルストーンを作成."""
+    if current_member.role == "viewer":
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    milestone = Milestone(
+        project_id=project_id,
+        title=milestone_data.title,
+        start_date=milestone_data.start_date,
+        end_date=milestone_data.end_date,
+        description=milestone_data.description,
+        color=milestone_data.color,
+    )
+    db.add(milestone)
+    await db.commit()
+    await db.refresh(milestone)
+
+    return MilestoneResponse.model_validate(milestone)
+
+
+@router.get("/{project_id}/milestones", response_model=list[MilestoneResponse])
+async def list_milestones(
+    project_id: UUID,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> list[MilestoneResponse]:
+    """マイルストーン一覧を取得."""
+    stmt = select(Milestone).where(Milestone.project_id == project_id).order_by(Milestone.start_date)
+    result = await db.execute(stmt)
+    milestones = result.scalars().all()
+    
+    return [MilestoneResponse.model_validate(m) for m in milestones]
+
+
+@router.delete("/{project_id}/milestones/{milestone_id}", status_code=204)
+async def delete_milestone(
+    project_id: UUID,
+    milestone_id: UUID,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """マイルストーンを削除."""
+    if current_member.role == "viewer":
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    stmt = select(Milestone).where(Milestone.id == milestone_id, Milestone.project_id == project_id)
+    result = await db.execute(stmt)
+    milestone = result.scalar_one_or_none()
+    
+    if not milestone:
+        raise HTTPException(status_code=404, detail="マイルストーンが見つかりません")
+        
+    await db.delete(milestone)
+    await db.commit()

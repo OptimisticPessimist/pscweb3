@@ -7,7 +7,8 @@ import {
     Settings,
     LayoutGrid,
     Clapperboard,
-    Wrench
+    Wrench,
+    CalendarDays
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -24,7 +25,9 @@ export function Sidebar() {
     // 共通メニュー
     const commonLinks = [
         { to: '/', icon: LayoutGrid, label: 'Dashboard' },
+        { to: '/my-schedule', icon: CalendarDays, label: 'My Schedule' },
     ];
+
 
     // プロジェクト内メニュー
     const projectLinks = projectId ? [

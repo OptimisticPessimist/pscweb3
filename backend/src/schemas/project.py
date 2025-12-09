@@ -43,3 +43,27 @@ class MemberRoleUpdate(BaseModel):
     role: str = Field(..., pattern="^(owner|editor|viewer)$", description="新しいロール")
     default_staff_role: str | None = Field(None, description="基本的な役割（演出、照明など）")
     display_name: str | None = Field(None, description="表示名")
+
+
+class MilestoneCreate(BaseModel):
+    """マイルストーン作成スキーマ."""
+    
+    title: str = Field(..., min_length=1, max_length=200)
+    start_date: datetime
+    end_date: datetime | None = None
+    description: str | None = None
+    color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")  # Simple hex validation
+
+
+class MilestoneResponse(BaseModel):
+    """マイルストーンレスポンス."""
+    
+    id: UUID
+    project_id: UUID
+    title: str
+    start_date: datetime
+    end_date: datetime | None = None
+    description: str | None = None
+    color: str | None = None
+    
+    model_config = {"from_attributes": True}

@@ -1,0 +1,741 @@
+﻿uv : F:\src\PythonPro
+ject\pscweb3-1\backen
+d\verify_schedule.py:
+80: DeprecationWarnin
+g: datetime.datetime.
+utcnow() is deprecate
+d and scheduled for r
+emoval in a future ve
+rsion. Use timezone-a
+ware objects to repre
+sent datetimes in UTC
+: datetime.datetime.n
+ow(datetime.UTC).
+At line:1 char:59
++ ... ect\pscweb3-1\b
+ackend"; uv run pytho
+n verify_schedule.py 
+2>&1 | Out-F ...
++                    
+         ~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (F:\src\   
+ PythonPr...(date    
+time.UTC).:Strin    g
+) [], RemoteExc    ep
+tion
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  date=datetime.utcno
+w() + timedelta(days=
+1),
+F:\src\PythonProject\
+pscweb3-1\backend\ver
+ify_schedule.py:95: D
+eprecationWarning: da
+tetime.datetime.utcno
+w() is deprecated and
+ scheduled for remova
+l in a future version
+. Use timezone-aware 
+objects to represent 
+datetimes in UTC: dat
+etime.datetime.now(da
+tetime.UTC).
+  start_date=datetime
+.utcnow() + timedelta
+(days=2),
+--- Verifying Schedule API Logic ---
+User ID: 0f6dfc5e-5a85-4784-b2d7-9dc2b2bfc66f
+Traceback (most recen
+t call last):
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 526, i
+n _prepare_and_execut
+e
+    prepared_stmt, at
+tributes = await adap
+t_connection._prepare
+(
+                     
+           ^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^
+        operation, se
+lf._invalidate_schema
+_cache_asof
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 773, i
+n _prepare
+    prepared_stmt = a
+wait self._connection
+.prepare(
+                    ^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
+        operation, na
+me=self._prepared_sta
+tement_name_func()
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\asyncpg\conne
+ction.py", line 638, 
+in prepare
+    return await self
+._prepare(
+           ^^^^^^^^^^
+^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\asyncpg\conne
+ction.py", line 657, 
+in _prepare
+    stmt = await self
+._get_statement(
+           ^^^^^^^^^^
+^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\asyncpg\conne
+ction.py", line 443, 
+in _get_statement
+    statement = await
+ self._protocol.prepa
+re(
+                ^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^
+    ...<5 lines>...
+    )
+    ^
+  File "asyncpg/proto
+col/protocol.pyx", li
+ne 165, in prepare
+asyncpg.exceptions.Un
+definedTableError: re
+lation "milestones" d
+oes not exist
+
+The above exception w
+as the direct cause o
+f the following excep
+tion:
+
+Traceback (most recen
+t call last):
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+967, in _exec_single_
+context
+    self.dialect.do_e
+xecute(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^
+        cursor, str_s
+tatement, effective_p
+arameters, context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\default.py", lin
+e 951, in do_execute
+    cursor.execute(st
+atement, parameters)
+    ~~~~~~~~~~~~~~^^^
+^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 585, i
+n execute
+    self._adapt_conne
+ction.await_(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~^
+        self._prepare
+_and_execute(operatio
+n, parameters)
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\_concurrency_py3k.
+py", line 132, in awa
+it_only
+    return current.pa
+rent.switch(awaitable
+)  # type: ignore[no-
+any-return,attr-defin
+ed] # noqa: E501
+           ~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^
+^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\_concurrency_py3k.
+py", line 196, in gre
+enlet_spawn
+    value = await res
+ult
+            ^^^^^^^^^
+^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 563, i
+n _prepare_and_execut
+e
+    self._handle_exce
+ption(error)
+    ~~~~~~~~~~~~~~~~~
+~~~~~^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 513, i
+n _handle_exception
+    self._adapt_conne
+ction._handle_excepti
+on(error)
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 797, i
+n _handle_exception
+    raise translated_
+error from error
+sqlalchemy.dialects.p
+ostgresql.asyncpg.Asy
+ncAdapt_asyncpg_dbapi
+.ProgrammingError: <c
+lass 'asyncpg.excepti
+ons.UndefinedTableErr
+or'>: relation "miles
+tones" does not exist
+
+The above exception w
+as the direct cause o
+f the following excep
+tion:
+
+Traceback (most recen
+t call last):
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\verify_schedule.
+py", line 172, in <mo
+dule>
+    asyncio.run(verif
+y_schedule())
+    ~~~~~~~~~~~^^^^^^
+^^^^^^^^^^^^^
+  File "C:\Users\word
+s\AppData\Roaming\uv\
+python\cpython-3.13.1
+-windows-x86_64-none\
+Lib\asyncio\runners.p
+y", line 194, in run
+    return runner.run
+(main)
+           ~~~~~~~~~~
+^^^^^^
+  File "C:\Users\word
+s\AppData\Roaming\uv\
+python\cpython-3.13.1
+-windows-x86_64-none\
+Lib\asyncio\runners.p
+y", line 118, in run
+    return self._loop
+.run_until_complete(t
+ask)
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~^^
+^^^^
+  File "C:\Users\word
+s\AppData\Roaming\uv\
+python\cpython-3.13.1
+-windows-x86_64-none\
+Lib\asyncio\base_even
+ts.py", line 720, in 
+run_until_complete
+    return future.res
+ult()
+           ~~~~~~~~~~
+~~~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\verify_schedule.
+py", line 100, in ver
+ify_schedule
+    await db.commit()
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ex
+t\asyncio\session.py"
+, line 1000, in commi
+t
+    await greenlet_sp
+awn(self.sync_session
+.commit)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\_concurrency_py3k.
+py", line 203, in gre
+enlet_spawn
+    result = context.
+switch(value)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 2
+030, in commit
+    trans.commit(_to_
+root=True)
+    ~~~~~~~~~~~~^^^^^
+^^^^^^^^^^
+  File "<string>", li
+ne 2, in commit
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\state_changes.py", 
+line 137, in _go
+    ret_value = fn(se
+lf, *arg, **kw)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 1
+311, in commit
+    self._prepare_imp
+l()
+    ~~~~~~~~~~~~~~~~~
+~^^
+  File "<string>", li
+ne 2, in _prepare_imp
+l
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\state_changes.py", 
+line 137, in _go
+    ret_value = fn(se
+lf, *arg, **kw)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 1
+286, in _prepare_impl
+    self.session.flus
+h()
+    ~~~~~~~~~~~~~~~~~
+~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 4
+331, in flush
+    self._flush(objec
+ts)
+    ~~~~~~~~~~~^^^^^^
+^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 4
+466, in _flush
+    with util.safe_re
+raise():
+         ~~~~~~~~~~~~
+~~~~~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\langhelpers.py", l
+ine 224, in __exit__
+    raise exc_value.w
+ith_traceback(exc_tb)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\session.py", line 4
+427, in _flush
+    flush_context.exe
+cute()
+    ~~~~~~~~~~~~~~~~~
+~~~~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\unitofwork.py", lin
+e 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\unitofwork.py", lin
+e 642, in execute
+    util.preloaded.or
+m_persistence.save_ob
+j(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_fo
+r_mapper_hierarchy(se
+lf.mapper, False, Fal
+se),
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\persistence.py", li
+ne 93, in save_obj
+    _emit_insert_stat
+ements(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\persistence.py", li
+ne 1233, in _emit_ins
+ert_statements
+    result = connecti
+on.execute(
+        statement,
+        params,
+        execution_opt
+ions=execution_option
+s,
+    )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+419, in execute
+    return meth(
+        self,
+        distilled_par
+ameters,
+        execution_opt
+ions or NO_OPTIONS,
+    )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\sq
+l\elements.py", line 
+526, in _execute_on_c
+onnection
+    return connection
+._execute_clauseeleme
+nt(
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~^
+        self, distill
+ed_params, execution_
+options
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+641, in _execute_clau
+seelement
+    ret = self._execu
+te_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cac
+he_hit,
+    )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+846, in _execute_cont
+ext
+    return self._exec
+_single_context(
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~^
+        dialect, cont
+ext, statement, param
+eters
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+986, in _exec_single_
+context
+    self._handle_dbap
+i_exception(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~^
+        e, str_statem
+ent, effective_parame
+ters, cursor, context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 2
+355, in _handle_dbapi
+_exception
+    raise sqlalchemy_
+exception.with_traceb
+ack(exc_info[2]) from
+ e
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\base.py", line 1
+967, in _exec_single_
+context
+    self.dialect.do_e
+xecute(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^
+        cursor, str_s
+tatement, effective_p
+arameters, context
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\en
+gine\default.py", lin
+e 951, in do_execute
+    cursor.execute(st
+atement, parameters)
+    ~~~~~~~~~~~~~~^^^
+^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 585, i
+n execute
+    self._adapt_conne
+ction.await_(
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~^
+        self._prepare
+_and_execute(operatio
+n, parameters)
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\_concurrency_py3k.
+py", line 132, in awa
+it_only
+    return current.pa
+rent.switch(awaitable
+)  # type: ignore[no-
+any-return,attr-defin
+ed] # noqa: E501
+           ~~~~~~~~~~
+~~~~~~~~~~~^^^^^^^^^^
+^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\_concurrency_py3k.
+py", line 196, in gre
+enlet_spawn
+    value = await res
+ult
+            ^^^^^^^^^
+^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 563, i
+n _prepare_and_execut
+e
+    self._handle_exce
+ption(error)
+    ~~~~~~~~~~~~~~~~~
+~~~~~^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 513, i
+n _handle_exception
+    self._adapt_conne
+ction._handle_excepti
+on(error)
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\di
+alects\postgresql\asy
+ncpg.py", line 797, i
+n _handle_exception
+    raise translated_
+error from error
+sqlalchemy.exc.Progra
+mmingError: (sqlalche
+my.dialects.postgresq
+l.asyncpg.Programming
+Error) <class 'asyncp
+g.exceptions.Undefine
+dTableError'>: relati
+on "milestones" does 
+not exist
+[SQL: INSERT INTO mil
+estones (id, project_
+id, title, start_date
+, end_date, descripti
+on, color) VALUES ($1
+::UUID, $2::UUID, $3:
+:VARCHAR, $4::TIMESTA
+MP WITHOUT TIME ZONE,
+ $5::TIMESTAMP WITHOU
+T TIME ZONE, $6::VARC
+HAR, $7::VARCHAR)]
+[parameters: (UUID('1
+3818eaa-e53b-4eca-a99
+7-fc0369c52041'), UUI
+D('2ae72456-1c9b-4dd8
+-8c89-99b90849f454'),
+ 'Performance B', dat
+etime.datetime(2025, 
+12, 11, 8, 40, 45, 67
+2250), None, None, '#
+FF0000')]
+(Background on this e
+rror at: https://sqla
+lche.me/e/20/f405)

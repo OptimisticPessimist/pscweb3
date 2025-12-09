@@ -12,6 +12,7 @@ import { CastingPage } from '@/features/casting/pages/CastingPage';
 import { StaffPage } from '@/features/staff';
 import { SchedulePage } from '@/features/schedule/pages/SchedulePage';
 import { ProjectSettingsPage } from '@/features/projects/pages/ProjectSettingsPage';
+import { MySchedulePage } from '@/features/schedule/MySchedulePage';
 import { InvitationLandingPage } from './features/projects/pages/InvitationLandingPage';
 import { ScriptListPage } from './features/scripts/pages/ScriptListPage';
 import { ScriptUploadPage } from './features/scripts/pages/ScriptUploadPage';
@@ -42,6 +43,7 @@ function App() {
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/my-schedule" element={<MySchedulePage />} />
                 <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
                 <Route path="/projects/:projectId/scripts" element={<ScriptListPage />} />
                 <Route path="/projects/:projectId/scripts/upload" element={<ScriptUploadPage />} />

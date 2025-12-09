@@ -25,7 +25,9 @@ if TYPE_CHECKING:
         SceneCharacterMapping,
         Script,
         ProjectInvitation,
+        ProjectInvitation,
         AuditLog,
+        Milestone,
     )
 
 
@@ -78,6 +80,9 @@ class TheaterProject(Base):
         back_populates="project", cascade="all, delete-orphan"
     )
     audit_logs: Mapped[list["AuditLog"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    milestones: Mapped[list["Milestone"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
     
@@ -378,3 +383,21 @@ class AuditLog(Base):
     # リレーション
     user: Mapped["User | None"] = relationship()
     project: Mapped["TheaterProject | None"] = relationship(back_populates="audit_logs")
+
+
+class Milestone(Base):
+    """プロジェクトのマイルストーン（本番、GP、小屋入りなど）."""
+
+    __tablename__ = "milestones"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
+    title: Mapped[str] = mapped_column(String(200))  # "本番初日", "顔合わせ"
+    start_date: Mapped[datetime] = mapped_column(DateTime)  # 日時
+    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 終了日時（任意）
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    color: Mapped[str | None] = mapped_column(String(20), nullable=True)  # カレンダー表示用の色コード (e.g. "#FF0000")
+
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship(back_populates="milestones")
+
