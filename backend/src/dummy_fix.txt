@@ -1,0 +1,4 @@
+
+// This is a dummy write to force a sync if needed, but actually I need to append the wrapper to ScriptDetailPage.tsx
+// Since `replace_file_content` can't append easily if I don't target the last line exactly.
+// I'll use `replace_file_content` to replace the last closing brace with the brace + wrapper.

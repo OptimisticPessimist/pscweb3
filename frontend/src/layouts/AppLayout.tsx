@@ -7,11 +7,11 @@ export function AppLayout() {
         <div className="flex h-screen bg-gray-50">
             <Sidebar />
 
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
                 <Header />
 
                 <main className="flex-1 overflow-auto p-6 scroll-smooth">
-                    <div className="max-w-7xl mx-auto w-full">
+                    <div className="max-w-7xl mx-auto w-full h-full flex flex-col">
                         <Outlet />
                     </div>
                 </main>

@@ -1,0 +1,152 @@
+Help on module playscript.conv.pdf in playscript.conv:
+
+NAME
+    playscript.conv.pdf
+
+CLASSES
+    builtins.object
+        PageMan
+
+    class PageMan(builtins.object)
+     |  PageMan(
+     |      size,
+     |      margin=None,
+     |      upper_space=None,
+     |      font_name='HeiseiMin-W3',
+     |      num_font_name='Times-Roman',
+     |      font_size=10.0,
+     |      line_space=None,
+     |      before_init_page=None
+     |  )
+     |
+     |  PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u751f\u6210\u30af\u30e9\u30b9
+     |
+     |  Methods defined here:
+     |
+     |  __init__(
+     |      self,
+     |      size,
+     |      margin=None,
+     |      upper_space=None,
+     |      font_name='HeiseiMin-W3',
+     |      num_font_name='Times-Roman',
+     |      font_size=10.0,
+     |      line_space=None,
+     |      before_init_page=None
+     |  )
+     |      \u30b3\u30f3\u30b9\u30c8\u30e9\u30af\u30bf
+     |
+     |      Parameters
+     |      ----------
+     |      size : tuple
+     |          \u30da\u30fc\u30b8\u306e\u30b5\u30a4\u30ba (\u30dd\u30a4\u30f3\u30c8)
+     |      margin : tuple
+     |          \u5de6\u53f3\u3068\u4e0a\u4e0b\u306e\u30de\u30fc\u30b8\u30f3 (\u30dd\u30a4\u30f3\u30c8)
+     |      upper_space : float
+     |          \u4e0a\u306e\u4f59\u767d (\u30dd\u30a4\u30f3\u30c8)
+     |      font_name : str
+     |          \u672c\u6587\u306e\u30d5\u30a9\u30f3\u30c8
+     |      num_font_name : str
+     |          \u6570\u5b57\u306e\u30d5\u30a9\u30f3\u30c8
+     |      font_size : float
+     |          \u672c\u6587\u306e\u30d5\u30a9\u30f3\u30c8\u30b5\u30a4\u30ba (\u30dd\u30a4\u30f3\u30c8)
+     |      line_space : float
+     |          \u672c\u6587\u306e\u884c\u9593 (\u30dd\u30a4\u30f3\u30c8)
+     |      before_init_page : function
+     |          \u30da\u30fc\u30b8\u521d\u671f\u5316\u6642\u306e\u30ab\u30b9\u30bf\u30e0\u51e6\u7406\u306e\u95a2\u6570
+     |
+     |  close(self)
+     |      PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u3078\u306e\u66f8\u304d\u51fa\u3057\u3092\u7d42\u4e86\u3059\u308b
+     |
+     |  draw_author(self, l_idx, athr_line)
+     |      \u8457\u8005\u540d\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_character(self, l_idx, char_line)
+     |      \u767b\u5834\u4eba\u7269\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_charsheadline(self, l_idx, chead_line)
+     |      \u767b\u5834\u4eba\u7269\u898b\u51fa\u3057\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_comment(self, l_idx, cmmt_line)
+     |      \u30b3\u30e1\u30f3\u30c8\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_dialogue(self, l_idx, dlg_line)
+     |      \u30bb\u30ea\u30d5\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_direction(self, l_idx, drct_line)
+     |      \u30c8\u66f8\u304d\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_empty(self, l_idx, empty_line)
+     |      \u7a7a\u884c\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_endmark(self, l_idx, endmk_line)
+     |      \u30a8\u30f3\u30c9\u30de\u30fc\u30af\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_slugline(self, l_idx, hx_line, number=None, border=False)
+     |      \u67f1\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  draw_title(self, l_idx, ttl_line)
+     |      \u984c\u540d\u3092 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u306b\u66f8\u304d\u51fa\u3059
+     |
+     |  save(self, file_name)
+     |      PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u3092\u30d5\u30a1\u30a4\u30eb\u306b\u51fa\u529b\u3059\u308b
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+FUNCTIONS
+    psc_to_pdf(
+        psc,
+        size=None,
+        margin=None,
+        upper_space=None,
+        font_name='HeiseiMin-W3',
+        num_font_name='Times-Roman',
+        font_size=10.0,
+        line_space=None,
+        before_init_page=None,
+        draw_page_num=True
+    )
+        \u53f0\u672c\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u304b\u3089 PDF \u30b9\u30c8\u30ea\u30fc\u30e0\u3092\u751f\u6210\u3059\u308b
+
+        Parameters
+        ----------
+        psc : PSc
+            \u30bd\u30fc\u30b9\u3068\u306a\u308b\u53f0\u672c\u30aa\u30d6\u30b8\u30a7\u30af\u30c8
+        size : tuple
+            \u30da\u30fc\u30b8\u306e\u30b5\u30a4\u30ba (\u30dd\u30a4\u30f3\u30c8)
+        margin : tuple
+            \u5de6\u53f3\u3068\u4e0a\u4e0b\u306e\u30de\u30fc\u30b8\u30f3 (\u30dd\u30a4\u30f3\u30c8)
+        upper_space : float
+            \u4e0a\u306e\u4f59\u767d (\u30dd\u30a4\u30f3\u30c8)
+        font_name : str
+            \u672c\u6587\u306e\u30d5\u30a9\u30f3\u30c8
+        num_font_name : str
+            \u6570\u5b57\u306e\u30d5\u30a9\u30f3\u30c8
+        font_size : float
+            \u672c\u6587\u306e\u30d5\u30a9\u30f3\u30c8\u30b5\u30a4\u30ba (\u30dd\u30a4\u30f3\u30c8)
+        line_space : float
+            \u672c\u6587\u306e\u884c\u9593 (\u30dd\u30a4\u30f3\u30c8)
+        before_init_page : function
+            \u30da\u30fc\u30b8\u521d\u671f\u5316\u6642\u306e\u30ab\u30b9\u30bf\u30e0\u51e6\u7406\u306e\u95a2\u6570
+        draw_page_num : bool
+            \u30da\u30fc\u30b8\u756a\u53f7\u3092\u66f8\u304d\u51fa\u3059\u304b\u3069\u3046\u304b
+
+        Returns
+        -------
+        PDF \u30b9\u30c8\u30ea\u30fc\u30e0 : BytesIO
+
+DATA
+    A5 = (419.52755905511816, 595.2755905511812)
+    cm = 28.346456692913385
+
+FILE
+    f:\src\pythonproject\pscweb3-1\backend\.venv\lib\site-packages\playscript\conv\pdf.py
+
+

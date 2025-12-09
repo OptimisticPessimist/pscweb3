@@ -1,40 +1,29 @@
-# 実装計画: フロントエンドレイアウトとルーティング
+# スタッフ管理セクション実装計画
 
-## ゴール
-アプリケーションの基本レイアウト（サイドバー、ヘッダー）と、プロジェクトごとのネストされたルーティング構造を実装します。これにより、ユーザーはプロジェクト内の各機能（脚本、香盤表など）へナビゲーションできるようになります。
-
-## この変更による影響
-- **ユーザー体験**: アプリケーションらしさが向上し、各機能へのアクセスが容易になります。
-- **開発者体験**: 共通レイアウトが定義されることで、以降の各ページ実装がスムーズになります。
+## 目標
+サイドバーの「Cast」と「Schedule」の間に「Staff」セクションを追加し、プロジェクトメンバー（スタッフ）の一覧を表示するページを作成する。
 
 ## 変更内容
 
-### 新規コンポーネント
-#### [NEW] [AppLayout.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/layouts/AppLayout.tsx)
-- サイドバーナビゲーション (Home, Script, Chart, Cast, Schedule, Settings)
-- ヘッダー (パンくずリスト, ユーザーアイコン/ログアウト)
-- レスポンシブ対応 (モバイルメニュー)
-- `Outlet` を使用したネストされたコンテンツ表示
+### Frontend
 
-### ルーティング変更
-#### [MODIFY] [App.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/App.tsx)
-- 保護されたルート配下に `AppLayout` を適用
-- プロジェクト詳細以下のサブルート定義 (`/projects/:projectId/*`)
+#### [MODIFY] `src/components/layout/Sidebar.tsx`
+- メニューに「Staff」を追加（CastとScheduleの間）。
+- アイコン案: `Users` (Castで使用中) と区別するため `Wrench` を使用。
 
-### UIコンポーネント (必要に応じて作成)
-- `frontend/src/components/layout/Sidebar.tsx`
-- `frontend/src/components/layout/Header.tsx`
+#### [NEW] `src/features/staff/pages/StaffPage.tsx`
+- 新規ページコンポーネント。
+- プロジェクトメンバー一覧を取得 (`GET /projects/{id}/members`)。
+- メンバーを表示（ユーザー名、スタッフ役割/Default Staff Role、Discord名）。
+- （オプション）役割ごとのグループ化など（今回は単純なリスト表示から開始）。
+
+#### [MODIFY] `src/App.tsx`
+- ルート `/projects/:projectId/staff` を追加し、`StaffPage` にマッピング。
+
+#### [NEW] `src/features/staff/index.ts`
+- `StaffPage` をエクスポート。
 
 ## 検証計画
-
-### 自動テスト
-- 現在はE2Eテスト環境が完全ではないため、単体テストまたは手動確認を主とします。
-- `npm run lint` が通ることを確認。
-
-### 手動検証
-1. **ログイン後の遷移**: ダッシュボードからプロジェクトを選択し、プロジェクト詳細画面に遷移できること。
-2. **レイアウト確認**:
-    - 左側にサイドバー、上部にヘッダーが表示されていること。
-    - サイドバーのリンクをクリックすると、URLが切り替わること（中身は空またはプレースホルダー）。
-3. **レスポンシブ確認**:
-    - ウィンドウ幅を縮めた際にサイドバーが隠れ、ハンバーガーメニュー等で表示できること（今回は簡易的なレスポンシブ対応のみでも可とする）。
+1.  サイドバーに「Staff」が表示されることを確認。
+2.  「Staff」をクリックすると `/projects/{id}/staff` に遷移することを確認。
+3.  スタッフページにメンバー一覧と役割が表示されることを確認。

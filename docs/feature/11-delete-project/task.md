@@ -1,0 +1,24 @@
+
+# Feature: Delete Project
+- [x] Backend: Add DELETE endpoint <!-- id: 1 -->
+    - [x] Define `delete_project` in `backend/src/api/projects.py`
+    - [x] Ensure only "owner" can delete
+    - [x] Add AuditLog entry
+    - [x] Send Discord notification
+- [x] Frontend: Add API client method <!-- id: 2 -->
+    - [x] Add `deleteProject` to `dashboard.ts`
+- [x] Frontend: UI Implementation <!-- id: 3 -->
+    - [x] Add Delete icon to project card in `DashboardPage.tsx`
+    - [x] Add Confirmation Modal (reusable or simple window.confirm for MVP?) -> Let's make a nice Modal.
+    - [x] Connect mutation to API
+- [x] Verification <!-- id: 4 -->
+    - [x] Test deletion as Owner (Success)
+    - [x] Test deletion as Non-Owner (Fail - though UI should hide it)
+- [x] Bug Fix: Corrupted Models <!-- id: 5 -->
+    - [x] Restore `ProjectMember` class in `models.py`
+    - [x] Apply cascade settings correctly
+- [x] Bug Fix: Deletion Consistency <!-- id: 6 -->
+    - [x] Debug failing deletion (3rd attempt failed)
+    - [x] Fix FK constraint violation (AuditLog)
+    - [x] Fix FK constraint violation (CharacterCasting)
+    - [x] Solve "Last one cannot be deleted" issue (Check logs)

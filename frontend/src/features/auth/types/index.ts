@@ -1,5 +1,5 @@
 export interface User {
-    id: number;
+    id: string;
     discord_id: string;
     discord_username: string;
     created_at: string;
