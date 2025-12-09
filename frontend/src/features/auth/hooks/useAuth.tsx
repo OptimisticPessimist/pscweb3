@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { authApi } from '../api/auth';
@@ -40,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 認証エラー時はログアウト扱い
     useEffect(() => {
         if (isError) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setToken(null);
         }
     }, [isError]);

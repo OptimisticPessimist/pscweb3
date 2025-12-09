@@ -1,7 +1,7 @@
 import { apiClient } from '@/api/client';
 
 export interface Project {
-    id: number;
+    id: string;
     name: string;
     description: string | null;
     discord_webhook_url: string | null;
@@ -11,12 +11,16 @@ export interface Project {
 
 export const dashboardApi = {
     getProjects: async (): Promise<Project[]> => {
-        const response = await apiClient.get<Project[]>('/projects');
+        const response = await apiClient.get<Project[]>('/projects/');
         return response.data;
     },
 
     createProject: async (data: { name: string; description?: string }): Promise<Project> => {
-        const response = await apiClient.post<Project>('/projects', data);
+        const response = await apiClient.post<Project>('/projects/', data);
         return response.data;
+    },
+
+    deleteProject: async (id: string): Promise<void> => {
+        await apiClient.delete(`/projects/${id}`);
     },
 };

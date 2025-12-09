@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client';
-import type { LoginResponse, User } from '../types';
+import type { User } from '../types';
 
 export const authApi = {
     // バックエンドの /auth/login はリダイレクト用なので、フロントエンドからは直接リンクとして使用する

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useAuth, AuthProvider } from './useAuth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,7 +26,7 @@ const createWrapper = () => {
             },
         },
     });
-    return ({ children }: { children: React.ReactNode }) => (
+    return ({ children }: { children: ReactNode }) => (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>{children}</AuthProvider>
         </QueryClientProvider>
@@ -50,7 +51,7 @@ describe('useAuth', () => {
 
         // Mock getUser to return a user
         const mockUser = { id: 1, discord_id: '123', discord_username: 'test', created_at: '' };
-        (authApi.getUser as any).mockResolvedValue(mockUser);
+        vi.mocked(authApi.getUser).mockResolvedValue(mockUser);
 
         act(() => {
             result.current.login('test-token');
