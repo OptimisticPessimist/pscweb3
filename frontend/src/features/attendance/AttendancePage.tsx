@@ -8,6 +8,7 @@ export const AttendancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
     const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+    const [filter, setFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
 
     const { data: events, isLoading } = useQuery({
         queryKey: ['attendance', projectId],
@@ -45,7 +46,15 @@ export const AttendancePage: React.FC = () => {
         return dateB.getTime() - dateA.getTime();
     }) : [];
 
-    // 未回答のイベントのみフィルタリング
+    // フィルタリング
+    const filteredEvents = sortedEvents.filter(e => {
+        if (filter === 'pending') return e.stats.pending > 0;
+        if (filter === 'ok') return e.stats.ok > 0;
+        if (filter === 'ng') return e.stats.ng > 0;
+        return true; // 'all'
+    });
+
+    // 未回答のイベントのみ（アラート用）
     const pendingEvents = sortedEvents.filter(e => e.stats.pending > 0);
 
     return (
@@ -70,15 +79,55 @@ export const AttendancePage: React.FC = () => {
             {/* 出欠確認一覧 */}
             <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900">出欠確認一覧</h2>
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-gray-900">出欠確認一覧</h2>
+                        <div className="flex space-x-2">
+                            <button
+                                onClick={() => setFilter('all')}
+                                className={`px-3 py-1 text-sm rounded ${filter === 'all'
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                            >
+                                全て
+                            </button>
+                            <button
+                                onClick={() => setFilter('pending')}
+                                className={`px-3 py-1 text-sm rounded ${filter === 'pending'
+                                    ? 'bg-yellow-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                            >
+                                未回答
+                            </button>
+                            <button
+                                onClick={() => setFilter('ok')}
+                                className={`px-3 py-1 text-sm rounded ${filter === 'ok'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                            >
+                                OK
+                            </button>
+                            <button
+                                onClick={() => setFilter('ng')}
+                                className={`px-3 py-1 text-sm rounded ${filter === 'ng'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                            >
+                                NG
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div className="divide-y divide-gray-200">
-                    {sortedEvents.length === 0 ? (
+                    {filteredEvents.length === 0 ? (
                         <div className="p-6 text-center text-gray-500">
-                            出欠確認はまだありません
+                            {filter === 'all' ? '出欠確認はまだありません' : `${filter === 'pending' ? '未回答' : filter === 'ok' ? 'OK' : 'NG'}の出欠確認はありません`}
                         </div>
                     ) : (
-                        sortedEvents.map((event) => (
+                        filteredEvents.map((event) => (
                             <div key={event.id} className="p-6">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
