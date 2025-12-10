@@ -101,20 +101,6 @@ export const ProjectDetailsPage = () => {
                         {project.description || 'No description provided.'}
                     </p>
                 </div>
-
-                {/* Debug Info */}
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <p><strong>Debug - Dashboard API:</strong></p>
-                    <p>Dashboard Loaded: {dashboard ? 'Yes' : 'No'}</p>
-                    {dashboard && (
-                        <>
-                            <p>Next Rehearsal: {dashboard.next_rehearsal ? `${dashboard.next_rehearsal.title} at ${dashboard.next_rehearsal.start_time}` : 'None'}</p>
-                            <p>Next Milestone: {dashboard.next_milestone ? `${dashboard.next_milestone.title} (${dashboard.next_milestone.days_until} days)` : 'None'}</p>
-                            <p>Pending Attendance: {dashboard.pending_attendance_count}</p>
-                            <p>Alerts Count: {alerts.length}</p>
-                        </>
-                    )}
-                </div>
             </div>
 
             {/* 重要アラート */}
