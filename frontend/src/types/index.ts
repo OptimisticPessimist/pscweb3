@@ -14,6 +14,7 @@ export interface Project {
     created_at: string;
     updated_at?: string; // Optional if not always present
     discord_webhook_url: string | null;
+    discord_channel_id: string | null;
     role: 'owner' | 'editor' | 'viewer';
 }
 
@@ -105,6 +106,7 @@ export interface Rehearsal {
     notes: string | null;
     participants: RehearsalParticipant[];
     casts: RehearsalCast[];
+    scenes?: { id: string; heading: string; scene_number: number }[];
 }
 
 export type RehearsalResponse = Rehearsal;
@@ -118,20 +120,38 @@ export interface RehearsalScheduleResponse {
     rehearsals: Rehearsal[];
 }
 
+export interface RehearsalParticipantCreate {
+    user_id: string;
+    staff_role?: string | null;
+}
+
+export interface RehearsalCastCreate {
+    user_id: string;
+    character_id: string;
+}
+
 export interface RehearsalCreate {
-    scene_id?: string | null;
+    scene_id?: string | null; // Deprecated
+    scene_ids?: string[];
     date: string;
     duration_minutes: number;
     location?: string | null;
     notes?: string | null;
+    create_attendance_check?: boolean;
+    attendance_deadline?: string | null;
+    participants?: RehearsalParticipantCreate[];
+    casts?: RehearsalCastCreate[];
 }
 
 export interface RehearsalUpdate {
     scene_id?: string | null;
+    scene_ids?: string[];
     date?: string | null;
     duration_minutes?: number | null;
     location?: string | null;
     notes?: string | null;
+    participants?: RehearsalParticipantCreate[];
+    casts?: RehearsalCastCreate[];
 }
 
 // Invitation Types
@@ -154,4 +174,12 @@ export interface InvitationAcceptResponse {
     project_id: string;
     project_name: string;
     message: string;
+}
+
+export interface ApiError extends Error {
+    response?: {
+        data?: {
+            detail?: string | { loc: (string | number)[]; msg: string }[] | any;
+        };
+    };
 }

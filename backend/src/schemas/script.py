@@ -5,12 +5,20 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+class CastingResponse(BaseModel):
+    """キャスティングレスポンス."""
+    user_id: UUID = Field(..., description="ユーザーID")
+    cast_name: str | None = Field(None, description="役名（上書き）")
+
+    model_config = {"from_attributes": True}
+
 
 class CharacterResponse(BaseModel):
     """登場人物レスポンス."""
 
     id: UUID = Field(..., description="登場人物ID")
     name: str = Field(..., description="登場人物名")
+    castings: list[CastingResponse] = Field(default_factory=list, description="キャスティング情報")
 
     model_config = {"from_attributes": True}
 

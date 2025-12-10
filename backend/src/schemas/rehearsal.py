@@ -56,26 +56,48 @@ class RehearsalResponse(BaseModel):
     )
 
 
+class RehearsalParticipantCreate(BaseModel):
+    """稽古参加者作成リクエスト."""
+
+    user_id: UUID = Field(..., description="ユーザーID")
+    staff_role: str | None = Field(None, description="役割")
+
+
+class RehearsalCastCreate(BaseModel):
+    """稽古キャスト作成リクエスト."""
+
+    user_id: UUID = Field(..., description="ユーザーID")
+    character_id: UUID = Field(..., description="キャラクターID")
+
+
 class RehearsalCreate(BaseModel):
     """稽古作成リクエスト."""
 
-    scene_id: UUID | None = Field(None, description="シーンID")
+    scene_id: UUID | None = Field(None, description="シーンID（非推奨: scene_idsを使用してください）")
+    scene_ids: list[UUID] = Field(default_factory=list, description="シーンIDリスト")
     date: datetime = Field(..., description="稽古日時")
     duration_minutes: int = Field(120, description="稽古時間（分）")
     location: str | None = Field(None, description="場所")
     notes: str | None = Field(None, description="備考")
     create_attendance_check: bool = Field(False, description="出席確認を作成")
     attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合は稽古日の24時間前）")
+    
+    # 参加者・キャストの明示的な指定（指定がない場合は自動決定ロジックが走る場合があるが、基本はFrontendから送る）
+    participants: list[RehearsalParticipantCreate] | None = Field(None, description="スタッフ参加者リスト")
+    casts: list[RehearsalCastCreate] | None = Field(None, description="キャスト参加者リスト")
 
 
 class RehearsalUpdate(BaseModel):
     """稽古更新リクエスト."""
 
-    scene_id: UUID | None = Field(None, description="シーンID")
+    scene_id: UUID | None = Field(None, description="シーンID（非推奨）")
+    scene_ids: list[UUID] | None = Field(None, description="シーンIDリスト")
     date: datetime | None = Field(None, description="稽古日時")
     duration_minutes: int | None = Field(None, description="稽古時間（分）")
     location: str | None = Field(None, description="場所")
     notes: str | None = Field(None, description="備考")
+    participants: list[RehearsalParticipantCreate] | None = Field(None, description="スタッフ参加者リスト")
+    casts: list[RehearsalCastCreate] | None = Field(None, description="キャスト参加者リスト")
 
 
 class RehearsalParticipantUpdate(BaseModel):

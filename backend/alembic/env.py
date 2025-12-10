@@ -32,7 +32,11 @@ from src.db.models import (  # noqa: F401 - モデルをインポートしてマ
 config = context.config
 
 # データベースURLを設定から取得
-config.set_main_option("sqlalchemy.url", settings.database_url)
+url = settings.database_url
+if url:
+    # ConfigParserのinterpolationエラーを防ぐために%をエスケープ
+    url = url.replace("%", "%%")
+config.set_main_option("sqlalchemy.url", url)
 
 # ロギング設定
 if config.config_file_name is not None:
@@ -70,6 +74,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"statement_cache_size": 0},
     )
 
     async with connectable.connect() as connection:

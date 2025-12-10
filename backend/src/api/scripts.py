@@ -23,11 +23,13 @@ from src.db.models import (
     TheaterProject,
     User,
 )
+
 from src.dependencies.auth import get_current_user_dep
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.fountain_parser import parse_fountain_and_create_models
 from src.services.scene_chart_generator import generate_scene_chart
 from src.services.discord import DiscordService, get_discord_service
+from src.dependencies.permissions import get_project_member_dep, get_script_member_dep
 
 router = APIRouter(tags=["scripts"])
 
@@ -40,18 +42,11 @@ router = APIRouter(tags=["scripts"])
 async def get_scripts(
     project_id: UUID,
     current_user: User = Depends(get_current_user_dep),
+    member: ProjectMember = Depends(get_project_member_dep),
     db: AsyncSession = Depends(get_db),
 ) -> ScriptListResponse:
     """プロジェクトの脚本一覧を取得."""
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+    # 権限チェックはDepends(get_project_member_dep)で完了済み
 
     # 脚本取得
     stmt = (
@@ -132,31 +127,11 @@ async def upload_script(
 
 @router.get("/{project_id}/{script_id}", response_model=ScriptResponse)
 async def get_script(
-    project_id: UUID,
-    script_id: UUID,
-    current_user: User = Depends(get_current_user_dep),
-    db: AsyncSession = Depends(get_db),
+    tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
 ) -> ScriptResponse:
     """指定した脚本の詳細を取得."""
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
-
-    # 脚本取得
-    result = await db.execute(
-        select(Script).where(Script.id == script_id, Script.project_id == project_id)
-    )
-    script = result.scalar_one_or_none()
-    if script is None:
-        raise HTTPException(status_code=404, detail="脚本が見つかりません")
-
+    # 権限チェックはDepends(get_script_member_dep)で完了済み
+    member, script = tuple_data
     return ScriptResponse.model_validate(script)
 
 
@@ -169,19 +144,11 @@ async def get_scenes(
     project_id: UUID,
     script_id: UUID,
     current_user: User = Depends(get_current_user_dep),
+    member: ProjectMember = Depends(get_project_member_dep),
     db: AsyncSession = Depends(get_db),
 ):
     """指定した脚本のシーン一覧を取得."""
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+    # 権限チェックはDepends(get_project_member_dep)で完了済み
 
     # シーン取得
     result = await db.execute(
@@ -203,19 +170,11 @@ async def get_characters(
     project_id: UUID,
     script_id: UUID,
     current_user: User = Depends(get_current_user_dep),
+    member: ProjectMember = Depends(get_project_member_dep),
     db: AsyncSession = Depends(get_db),
 ):
     """指定した脚本の登場人物一覧を取得."""
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+    # 権限チェックはDepends(get_project_member_dep)で完了済み
 
     # 登場人物取得
     result = await db.execute(select(Character).where(Character.script_id == script_id))

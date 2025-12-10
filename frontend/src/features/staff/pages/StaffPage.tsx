@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/features/projects/api/projects';
+import type { ProjectMember } from '@/types';
 import { ProjectDetailsHeader } from '@/features/projects/components/ProjectDetailsHeader';
 
 export const StaffPage: React.FC = () => {
@@ -42,7 +43,7 @@ export const StaffPage: React.FC = () => {
         setEditDisplayName(currentDisplayName || '');
     };
 
-    const handleSave = (member: any) => {
+    const handleSave = (member: ProjectMember) => {
         updateMemberMutation.mutate({
             userId: member.user_id,
             role: member.role, // Keep existing access role
