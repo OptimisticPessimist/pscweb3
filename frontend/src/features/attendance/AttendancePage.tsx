@@ -293,59 +293,67 @@ export const AttendancePage: React.FC = () => {
                                     {/* 詳細表示 */}
                                     {expandedEvent === event.id && eventDetail && (
                                         <div className="mt-4 pt-4 border-t border-gray-200">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <h4 className="text-sm font-semibold text-gray-700">回答状況</h4>
-                                                <div className="flex space-x-2">
-                                                    <button
-                                                        onClick={() => setDetailFilter('all')}
-                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                    >
-                                                        全て
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDetailFilter('pending')}
-                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                    >
-                                                        未回答
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDetailFilter('ok')}
-                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'ok' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                    >
-                                                        OK
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDetailFilter('ng')}
-                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'ng' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                            }`}
-                                                    >
-                                                        NG
-                                                    </button>
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-4">回答状況</h4>
+
+                                            {/* OKセクション */}
+                                            {eventDetail.targets.filter(t => t.status === 'ok').length > 0 && (
+                                                <div className="mb-4">
+                                                    <div className="flex items-center mb-2">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-800">
+                                                            ✓ OK ({eventDetail.targets.filter(t => t.status === 'ok').length}名)
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1 pl-2 border-l-2 border-green-500">
+                                                        {eventDetail.targets
+                                                            .filter(t => t.status === 'ok')
+                                                            .map((target) => (
+                                                                <div key={target.user_id} className="text-sm text-gray-700">
+                                                                    {target.display_name || target.discord_username}
+                                                                </div>
+                                                            ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                {eventDetail.targets
-                                                    .filter(target => {
-                                                        if (detailFilter === 'all') return true;
-                                                        return target.status === detailFilter;
-                                                    })
-                                                    .map((target) => (
-                                                        <div key={target.user_id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                                                            <span className="text-sm text-gray-900">
-                                                                {target.display_name || target.discord_username}
-                                                            </span>
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
-                                                                target.status === 'ng' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-yellow-100 text-yellow-800'
-                                                                }`}>
-                                                                {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                            </div>
+                                            )}
+
+                                            {/* NGセクション */}
+                                            {eventDetail.targets.filter(t => t.status === 'ng').length > 0 && (
+                                                <div className="mb-4">
+                                                    <div className="flex items-center mb-2">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-100 text-red-800">
+                                                            ✗ NG ({eventDetail.targets.filter(t => t.status === 'ng').length}名)
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1 pl-2 border-l-2 border-red-500">
+                                                        {eventDetail.targets
+                                                            .filter(t => t.status === 'ng')
+                                                            .map((target) => (
+                                                                <div key={target.user_id} className="text-sm text-gray-700">
+                                                                    {target.display_name || target.discord_username}
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* 未回答セクション */}
+                                            {eventDetail.targets.filter(t => t.status === 'pending').length > 0 && (
+                                                <div>
+                                                    <div className="flex items-center mb-2">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                                            ⏱ 未回答 ({eventDetail.targets.filter(t => t.status === 'pending').length}名)
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1 pl-2 border-l-2 border-yellow-500">
+                                                        {eventDetail.targets
+                                                            .filter(t => t.status === 'pending')
+                                                            .map((target) => (
+                                                                <div key={target.user_id} className="text-sm text-gray-700">
+                                                                    {target.display_name || target.discord_username}
+                                                                </div>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
