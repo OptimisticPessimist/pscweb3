@@ -55,7 +55,11 @@ export const SchedulePage: React.FC = () => {
             : `Rehearsal (${rehearsal.location || 'TBD'})`,
         start: rehearsal.date,
         end: new Date(new Date(rehearsal.date).getTime() + rehearsal.duration_minutes * 60000).toISOString(),
+        allDay: false, // 時間イベントとして扱う
+        backgroundColor: '#3b82f6', // blue-500
+        borderColor: '#2563eb', // blue-600
         extendedProps: {
+            type: 'rehearsal',
             ...rehearsal
         }
     })) || [];
