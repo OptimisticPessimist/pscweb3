@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
-from src.db.models import User, ProjectMember, Project, RehearsalSchedule, Rehearsal, Milestone
+from src.db.models import User, ProjectMember, RehearsalSchedule, Rehearsal, Milestone
 from typing import List
 from pydantic import BaseModel
 from datetime import datetime, timedelta
