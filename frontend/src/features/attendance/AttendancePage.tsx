@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { attendanceApi, type AttendanceEventResponse } from '../api/attendance';
+import { attendanceApi, type AttendanceEventResponse } from '@/features/attendance/api/attendance';
 import { Calendar, Clock, Users, AlertCircle, Bell } from 'lucide-react';
 
 export const AttendancePage: React.FC = () => {
@@ -163,8 +163,8 @@ export const AttendancePage: React.FC = () => {
                                                         {target.display_name || target.discord_username}
                                                     </span>
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
-                                                            target.status === 'ng' ? 'bg-red-100 text-red-800' :
-                                                                'bg-yellow-100 text-yellow-800'
+                                                        target.status === 'ng' ? 'bg-red-100 text-red-800' :
+                                                            'bg-yellow-100 text-yellow-800'
                                                         }`}>
                                                         {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
                                                     </span>
