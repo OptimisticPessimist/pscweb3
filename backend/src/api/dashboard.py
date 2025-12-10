@@ -44,7 +44,7 @@ async def get_project_dashboard(
     Returns:
         DashboardResponse: ダッシュボード情報
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now()  # timezone-naive for database comparison
     
     # 1. 次回の稽古を取得
     next_rehearsal = None
@@ -85,7 +85,7 @@ async def get_project_dashboard(
     milestone = result.scalar_one_or_none()
     
     if milestone:
-        days_until = (milestone.start_date.replace(tzinfo=timezone.utc) - now).days
+        days_until = (milestone.start_date - now).days
         next_milestone = MilestoneInfo(
             id=milestone.id,
             title=milestone.title,
