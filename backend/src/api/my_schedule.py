@@ -74,7 +74,7 @@ async def get_my_schedule(
         schedule_stmt = select(RehearsalSchedule).where(
             RehearsalSchedule.project_id == project.id
         ).options(
-            selectinload(RehearsalSchedule.rehearsals)
+            selectinload(RehearsalSchedule.rehearsals).selectinload(Rehearsal.scene)
         )
         schedule_result = await db.execute(schedule_stmt)
         schedule = schedule_result.scalar_one_or_none()
@@ -82,18 +82,20 @@ async def get_my_schedule(
         if schedule and schedule.rehearsals:
             for rehearsal in schedule.rehearsals:
                 end_time = rehearsal.date + timedelta(minutes=rehearsal.duration_minutes) if rehearsal.duration_minutes else None
+                # scene.headingを取得（sceneがNoneの場合は'Rehearsal'）
+                scene_title = rehearsal.scene.heading if rehearsal.scene else None
                 events.append(MyScheduleEvent(
                     id=f"rehearsal-{rehearsal.id}",
-                    title=f"{rehearsal.scene_heading or 'Rehearsal'} ({project.name})",
+                    title=f"{scene_title or 'Rehearsal'} ({project.name})",
                     start=rehearsal.date,
                     end=end_time,
                     type="rehearsal",
-                    project_id=project.id,
+                    project_id=str(project.id),
                     project_name=project.name,
                     project_color=project_color,
                     location=rehearsal.location,
                     notes=rehearsal.notes,
-                    scene_heading=rehearsal.scene_heading
+                    scene_heading=scene_title
                 ))
         
         # Get milestones for this project
@@ -110,7 +112,7 @@ async def get_my_schedule(
                 start=milestone.start_date,
                 end=milestone.end_date,
                 type="milestone",
-                project_id=project.id,
+                project_id=str(project.id),
                 project_name=project.name,
                 project_color=project_color,
                 location=milestone.location,
