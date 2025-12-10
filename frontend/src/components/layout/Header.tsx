@@ -1,13 +1,7 @@
-import { useLocation } from 'react-router-dom';
+import { Breadcrumbs } from '../Breadcrumbs';
 import { Bell, Search, Menu } from 'lucide-react';
 
 export function Header() {
-    const location = useLocation();
-    const pathnames = location.pathname.split('/').filter((x) => x);
-
-    // 簡易的なパンくずリスト生成（今回は表示のみで機能はしない）
-    const breadcrumbs = pathnames.length > 0 ? pathnames.join(' / ') : 'Dashboard';
-
     return (
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
@@ -16,9 +10,7 @@ export function Header() {
                     <Menu className="w-6 h-6 text-gray-600" />
                 </button>
 
-                <h2 className="text-lg font-semibold text-gray-800 capitalize">
-                    {breadcrumbs}
-                </h2>
+                <Breadcrumbs />
             </div>
 
             <div className="flex items-center gap-4">

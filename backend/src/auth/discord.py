@@ -56,6 +56,11 @@ async def get_or_create_user_from_discord(
     """
     discord_id = discord_user_data["id"]
 
+    avatar_hash = discord_user_data.get("avatar")
+    avatar_url = f"https://cdn.discordapp.com/avatars/{discord_id}/{avatar_hash}.png" if avatar_hash else None
+    display_name = discord_user_data.get("global_name") or discord_user_data.get("username")
+    email = discord_user_data.get("email")
+
     # 既存ユーザーを検索
     result = await db.execute(select(User).where(User.discord_id == discord_id))
     user = result.scalar_one_or_none()
@@ -63,13 +68,17 @@ async def get_or_create_user_from_discord(
     if user:
         # ユーザー情報を更新
         user.discord_username = discord_user_data.get("username", user.discord_username)
-        # user.email = discord_user_data.get("email", user.email) # Userモデルにemailがないため無効化
+        user.email = email
+        user.display_name = display_name
+        user.avatar_url = avatar_url
     else:
         # 新規ユーザーを作成
         user = User(
             discord_id=discord_id,
             discord_username=discord_user_data.get("username", "Unknown"),
-            # email=discord_user_data.get("email"), # Userモデルにemailがないため無効化
+            email=email,
+            display_name=display_name,
+            avatar_url=avatar_url
         )
         db.add(user)
 

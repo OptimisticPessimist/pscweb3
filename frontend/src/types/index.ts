@@ -1,10 +1,11 @@
 export interface User {
     id: string;
-    email: string;
-    name: string;
+    email?: string;
+    // name: string; // Deprecated or mapped to display_name
+    display_name?: string;
     discord_id: string;
     avatar_url?: string;
-    discord_username?: string; // Added for consistency
+    discord_username: string;
 }
 
 export interface Project {

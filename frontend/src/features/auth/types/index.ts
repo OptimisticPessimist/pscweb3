@@ -2,6 +2,9 @@ export interface User {
     id: string;
     discord_id: string;
     discord_username: string;
+    email?: string;
+    display_name?: string;
+    avatar_url?: string;
     created_at: string;
 }
 

@@ -1,4 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
     Home,
     FileText,
@@ -20,6 +21,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 export function Sidebar() {
     const { projectId } = useParams<{ projectId: string }>();
+    const { user } = useAuth();
+
 
     // プロジェクト選択中かどうかでメニューを切り替える
     // 共通メニュー
@@ -107,12 +110,16 @@ export function Sidebar() {
 
             <div className="p-4 border-t border-gray-800">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-                        <span className="text-xs font-bold">U</span>
-                    </div>
+                    {user?.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.display_name} className="w-8 h-8 rounded-full" />
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                            <span className="text-xs font-bold">{user?.display_name?.charAt(0) || 'U'}</span>
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">User Name</p>
-                        <p className="text-xs text-gray-500 truncate">user@example.com</p>
+                        <p className="text-sm font-medium truncate">{user?.display_name}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.discord_username}</p>
                     </div>
                 </div>
             </div>
