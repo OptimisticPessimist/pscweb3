@@ -54,7 +54,17 @@ async def get_scripts(
         raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
 
     # 脚本取得
-    result = await db.execute(select(Script).where(Script.project_id == project_id))
+    stmt = (
+        select(Script)
+        .where(Script.project_id == project_id)
+        .options(
+            selectinload(Script.characters),
+            selectinload(Script.scenes).options(
+                selectinload(Scene.lines).options(selectinload(Line.character))
+            ),
+        )
+    )
+    result = await db.execute(stmt)
     scripts = result.scalars().all()
     return ScriptListResponse(scripts=[ScriptResponse.model_validate(s) for s in scripts])
 
