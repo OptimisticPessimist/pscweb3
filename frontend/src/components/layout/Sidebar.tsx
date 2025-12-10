@@ -24,6 +24,7 @@ export function Sidebar() {
     // 共通メニュー
     const commonLinks = [
         { to: '/', icon: LayoutGrid, label: 'Dashboard' },
+        { to: '/my-schedule', icon: Calendar, label: 'My Schedule' },
     ];
 
     // プロジェクト内メニュー
