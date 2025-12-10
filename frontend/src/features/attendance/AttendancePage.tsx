@@ -11,7 +11,6 @@ export const AttendancePage: React.FC = () => {
     const [filter, setFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
-    const [detailFilter, setDetailFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
 
     const { data: events, isLoading } = useQuery({
         queryKey: ['attendance', projectId],
