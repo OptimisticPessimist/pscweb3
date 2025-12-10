@@ -146,19 +146,6 @@ export const SchedulePage: React.FC = () => {
                     </ErrorBoundary>
                 </div>
             )}
-
-            {/* Debug Panel */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded text-xs overflow-auto max-h-40 mt-4">
-                <p><strong>Debug Info:</strong></p>
-                <p>Project ID: {projectId}</p>
-                <p>Scripts: {scripts ? scripts.length : 'none'}</p>
-                <p>Schedule Loading: {isScheduleLoading ? 'Yes' : 'No'}</p>
-                <p>Schedule Error: {scheduleError ? String(scheduleError) : 'None'}</p>
-                <p>Schedule Data: {schedule ? `Loaded (ID: ${schedule.id}, Script: ${schedule.script_id})` : 'None'}</p>
-                <p>Events: {events.length}</p>
-                <p>Modal Open: {isModalOpen ? 'TRUE' : 'FALSE'}</p>
-                <p>Selected Date: {selectedDate ? selectedDate.toString() : 'None'}</p>
-            </div>
         </div>
     );
 };
