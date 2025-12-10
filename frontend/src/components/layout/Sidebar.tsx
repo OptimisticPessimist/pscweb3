@@ -7,7 +7,8 @@ import {
     Settings,
     LayoutGrid,
     Clapperboard,
-    Wrench
+    Wrench,
+    ClipboardCheck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -35,6 +36,7 @@ export function Sidebar() {
         { to: `/projects/${projectId}/cast`, icon: Users, label: 'Cast' },
         { to: `/projects/${projectId}/staff`, icon: Wrench, label: 'Staff' },
         { to: `/projects/${projectId}/schedule`, icon: Calendar, label: 'Schedule' },
+        { to: `/projects/${projectId}/attendance`, icon: ClipboardCheck, label: 'Attendance' },
         { to: `/projects/${projectId}/settings`, icon: Settings, label: 'Settings' },
     ] : [];
 

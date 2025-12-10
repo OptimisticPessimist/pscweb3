@@ -47,4 +47,17 @@ export const attendanceApi = {
         const response = await apiClient.post<{ message: string }>(`/projects/${projectId}/attendance/${eventId}/remind-pending`);
         return response.data;
     },
+
+    // 自分の出欠確認ステータスを更新
+    updateMyAttendanceStatus: async (
+        projectId: string,
+        eventId: string,
+        status: 'ok' | 'ng' | 'pending'
+    ): Promise<AttendanceEventDetailResponse> => {
+        const response = await apiClient.patch<AttendanceEventDetailResponse>(
+            `/projects/${projectId}/attendance/${eventId}/my-status`,
+            { status }
+        );
+        return response.data;
+    },
 };

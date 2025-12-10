@@ -17,7 +17,8 @@ from src.schemas.attendance import (
     AttendanceStats, 
     AttendanceEventDetailResponse, 
     AttendanceTargetResponse,
-    AttendanceTargetUpdate
+    AttendanceTargetUpdate,
+    AttendanceStatusUpdate
 )
 
 router = APIRouter()
@@ -297,3 +298,46 @@ async def remind_pending_users(
         raise HTTPException(status_code=500, detail="Failed to send Discord message")
     
     return {"message": f"Reminder sent to {len(pending_users)} pending users"}
+
+
+@router.patch("/{project_id}/attendance/{event_id}/my-status", response_model=AttendanceEventDetailResponse)
+async def update_my_attendance_status(
+    project_id: UUID,
+    event_id: UUID,
+    payload: AttendanceStatusUpdate,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> AttendanceEventDetailResponse:
+    """自分の出席確認ステータスを更新."""
+    # イベント存在確認
+    stmt = select(AttendanceEvent).where(
+        AttendanceEvent.id == event_id,
+        AttendanceEvent.project_id == project_id
+    )
+    result = await db.execute(stmt)
+    event = result.scalar_one_or_none()
+    
+    if not event:
+        raise HTTPException(status_code=404, detail="Attendance event not found")
+    
+    # 自分のターゲットレコード取得
+    target_stmt = select(AttendanceTarget).where(
+        AttendanceTarget.event_id == event_id,
+        AttendanceTarget.user_id == current_member.user_id
+    )
+    target_result = await db.execute(target_stmt)
+    target = target_result.scalar_one_or_none()
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="You are not a target of this attendance event")
+    
+    # ステータス更新
+    if payload.status not in ["ok", "ng", "pending"]:
+        raise HTTPException(status_code=400, detail="Invalid status value")
+    
+    target.status = payload.status
+    await db.commit()
+    
+    # 更新後の詳細を返す
+    return await get_attendance_event(project_id, event_id, current_member, db)
+

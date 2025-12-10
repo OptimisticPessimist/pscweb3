@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { attendanceApi, type AttendanceEventResponse } from '@/features/attendance/api/attendance';
-import { Calendar, Clock, Users, AlertCircle, Bell } from 'lucide-react';
+import { attendanceApi } from '@/features/attendance/api/attendance';
+import { Calendar, Clock, AlertCircle, Bell } from 'lucide-react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import toast from 'react-hot-toast';
 
 export const AttendancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -27,10 +30,10 @@ export const AttendancePage: React.FC = () => {
     const remindMutation = useMutation({
         mutationFn: (eventId: string) => attendanceApi.remindPendingUsers(projectId!, eventId),
         onSuccess: () => {
-            alert('リマインダーを送信しました');
+            toast.success('リマインダーを送信しました');
         },
         onError: () => {
-            alert('リマインダー送信に失敗しました');
+            toast.error('リマインダー送信に失敗しました');
         },
     });
 
@@ -41,11 +44,24 @@ export const AttendancePage: React.FC = () => {
             }
         },
         onSuccess: () => {
-            alert(`${selectedEvents.size}件の出欠確認にリマインダーを送信しました`);
+            toast.success(`${selectedEvents.size}件の出欠確認にリマインダーを送信しました`);
             setSelectedEvents(new Set());
         },
         onError: () => {
-            alert('一括リマインダー送信に失敗しました');
+            toast.error('一括リマインダー送信に失敗しました');
+        },
+    });
+
+    const updateMyStatusMutation = useMutation({
+        mutationFn: ({ eventId, status }: { eventId: string; status: 'ok' | 'ng' | 'pending' }) =>
+            attendanceApi.updateMyAttendanceStatus(projectId!, eventId, status),
+        onSuccess: () => {
+            // キャッシュを無効化して再取得
+            queryClient.invalidateQueries({ queryKey: ['attendance', projectId] });
+        },
+        onError: (error) => {
+            console.error('Failed to update status:', error);
+            toast.error('出欠回答の更新に失敗しました');
         },
     });
 
@@ -303,12 +319,40 @@ export const AttendancePage: React.FC = () => {
                                                             ✓ OK ({eventDetail.targets.filter(t => t.status === 'ok').length}名)
                                                         </span>
                                                     </div>
-                                                    <div className="space-y-1 pl-2 border-l-2 border-green-500">
+                                                    <div className="space-y-2 pl-2 border-l-2 border-green-500">
                                                         {eventDetail.targets
                                                             .filter(t => t.status === 'ok')
                                                             .map((target) => (
-                                                                <div key={target.user_id} className="text-sm text-gray-700">
-                                                                    {target.display_name || target.discord_username}
+                                                                <div key={target.user_id} className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-700">
+                                                                        {target.display_name || target.discord_username}
+                                                                        {user && target.user_id === user.id && <span className="text-xs text-gray-500 ml-1">(あなた)</span>}
+                                                                    </span>
+                                                                    {user && target.user_id === user.id && (
+                                                                        <div className="flex space-x-1">
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ok' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-green-600 text-white"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                OK
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ng' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                NG
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'pending' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                未回答
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                     </div>
@@ -323,12 +367,40 @@ export const AttendancePage: React.FC = () => {
                                                             ✗ NG ({eventDetail.targets.filter(t => t.status === 'ng').length}名)
                                                         </span>
                                                     </div>
-                                                    <div className="space-y-1 pl-2 border-l-2 border-red-500">
+                                                    <div className="space-y-2 pl-2 border-l-2 border-red-500">
                                                         {eventDetail.targets
                                                             .filter(t => t.status === 'ng')
                                                             .map((target) => (
-                                                                <div key={target.user_id} className="text-sm text-gray-700">
-                                                                    {target.display_name || target.discord_username}
+                                                                <div key={target.user_id} className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-700">
+                                                                        {target.display_name || target.discord_username}
+                                                                        {user && target.user_id === user.id && <span className="text-xs text-gray-500 ml-1">(あなた)</span>}
+                                                                    </span>
+                                                                    {user && target.user_id === user.id && (
+                                                                        <div className="flex space-x-1">
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ok' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                OK
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ng' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-red-600 text-white"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                NG
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'pending' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                未回答
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                     </div>
@@ -343,12 +415,40 @@ export const AttendancePage: React.FC = () => {
                                                             ⏱ 未回答 ({eventDetail.targets.filter(t => t.status === 'pending').length}名)
                                                         </span>
                                                     </div>
-                                                    <div className="space-y-1 pl-2 border-l-2 border-yellow-500">
+                                                    <div className="space-y-2 pl-2 border-l-2 border-yellow-500">
                                                         {eventDetail.targets
                                                             .filter(t => t.status === 'pending')
                                                             .map((target) => (
-                                                                <div key={target.user_id} className="text-sm text-gray-700">
-                                                                    {target.display_name || target.discord_username}
+                                                                <div key={target.user_id} className="flex items-center justify-between">
+                                                                    <span className="text-sm text-gray-700">
+                                                                        {target.display_name || target.discord_username}
+                                                                        {user && target.user_id === user.id && <span className="text-xs text-gray-500 ml-1">(あなた)</span>}
+                                                                    </span>
+                                                                    {user && target.user_id === user.id && (
+                                                                        <div className="flex space-x-1">
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ok' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                OK
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'ng' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                NG
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => updateMyStatusMutation.mutate({ eventId: event.id, status: 'pending' })}
+                                                                                className="px-2 py-0.5 text-xs rounded bg-yellow-600 text-white"
+                                                                                disabled={updateMyStatusMutation.isPending}
+                                                                            >
+                                                                                未回答
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                     </div>
