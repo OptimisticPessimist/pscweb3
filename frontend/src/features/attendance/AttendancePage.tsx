@@ -180,160 +180,177 @@ export const AttendancePage: React.FC = () => {
                             {filter === 'all' ? '出欠確認はまだありません' : `${filter === 'pending' ? '未回答' : filter === 'ok' ? 'OK' : 'NG'}の出欠確認はありません`}
                         </div>
                     ) : (
-                        filteredEvents.map((event) => (
-                            <div key={event.id} className="p-6">
-                                <div className="flex items-start justify-between">
-                                    {/* チェックボックス */}
-                                    {event.stats.pending > 0 && (
-                                        <div className="mr-3 mt-1">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedEvents.has(event.id)}
-                                                onChange={(e) => {
-                                                    const newSelected = new Set(selectedEvents);
-                                                    if (e.target.checked) {
-                                                        newSelected.add(event.id);
-                                                    } else {
-                                                        newSelected.delete(event.id);
-                                                    }
-                                                    setSelectedEvents(newSelected);
-                                                }}
-                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                            />
-                                        </div>
-                                    )}
+                        filteredEvents.map((event) => {
+                            // 回答状況に応じた色分け
+                            let borderColor = 'border-l-gray-300'; // デフォルト
+                            if (event.stats.pending === 0) {
+                                // 全員回答済み
+                                borderColor = 'border-l-green-500';
+                            } else if (event.stats.pending > event.stats.ok) {
+                                // 未回答が多い
+                                borderColor = 'border-l-yellow-500';
+                            } else if (event.stats.ng > event.stats.ok) {
+                                // NGが多い
+                                borderColor = 'border-l-red-500';
+                            } else {
+                                // 未回答がある
+                                borderColor = 'border-l-yellow-400';
+                            }
 
-                                    <div className="flex-1">
-                                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {event.title}
-                                        </h3>
-                                        <div className="space-y-1 text-sm text-gray-600">
-                                            {event.schedule_date && (
-                                                <div className="flex items-center">
-                                                    <Calendar className="h-4 w-4 mr-2" />
-                                                    <span>
-                                                        日時: {new Date(event.schedule_date).toLocaleString('ja-JP', {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {event.deadline && (
-                                                <div className="flex items-center">
-                                                    <Clock className="h-4 w-4 mr-2" />
-                                                    <span>
-                                                        回答期限: {new Date(event.deadline).toLocaleString('ja-JP', {
-                                                            year: 'numeric',
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="mt-3 flex items-center space-x-4">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    OK: {event.stats.ok}
-                                                </span>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    NG: {event.stats.ng}
-                                                </span>
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                    未回答: {event.stats.pending}
-                                                </span>
-                                                <span className="text-xs text-gray-500">
-                                                    / 計{event.stats.total}名
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="ml-4 flex flex-col space-y-2">
-                                        <button
-                                            onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                                            className="text-sm text-indigo-600 hover:text-indigo-500"
-                                        >
-                                            {expandedEvent === event.id ? '閉じる' : '詳細'}
-                                        </button>
+                            return (
+                                <div key={event.id} className={`p-6 border-l-4 ${borderColor}`}>
+                                    <div className="flex items-start justify-between">
+                                        {/* チェックボックス */}
                                         {event.stats.pending > 0 && (
-                                            <button
-                                                onClick={() => remindMutation.mutate(event.id)}
-                                                disabled={remindMutation.isPending}
-                                                className="flex items-center text-sm text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
-                                            >
-                                                <Bell className="h-4 w-4 mr-1" />
-                                                リマインド
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* 詳細表示 */}
-                                {expandedEvent === event.id && eventDetail && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-sm font-semibold text-gray-700">回答状況</h4>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => setDetailFilter('all')}
-                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                        }`}
-                                                >
-                                                    全て
-                                                </button>
-                                                <button
-                                                    onClick={() => setDetailFilter('pending')}
-                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                        }`}
-                                                >
-                                                    未回答
-                                                </button>
-                                                <button
-                                                    onClick={() => setDetailFilter('ok')}
-                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'ok' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                        }`}
-                                                >
-                                                    OK
-                                                </button>
-                                                <button
-                                                    onClick={() => setDetailFilter('ng')}
-                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'ng' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'
-                                                        }`}
-                                                >
-                                                    NG
-                                                </button>
+                                            <div className="mr-3 mt-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEvents.has(event.id)}
+                                                    onChange={(e) => {
+                                                        const newSelected = new Set(selectedEvents);
+                                                        if (e.target.checked) {
+                                                            newSelected.add(event.id);
+                                                        } else {
+                                                            newSelected.delete(event.id);
+                                                        }
+                                                        setSelectedEvents(newSelected);
+                                                    }}
+                                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                />
                                             </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {eventDetail.targets
-                                                .filter(target => {
-                                                    if (detailFilter === 'all') return true;
-                                                    return target.status === detailFilter;
-                                                })
-                                                .map((target) => (
-                                                    <div key={target.user_id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                                                        <span className="text-sm text-gray-900">
-                                                            {target.display_name || target.discord_username}
-                                                        </span>
-                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
-                                                                target.status === 'ng' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-yellow-100 text-yellow-800'
-                                                            }`}>
-                                                            {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
+                                        )}
+
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                                {event.title}
+                                            </h3>
+                                            <div className="space-y-1 text-sm text-gray-600">
+                                                {event.schedule_date && (
+                                                    <div className="flex items-center">
+                                                        <Calendar className="h-4 w-4 mr-2" />
+                                                        <span>
+                                                            日時: {new Date(event.schedule_date).toLocaleString('ja-JP', {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
                                                         </span>
                                                     </div>
-                                                ))}
+                                                )}
+                                                {event.deadline && (
+                                                    <div className="flex items-center">
+                                                        <Clock className="h-4 w-4 mr-2" />
+                                                        <span>
+                                                            回答期限: {new Date(event.deadline).toLocaleString('ja-JP', {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="mt-3 flex items-center space-x-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        OK: {event.stats.ok}
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        NG: {event.stats.ng}
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        未回答: {event.stats.pending}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">
+                                                        / 計{event.stats.total}名
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="ml-4 flex flex-col space-y-2">
+                                            <button
+                                                onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                                                className="text-sm text-indigo-600 hover:text-indigo-500"
+                                            >
+                                                {expandedEvent === event.id ? '閉じる' : '詳細'}
+                                            </button>
+                                            {event.stats.pending > 0 && (
+                                                <button
+                                                    onClick={() => remindMutation.mutate(event.id)}
+                                                    disabled={remindMutation.isPending}
+                                                    className="flex items-center text-sm text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
+                                                >
+                                                    <Bell className="h-4 w-4 mr-1" />
+                                                    リマインド
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        ))
+
+                                    {/* 詳細表示 */}
+                                    {expandedEvent === event.id && eventDetail && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-sm font-semibold text-gray-700">回答状況</h4>
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() => setDetailFilter('all')}
+                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                    >
+                                                        全て
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDetailFilter('pending')}
+                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                    >
+                                                        未回答
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDetailFilter('ok')}
+                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'ok' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                    >
+                                                        OK
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDetailFilter('ng')}
+                                                        className={`px-2 py-1 text-xs rounded ${detailFilter === 'ng' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                            }`}
+                                                    >
+                                                        NG
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {eventDetail.targets
+                                                    .filter(target => {
+                                                        if (detailFilter === 'all') return true;
+                                                        return target.status === detailFilter;
+                                                    })
+                                                    .map((target) => (
+                                                        <div key={target.user_id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
+                                                            <span className="text-sm text-gray-900">
+                                                                {target.display_name || target.discord_username}
+                                                            </span>
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
+                                                                target.status === 'ng' ? 'bg-red-100 text-red-800' :
+                                                                    'bg-yellow-100 text-yellow-800'
+                                                                }`}>
+                                                                {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
                     )}
                 </div>
             </div>
