@@ -1,24 +1,23 @@
 """出席確認APIエンドポイント."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.db import get_db
-from src.db.models import AttendanceEvent, AttendanceTarget
+from src.db.models import AttendanceEvent, AttendanceTarget, ProjectMember
 from src.dependencies.permissions import get_project_member_dep
-from src.db.models import ProjectMember
 from src.schemas.attendance import (
-    AttendanceEventResponse, 
-    AttendanceStats, 
-    AttendanceEventDetailResponse, 
+    AttendanceEventDetailResponse,
+    AttendanceEventResponse,
+    AttendanceStats,
+    AttendanceStatusUpdate,
     AttendanceTargetResponse,
     AttendanceTargetUpdate,
-    AttendanceStatusUpdate
 )
 
 router = APIRouter()
@@ -33,10 +32,9 @@ def ensure_utc(dt: datetime | None) -> datetime | None:
     Returns:
         Datetime with UTC timezone, or None if input is None
     """
-    from datetime import timezone
     if dt is None:
         return None
-    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
 
 
 @router.get("/{project_id}/attendance/{event_id}", response_model=AttendanceEventDetailResponse)
@@ -93,7 +91,7 @@ async def get_attendance_event(
         pending=pending_count,
         total=total_count
     )
-    
+
     # 日時UTC化
     return AttendanceEventDetailResponse(
         id=event.id,
@@ -112,7 +110,7 @@ async def get_attendance_event(
 async def update_attendance_targets(
     project_id: UUID,
     event_id: UUID,
-    payload: AttendanceTargetUpdate, 
+    payload: AttendanceTargetUpdate,
     current_member: ProjectMember = Depends(get_project_member_dep),
     db: AsyncSession = Depends(get_db),
 ) -> AttendanceEventDetailResponse:
@@ -132,7 +130,7 @@ async def update_attendance_targets(
 
     if not event:
         raise HTTPException(status_code=404, detail="Attendance event not found")
-        
+
     # 削除処理
     if payload.remove_user_ids:
         # 文字列IDをUUIDに変換
@@ -142,16 +140,16 @@ async def update_attendance_targets(
                 remove_uuids.append(UUID(uid))
             except ValueError:
                 pass
-                
+
         targets_to_remove = [t for t in event.targets if t.user_id in remove_uuids]
         for t in targets_to_remove:
             await db.delete(t)
-            
+
     # 追加処理
     if payload.add_user_ids:
         # 既存ターゲットID
         existing_target_ids = {t.user_id for t in event.targets}
-        
+
         for uid in payload.add_user_ids:
             try:
                 user_uuid = UUID(uid)
@@ -167,7 +165,7 @@ async def update_attendance_targets(
                 pass
 
     await db.commit()
-    
+
     # 再取得して返す
     return await get_attendance_event(project_id, event_id, current_member, db)
 
@@ -232,13 +230,13 @@ async def remind_pending_users(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Pendingユーザーにリマインダーを送信."""
+    from src.db.models import TheaterProject, User
     from src.services.discord import get_discord_service
-    from src.db.models import User, TheaterProject
-    
+
     # 権限チェック
     if current_member.role == "viewer":
         raise HTTPException(status_code=403, detail="Permission denied")
-    
+
     # イベント取得
     stmt = (
         select(AttendanceEvent)
@@ -247,38 +245,37 @@ async def remind_pending_users(
     )
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
-    
+
     if not event:
         raise HTTPException(status_code=404, detail="Attendance event not found")
-    
+
     # Pendingユーザーを抽出
     pending_targets = [t for t in event.targets if t.status == "pending"]
-    
+
     if not pending_targets:
         return {"message": "No pending users to remind"}
-    
+
     # Pendingユーザーのdiscord_idを取得
     pending_user_ids = [t.user_id for t in pending_targets]
     user_stmt = select(User).where(User.id.in_(pending_user_ids), User.discord_id.isnot(None))
     user_result = await db.execute(user_stmt)
     pending_users = user_result.scalars().all()
-    
+
     if not pending_users:
         return {"message": "No pending users with Discord accounts"}
-    
+
     # プロジェクト取得
     project = await db.get(TheaterProject, project_id)
     if not project or not project.discord_channel_id:
         raise HTTPException(status_code=400, detail="Discord channel not configured")
-    
+
     # メンション作成
     mentions = [f"<@{u.discord_id}>" for u in pending_users]
-    
+
     # メッセージ作成
-    from datetime import timezone
     deadline_str = event.deadline.strftime('%Y-%m-%d %H:%M') if event.deadline else "未設定"
     schedule_str = event.schedule_date.strftime('%Y-%m-%d %H:%M') if event.schedule_date else "未定"
-    
+
     message_content = (
         f"**【出欠確認リマインダー】{event.title}**\n"
         f"日時: {schedule_str}\n"
@@ -286,17 +283,17 @@ async def remind_pending_users(
         f"未回答の方: {' '.join(mentions)}\n\n"
         f"まだ出欠の回答をされていない方は、元のメッセージのボタンから回答をお願いします。"
     )
-    
+
     # Discord送信
     discord_service = get_discord_service()
     discord_resp = await discord_service.send_channel_message(
         channel_id=project.discord_channel_id,
         content=message_content,
     )
-    
+
     if not discord_resp:
         raise HTTPException(status_code=500, detail="Failed to send Discord message")
-    
+
     return {"message": f"Reminder sent to {len(pending_users)} pending users"}
 
 
@@ -316,10 +313,10 @@ async def update_my_attendance_status(
     )
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
-    
+
     if not event:
         raise HTTPException(status_code=404, detail="Attendance event not found")
-    
+
     # 自分のターゲットレコード取得
     target_stmt = select(AttendanceTarget).where(
         AttendanceTarget.event_id == event_id,
@@ -327,17 +324,17 @@ async def update_my_attendance_status(
     )
     target_result = await db.execute(target_stmt)
     target = target_result.scalar_one_or_none()
-    
+
     if not target:
         raise HTTPException(status_code=404, detail="You are not a target of this attendance event")
-    
+
     # ステータス更新
     if payload.status not in ["ok", "ng", "pending"]:
         raise HTTPException(status_code=400, detail="Invalid status value")
-    
+
     target.status = payload.status
     await db.commit()
-    
+
     # 更新後の詳細を返す
     return await get_attendance_event(project_id, event_id, current_member, db)
 

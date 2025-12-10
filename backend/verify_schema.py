@@ -1,7 +1,10 @@
 
 import asyncio
+
 from sqlalchemy import text
+
 from src.db import get_db
+
 
 async def verify_schema():
     async for session in get_db():

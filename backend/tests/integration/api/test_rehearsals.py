@@ -1,18 +1,28 @@
+from datetime import datetime
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.models import Rehearsal, AttendanceEvent, RehearsalSchedule, Script, Scene, RehearsalScene, ProjectMember
-from src.services.discord import get_discord_service
+
+from src.db.models import (
+    AttendanceEvent,
+    Rehearsal,
+    RehearsalScene,
+    RehearsalSchedule,
+    Scene,
+    Script,
+)
 from src.main import app
-from datetime import datetime, timedelta, timezone
+from src.services.discord import get_discord_service
+
 
 # Mock Discord Service
 async def mock_get_discord_service():
     class MockDiscordService:
         async def send_message(self, channel_id, content=None, embed=None, components=None):
             return {"id": "mock_msg_id", "channel_id": channel_id}
-        
+
     return MockDiscordService()
 
 @pytest.fixture(scope="function")
@@ -23,9 +33,9 @@ def override_discord_service():
 
 @pytest.mark.asyncio
 async def test_add_rehearsal_success(
-    client: AsyncClient, 
-    db: AsyncSession, 
-    test_user_token: str, 
+    client: AsyncClient,
+    db: AsyncSession,
+    test_user_token: str,
     test_project,
     override_discord_service
 ):
@@ -34,24 +44,24 @@ async def test_add_rehearsal_success(
     script = Script(project_id=test_project.id, title="Test Script")
     db.add(script)
     await db.flush()
-    
+
     scene1 = Scene(script_id=script.id, scene_number=1, heading="Scene 1")
     scene2 = Scene(script_id=script.id, scene_number=2, heading="Scene 2")
     db.add_all([scene1, scene2])
-    
+
     # Schedule
     schedule = RehearsalSchedule(
-        project_id=test_project.id, 
+        project_id=test_project.id,
         script_id=script.id,
         created_at=datetime.now() # Naive for sqlite compatibility
     )
     db.add(schedule)
-    
+
     await db.commit()
     await db.refresh(schedule)
     await db.refresh(scene1)
     await db.refresh(scene2)
-    
+
     # 2. Add Rehearsal Request
     valid_payload = {
         "date": "2025-12-12T10:00:00+09:00", # Aware
@@ -64,32 +74,32 @@ async def test_add_rehearsal_success(
         "participants": [], # Default to all members
         "casts": []
     }
-    
+
     headers = {"Authorization": f"Bearer {test_user_token}"}
     response = await client.post(
-        f"/api/rehearsals/{schedule.id}", 
-        json=valid_payload, 
+        f"/api/rehearsals/{schedule.id}",
+        json=valid_payload,
         headers=headers
     )
-    
+
     # 3. Verify Response
     assert response.status_code == 200, f"Response: {response.text}"
     data = response.json()
     assert data["location"] == "Studio A"
     assert len(data["scenes"]) == 2 # Assuming response includes scenes or scene_ids
-    
+
     # 4. Verify DB - Rehearsal
     result = await db.execute(select(Rehearsal).where(Rehearsal.id == data["id"]))
     rehearsal = result.scalar_one()
     # Check naive date storage (if model is naive)
     # The API might return it as is, depending on Pydantic config.
     # But DB should successfully store it.
-    
+
     # Verify Rehearsal-Scene Link
     result = await db.execute(select(RehearsalScene).where(RehearsalScene.rehearsal_id == rehearsal.id))
     links = result.scalars().all()
     assert len(links) == 2
-    
+
     # 5. Verify DB - AttendanceEvent
     # AttendanceEvent is created via background task or await? Code was changed to await.
     result = await db.execute(

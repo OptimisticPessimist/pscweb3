@@ -1,16 +1,17 @@
 import asyncio
-import sys
 import os
+import sys
 
 # Backend root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from src.db import async_session_maker
-from src.db.models import SceneChart, SceneCharacterMapping
-from src.schemas.scene_chart import SceneChartResponse
+
 from src.api.scene_charts import _build_scene_chart_response
+from src.db import async_session_maker
+from src.db.models import SceneCharacterMapping, SceneChart
+
 
 async def main():
     async with async_session_maker() as db:
@@ -25,7 +26,7 @@ async def main():
         )
         result = await db.execute(stmt)
         chart = result.scalar_one_or_none()
-        
+
         if not chart:
             print("No chart found.")
             return

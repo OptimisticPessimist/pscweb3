@@ -1,6 +1,7 @@
 
-import sys
 import os
+import sys
+
 sys.path.append(os.getcwd())
 
 from src.config import settings

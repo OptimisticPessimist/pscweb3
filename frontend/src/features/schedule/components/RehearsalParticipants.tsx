@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/features/projects/api/projects';
 import { rehearsalsApi } from '@/features/schedule/api/rehearsals';

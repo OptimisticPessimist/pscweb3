@@ -30,7 +30,7 @@ async def parse_fountain_and_create_models(
             char_name = element.original_content.strip()
             if char_name.startswith("@"):
                 char_name = char_name[1:]
-            
+
             if char_name and char_name not in character_map:
                 character = Character(script_id=script.id, name=char_name)
                 db.add(character)
@@ -53,7 +53,7 @@ async def parse_fountain_and_create_models(
              if element.original_content.strip().startswith("#") and not element.original_content.strip().startswith("##"):
                   # Level 1 Heading detected
                   heading_content = element.original_content.strip()
-                  
+
                   # "登場人物" や "Character" は幕としてカウントしない
                   if "登場人物" in heading_content or "Character" in heading_content:
                       pass
@@ -74,7 +74,7 @@ async def parse_fountain_and_create_models(
             scene_number += 1
             logger.info(f"Found Scene Heading #{scene_number}: {element.original_content.strip()}")
             line_order = 0
-            
+
             # 見出しから "##" などを除去して綺麗にする（Section Headingの場合）
             heading_text = element.original_content.strip()
             if element.element_type == "Section Heading":

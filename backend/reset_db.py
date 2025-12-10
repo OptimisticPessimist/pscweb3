@@ -5,9 +5,11 @@ import sys
 # パスを通す
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from src.db import (
+    engine,  # モデルをインポートしてmetadataに登録させる
+)
 from src.db.base import Base
-from src.db import engine
-from src.db import models  # モデルをインポートしてmetadataに登録させる
+
 
 async def reset_database():
     print("Resetting database...")

@@ -1,26 +1,26 @@
+from datetime import UTC
 from uuid import UUID
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Path
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
 from src.db import get_db
-from src.db.models import AuditLog, ProjectMember, TheaterProject, User, Milestone
+from src.db.models import AuditLog, Milestone, ProjectMember, TheaterProject, User
 from src.dependencies.auth import get_current_user_dep
 from src.dependencies.permissions import get_project_member_dep, get_project_owner_dep
 from src.schemas.project import (
-    ProjectCreate,
-    ProjectResponse,
-    ProjectMemberResponse,
-    ProjectUpdate,
     MemberRoleUpdate,
     MilestoneCreate,
     MilestoneResponse,
+    ProjectCreate,
+    ProjectMemberResponse,
+    ProjectResponse,
+    ProjectUpdate,
 )
-from src.services.discord import DiscordService, get_discord_service
 from src.services.attendance import AttendanceService
+from src.services.discord import DiscordService, get_discord_service
 
 logger = get_logger(__name__)
 
@@ -68,7 +68,7 @@ async def create_project(
         role="owner",
     )
     db.add(member)
-    
+
     # 監査ログ
     audit = AuditLog(
         event="project.create",
@@ -124,7 +124,7 @@ async def list_projects(
         .join(ProjectMember)
         .where(ProjectMember.user_id == current_user.id)
     )
-    
+
     projects_response = []
     for project, role in result.all():
         projects_response.append(ProjectResponse(
@@ -171,7 +171,7 @@ async def get_project(
     project = await db.get(TheaterProject, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
-    
+
     return _build_project_response(project, current_member.role)
 
 
@@ -251,7 +251,7 @@ async def list_project_members(
         .where(ProjectMember.project_id == project_id)
     )
     members = result.all()
-    
+
     response = []
     for pm, user in members:
         response.append(ProjectMemberResponse(
@@ -262,7 +262,7 @@ async def list_project_members(
             display_name=pm.display_name,
             joined_at=pm.joined_at,
         ))
-    
+
     return response
 
 
@@ -296,7 +296,7 @@ async def update_member_role(
         if role_update.role != owner_member.role:
             raise HTTPException(status_code=400, detail="自分自身のロールは変更できません")
         # roleが同じなら続行（display_name等の更新は許可）
-        
+
     # 対象メンバー取得
     result = await db.execute(
         select(ProjectMember).where(
@@ -305,10 +305,10 @@ async def update_member_role(
         )
     )
     target_member = result.scalar_one_or_none()
-    
+
     if target_member is None:
         raise HTTPException(status_code=404, detail="メンバーが見つかりません")
-        
+
     # 更新
     old_role = target_member.role
     target_member.role = role_update.role
@@ -316,7 +316,7 @@ async def update_member_role(
         target_member.default_staff_role = role_update.default_staff_role
     if role_update.display_name is not None:
         target_member.display_name = role_update.display_name
-    
+
     # User情報取得用
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one()
@@ -329,10 +329,10 @@ async def update_member_role(
         details=f"User {user.discord_username} role changed from {old_role} to {role_update.role}. Staff role: {role_update.default_staff_role}. Display name: {role_update.display_name}",
     )
     db.add(audit)
-    
+
     await db.commit()
     await db.refresh(target_member)
-    
+
     # Discord通知
     # Project取得 (webhook_urlのため)
     project = await db.get(TheaterProject, project_id)
@@ -341,7 +341,7 @@ async def update_member_role(
         content=f"👮 **メンバー権限が変更されました**\nプロジェクト: {project.name}\nメンバー: {user.discord_username}\n変更: {old_role} -> {role_update.role}",
         webhook_url=project.discord_webhook_url,
     )
-    
+
     return ProjectMemberResponse(
         user_id=user.id,
         discord_username=user.discord_username,
@@ -377,10 +377,10 @@ async def remove_member(
     # 権限チェック: オーナー または 本人
     is_owner = current_member.role == "owner"
     is_self = current_member.user_id == user_id
-    
+
     if not (is_owner or is_self):
         raise HTTPException(status_code=403, detail="権限がありません")
-        
+
     # オーナーが自分自身を削除（脱退）しようとする場合
     if is_owner and is_self:
         # 他にオーナーがいるか確認すべきだが、今回は簡易的に不可とするか、あるいはプロジェクト削除を促す
@@ -399,10 +399,10 @@ async def remove_member(
             )
         )
         target_member = result.scalar_one_or_none()
-        
+
     if target_member is None:
         raise HTTPException(status_code=404, detail="メンバーが見つかりません")
-    
+
     # ユーザー名取得（通知用）
     user_name = "Unknown"
     result = await db.execute(select(User.discord_username).where(User.id == user_id))
@@ -412,7 +412,7 @@ async def remove_member(
 
     # 削除
     await db.delete(target_member)
-    
+
     # 監査ログ
     audit = AuditLog(
         event="member.remove",
@@ -421,7 +421,7 @@ async def remove_member(
         details=f"User {user_name} removed from project.",
     )
     db.add(audit)
-    
+
     await db.commit()
 
     # Discord通知
@@ -468,7 +468,7 @@ async def delete_project(
 
     # 削除 (cascadeにより関連データも削除されるはず)
     await db.delete(project)
-    
+
     # 注: プロジェクト削除に伴い、AuditLogも削除される設定にしているため、
     # データベース上には痕跡が残らない。
 
@@ -505,11 +505,11 @@ async def create_milestone(
     # Timezone handling: DB expects naive UTC
     start_date = milestone_data.start_date
     if start_date.tzinfo:
-        start_date = start_date.astimezone(timezone.utc).replace(tzinfo=None)
-        
+        start_date = start_date.astimezone(UTC).replace(tzinfo=None)
+
     end_date = milestone_data.end_date
     if end_date and end_date.tzinfo:
-        end_date = end_date.astimezone(timezone.utc).replace(tzinfo=None)
+        end_date = end_date.astimezone(UTC).replace(tzinfo=None)
 
     milestone = Milestone(
         project_id=project_id,
@@ -537,7 +537,7 @@ async def create_milestone(
                 if not deadline:
                     from datetime import timedelta
                     deadline = milestone.start_date - timedelta(hours=24)
-                
+
                 attendance_service = AttendanceService(db, discord_service)
                 title = f"イベント出席確認: {milestone.title}"
                 result = await attendance_service.create_attendance_event(
@@ -560,7 +560,7 @@ async def create_milestone(
         date_str = milestone.start_date.strftime("%Y/%m/%d")
         if milestone.end_date:
             date_str += f" - {milestone.end_date.strftime('%Y/%m/%d')}"
-        
+
         background_tasks.add_task(
             discord_service.send_notification,
             content=f"📅 **新しいマイルストーンが作成されました**\nプロジェクト: {project.name}\nタイトル: {milestone.title}\n日程: {date_str}\n場所: {milestone.location or '未定'}\n詳細: {milestone.description or 'なし'}",
@@ -589,7 +589,7 @@ async def list_milestones(
     stmt = select(Milestone).where(Milestone.project_id == project_id).order_by(Milestone.start_date)
     result = await db.execute(stmt)
     milestones = result.scalars().all()
-    
+
     return [MilestoneResponse.model_validate(m) for m in milestones]
 
 
@@ -609,13 +609,13 @@ async def delete_milestone(
     stmt = select(Milestone).where(Milestone.id == milestone_id, Milestone.project_id == project_id)
     result = await db.execute(stmt)
     milestone = result.scalar_one_or_none()
-    
+
     if not milestone:
         raise HTTPException(status_code=404, detail="マイルストーンが見つかりません")
 
     # Discord通知用データ退避
     milestone_title = milestone.title
-    
+
     await db.delete(milestone)
     await db.commit()
 

@@ -1,7 +1,10 @@
 
 import asyncio
+
 from sqlalchemy import text
+
 from src.db import async_session_factory
+
 
 async def check_schema():
     async with async_session_factory() as session:

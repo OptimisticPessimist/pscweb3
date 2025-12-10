@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
 import { ScriptUploadModal } from '../components/ScriptUploadModal';
-import { ScriptDetail } from './ScriptDetailPage';
+import { ScriptDetailPage } from './ScriptDetailPage';
 
 export const ScriptsPage = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -40,8 +40,8 @@ export const ScriptsPage = () => {
                     // 1プロジェクト1脚本のため、最初の要素を表示
                     // ScriptDetail コンポーネントを使用（別ファイルからインポートが必要）
                     <div className="p-4 sm:p-6">
-                        {/* ScriptDetail is imported from ScriptDetailPage */}
-                        <ScriptDetail projectId={projectId!} scriptId={scripts[0].id} />
+                        {/* ScriptDetailPage is imported from ScriptDetailPage */}
+                        <ScriptDetailPage />
                     </div>
                 ) : (
                     <div className="p-12 text-center text-gray-500">

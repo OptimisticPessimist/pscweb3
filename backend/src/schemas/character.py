@@ -1,7 +1,9 @@
 """キャラクターおよびキャスティング関連のスキーマ."""
 
 from uuid import UUID
+
 from pydantic import BaseModel, Field
+
 
 class CastingUser(BaseModel):
     """配役されたユーザー情報."""

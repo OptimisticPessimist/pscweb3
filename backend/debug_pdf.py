@@ -1,5 +1,5 @@
+
 from src.services.pdf_generator import generate_script_pdf
-import os
 
 dummy_fountain = """
 Title: Test Script

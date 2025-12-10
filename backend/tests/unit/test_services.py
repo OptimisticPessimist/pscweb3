@@ -26,7 +26,7 @@ INT. テスト部屋 - DAY
 @少年
 うん、元気だよ。
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -69,7 +69,7 @@ EXT. 公園 - DAY
 @子供たち
 わーい！
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -95,7 +95,7 @@ async def test_parse_fountain_empty_script(
     """空のFountain脚本のパーステスト."""
     # Arrange
     fountain_content = "Title: 空の脚本"
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,

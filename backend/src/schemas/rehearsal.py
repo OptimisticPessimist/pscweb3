@@ -1,7 +1,6 @@
 """稽古スケジュールスキーマ."""
 
 from datetime import datetime
-
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -81,7 +80,7 @@ class RehearsalCreate(BaseModel):
     notes: str | None = Field(None, description="備考")
     create_attendance_check: bool = Field(False, description="出席確認を作成")
     attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合は稽古日の24時間前）")
-    
+
     # 参加者・キャストの明示的な指定（指定がない場合は自動決定ロジックが走る場合があるが、基本はFrontendから送る）
     participants: list[RehearsalParticipantCreate] | None = Field(None, description="スタッフ参加者リスト")
     casts: list[RehearsalCastCreate] | None = Field(None, description="キャスト参加者リスト")

@@ -9,7 +9,9 @@ sys.path.append(os.getcwd())
 
 from sqlalchemy import select
 from src.db.session import async_session_factory
-from src.db.models import Script, TheaterProject
+
+from src.db.models import Script
+
 
 async def find_script():
     async with async_session_factory() as db:
@@ -17,7 +19,7 @@ async def find_script():
         query = select(Script).where(Script.title.like("%ラブコメ%"))
         result = await db.execute(query)
         scripts = result.scalars().all()
-        
+
         if not scripts:
             print("No script found.")
             return

@@ -1,5 +1,6 @@
 from src.services.pdf_generator import generate_script_pdf
 
+
 def test_generate_script_pdf() -> None:
     """PDF生成のシンプルなテスト."""
     fountain_content = """Title: Test Script
@@ -11,7 +12,7 @@ CHARACTER
 Hello world.
 """
     pdf_bytes = generate_script_pdf(fountain_content)
-    
+
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 0
     # PDFヘッダーチェック

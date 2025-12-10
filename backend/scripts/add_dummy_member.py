@@ -6,18 +6,20 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from sqlalchemy import select
+
 from src.db import async_session_maker
-from src.db.models import User, TheaterProject, ProjectMember
+from src.db.models import ProjectMember, TheaterProject, User
+
 
 async def create_dummy_user(project_name_keyword: str = None):
     async with async_session_maker() as db:
         # 1. ダミーユーザー作成
         dummy_discord_id = "dummy_12345"
         dummy_username = "DramaActor_A"
-        
+
         result = await db.execute(select(User).where(User.discord_id == dummy_discord_id))
         user = result.scalar_one_or_none()
-        
+
         if not user:
             print(f"Creating dummy user: {dummy_username}")
             user = User(
@@ -36,10 +38,10 @@ async def create_dummy_user(project_name_keyword: str = None):
             stmt = select(TheaterProject).where(TheaterProject.name.contains(project_name_keyword))
         else:
             stmt = select(TheaterProject).order_by(TheaterProject.created_at.desc())
-            
+
         result = await db.execute(stmt)
         project = result.scalars().first()
-        
+
         if not project:
             print("No projects found.")
             return
@@ -52,7 +54,7 @@ async def create_dummy_user(project_name_keyword: str = None):
             ProjectMember.user_id == user.id
         ))
         member = result.scalar_one_or_none()
-        
+
         if not member:
             print("Adding user to project...")
             member = ProjectMember(

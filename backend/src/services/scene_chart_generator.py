@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import Scene, SceneChart, SceneCharacterMapping, Script
+from src.db.models import SceneCharacterMapping, SceneChart, Script
 
 
 async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:

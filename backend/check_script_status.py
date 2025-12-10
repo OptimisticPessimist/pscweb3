@@ -8,7 +8,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from sqlalchemy import select
 from src.db.session import async_session_factory
-from src.db.models import RehearsalSchedule, Script, TheaterProject
+
+from src.db.models import RehearsalSchedule, Script
+
 
 async def check_data():
     async with async_session_factory() as db:
@@ -17,7 +19,7 @@ async def check_data():
         query = select(Script).where(Script.title.like("%ラブコメ%"))
         result = await db.execute(query)
         scripts = result.scalars().all()
-        
+
         target_script_id = None
         if scripts:
             for s in scripts:
@@ -29,7 +31,7 @@ async def check_data():
         print("\n--- Rehearsal Schedules ---")
         result = await db.execute(select(RehearsalSchedule))
         schedules = result.scalars().all()
-        
+
         for s in schedules:
             print(f"Schedule ID={s.id}, Script ID={s.script_id}")
             # Check correctness

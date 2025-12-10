@@ -1,7 +1,7 @@
 """FastAPI メインアプリケーション."""
 
-import sys
 import asyncio
+import sys
 
 # サブプロセスを使用するため、Windowsのデフォルト（Proactor）を明示的に使用
 if sys.platform == 'win32':
@@ -12,7 +12,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule
+from src.api import (
+    attendance,
+    auth,
+    characters,
+    dashboard,
+    interactions,
+    invitations,
+    my_schedule,
+    projects,
+    rehearsals,
+    scene_charts,
+    scripts,
+    users,
+)
 from src.config import settings
 from src.core.logger import configure_logger
 from src.middleware.request_logging import RequestLoggingMiddleware
@@ -45,9 +58,15 @@ app.add_middleware(RequestLoggingMiddleware)
 
 
 # CORS設定
+origins = []
+if settings.environment == "development":
+    origins = ["*"]
+elif settings.allowed_origins:
+    origins = [origin.strip() for origin in settings.allowed_origins.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.environment == "development" else [],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,7 +79,7 @@ app.include_router(invitations.router, prefix="/api/invitations", tags=["招待"
 app.include_router(attendance.router, prefix="/api/projects", tags=["出欠確認"])
 app.include_router(interactions.router, prefix="/api", tags=["Discord Interactions"])
 # 香盤表はscriptsの下 (scripts.routerより先に定義して、具体的なパスを優先させる)
-app.include_router(scene_charts.router, prefix="/api/scripts", tags=["香盤表"]) 
+app.include_router(scene_charts.router, prefix="/api/scripts", tags=["香盤表"])
 app.include_router(scripts.router, prefix="/api/scripts", tags=["脚本"])
 # キャスティングはprojectsの下
 app.include_router(characters.router, prefix="/api/projects", tags=["キャスティング"])

@@ -1,13 +1,14 @@
 """権限チェック依存関係ロジック."""
 
 from uuid import UUID
+
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db import get_db
-from src.db.models import ProjectMember, User, Script, Scene, Line, Character, CharacterCasting
-from sqlalchemy.orm import selectinload
+from src.db.models import Character, Line, ProjectMember, Scene, Script, User
 from src.dependencies.auth import get_current_user_dep
 
 
@@ -39,10 +40,10 @@ async def get_project_member_dep(
         )
     )
     member = result.scalar_one_or_none()
-    
+
     if member is None:
         raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
-        
+
     return member
 
 
@@ -61,7 +62,7 @@ def check_role(required_roles: list[str]) -> callable:
         if member.role not in required_roles:
             raise HTTPException(status_code=403, detail="この操作を行う権限がありません")
         return member
-    
+
     return dependency
 
 
@@ -115,7 +116,7 @@ async def get_script_member_dep(
         .where(Script.id == script_id)
     )
     script = result.scalar_one_or_none()
-    
+
     if script is None:
         raise HTTPException(status_code=404, detail="脚本が見つかりません")
 
@@ -127,8 +128,8 @@ async def get_script_member_dep(
         )
     )
     member = result.scalar_one_or_none()
-    
+
     if member is None:
         raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
-        
+
     return member, script

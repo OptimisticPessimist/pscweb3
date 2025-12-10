@@ -33,5 +33,8 @@ class Settings(BaseSettings):
     # 環境
     environment: str = "development"
 
+    # CORS設定 (本番環境用)
+    allowed_origins: str = ""  # カンマ区切りのURL (例: "https://example.com,https://www.example.com")
+
 
 settings = Settings()

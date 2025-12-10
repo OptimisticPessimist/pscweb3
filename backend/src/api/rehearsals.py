@@ -1,47 +1,43 @@
 """稽古スケジュール管理APIエンドポイント."""
 
-from datetime import datetime, timezone
+from datetime import UTC, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlalchemy import select, delete
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from structlog import get_logger
 
-from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
-from src.services.discord import DiscordService, get_discord_service
-from src.services.attendance import AttendanceService
 from src.db.models import (
+    Character,
+    CharacterCasting,
+    Line,
     ProjectMember,
     Rehearsal,
     RehearsalCast,
     RehearsalParticipant,
-    RehearsalSchedule,
     RehearsalScene,
+    RehearsalSchedule,
     Scene,
     Script,
-    User,
     TheaterProject,
-    Line,
-    Character,
-    CharacterCasting,
-    AttendanceEvent,
-    AttendanceTarget,
+    User,
 )
-from datetime import timedelta
+from src.dependencies.auth import get_current_user_dep
 from src.schemas.rehearsal import (
     RehearsalCastCreate,
     RehearsalCastResponse,
     RehearsalCreate,
     RehearsalParticipantResponse,
+    RehearsalParticipantUpdate,
     RehearsalResponse,
     RehearsalScheduleResponse,
     RehearsalUpdate,
-    RehearsalParticipantUpdate,
 )
 from src.services.attendance import AttendanceService
+from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
 project_router = APIRouter()
@@ -176,10 +172,10 @@ async def get_rehearsal_schedule(
     )
     # 重複データがある場合、有効な（脚本が存在する）スケジュールを探す
     schedules = result.scalars().all()
-    
+
     schedule = None
     script = None
-    
+
     for s in schedules:
         script_res = await db.execute(select(Script).where(Script.id == s.script_id))
         found_script = script_res.scalar_one_or_none()
@@ -187,10 +183,10 @@ async def get_rehearsal_schedule(
             schedule = s
             script = found_script
             break
-            
+
     if schedule is None:
         raise HTTPException(status_code=404, detail="稽古スケジュールが見つかりません")
-    
+
     # scriptはループ内で既に取得済み
 
     # プロジェクトメンバー情報を取得して、user_id -> display_name のマップを作成
@@ -199,7 +195,7 @@ async def get_rehearsal_schedule(
     )
     members = member_result.scalars().all()
     display_name_map = {m.user_id: m.display_name for m in members}
-    
+
     # User Map creation to avoid MissingGreenlet on p.user.discord_username access
     all_user_ids = set()
     for rehearsal in schedule.rehearsals:
@@ -292,7 +288,7 @@ async def get_rehearsal_schedule(
                 for line in scene.lines:
                     if line.character_id not in unique_characters:
                         unique_characters[line.character_id] = line.character
-                
+
                 for char_id, char in unique_characters.items():
                     if char_id not in rehearsal_cast_map:
                         # デフォルト配役を追加
@@ -313,7 +309,7 @@ async def get_rehearsal_schedule(
                 schedule_id=rehearsal.schedule_id,
                 scene_id=rehearsal.scene_id,
                 scene_heading=scene_heading,
-                date=rehearsal.date.replace(tzinfo=timezone.utc),
+                date=rehearsal.date.replace(tzinfo=UTC),
                 duration_minutes=rehearsal.duration_minutes,
                 location=rehearsal.location,
                 notes=rehearsal.notes,
@@ -405,7 +401,7 @@ async def add_rehearsal(
         target_scene_ids.update(rehearsal_data.scene_ids)
     elif rehearsal_data.scene_id:
         target_scene_ids.add(rehearsal_data.scene_id)
-    
+
     if target_scene_ids:
         # Explicitly add to association table to avoid AsyncIO issues with relationship assignment
         for sid in target_scene_ids:
@@ -440,7 +436,7 @@ async def add_rehearsal(
                 )
                 db.add(new_participant)
                 target_user_ids.add(m.user_id)
-    
+
     # Casts
     if rehearsal_data.casts is not None:
         for c in rehearsal_data.casts:
@@ -451,7 +447,7 @@ async def add_rehearsal(
             )
             db.add(new_cast)
             target_user_ids.add(c.user_id)
-    
+
     # Commit changes
     await db.commit()
 
@@ -461,7 +457,7 @@ async def add_rehearsal(
         deadline = rehearsal_data.attendance_deadline
         if not deadline:
             deadline = rehearsal_data.date - timedelta(hours=24)
-        
+
         # ターゲット指定がある場合はそれを使用、なければ全員（後方互換性として、Frontendがparticipantsを送ってこない場合は全員にするか？
         # いや、Frontendが古い場合、target_user_idsはDefault Staffのみになる。
         # 古い挙動は「全員」だった。
@@ -472,7 +468,7 @@ async def add_rehearsal(
         # 旧UI（もしあれば）からはNoneが来る -> Default Staffのみになる -> これだと全員に飛ばない。
         # 安全策: participants/castsがNoneの場合は target_user_ids=None を渡して「全員」にする。
         # 指定がある場合は target_user_ids を渡す。
-        
+
         attendance_targets = list(target_user_ids) if (rehearsal_data.participants is not None or rehearsal_data.casts is not None) else None
 
         attendance_service = AttendanceService(db, discord_service)
@@ -517,10 +513,10 @@ async def add_rehearsal(
     # RehearsalParticipantResponse configuration: from_attributes = True?
     # Let's check schema. RehearsalParticipantResponse uses `user_name` etc.
     # We might need manual mapping if relations are not strictly matching pydantic fields.
-    
+
     # Old logic constructed `participants_response` manually.
     # Let's keep manual construction to be safe because of `display_name` map.
-    
+
     member_result = await db.execute(
         select(ProjectMember).where(ProjectMember.project_id == schedule.project_id)
     )
@@ -549,12 +545,12 @@ async def add_rehearsal(
     project = await db.get(TheaterProject, schedule.project_id)
     scene_headings = [s.heading for s in rehearsal.scenes]
     scene_text = ", ".join(scene_headings) if scene_headings else None
-    
+
     date_str = rehearsal.date.strftime("%Y/%m/%d %H:%M")
     content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
     if scene_text:
         content += f"\nシーン: {scene_text}"
-        
+
     if project.discord_webhook_url:
         background_tasks.add_task(
             discord_service.send_notification,
@@ -582,7 +578,7 @@ async def add_rehearsal(
         deadline = rehearsal_data.attendance_deadline
         if not deadline:
             deadline = rehearsal.date - timedelta(hours=24)
-        
+
         # プロジェクト取得
         if project and project.discord_channel_id:
             # AttendanceServiceを使用
@@ -602,7 +598,7 @@ async def add_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,
         scene_heading=scene_heading,
-        date=rehearsal.date.replace(tzinfo=timezone.utc),
+        date=rehearsal.date.replace(tzinfo=UTC),
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,
         notes=rehearsal.notes,
@@ -662,7 +658,7 @@ async def update_rehearsal(
     # 更新
     if rehearsal_data.scene_id is not None:
         rehearsal.scene_id = rehearsal_data.scene_id
-    
+
     # 複数シーン更新
     if rehearsal_data.scene_ids is not None:
         if not rehearsal_data.scene_ids:
@@ -685,7 +681,7 @@ async def update_rehearsal(
         rehearsal.location = rehearsal_data.location
     if rehearsal_data.notes is not None:
         rehearsal.notes = rehearsal_data.notes
-        
+
     # 参加者更新 (全置換)
     if rehearsal_data.participants is not None:
         # 既存削除
@@ -693,8 +689,8 @@ async def update_rehearsal(
         # 新規追加
         for p in rehearsal_data.participants:
             db.add(RehearsalParticipant(
-                rehearsal_id=rehearsal.id, 
-                user_id=p.user_id, 
+                rehearsal_id=rehearsal.id,
+                user_id=p.user_id,
                 staff_role=p.staff_role
             ))
 
@@ -705,8 +701,8 @@ async def update_rehearsal(
         # 新規追加
         for c in rehearsal_data.casts:
             db.add(RehearsalCast(
-                rehearsal_id=rehearsal.id, 
-                user_id=c.user_id, 
+                rehearsal_id=rehearsal.id,
+                user_id=c.user_id,
                 character_id=c.character_id
             ))
 
@@ -728,11 +724,11 @@ async def update_rehearsal(
     # シーン情報 & キャスト構成
     scene_headings = [s.heading for s in rehearsal.scenes]
     scene_heading = ", ".join(scene_headings) if scene_headings else None
-    
+
     casts_response_list = []
-    
+
     rehearsal_cast_map = {c.character_id: c for c in rehearsal.casts}
-    
+
     # Display Name Map
     member_result = await db.execute(
         select(ProjectMember).where(ProjectMember.project_id == schedule.project_id)
@@ -767,13 +763,13 @@ async def update_rehearsal(
         scene = result.scalar_one_or_none()
         if scene:
             scene_heading = scene.heading
-            
+
             # デフォルト配役の取得 (Missing characters only)
             unique_characters = {}
             for line in scene.lines:
                 if line.character_id not in unique_characters:
                     unique_characters[line.character_id] = line.character
-            
+
             for char_id, char in unique_characters.items():
                 if char_id not in rehearsal_cast_map:
                     for casting in char.castings:
@@ -790,7 +786,7 @@ async def update_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,
         scene_heading=scene_heading,
-        date=rehearsal.date.replace(tzinfo=timezone.utc),
+        date=rehearsal.date.replace(tzinfo=UTC),
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,
         notes=rehearsal.notes,
@@ -850,7 +846,7 @@ async def add_participant(
     )
     pm_result = await db.execute(pm_query)
     target_member = pm_result.scalar_one_or_none()
-    
+
     default_role = target_member.default_staff_role if target_member else None
 
     # 参加者追加
@@ -919,7 +915,7 @@ async def delete_rehearsal(
 
     # Discord通知用データ退避
     rehearsal_date = rehearsal.date.strftime("%Y/%m/%d %H:%M")
-    
+
     # 削除
     await db.delete(rehearsal)
     await db.commit()

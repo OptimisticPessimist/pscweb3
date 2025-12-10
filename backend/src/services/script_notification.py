@@ -1,6 +1,5 @@
 """スクリプト通知サービス."""
 
-from uuid import UUID
 
 from src.db.models import Script, TheaterProject, User
 from src.services.discord import DiscordService
@@ -30,18 +29,18 @@ async def send_script_notification(
         f"タイトル: {script.title}\n"
         f"ユーザー: {current_user.discord_username}"
     )
-    
+
     # PDF生成（通知添付用）
     pdf_file = None
     try:
         from src.services.pdf_generator import generate_script_pdf
-        
+
         pdf_bytes = generate_script_pdf(script.content)
         pdf_file = {"filename": f"{script.title}.pdf", "content": pdf_bytes}
     except Exception as e:
         # PDF生成失敗しても通知は送る
         message += f"\n\n⚠️ PDF生成に失敗しました: {e}"
-    
+
     # Discord通知送信
     await discord_service.send_notification(
         content=message, webhook_url=project.discord_webhook_url, file=pdf_file

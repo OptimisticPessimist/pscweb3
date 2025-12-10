@@ -36,20 +36,20 @@ class ProjectResponse(BaseModel):
 
 class ProjectMemberResponse(BaseModel):
     """プロジェクトメンバーレスポンス."""
-    
+
     user_id: UUID
     discord_username: str
     role: str
     default_staff_role: str | None = None  # 基本的な役割
     display_name: str | None = None  # 表示名
     joined_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 
 class MemberRoleUpdate(BaseModel):
     """メンバーロール更新リクエスト."""
-    
+
     role: str = Field(..., pattern="^(owner|editor|viewer)$", description="新しいロール")
     default_staff_role: str | None = Field(None, description="基本的な役割（演出、照明など）")
     display_name: str | None = Field(None, description="表示名")
@@ -57,7 +57,7 @@ class MemberRoleUpdate(BaseModel):
 
 class MilestoneCreate(BaseModel):
     """マイルストーン作成スキーマ."""
-    
+
     title: str = Field(..., min_length=1, max_length=200)
     start_date: datetime
     end_date: datetime | None = None
@@ -70,7 +70,7 @@ class MilestoneCreate(BaseModel):
 
 class MilestoneResponse(BaseModel):
     """マイルストーンレスポンス."""
-    
+
     id: UUID
     project_id: UUID
     title: str
@@ -79,5 +79,5 @@ class MilestoneResponse(BaseModel):
     description: str | None = None
     location: str | None = None
     color: str | None = None
-    
+
     model_config = {"from_attributes": True}

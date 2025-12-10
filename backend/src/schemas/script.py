@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+
 class CastingResponse(BaseModel):
     """キャスティングレスポンス."""
     user_id: UUID = Field(..., description="ユーザーID")

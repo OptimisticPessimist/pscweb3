@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Project } from '@/types';
 import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';

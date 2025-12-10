@@ -6,8 +6,8 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from sqlalchemy.ext.asyncio import create_async_engine
+
 from src.db.models import Base
-from src.config import settings
 
 # Explicit connection string from user (with async driver)
 # Note: SQLAlchemy async requires postgresql+asyncpg://

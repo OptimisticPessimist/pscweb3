@@ -1,8 +1,7 @@
 """出席確認サービス."""
 
-from datetime import datetime, timedelta
 import uuid
-from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,10 +38,10 @@ class AttendanceService:
         title: str,
         deadline: datetime,
         schedule_date: datetime,
-        location: Optional[str] = None,
-        description: Optional[str] = None,
-        target_user_ids: Optional[list[uuid.UUID]] = None,
-    ) -> Optional[AttendanceEvent]:
+        location: str | None = None,
+        description: str | None = None,
+        target_user_ids: list[uuid.UUID] | None = None,
+    ) -> AttendanceEvent | None:
         """出席確認イベントを作成し、Disocrdに通知を送信する.
 
         Args:
@@ -60,7 +59,7 @@ class AttendanceService:
         if not project.discord_channel_id:
             logger.warning("Discord Channel ID not set for project", project_id=project.id)
             return None
-            
+
         logger.info(f"Creating attendance for project {project.name}, channel {project.discord_channel_id}")
 
         valid_users = []
@@ -78,7 +77,7 @@ class AttendanceService:
             )
             all_members = all_members_result.scalars().all()
             all_target_ids = [m.user_id for m in all_members]
-            
+
             # ユーザー取得（discord_id所持者のみ）
             users_result = await self.db.execute(
                 select(User).where(User.id.in_(all_target_ids), User.discord_id.isnot(None))
@@ -100,26 +99,26 @@ class AttendanceService:
             f"日時: {schedule_str}\n"
             f"期限: {deadline_str}\n"
         )
-        
+
         if location:
             message_content += f"場所: {location}\n"
-            
+
         message_content += f"対象: {' '.join(mentions)}\n\n"
-        
+
         if description:
             message_content += f"{description}\n\n"
-            
+
         message_content += "以下のボタンで出欠を登録してください。"
 
         # ボタンコンポーネント (Action Row)
         # 暫定的にDB保存前にIDが必要だが、event_idはまだない。
         # なので、message_idが返ってきてからupdateするか、UUIDを先に振るか。
         # UUIDはPython側で生成しているので、先に生成して使うのが良い。
-        
+
         # UUID生成
         import uuid
         event_id = uuid.uuid4()
-        
+
         components = [
             {
                 "type": 1, # Action Row
@@ -132,7 +131,7 @@ class AttendanceService:
                         "style": 3 # Success
                     },
                     {
-                        "type": 2, 
+                        "type": 2,
                         "style": 4, # Danger
                         "label": "不参加",
                         "custom_id": f"attendance:{event_id}:ng"
@@ -182,7 +181,7 @@ class AttendanceService:
 
         await self.db.commit()
         await self.db.refresh(attendance_event)
-        
+
         return attendance_event
 
 

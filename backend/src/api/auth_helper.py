@@ -1,7 +1,9 @@
-import sys
 import asyncio
-import httpx
 import json
+import sys
+
+import httpx
+
 
 async def exchange_token(token_endpoint, data):
     try:
@@ -23,7 +25,7 @@ async def exchange_token(token_endpoint, data):
 
             token_data = resp.json()
             access_token = token_data.get("access_token")
-            
+
             if not access_token:
                 with open(result_file_path, "w", encoding="utf-8") as f:
                     json.dump({
@@ -38,7 +40,7 @@ async def exchange_token(token_endpoint, data):
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=10.0
             )
-            
+
             if user_resp.status_code >= 400:
                  with open(result_file_path, "w", encoding="utf-8") as f:
                     json.dump({
@@ -72,7 +74,7 @@ if __name__ == "__main__":
 
     result_file_path = sys.argv[1]
     endpoint = sys.argv[2]
-    
+
     data = {
         'grant_type': 'authorization_code',
         'client_id': sys.argv[3],
@@ -80,5 +82,5 @@ if __name__ == "__main__":
         'redirect_uri': sys.argv[5],
         'code': sys.argv[6]
     }
-    
+
     asyncio.run(exchange_token(endpoint, data))

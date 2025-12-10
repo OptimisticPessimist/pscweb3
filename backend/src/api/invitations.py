@@ -1,15 +1,15 @@
-from datetime import datetime, timedelta, timezone
 import secrets
+from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
 from src.db.models import ProjectInvitation, ProjectMember, TheaterProject, User
-from src.schemas.invitation import InvitationCreate, InvitationResponse, InvitationAcceptResponse
+from src.dependencies.auth import get_current_user_dep
+from src.schemas.invitation import InvitationAcceptResponse, InvitationCreate, InvitationResponse
 from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
@@ -32,7 +32,7 @@ async def create_invitation(
     )
     result = await db.execute(query)
     member = result.scalar_one_or_none()
-    
+
     if not member or member.role not in ["owner", "admin"]:
         raise HTTPException(status_code=403, detail="権限がありません")
 
@@ -43,8 +43,8 @@ async def create_invitation(
 
     # トークン生成
     token_str = secrets.token_urlsafe(32)
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=invitation_in.expires_in_hours)
-    
+    expires_at = datetime.now(UTC) + timedelta(hours=invitation_in.expires_in_hours)
+
     invitation = ProjectInvitation(
         project_id=project_id,
         created_by=current_user.id,
@@ -56,7 +56,7 @@ async def create_invitation(
     db.add(invitation)
     await db.commit()
     await db.refresh(invitation)
-    
+
     return InvitationResponse(
         token=invitation.token,
         project_id=project.id,
@@ -79,17 +79,17 @@ async def get_invitation(
     ).where(ProjectInvitation.token == token)
     result = await db.execute(query)
     invitation = result.scalar_one_or_none()
-    
+
     if not invitation:
         raise HTTPException(status_code=404, detail="招待リンクが無効です")
-    
-    now = datetime.now(timezone.utc)
+
+    now = datetime.now(UTC)
     if invitation.expires_at < now:
         raise HTTPException(status_code=410, detail="招待リンクの有効期限が切れています")
-        
+
     if invitation.max_uses is not None and invitation.used_count >= invitation.max_uses:
         raise HTTPException(status_code=410, detail="招待リンクの使用回数が上限に達しました")
-        
+
     return InvitationResponse(
         token=invitation.token,
         project_id=invitation.project.id,
@@ -115,12 +115,12 @@ async def accept_invitation(
     query = select(ProjectInvitation).where(ProjectInvitation.token == token).with_for_update()
     result = await db.execute(query)
     invitation = result.scalar_one_or_none()
-    
+
     if not invitation:
         raise HTTPException(status_code=404, detail="招待リンクが無効です")
-        
+
     # バリデーション
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if invitation.expires_at < now:
         raise HTTPException(status_code=410, detail="招待リンクの有効期限が切れています")
     if invitation.max_uses is not None and invitation.used_count >= invitation.max_uses:
@@ -139,7 +139,7 @@ async def accept_invitation(
             project_name=project.name,
             message="既に参加済みです"
         )
-    
+
     # プロジェクト名取得
     project = await db.get(TheaterProject, invitation.project_id)
 
@@ -150,10 +150,10 @@ async def accept_invitation(
         role="viewer"
     )
     db.add(new_member)
-    
+
     # カウント更新
     invitation.used_count += 1
-    
+
     await db.commit()
 
     # Discord通知
@@ -162,7 +162,7 @@ async def accept_invitation(
         content=f"👋 **新しいメンバーが参加しました**\nプロジェクト: {project.name}\nユーザー: {current_user.discord_username}",
         webhook_url=project.discord_webhook_url,
     )
-    
+
     return InvitationAcceptResponse(
         project_id=project.id,
         project_name=project.name,

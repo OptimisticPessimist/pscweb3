@@ -4,12 +4,8 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 """キャスティングAPIの統合テスト."""
-import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Script, TheaterProject, User
-from src.main import app
 
 
 @pytest.mark.asyncio
@@ -17,7 +13,7 @@ async def test_assign_casting(
     db: AsyncSession, test_project: TheaterProject, test_user: User, client: AsyncClient
 ) -> None:
     """キャスト割り当てのテスト."""
-    
+
     # Arrange: 脚本と登場人物を作成
     script = Script(
         project_id=test_project.id,
@@ -39,7 +35,7 @@ async def test_assign_casting(
     # JWTトークンを取得
     from src.auth.jwt import create_access_token
     token = create_access_token({"sub": str(test_user.id)})
-    
+
     # Act: キャスト割り当てAPI呼び出し
     response = await client.post(
         f"/scripts/characters/{character.id}/casting?token={token}",

@@ -20,7 +20,7 @@ def event_loop():
     """イベントループフィクスチャ."""
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
+
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
     yield loop
@@ -88,9 +88,10 @@ async def test_project(db: AsyncSession, test_user: User) -> TheaterProject:
 @pytest.fixture
 async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """テスト用APIクライアントフィクスチャ."""
+    from httpx import ASGITransport
+
     from src.db import get_db
     from src.main import app
-    from httpx import ASGITransport
 
     # 依存関係のオーバーライド
     app.dependency_overrides[get_db] = lambda: db

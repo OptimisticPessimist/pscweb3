@@ -1,7 +1,6 @@
 import asyncio
+
 import httpx
-import os
-import sys
 
 # Windowsでのイベントループポリシー設定（Python 3.8以降のWindowsではProactorがデフォルトだが念のため）
 # if sys.platform == 'win32':
@@ -10,7 +9,7 @@ import sys
 async def check_connection():
     url = "https://discord.com/api/v10/oauth2/token"
     print(f"Testing connection to {url}...", flush=True)
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # わざとパラメータなしで送って、400 Bad Requestが返ってくるかテスト（通信成立の確認）
@@ -24,7 +23,7 @@ async def check_connection():
             })
             print(f"Response Status: {resp.status_code}", flush=True)
             print(f"Response Text: {resp.text[:100]}...", flush=True)
-            
+
             if resp.status_code == 400:
                 print("SUCCESS: Connection established (Bad Request is expected for dummy data).", flush=True)
             else:

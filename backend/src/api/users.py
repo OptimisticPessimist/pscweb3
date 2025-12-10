@@ -2,17 +2,24 @@
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 
 from src.auth.jwt import get_current_user
 from src.db import get_db
-from src.db.models import Rehearsal, RehearsalParticipant, RehearsalCast, Milestone, ProjectMember, TheaterProject, RehearsalSchedule
+from src.db.models import (
+    Milestone,
+    ProjectMember,
+    Rehearsal,
+    RehearsalCast,
+    RehearsalParticipant,
+    RehearsalSchedule,
+    TheaterProject,
+)
 from src.schemas.auth import UserResponse
-from src.schemas.schedule import UserScheduleResponse, ScheduleItem
+from src.schemas.schedule import ScheduleItem, UserScheduleResponse
 
 router = APIRouter()
 
@@ -36,9 +43,9 @@ async def get_current_user_info(
     """
     if not authorization.startswith("Bearer "):
          raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    
+
     token = authorization.split(" ")[1]
-    
+
     user = await get_current_user(token, db)
     if user is None:
         raise HTTPException(status_code=401, detail="無効なトークンです")
@@ -54,7 +61,7 @@ async def get_my_schedule(
     """自分のスケジュール（稽古・マイルストーン）を取得."""
     if not authorization.startswith("Bearer "):
          raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    
+
     token = authorization.split(" ")[1]
     user = await get_current_user(token, db)
     if user is None:
@@ -82,13 +89,13 @@ async def get_my_schedule(
     )
     # RehearsalSchedule is needed for project link.
     # Note: Rehearsal has `schedule` relationship, Schedule has `project`.
-    
+
     # Wait, I need to check Rehearsal model for relationships.
     # Rehearsal -> Schedule -> Project.
     # Rehearsal.schedule is Mapped[RehearsalSchedule]. RehearsalSchedule.project is Mapped[TheaterProject].
-    
+
     # Updating stmt to be correct with models
-    
+
     # 2. マイルストーンの取得
     # 所属しているプロジェクトのマイルストーン
     milestone_stmt = (
@@ -112,7 +119,7 @@ async def get_my_schedule(
         project = r.schedule.project
         # End date calculation: date + duration_minutes
         end_date = r.date + timedelta(minutes=r.duration_minutes)
-        
+
         items.append(ScheduleItem(
             id=r.id,
             type="rehearsal",

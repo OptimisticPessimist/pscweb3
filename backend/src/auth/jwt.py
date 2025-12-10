@@ -39,12 +39,12 @@ async def get_current_user(token: str, db: AsyncSession) -> User | None:
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         user_id_str: str | None = payload.get("sub")
-        
+
         if user_id_str is None:
             return None
-        
+
         user_id = UUID(user_id_str)
-        
+
     except (JWTError, ValueError):
         return None
 

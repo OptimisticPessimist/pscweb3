@@ -50,7 +50,12 @@ describe('useAuth', () => {
         const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
         // Mock getUser to return a user
-        const mockUser = { id: 1, discord_id: '123', discord_username: 'test', created_at: '' };
+        const mockUser = {
+            id: '1',
+            discord_id: '123',
+            discord_username: 'test',
+            created_at: new Date().toISOString()
+        };
         vi.mocked(authApi.getUser).mockResolvedValue(mockUser);
 
         act(() => {

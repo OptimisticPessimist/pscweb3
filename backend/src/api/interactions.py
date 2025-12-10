@@ -1,10 +1,9 @@
 """Discord Interactions API endpoints."""
 
-from typing import Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
-from nacl.signing import VerifyKey
+from fastapi import APIRouter, Depends, HTTPException, Request
 from nacl.exceptions import BadSignatureError
+from nacl.signing import VerifyKey
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +11,7 @@ from structlog import get_logger
 
 from src.config import settings
 from src.db import get_db
-from src.db.models import AttendanceTarget, AttendanceEvent
+from src.db.models import AttendanceTarget
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -53,12 +52,12 @@ async def verify_signature(request: Request):
     """Verify Discord signature headers."""
     signature = request.headers.get("X-Signature-Ed25519")
     timestamp = request.headers.get("X-Signature-Timestamp")
-    
+
     if not signature or not timestamp:
         raise HTTPException(status_code=401, detail="Missing signature headers")
-    
+
     body = await request.body()
-    
+
     try:
         verify_key = VerifyKey(bytes.fromhex(settings.discord_public_key or ""))
         verify_key.verify(f"{timestamp}".encode() + body, bytes.fromhex(signature))
@@ -75,9 +74,9 @@ async def interaction_endpoint(
     if not settings.discord_public_key:
         logger.error("Discord Public Key not configured")
         raise HTTPException(status_code=500, detail="Server configuration error")
-    
+
     await verify_signature(request)
-    
+
     # Parse Body
     try:
         payload = await request.json()
@@ -104,21 +103,21 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
     custom_id = interaction.data.custom_id
     # Format: attendance:{event_id}:{status}
     parts = custom_id.split(":")
-    
+
     if len(parts) != 3 or parts[0] != "attendance":
         # Unknown interaction
         return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
-    
+
     event_id_str = parts[1]
     status = parts[2] # "ok", "ng", "pending"
-    
+
     # Get Discord User ID
     discord_user_id = None
     if interaction.member and interaction.member.user:
         discord_user_id = interaction.member.user.id
     elif interaction.user:
         discord_user_id = interaction.user.id
-        
+
     if not discord_user_id:
         return {
             "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
@@ -132,12 +131,12 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
     # We need to find the User by discord_id and then find the AttendanceTarget
     # But wait, AttendanceTarget links to User.id (UUID), not discord_id.
     # So we must verify the user exists in our DB.
-    
+
     from src.db.models import User
     stmt = select(User).where(User.discord_id == discord_user_id)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
-    
+
     if not user:
          return {
             "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
@@ -146,21 +145,21 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
                 "flags": 64 # Ephemeral
             }
         }
-    
+
     # Update Target
     from uuid import UUID
     try:
         event_id = UUID(event_id_str)
     except ValueError:
          return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
-         
+
     stmt = select(AttendanceTarget).where(
         AttendanceTarget.event_id == event_id,
         AttendanceTarget.user_id == user.id
     )
     result = await db.execute(stmt)
     target = result.scalar_one_or_none()
-    
+
     if not target:
         # Not a target? Maybe add them dynamically?
         # For now, show error.
@@ -171,13 +170,13 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
                 "flags": 64 # Ephemeral
             }
         }
-    
+
     # Update Status
     target.status = status
     await db.commit()
-    
+
     logger.info("Updated attendance status", user_id=user.id, event_id=event_id, status=status)
-    
+
     # Status Message
     status_text = "参加" if status == "ok" else "不参加" if status == "ng" else "保留"
     return {

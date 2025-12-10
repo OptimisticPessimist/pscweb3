@@ -84,16 +84,16 @@ async def test_member_management(
     await db.flush()
     owner_member = ProjectMember(project_id=project.id, user_id=test_user.id, role="owner")
     db.add(owner_member)
-    
+
     # 2. 別のユーザーを作成してメンバーに追加 (Viewer)
     other_user = User(discord_id="other", discord_username="OtherUser")
     db.add(other_user)
     await db.flush()
     other_member = ProjectMember(project_id=project.id, user_id=other_user.id, role="viewer")
     db.add(other_member)
-    
+
     await db.commit()
-    
+
     # --- A. メンバー一覧取得 ---
     response = await client.get(
         f"/projects/{project.id}/members",
@@ -102,7 +102,7 @@ async def test_member_management(
     assert response.status_code == 200
     members = response.json()
     assert len(members) == 2
-    
+
     # --- B. ロール更新 (Viewer -> Editor) ---
     response = await client.put(
         f"/projects/{project.id}/members/{other_user.id}",
@@ -112,11 +112,11 @@ async def test_member_management(
     assert response.status_code == 200
     data = response.json()
     assert data["role"] == "editor"
-    
+
     # DB確認
     await db.refresh(other_member)
     assert other_member.role == "editor"
-    
+
     # --- C. 権限チェック (自分自身を変更しようとする -> 400) ---
     response = await client.put(
         f"/projects/{project.id}/members/{test_user.id}",
@@ -124,14 +124,14 @@ async def test_member_management(
         json={"role": "viewer"},
     )
     assert response.status_code == 400
-    
+
     # --- D. メンバー削除 ---
     response = await client.delete(
         f"/projects/{project.id}/members/{other_user.id}",
         params={"token": test_user_token},
     )
     assert response.status_code == 200
-    
+
     # DB確認
     result = await db.execute(
         select(ProjectMember).where(

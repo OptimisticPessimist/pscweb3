@@ -1,8 +1,8 @@
 """データベースモデル定義."""
 
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING
 import uuid
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,25 +11,24 @@ from src.db.base import Base
 
 if TYPE_CHECKING:
     from src.db.models import (
+        AttendanceEvent,
+        AttendanceTarget,
+        AuditLog,
         Character,
         CharacterCasting,
         Line,
+        Milestone,
         NotificationSettings,
+        ProjectInvitation,
         ProjectMember,
         Rehearsal,
         RehearsalCast,
         RehearsalParticipant,
         RehearsalSchedule,
         Scene,
-        SceneChart,
         SceneCharacterMapping,
+        SceneChart,
         Script,
-        ProjectInvitation,
-        ProjectInvitation,
-        AuditLog,
-        Milestone,
-        AttendanceEvent,
-        AttendanceTarget,
     )
 
 
@@ -44,7 +43,7 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     display_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     project_members: Mapped[list["ProjectMember"]] = relationship(
@@ -70,7 +69,7 @@ class TheaterProject(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     discord_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     discord_channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     members: Mapped[list["ProjectMember"]] = relationship(
@@ -91,8 +90,8 @@ class TheaterProject(Base):
     milestones: Mapped[list["Milestone"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
-    
-    # AuditLog has project_id but we don't strictly enforce cascade via relationship there 
+
+    # AuditLog has project_id but we don't strictly enforce cascade via relationship there
     # unless we add back_populates. For now relying on DB Foreign Key or manual cleanup if needed,
     # but the Feature request didn't strictly ask for AuditLog cleanup, though it implies it.
     # Leaving AuditLog decoupled for now to avoid errors matching other side.
@@ -109,7 +108,7 @@ class ProjectMember(Base):
     role: Mapped[str] = mapped_column(String(20))  # "owner", "editor", "viewer"
     default_staff_role: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 基本的な役割（例：演出、照明）
     display_name: Mapped[str | None] = mapped_column(String(100), nullable=True)  # プロジェクト内表示名
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="members")
@@ -127,7 +126,7 @@ class Script(Base):
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(Text)  # Fountain脚本の内容を直接保存
     is_public: Mapped[bool] = mapped_column(default=False)  # 全体公開フラグ
-    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     revision: Mapped[int] = mapped_column(default=1)  # リビジョン番号
 
     # リレーション
@@ -206,9 +205,9 @@ class SceneChart(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"), unique=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
     )
 
     # リレーション
@@ -280,7 +279,7 @@ class RehearsalSchedule(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="schedules")
@@ -377,7 +376,7 @@ class ProjectInvitation(Base):
     """プロジェクト招待トークン."""
 
     __tablename__ = "project_invitations"
-    
+
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
@@ -385,8 +384,8 @@ class ProjectInvitation(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     max_uses: Mapped[int | None] = mapped_column(default=None)  # Noneなら無制限
     used_count: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="invitations")
     creator: Mapped["User"] = relationship()
@@ -403,7 +402,7 @@ class AuditLog(Base):
     project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("theater_projects.id"), nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON形式の詳細情報
     ip_address: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     user: Mapped["User | None"] = relationship()
@@ -440,7 +439,7 @@ class AttendanceEvent(Base):
     schedule_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 稽古日時
     deadline: Mapped[datetime] = mapped_column(DateTime)  # 回答期限
     completed: Mapped[bool] = mapped_column(default=False)  # 完了フラグ
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship()

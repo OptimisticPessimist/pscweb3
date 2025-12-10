@@ -5,10 +5,11 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from src.db.models import User, RehearsalParticipant, RehearsalCast, Rehearsal, TheaterProject
+
 from src.config import settings
+from src.db.models import Rehearsal, RehearsalCast, RehearsalParticipant, User
 
 DATABASE_URL = settings.database_url
 engine = create_async_engine(DATABASE_URL)
@@ -40,7 +41,7 @@ async def inspect_db():
         parts = result.scalars().all()
         for p in parts:
             print(f" - RehearsalID: {p.rehearsal_id}")
-        
+
         if not parts:
             print("No participation entries found.")
 
@@ -55,7 +56,7 @@ async def inspect_db():
 
         if not casts:
             print("No cast entries found.")
-            
+
         # Check actual Rehearsal objects to ensure they exist and have dates
         if parts or casts:
             param_r_ids = [p.rehearsal_id for p in parts] + [c.rehearsal_id for c in casts]

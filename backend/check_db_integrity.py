@@ -2,9 +2,11 @@
 import asyncio
 import os
 import sys
+
 from sqlalchemy import select
 from src.db.session import async_session_factory
-from src.db.models import RehearsalSchedule, Script, ProjectMember, User, TheaterProject
+
+from src.db.models import RehearsalSchedule, Script, TheaterProject
 
 # Add backend directory to python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -14,10 +16,10 @@ async def check_data():
         print("Checking RehearsalSchedules...")
         result = await db.execute(select(RehearsalSchedule))
         schedules = result.scalars().all()
-        
+
         for s in schedules:
             print(f"Schedule ID: {s.id}, Project ID: {s.project_id}, Script ID: {s.script_id}")
-            
+
             # Check if script exists
             script_res = await db.execute(select(Script).where(Script.id == s.script_id))
             script = script_res.scalar_one_or_none()

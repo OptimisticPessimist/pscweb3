@@ -1,14 +1,15 @@
 
 import asyncio
-import uuid
+
 from fastapi import BackgroundTasks
 from sqlalchemy import select
-from src.db.base import Base
-from src.db.models import User
-from src.db import get_db
+
 from src.api.projects import create_project
+from src.db import get_db
+from src.db.models import User
 from src.schemas.project import ProjectCreate
 from src.services.discord import DiscordService
+
 
 async def debug_create():
     async for session in get_db():
@@ -23,14 +24,14 @@ async def debug_create():
                 session.add(user)
                 await session.commit()
                 await session.refresh(user)
-            
+
             print(f"Using user: {user.discord_username} ({user.id})")
-            
+
             # 2. Prepare data
             project_data = ProjectCreate(name="Debug Project", description="Created by debug script")
             bg_tasks = BackgroundTasks()
             discord_service = DiscordService()
-            
+
             # 3. Call function
             print("Calling create_project...")
             try:
@@ -42,12 +43,12 @@ async def debug_create():
                     discord_service=discord_service
                 )
                 print(f"SUCCESS! Project created: {project.name} ({project.id})")
-                print(f"Audit log should be created.")
+                print("Audit log should be created.")
             except Exception as e:
                 print(f"FAILURE! create_project raised exception: {e}")
                 import traceback
                 traceback.print_exc()
-                
+
         except Exception as e:
             print(f"Setup error: {e}")
         finally:

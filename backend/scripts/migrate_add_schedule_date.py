@@ -1,7 +1,9 @@
 """Run migration to add schedule_date to attendance_events table."""
 
 import asyncio
+
 from sqlalchemy import text
+
 from src.db import async_session_maker
 
 

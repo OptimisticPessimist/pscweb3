@@ -2,8 +2,8 @@
 
 import pytest
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db.models import Character, Line, Scene, Script, TheaterProject, User
 from src.services.scene_chart_generator import generate_scene_chart
@@ -45,7 +45,7 @@ async def test_generate_scene_chart_single_scene(
     )
     db.add_all([line1, line2])
     await db.commit()
-    
+
     # リレーションを含めて再取得
     stmt = select(Script).options(
         selectinload(Script.scenes).selectinload(Scene.lines),
@@ -106,7 +106,7 @@ async def test_generate_scene_chart_multiple_scenes(
     line4 = Line(scene_id=scene2.id, character_id=char3.id, content="D", order=2)
     db.add_all([line1, line2, line3, line4])
     await db.commit()
-    
+
     # リレーションを含めて再取得
     stmt = select(Script).options(
         selectinload(Script.scenes).selectinload(Scene.lines),
@@ -165,7 +165,7 @@ async def test_regenerate_scene_chart(
     line = Line(scene_id=scene.id, character_id=char.id, content="テスト", order=1)
     db.add(line)
     await db.commit()
-    
+
     # リレーションを含めて再取得
     stmt = select(Script).options(
         selectinload(Script.scenes).selectinload(Scene.lines),

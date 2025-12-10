@@ -35,21 +35,21 @@ class DiscordService:
             async with httpx.AsyncClient() as client:
                 if file:
                     import json
-                    
+
                     payload_dict = {"content": content}
                     if embeds:
                         payload_dict["embeds"] = embeds
-                    
+
                     data = {"payload_json": json.dumps(payload_dict)}
                     files = {"file": (file["filename"], file["content"])}
-                    
+
                     response = await client.post(target_url, data=data, files=files)
                 else:
                     payload = {"content": content}
                     if embeds:
                         payload["embeds"] = embeds
                     response = await client.post(target_url, json=payload)
-                
+
                 response.raise_for_status()
                 logger.info("Discord notification sent", url=target_url)
 
@@ -72,7 +72,7 @@ class DiscordService:
 
         url = f"{self.api_base}/channels/{channel_id}/messages"
         headers = {"Authorization": f"Bot {self.bot_token}"}
-        
+
         payload = {"content": content}
         if embeds:
             payload["embeds"] = embeds
@@ -95,35 +95,35 @@ class DiscordService:
 
         import urllib.parse
         encoded_emoji = urllib.parse.quote(emoji)
-        
+
         url = f"{self.api_base}/channels/{channel_id}/messages/{message_id}/reactions/{encoded_emoji}"
         headers = {"Authorization": f"Bot {self.bot_token}"}
-        
+
         all_users = []
         after = None
-        
+
         try:
             async with httpx.AsyncClient() as client:
                 while True:
                     params = {"limit": 100}
                     if after:
                         params["after"] = after
-                        
+
                     response = await client.get(url, headers=headers, params=params)
                     if response.status_code == 404:
                         logger.warning("Message or emoji not found", message_id=message_id)
                         break
                     response.raise_for_status()
-                    
+
                     users = response.json()
                     if not users:
                         break
-                        
+
                     all_users.extend([u["id"] for u in users])
                     after = users[-1]["id"]
                     if len(users) < 100:
                         break
-                        
+
             return all_users
 
         except Exception as e:
