@@ -48,21 +48,40 @@ export const SchedulePage: React.FC = () => {
         },
     });
 
-    const events = schedule?.rehearsals.map(rehearsal => ({
-        id: rehearsal.id,
-        title: rehearsal.scene_heading
-            ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
-            : `Rehearsal (${rehearsal.location || 'TBD'})`,
-        start: rehearsal.date,
-        end: new Date(new Date(rehearsal.date).getTime() + rehearsal.duration_minutes * 60000).toISOString(),
-        allDay: false, // 時間イベントとして扱う
-        backgroundColor: '#3b82f6', // blue-500
-        borderColor: '#2563eb', // blue-600
-        extendedProps: {
-            type: 'rehearsal',
-            ...rehearsal
-        }
-    })) || [];
+    const events = schedule?.rehearsals.map(rehearsal => {
+        const startDate = new Date(rehearsal.date);
+        const endDate = new Date(startDate.getTime() + rehearsal.duration_minutes * 60000);
+
+        // 月表示で日をまたぐ場合、終了時刻を当日の23:59:59に制限
+        // これにより、月表示では1マスに収まる
+        const isSameDay = startDate.getDate() === endDate.getDate() &&
+            startDate.getMonth() === endDate.getMonth() &&
+            startDate.getFullYear() === endDate.getFullYear();
+
+        const displayEnd = isSameDay ? endDate : new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            23, 59, 59
+        );
+
+        return {
+            id: rehearsal.id,
+            title: rehearsal.scene_heading
+                ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
+                : `Rehearsal (${rehearsal.location || 'TBD'})`,
+            start: rehearsal.date,
+            end: displayEnd.toISOString(),
+            allDay: false, // 時間イベントとして扱う
+            backgroundColor: '#3b82f6', // blue-500
+            borderColor: '#2563eb', // blue-600
+            extendedProps: {
+                type: 'rehearsal',
+                actualEndDate: endDate.toISOString(), // 実際の終了時刻を保持
+                ...rehearsal
+            }
+        };
+    }) || [];
 
     const handleDateClick = (arg: any) => {
         setSelectedRehearsalId(null);
