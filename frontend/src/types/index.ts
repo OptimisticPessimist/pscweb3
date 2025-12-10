@@ -130,6 +130,15 @@ export interface RehearsalCastCreate {
     character_id: string;
 }
 
+export interface RehearsalParticipantState {
+    checked: boolean;
+    staffRole: string | null;
+    isCast: boolean;
+    castCharacterId: string | null;
+    userName: string | null;
+    displayName: string | null;
+}
+
 export interface RehearsalCreate {
     scene_id?: string | null; // Deprecated
     scene_ids?: string[];

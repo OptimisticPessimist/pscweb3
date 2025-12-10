@@ -6,6 +6,7 @@ import { scriptsApi } from '@/features/scripts/api/scripts';
 import { projectsApi } from '@/features/projects/api/projects';
 import type { Rehearsal, RehearsalCreate, RehearsalUpdate, RehearsalParticipantCreate, RehearsalCastCreate } from '@/types';
 import { RehearsalParticipants } from './RehearsalParticipants';
+import { useRehearsalParticipants } from '../hooks/useRehearsalParticipants';
 
 interface RehearsalModalProps {
     isOpen: boolean;
@@ -36,15 +37,6 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
     const [attendanceDeadline, setAttendanceDeadline] = useState<string>('');
     const [statusMessage, setStatusMessage] = useState<string>('');
 
-    interface ParticipantState {
-        checked: boolean;
-        staffRole: string | null;
-        isCast: boolean;
-        castCharacterId: string | null;
-        userName: string | null;
-        displayName: string | null;
-    }
-    const [participantsState, setParticipantsState] = useState<Record<string, ParticipantState>>({});
 
     const { data: script } = useQuery({
         queryKey: ['script', scriptId],
@@ -58,65 +50,15 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
         enabled: !!projectId && isOpen,
     });
 
-    // Auto-calculate participants based on scenes
-    // This runs when sceneIds change.
-    useEffect(() => {
-        if (!members || !script) return;
+    const { participantsState, setParticipantsState } = useRehearsalParticipants(
+        isOpen,
+        members,
+        script,
+        sceneIds,
+        rehearsal
+    );
 
-        // If editing existing rehearsal, we initialize state in the other useEffect.
-        // However, if user changes scenes, we might want to update cast status.
-        // We need to merge current state with new calculations.
 
-        setParticipantsState((prevState) => {
-            const newState: Record<string, ParticipantState> = { ...prevState };
-
-            // 1. Identify needed casts from currently selected scenes
-            const targetScenes = script.scenes.filter((s: any) => sceneIds.includes(s.id));
-            const neededCasts: Record<string, string> = {}; // userId -> characterId
-
-            targetScenes.forEach((scene: any) => {
-                scene.lines.forEach((line: any) => {
-                    line.character.castings.forEach((casting: any) => {
-                        neededCasts[casting.user_id] = line.character.id;
-                    });
-                });
-            });
-
-            // 2. Iterate members and update status
-            members.forEach(m => {
-                const uid = m.user_id;
-                const isCast = !!neededCasts[uid];
-                const castCharacterId = neededCasts[uid] || null;
-
-                if (!newState[uid]) {
-                    // New entry (only if not existed)
-                    newState[uid] = {
-                        checked: isCast || !!m.default_staff_role,
-                        staffRole: m.default_staff_role || null,
-                        isCast: isCast,
-                        castCharacterId: castCharacterId,
-                        userName: m.discord_username,
-                        displayName: m.display_name
-                    };
-                } else {
-                    // Update existing entry
-                    const wasCast = newState[uid].isCast;
-                    newState[uid].isCast = isCast;
-                    newState[uid].castCharacterId = castCharacterId;
-
-                    // If newly became cast, auto-check (unless user unchecked it? Hard to know user intent vs old state)
-                    // For now, if became cast and wasn't checked, check it.
-                    if (isCast && !wasCast) {
-                        newState[uid].checked = true;
-                    }
-                    // Updating names just in case
-                    newState[uid].userName = m.discord_username;
-                    newState[uid].displayName = m.display_name;
-                }
-            });
-            return newState;
-        });
-    }, [sceneIds, members, script]); // Removed 'rehearsal' dependency to allow updates
 
     // Initialization Effect
     useEffect(() => {
@@ -132,18 +74,9 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                 setNotes(rehearsal.notes || '');
 
                 // Scene IDs
-                // Backend might return `scene_ids` or we infer from single `scene_id` if older.
-                // Assuming backend update is deployed but data might be mixed.
-                // Currently `Rehearsal` type in frontend doesn't have `scene_ids` populated correctly unless we updated type?
-                // We updated `RehearsalCreate` type, but `Rehearsal` response type?
-                // `Rehearsal` response type implies `scene_id` field.
-                // If backend returns `scenes` relation? We need to use it.
-                // Since Type might be missing `scenes` or `scene_ids` in response interface (I didn't update Rehearsal response interface),
-                // we might need to rely on `scene_id` for now or assume `any`.
-                // Better approach: Use whatever we have.
-                const r = rehearsal as any;
-                if (r.scenes && Array.isArray(r.scenes)) {
-                    setSceneIds(r.scenes.map((s: any) => s.id));
+                // Use scenes relations if available (new backend), fallback to scene_id (legacy)
+                if (rehearsal.scenes && rehearsal.scenes.length > 0) {
+                    setSceneIds(rehearsal.scenes.map(s => s.id));
                 } else if (rehearsal.scene_id) {
                     setSceneIds([rehearsal.scene_id]);
                 } else {
@@ -185,37 +118,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
     }, [isOpen, rehearsal, initialDate]);
 
     // One-time initialization from Rehearsal Data (when members and rehearsal are both ready)
-    const [isRehearsalDataLoaded, setIsRehearsalDataLoaded] = useState(false);
-    useEffect(() => {
-        if (isOpen && rehearsal && members && !isRehearsalDataLoaded) {
-            setParticipantsState(prev => {
-                const newState = { ...prev };
-                members.forEach(m => {
-                    const p = rehearsal.participants?.find((rp: any) => rp.user_id === m.user_id);
-                    const c = rehearsal.casts?.find((rc: any) => rc.user_id === m.user_id);
 
-                    // If member exists in rehearsal data, override the "auto-calc" state
-                    // If not, keep auto-calc or unchecked?
-                    // Generally, if editing, we trust the DB state.
-                    const isParticipant = !!p;
-                    const isCastFromDB = !!c;
-
-                    if (newState[m.user_id]) {
-                        newState[m.user_id].checked = isParticipant || isCastFromDB;
-                        newState[m.user_id].staffRole = p?.staff_role || newState[m.user_id].staffRole || null;
-                        // For cast info, we trust the scene calc for "isCast" capability, but DB for actual participation?
-                        // No, "isCast" is property of Scene. 
-                        // "checked" is participation.
-                        // So keep "isCast" from Scene Logic.
-                    }
-                });
-                return newState;
-            });
-            setIsRehearsalDataLoaded(true);
-        } else if (!isOpen) {
-            setIsRehearsalDataLoaded(false);
-        }
-    }, [isOpen, rehearsal, members, isRehearsalDataLoaded]);
 
 
     const createMutation = useMutation({
