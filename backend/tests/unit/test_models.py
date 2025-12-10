@@ -1,7 +1,9 @@
 """データベースモデルのテスト."""
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db.models import (
     Character,
@@ -110,7 +112,17 @@ async def test_create_script_with_scenes_and_characters(
     db.add(line)
 
     await db.commit()
-    await db.refresh(script)
+    
+    # Refresh with eager loading
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(
+            selectinload(Script.scenes),
+            selectinload(Script.characters)
+        )
+    )
+    script = result.scalar_one()
 
     # Assert
     assert script.id is not None
@@ -165,7 +177,14 @@ async def test_character_casting_double_cast(
     db.add(casting1)
     db.add(casting2)
     await db.commit()
-    await db.refresh(character)
+    
+    # Refresh with eager loading
+    result = await db.execute(
+        select(Character)
+        .where(Character.id == character.id)
+        .options(selectinload(Character.castings))
+    )
+    character = result.scalar_one()
 
     # Assert: 同じ役に2人のユーザーが割り当てられている
     assert len(character.castings) == 2

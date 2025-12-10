@@ -1,10 +1,9 @@
-import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
-import { FileText, ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 
-export const ScriptDetailPage: React.FC = () => {
+export const ScriptDetailPage = () => {
     const { projectId, scriptId } = useParams<{ projectId: string; scriptId: string }>();
 
     const { data: script, isLoading } = useQuery({

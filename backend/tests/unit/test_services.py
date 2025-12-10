@@ -1,7 +1,9 @@
 """Fountainパーサーサービスのテスト."""
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db.models import Script, TheaterProject, User
 from src.services.fountain_parser import parse_fountain_and_create_models
@@ -39,7 +41,17 @@ INT. テスト部屋 - DAY
     # Act: Fountainパース
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    await db.refresh(script)
+    
+    # Refresh with eager loading
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(
+            selectinload(Script.scenes),
+            selectinload(Script.characters)
+        )
+    )
+    script = result.scalar_one()
 
     # Assert: シーン、登場人物、セリフが作成されている
     assert len(script.scenes) >= 1, "少なくとも1つのシーンが作成されるはず"
@@ -82,7 +94,14 @@ EXT. 公園 - DAY
     # Act
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    await db.refresh(script)
+    
+    # Refresh with eager loading
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(selectinload(Script.scenes))
+    )
+    script = result.scalar_one()
 
     # Assert: 2つのシーンが作成されている
     assert len(script.scenes) >= 2, "2つのシーンが作成されるはず"
@@ -108,7 +127,17 @@ async def test_parse_fountain_empty_script(
     # Act
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    await db.refresh(script)
+    
+    # Refresh with eager loading
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(
+            selectinload(Script.scenes),
+            selectinload(Script.characters)
+        )
+    )
+    script = result.scalar_one()
 
     # Assert: シーンも登場人物もない
     assert len(script.scenes) == 0
