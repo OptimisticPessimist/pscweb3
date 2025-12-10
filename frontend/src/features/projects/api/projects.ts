@@ -7,6 +7,11 @@ export const projectsApi = {
         return response.data;
     },
 
+    async updateProject(id: string, data: Partial<Project>): Promise<Project> {
+        const response = await apiClient.put(`/projects/${id}`, data);
+        return response.data;
+    },
+
     async getProjectMembers(id: string): Promise<ProjectMember[]> {
         const response = await apiClient.get(`/projects/${id}/members`);
         return response.data;
