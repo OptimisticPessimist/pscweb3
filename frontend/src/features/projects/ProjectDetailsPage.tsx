@@ -56,7 +56,7 @@ export const ProjectDetailsPage = () => {
             type: 'error',
             icon: AlertCircle,
             message: `未回答の出欠確認が${dashboard.pending_attendance_count}件あります`,
-            link: `/projects/${projectId}/schedule`,  // Scheduleページに遷移
+            link: `/projects/${projectId}/attendance`,
         });
     }
 

@@ -17,6 +17,7 @@ import { ScriptListPage } from './features/scripts/pages/ScriptListPage';
 import { ScriptUploadPage } from './features/scripts/pages/ScriptUploadPage';
 import { ScriptDetailPage } from './features/scripts/pages/ScriptDetailPage';
 import { MySchedulePage } from '@/features/schedule/MySchedulePage';
+import { AttendancePage } from '@/features/attendance/AttendancePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ function App() {
                 <Route path="/projects/:projectId/cast" element={<CastingPage />} />
                 <Route path="/projects/:projectId/staff" element={<StaffPage />} />
                 <Route path="/projects/:projectId/schedule" element={<SchedulePage />} />
+                <Route path="/projects/:projectId/attendance" element={<AttendancePage />} />
                 <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
               </Route>
             </Route>
