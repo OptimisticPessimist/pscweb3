@@ -1,0 +1,64 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.0.1, pluggy-1.6.0 -- F:\src\PythonProject\pscweb3-1\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\src\PythonProject\pscweb3-1\backend
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+tests/unit/test_models.py::test_create_user PASSED                       [ 25%]
+tests/unit/test_models.py::test_create_project PASSED                    [ 50%]
+tests/unit/test_models.py::test_create_script_with_scenes_and_characters PASSED [ 75%]
+tests/unit/test_models.py::test_character_casting_double_cast PASSED     [100%]
+
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.1-final-0 _______________
+
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+src\__init__.py                             0      0   100%
+src\api\__init__.py                         0      0   100%
+src\api\attendance.py                     132    132     0%   3-342
+src\api\auth.py                            92     92     0%   3-169
+src\api\auth_helper.py                     38     38     0%   1-84
+src\api\characters.py                      80     80     0%   3-285
+src\api\dashboard.py                       39     39     0%   3-139
+src\api\interactions.py                   102    102     0%   3-183
+src\api\invitations.py                     70     70     0%   1-166
+src\api\my_schedule.py                     52     52     0%   1-122
+src\api\projects.py                       201    201     0%   1-625
+src\api\rehearsals.py                     343    343     0%   3-1087
+src\api\scene_charts.py                    53     53     0%   3-157
+src\api\scripts.py                         49     49     0%   3-194
+src\api\users.py                           43     43     0%   3-145
+src\auth\__init__.py                        0      0   100%
+src\auth\discord.py                        26     26     0%   3-84
+src\auth\jwt.py                            25     25     0%   1-52
+src\config.py                              16      0   100%
+src\db\__init__.py                          8      2    75%   32-33
+src\db\base.py                              3      0   100%
+src\db\models.py                          211      0   100%
+src\main.py                                40     40     0%   3-91
+src\schemas\__init__.py                     0      0   100%
+src\schemas\attendance.py                  36     36     0%   3-56
+src\schemas\auth.py                        11     11     0%   3-22
+src\schemas\character.py                   18     18     0%   3-30
+src\schemas\dashboard.py                   29     29     0%   3-49
+src\schemas\invitation.py                  18     18     0%   1-25
+src\schemas\project.py                     51     51     0%   1-83
+src\schemas\rehearsal.py                   54     54     0%   3-99
+src\schemas\scene_chart.py                 19     19     0%   3-38
+src\schemas\schedule.py                    18     18     0%   1-29
+src\schemas\script.py                      39     39     0%   3-72
+src\services\__init__.py                    0      0   100%
+src\services\attendance.py                 55     55     0%   3-183
+src\services\discord.py                    86     86     0%   3-136
+src\services\fountain_parser.py            57     57     0%   3-111
+src\services\pdf_generator.py              32     32     0%   1-55
+src\services\scene_chart_generator.py      20     20     0%   3-50
+src\services\script_notification.py        15     15     0%   3-46
+src\services\script_processor.py           84     84     0%   3-292
+---------------------------------------------------------------------
+TOTAL                                    2265   2029    10%
+============================== 4 passed in 0.43s ==============================

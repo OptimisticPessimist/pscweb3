@@ -1,0 +1,29 @@
+﻿uv : warning: The following rules have been removed and ignoring the
+m has no effect:
+At line:1 char:1
++ uv run ruff check src --select D --output-format=concise 2>&1 | Ou
+t-F ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: The fo... has 
+    no effect::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    - ANN101
+    - ANN102
+
+src\api\auth_helper.py:1:1: D100 Missing docstring in public module
+src\api\auth_helper.py:10:11: D103 Missing docstring in public function
+src\api\characters.py:92:11: D417 Missing argument descriptions in the docstring for `add_casting`: `background_tasks`, `discord_service`
+src\api\characters.py:204:11: D417 Missing argument descriptions in the docstring for `remove_casting`: `background_tasks`, `discord_service`
+src\api\my_schedule.py:19:7: D101 Missing docstring in public class
+src\api\my_schedule.py:33:7: D101 Missing docstring in public class
+src\api\my_schedule.py:42:5: D200 One-line docstring should fit on one line
+src\api\my_schedule.py:42:5: D212 [*] Multi-line docstring summary should start at the first line
+src\api\rehearsals.py:869:11: D417 Missing argument descriptions in the docstring for `delete_rehearsal`: `background_tasks`, `discord_service`
+src\dependencies\auth.py:1:1: D100 Missing docstring in public module
+src\main.py:43:11: D103 Missing docstring in public function
+src\schemas\invitation.py:9:5: D415 First line should end with a period, question mark, or exclamation point
+src\schemas\invitation.py:14:5: D415 First line should end with a period, question mark, or exclamation point
+src\schemas\invitation.py:26:5: D415 First line should end with a period, question mark, or exclamation point
+Found 14 errors.
+[*] 1 fixable with the `--fix` option (4 hidden fixes can be enabled with the `--unsafe-fixes` option).

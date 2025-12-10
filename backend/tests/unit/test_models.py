@@ -68,6 +68,9 @@ async def test_create_script_with_scenes_and_characters(
     db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """脚本、シーン、登場人物の作成テスト."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    
     # Arrange
     script_title = "ハムレット"
     content = "INT. ELSINORE CASTLE - DAY\n\nHAMLET\nTo be, or not to be..."
@@ -110,7 +113,17 @@ async def test_create_script_with_scenes_and_characters(
     db.add(line)
 
     await db.commit()
-    await db.refresh(script)
+    
+    # リレーションシップを明示的にロード
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(
+            selectinload(Script.scenes),
+            selectinload(Script.characters)
+        )
+    )
+    script = result.scalar_one()
 
     # Assert
     assert script.id is not None
@@ -126,6 +139,9 @@ async def test_character_casting_double_cast(
     db: AsyncSession, test_project: TheaterProject, test_user: User
 ) -> None:
     """ダブルキャストのテスト."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    
     # Arrange: 脚本と登場人物を作成
     script = Script(
         project_id=test_project.id,
@@ -165,7 +181,14 @@ async def test_character_casting_double_cast(
     db.add(casting1)
     db.add(casting2)
     await db.commit()
-    await db.refresh(character)
+    
+    # リレーションシップを明示的にロード
+    result = await db.execute(
+        select(Character)
+        .where(Character.id == character.id)
+        .options(selectinload(Character.castings))
+    )
+    character = result.scalar_one()
 
     # Assert: 同じ役に2人のユーザーが割り当てられている
     assert len(character.castings) == 2

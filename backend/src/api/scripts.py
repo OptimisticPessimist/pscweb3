@@ -23,7 +23,6 @@ from src.db.models import (
     TheaterProject,
     User,
 )
-from src.decorators.auth import check_project_access_deprecated
 from src.dependencies.auth import get_current_user_dep
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.fountain_parser import parse_fountain_and_create_models
