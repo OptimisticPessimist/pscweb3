@@ -9,6 +9,9 @@ export const AttendancePage: React.FC = () => {
     const queryClient = useQueryClient();
     const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
+    const [detailFilter, setDetailFilter] = useState<'all' | 'pending' | 'ok' | 'ng'>('all');
 
     const { data: events, isLoading } = useQuery({
         queryKey: ['attendance', projectId],
@@ -32,6 +35,21 @@ export const AttendancePage: React.FC = () => {
         },
     });
 
+    const bulkRemindMutation = useMutation({
+        mutationFn: async (eventIds: string[]) => {
+            for (const eventId of eventIds) {
+                await attendanceApi.remindPendingUsers(projectId!, eventId);
+            }
+        },
+        onSuccess: () => {
+            alert(`${selectedEvents.size}件の出欠確認にリマインダーを送信しました`);
+            setSelectedEvents(new Set());
+        },
+        onError: () => {
+            alert('一括リマインダー送信に失敗しました');
+        },
+    });
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -47,12 +65,19 @@ export const AttendancePage: React.FC = () => {
     }) : [];
 
     // フィルタリング
-    const filteredEvents = sortedEvents.filter(e => {
+    let filteredEvents = sortedEvents.filter(e => {
         if (filter === 'pending') return e.stats.pending > 0;
         if (filter === 'ok') return e.stats.ok > 0;
         if (filter === 'ng') return e.stats.ng > 0;
         return true; // 'all'
     });
+
+    // 検索フィルタ（イベントタイトルで検索）
+    if (searchQuery) {
+        filteredEvents = filteredEvents.filter(e =>
+            e.title.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }
 
     // 未回答のイベントのみ（アラート用）
     const pendingEvents = sortedEvents.filter(e => e.stats.pending > 0);
@@ -62,6 +87,34 @@ export const AttendancePage: React.FC = () => {
             <div className="bg-white shadow rounded-lg p-6">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">出欠確認</h1>
                 <p className="text-sm text-gray-600">プロジェクトの出欠確認一覧</p>
+
+                {/* 検索バー */}
+                <div className="mt-4">
+                    <input
+                        type="text"
+                        placeholder="イベントタイトルで検索..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                </div>
+
+                {/* 一括操作 */}
+                {selectedEvents.size > 0 && (
+                    <div className="mt-4 p-3 bg-indigo-50 border border-indigo-200 rounded flex items-center justify-between">
+                        <p className="text-sm text-indigo-800">
+                            {selectedEvents.size}件選択中
+                        </p>
+                        <button
+                            onClick={() => bulkRemindMutation.mutate(Array.from(selectedEvents))}
+                            disabled={bulkRemindMutation.isPending}
+                            className="flex items-center px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            <Bell className="h-4 w-4 mr-1" />
+                            一括リマインド送信
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* 未回答の出欠確認 */}
@@ -130,6 +183,26 @@ export const AttendancePage: React.FC = () => {
                         filteredEvents.map((event) => (
                             <div key={event.id} className="p-6">
                                 <div className="flex items-start justify-between">
+                                    {/* チェックボックス */}
+                                    {event.stats.pending > 0 && (
+                                        <div className="mr-3 mt-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedEvents.has(event.id)}
+                                                onChange={(e) => {
+                                                    const newSelected = new Set(selectedEvents);
+                                                    if (e.target.checked) {
+                                                        newSelected.add(event.id);
+                                                    } else {
+                                                        newSelected.delete(event.id);
+                                                    }
+                                                    setSelectedEvents(newSelected);
+                                                }}
+                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="flex-1">
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
                                             {event.title}
@@ -204,21 +277,58 @@ export const AttendancePage: React.FC = () => {
                                 {/* 詳細表示 */}
                                 {expandedEvent === event.id && eventDetail && (
                                     <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <h4 className="text-sm font-semibold text-gray-700 mb-3">回答状況</h4>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-sm font-semibold text-gray-700">回答状況</h4>
+                                            <div className="flex space-x-2">
+                                                <button
+                                                    onClick={() => setDetailFilter('all')}
+                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'all' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    全て
+                                                </button>
+                                                <button
+                                                    onClick={() => setDetailFilter('pending')}
+                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'pending' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    未回答
+                                                </button>
+                                                <button
+                                                    onClick={() => setDetailFilter('ok')}
+                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'ok' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    OK
+                                                </button>
+                                                <button
+                                                    onClick={() => setDetailFilter('ng')}
+                                                    className={`px-2 py-1 text-xs rounded ${detailFilter === 'ng' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'
+                                                        }`}
+                                                >
+                                                    NG
+                                                </button>
+                                            </div>
+                                        </div>
                                         <div className="space-y-2">
-                                            {eventDetail.targets.map((target) => (
-                                                <div key={target.user_id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
-                                                    <span className="text-sm text-gray-900">
-                                                        {target.display_name || target.discord_username}
-                                                    </span>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
-                                                        target.status === 'ng' ? 'bg-red-100 text-red-800' :
-                                                            'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                        {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {eventDetail.targets
+                                                .filter(target => {
+                                                    if (detailFilter === 'all') return true;
+                                                    return target.status === detailFilter;
+                                                })
+                                                .map((target) => (
+                                                    <div key={target.user_id} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded">
+                                                        <span className="text-sm text-gray-900">
+                                                            {target.display_name || target.discord_username}
+                                                        </span>
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${target.status === 'ok' ? 'bg-green-100 text-green-800' :
+                                                                target.status === 'ng' ? 'bg-red-100 text-red-800' :
+                                                                    'bg-yellow-100 text-yellow-800'
+                                                            }`}>
+                                                            {target.status === 'ok' ? 'OK' : target.status === 'ng' ? 'NG' : '未回答'}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                         </div>
                                     </div>
                                 )}
