@@ -29,7 +29,7 @@ from src.services.fountain_parser import parse_fountain_and_create_models
 from src.services.scene_chart_generator import generate_scene_chart
 from src.services.discord import DiscordService, get_discord_service
 
-router = APIRouter(prefix="/scripts", tags=["scripts"])
+router = APIRouter(tags=["scripts"])
 
 
 # ===========================
