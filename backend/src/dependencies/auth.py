@@ -1,3 +1,5 @@
+"""認証関連の依存性注入."""
+
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 

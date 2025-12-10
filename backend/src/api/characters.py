@@ -104,8 +104,10 @@ async def add_casting(
         project_id: プロジェクトID
         character_id: キャラクターID
         casting_data: キャスティングデータ
+        background_tasks: バックグラウンドタスク
         editor_member: 実行者（編集者以上）
         db: DBセッション
+        discord_service: Discordサービス
         
     Returns:
         list[CastingUser]: 更新後のキャストリスト
@@ -216,8 +218,10 @@ async def remove_casting(
         project_id: プロジェクトID
         character_id: キャラクターID
         delete_data: 解除データ（ユーザーID指定）
+        background_tasks: バックグラウンドタスク
         editor_member: 実行者
         db: DBセッション
+        discord_service: Discordサービス
         
     Returns:
         list[CastingUser]: 更新後のキャストリスト

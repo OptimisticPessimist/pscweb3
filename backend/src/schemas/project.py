@@ -1,3 +1,5 @@
+"""プロジェクト関連スキーマ."""
+
 from datetime import datetime
 from uuid import UUID
 

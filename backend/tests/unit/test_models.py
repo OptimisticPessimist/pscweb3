@@ -112,7 +112,7 @@ async def test_create_script_with_scenes_and_characters(
     db.add(line)
 
     await db.commit()
-    
+
     # Refresh with eager loading
     result = await db.execute(
         select(Script)
@@ -177,7 +177,7 @@ async def test_character_casting_double_cast(
     db.add(casting1)
     db.add(casting2)
     await db.commit()
-    
+
     # Refresh with eager loading
     result = await db.execute(
         select(Character)

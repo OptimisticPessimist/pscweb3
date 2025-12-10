@@ -1,4 +1,7 @@
-from datetime import datetime, timedelta
+"""マイスケジュールAPI."""
+
+import json
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -14,6 +17,8 @@ router = APIRouter()
 
 
 class MyScheduleEvent(BaseModel):
+    """マイスケジュールイベントのデータモデル."""
+    
     id: str
     title: str
     start: datetime
@@ -28,6 +33,8 @@ class MyScheduleEvent(BaseModel):
 
 
 class MyScheduleResponse(BaseModel):
+    """マイスケジュールレスポンス."""
+    
     events: list[MyScheduleEvent]
 
 
@@ -36,9 +43,7 @@ async def get_my_schedule(
     current_user: User = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Get all rehearsals and milestones for all projects the user is a member of.
-    """
+    """ユーザーがメンバーとなっている全プロジェクトの稽古とマイルストーンを取得する."""
     # 1. Get all projects the user is a member of
     stmt = select(ProjectMember).where(
         ProjectMember.user_id == current_user.id

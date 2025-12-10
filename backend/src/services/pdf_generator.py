@@ -1,4 +1,8 @@
+"""PDF生成サービス."""
+
 import os
+import io
+from uuid import UUID
 
 from playscript.conv import fountain, pdf
 from reportlab.pdfbase import pdfmetrics

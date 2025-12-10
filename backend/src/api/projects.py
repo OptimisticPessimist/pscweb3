@@ -1,3 +1,5 @@
+"""プロジェクト管理APIエンドポイント."""
+
 from datetime import UTC
 from uuid import UUID
 

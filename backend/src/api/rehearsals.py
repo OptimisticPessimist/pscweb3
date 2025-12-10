@@ -874,15 +874,17 @@ async def delete_rehearsal(
     discord_service: DiscordService = Depends(get_discord_service),
 ) -> dict[str, str]:
     """稽古を削除.
-
+    
     Args:
         rehearsal_id: 稽古ID
+        background_tasks: バックグラウンドタスク
         current_user: 認証ユーザー
         db: データベースセッション
-
+        discord_service: Discordサービス
+        
     Returns:
         dict: 成功メッセージ
-
+        
     Raises:
         HTTPException: 認証エラーまたは権限エラー
     """

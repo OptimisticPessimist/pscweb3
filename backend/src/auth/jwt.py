@@ -1,5 +1,7 @@
+"""JWTトークン認証ユーティリティ."""
+
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from typing import AnyUUID
 
 from jose import JWTError, jwt
 from sqlalchemy import select

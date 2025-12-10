@@ -1,3 +1,5 @@
+"""Discord認証ヘルパースクリプト."""
+
 import asyncio
 import json
 import sys
@@ -6,6 +8,7 @@ import httpx
 
 
 async def exchange_token(token_endpoint, data):
+    """Discordアクセストークンとユーザー情報を交換する."""
     try:
         async with httpx.AsyncClient() as client:
             # 1. トークン取得

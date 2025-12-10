@@ -41,7 +41,7 @@ INT. テスト部屋 - DAY
     # Act: Fountainパース
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    
+
     # Refresh with eager loading
     result = await db.execute(
         select(Script)
@@ -94,7 +94,7 @@ EXT. 公園 - DAY
     # Act
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    
+
     # Refresh with eager loading
     result = await db.execute(
         select(Script)
@@ -127,7 +127,7 @@ async def test_parse_fountain_empty_script(
     # Act
     await parse_fountain_and_create_models(script, fountain_content, db)
     await db.commit()
-    
+
     # Refresh with eager loading
     result = await db.execute(
         select(Script)

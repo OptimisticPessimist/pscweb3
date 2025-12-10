@@ -1,3 +1,5 @@
+"""プロジェクト招待API."""
+
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -21,7 +23,7 @@ async def create_invitation(
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ):
-    """招待リンクを作成する（管理者のみ）。"""
+    """招待リンクを作成する（管理者のみ）."""
     if not current_user:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
@@ -72,7 +74,7 @@ async def get_invitation(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """招待情報を取得する（ログイン不要）。"""
+    """招待情報を取得する（ログイン不要）."""
     query = select(ProjectInvitation).options(
         selectinload(ProjectInvitation.project),
         selectinload(ProjectInvitation.creator)
@@ -108,7 +110,7 @@ async def accept_invitation(
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
 ):
-    """招待を受諾してプロジェクトに参加する。"""
+    """招待を受諾してプロジェクトに参加する."""
     if not current_user:
         raise HTTPException(status_code=401, detail="認証が必要です")
 

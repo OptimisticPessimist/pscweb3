@@ -42,7 +42,7 @@ async def get_current_user_info(
         HTTPException: 認証エラー
     """
     if not authorization.startswith("Bearer "):
-         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+         raise HTTPException(status_code=401, detail="無効な認証方式です")
 
     token = authorization.split(" ")[1]
 
@@ -123,7 +123,7 @@ async def get_my_schedule(
         items.append(ScheduleItem(
             id=r.id,
             type="rehearsal",
-            title=f"Rehearsal: {r.scene.heading if r.scene else 'No Scene'}",
+            title=f"稽古: {r.scene.heading if r.scene else 'シーンなし'}",
             date=r.date,
             end_date=end_date,
             project_id=project.id,

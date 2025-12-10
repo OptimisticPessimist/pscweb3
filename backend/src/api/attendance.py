@@ -24,13 +24,13 @@ router = APIRouter()
 
 
 def ensure_utc(dt: datetime | None) -> datetime | None:
-    """Ensure datetime has UTC timezone.
+    """日時オブジェクトがUTCタイムゾーンを持つことを保証する.
     
     Args:
-        dt: Datetime object to convert
+        dt: 変換対象の日時オブジェクト
         
     Returns:
-        Datetime with UTC timezone, or None if input is None
+        UTCタイムゾーン付きの日時、またはNone（入力がNoneの場合）
     """
     if dt is None:
         return None
@@ -59,7 +59,7 @@ async def get_attendance_event(
     event = result.scalar_one_or_none()
 
     if not event:
-        raise HTTPException(status_code=404, detail="Attendance event not found")
+        raise HTTPException(status_code=404, detail="出席確認イベントが見つかりません")
 
     # ユーザー表示名マップ作成
     member_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
@@ -115,9 +115,9 @@ async def update_attendance_targets(
     db: AsyncSession = Depends(get_db),
 ) -> AttendanceEventDetailResponse:
     """出席確認イベントの対象メンバーを更新."""
-    # 権限チェック (Owner/Editor only?)
+    # 権限チェック (Owner/Editor のみ)
     if current_member.role == "viewer":
-         raise HTTPException(status_code=403, detail="Permission denied")
+         raise HTTPException(status_code=403, detail="権限がありません")
 
     # イベント取得
     stmt = (
@@ -129,7 +129,7 @@ async def update_attendance_targets(
     event = result.scalar_one_or_none()
 
     if not event:
-        raise HTTPException(status_code=404, detail="Attendance event not found")
+        raise HTTPException(status_code=404, detail="出席確認イベントが見つかりません")
 
     # 削除処理
     if payload.remove_user_ids:
@@ -235,7 +235,7 @@ async def remind_pending_users(
 
     # 権限チェック
     if current_member.role == "viewer":
-        raise HTTPException(status_code=403, detail="Permission denied")
+        raise HTTPException(status_code=403, detail="権限がありません")
 
     # イベント取得
     stmt = (
@@ -247,13 +247,13 @@ async def remind_pending_users(
     event = result.scalar_one_or_none()
 
     if not event:
-        raise HTTPException(status_code=404, detail="Attendance event not found")
+        raise HTTPException(status_code=404, detail="出席確認イベントが見つかりません")
 
     # Pendingユーザーを抽出
     pending_targets = [t for t in event.targets if t.status == "pending"]
 
     if not pending_targets:
-        return {"message": "No pending users to remind"}
+        return {"message": "リマインダーを送信する未回答ユーザーがいません"}
 
     # Pendingユーザーのdiscord_idを取得
     pending_user_ids = [t.user_id for t in pending_targets]
@@ -262,12 +262,12 @@ async def remind_pending_users(
     pending_users = user_result.scalars().all()
 
     if not pending_users:
-        return {"message": "No pending users with Discord accounts"}
+        return {"message": "Discordアカウントを持つ未回答ユーザーがいません"}
 
     # プロジェクト取得
     project = await db.get(TheaterProject, project_id)
     if not project or not project.discord_channel_id:
-        raise HTTPException(status_code=400, detail="Discord channel not configured")
+        raise HTTPException(status_code=400, detail="Discordチャンネルが設定されていません")
 
     # メンション作成
     mentions = [f"<@{u.discord_id}>" for u in pending_users]
@@ -292,9 +292,9 @@ async def remind_pending_users(
     )
 
     if not discord_resp:
-        raise HTTPException(status_code=500, detail="Failed to send Discord message")
+        raise HTTPException(status_code=500, detail="Discordメッセージの送信に失敗しました")
 
-    return {"message": f"Reminder sent to {len(pending_users)} pending users"}
+    return {"message": f"{len(pending_users)}名の未回答ユーザーにリマインダーを送信しました"}
 
 
 @router.patch("/{project_id}/attendance/{event_id}/my-status", response_model=AttendanceEventDetailResponse)
@@ -315,7 +315,7 @@ async def update_my_attendance_status(
     event = result.scalar_one_or_none()
 
     if not event:
-        raise HTTPException(status_code=404, detail="Attendance event not found")
+        raise HTTPException(status_code=404, detail="出席確認イベントが見つかりません")
 
     # 自分のターゲットレコード取得
     target_stmt = select(AttendanceTarget).where(
@@ -326,11 +326,11 @@ async def update_my_attendance_status(
     target = target_result.scalar_one_or_none()
 
     if not target:
-        raise HTTPException(status_code=404, detail="You are not a target of this attendance event")
+        raise HTTPException(status_code=404, detail="この出席確認イベントの対象ではありません")
 
     # ステータス更新
     if payload.status not in ["ok", "ng", "pending"]:
-        raise HTTPException(status_code=400, detail="Invalid status value")
+        raise HTTPException(status_code=400, detail="無効なステータス値です")
 
     target.status = payload.status
     await db.commit()

@@ -57,9 +57,9 @@ async def test_generate_scene_chart_single_scene(
     # Act: 香盤表を生成
     chart = await generate_scene_chart(script, db)
     await db.commit()
-    
+
     # Refresh with eager loading
-    from src.db.models import SceneChart, SceneChartMapping
+    from src.db.models import SceneChart
     result = await db.execute(
         select(SceneChart)
         .where(SceneChart.id == chart.id)
@@ -126,9 +126,9 @@ async def test_generate_scene_chart_multiple_scenes(
     # Act
     chart = await generate_scene_chart(script, db)
     await db.commit()
-    
+
     # Refresh with eager loading
-    from src.db.models import SceneChart, SceneChartMapping
+    from src.db.models import SceneChart
     result = await db.execute(
         select(SceneChart)
         .where(SceneChart.id == chart.id)
