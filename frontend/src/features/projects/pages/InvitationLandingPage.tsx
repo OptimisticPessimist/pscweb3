@@ -22,7 +22,7 @@ export const InvitationLandingPage: React.FC = () => {
         onSuccess: (data) => {
             navigate(`/projects/${data.project_id}`);
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
             alert(`Failed to join project: ${err.message || 'Unknown error'}`);
         }
     });

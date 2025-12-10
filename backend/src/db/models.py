@@ -309,6 +309,24 @@ class Rehearsal(Base):
     casts: Mapped[list["RehearsalCast"]] = relationship(
         back_populates="rehearsal", lazy="selectin", cascade="all, delete-orphan"
     )
+    scenes: Mapped[list["Scene"]] = relationship(
+        secondary="rehearsal_scenes", lazy="selectin"
+    )
+
+
+class RehearsalScene(Base):
+    """稽古とシーンの紐付け（多対多）."""
+
+    __tablename__ = "rehearsal_scenes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    rehearsal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rehearsals.id"))
+    scene_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scenes.id"))
+
+    # ユニーク制約
+    __table_args__ = (
+        UniqueConstraint("rehearsal_id", "scene_id", name="uq_rehearsal_scene"),
+    )
 
 
 class RehearsalParticipant(Base):

@@ -19,7 +19,7 @@ export const ScriptListPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['scripts', projectId] });
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             alert(`Failed to delete script: ${error.message || 'Unknown error'}`);
         }
     });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { scriptsApi } from '../api/scripts';
+import type { ApiError } from '@/types';
 
 interface ScriptUploadModalProps {
     projectId: string;
@@ -30,16 +31,19 @@ export const ScriptUploadModal = ({ projectId, isOpen, onClose, initialTitle }: 
     }, [isOpen, initialTitle, setValue]);
 
     const uploadMutation = useMutation({
-        mutationFn: (data: UploadFormData) =>
-            scriptsApi.uploadScript(projectId, data.file[0], data.title),
+        mutationFn: (data: UploadFormData) => {
+            const formData = new FormData();
+            formData.append('script_file', data.file[0]);
+            formData.append('title', data.title);
+            formData.append('is_public', 'false'); // Default to false
+            return scriptsApi.uploadScript(projectId, formData);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['scripts', projectId] });
-            // リセットは onClose で行うかここでやるか
-            // onSuccessで閉じたいならここで
             reset();
             onClose();
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             console.error('Upload failed:', error);
             console.error('Error Response Data:', error.response?.data);
 
@@ -50,7 +54,7 @@ export const ScriptUploadModal = ({ projectId, isOpen, onClose, initialTitle }: 
                 errorMessage = detail;
             } else if (Array.isArray(detail)) {
                 // Pydantic validation error list
-                errorMessage = detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join('\n');
+                errorMessage = detail.map((err: { loc: (string | number)[]; msg: string }) => `${err.loc.join('.')}: ${err.msg}`).join('\n');
             } else if (typeof detail === 'object') {
                 errorMessage = JSON.stringify(detail);
             }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Project } from '@/types';
+import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../api/projects';
 import { ProjectDetailsHeader } from '../components/ProjectDetailsHeader';
 import { InvitationPanel } from '../components/InvitationPanel';
@@ -37,7 +38,7 @@ export const ProjectSettingsPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['projectMembers', projectId] });
             alert('Member removed successfully.');
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             alert(`Failed to remove member: ${error.message || 'Unknown error'}`);
         }
     });
@@ -230,19 +231,19 @@ export const ProjectSettingsPage: React.FC = () => {
     );
 };
 
-const ProjectUpdateForm: React.FC<{ project: any, projectId: string, queryClient: any }> = ({ project, projectId, queryClient }) => {
+const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryClient: QueryClient }> = ({ project, projectId, queryClient }) => {
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || '');
     const [webhookUrl, setWebhookUrl] = useState(project.discord_webhook_url || '');
     const [channelId, setChannelId] = useState(project.discord_channel_id || '');
 
     const updateProjectMutation = useMutation({
-        mutationFn: (data: any) => projectsApi.updateProject(projectId, data),
+        mutationFn: (data: Partial<Project>) => projectsApi.updateProject(projectId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['project', projectId] });
             alert('Project settings updated.');
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             alert(`Failed to update settings: ${error.message || 'Unknown error'}`);
         }
     });
