@@ -3,7 +3,7 @@
 from uuid import UUID
 
 from src.db.models import Script, TheaterProject, User
-from src.services.discord_service import DiscordService
+from src.services.discord import DiscordService
 
 
 async def send_script_notification(
