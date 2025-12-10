@@ -50,7 +50,29 @@ export const ProjectSettingsPage: React.FC = () => {
         <div className="space-y-6">
             <ProjectDetailsHeader project={project} />
 
-            <div className="bg-white shadow sm:rounded-lg">
+            <div className="bg-white shadow sm:rounded-lg mb-6">
+                <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">General Settings</h3>
+                    <div className="mt-5 max-w-xl">
+                        {isOwner ? (
+                            <ProjectUpdateForm project={project} projectId={projectId!} queryClient={queryClient} />
+                        ) : (
+                            <div className="space-y-4">
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Project Name</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{project.name}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Description</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{project.description || 'No description'}</dd>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">Project Members & Staff Roles</h3>
                     <div className="mt-5">
@@ -205,5 +227,101 @@ export const ProjectSettingsPage: React.FC = () => {
                 <InvitationPanel projectId={projectId!} />
             )}
         </div>
+    );
+};
+
+const ProjectUpdateForm: React.FC<{ project: any, projectId: string, queryClient: any }> = ({ project, projectId, queryClient }) => {
+    const [name, setName] = useState(project.name);
+    const [description, setDescription] = useState(project.description || '');
+    const [webhookUrl, setWebhookUrl] = useState(project.discord_webhook_url || '');
+    const [channelId, setChannelId] = useState(project.discord_channel_id || '');
+
+    const updateProjectMutation = useMutation({
+        mutationFn: (data: any) => projectsApi.updateProject(projectId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+            alert('Project settings updated.');
+        },
+        onError: (error: any) => {
+            alert(`Failed to update settings: ${error.message || 'Unknown error'}`);
+        }
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        updateProjectMutation.mutate({
+            name,
+            description,
+            discord_webhook_url: webhookUrl,
+            discord_channel_id: channelId
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Project Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                />
+            </div>
+            <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Discord Integration</h4>
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-700">Webhook URL</label>
+                        <div className="mt-1 flex rounded-md shadow-sm">
+                            <input
+                                type="text"
+                                id="webhookUrl"
+                                value={webhookUrl}
+                                onChange={(e) => setWebhookUrl(e.target.value)}
+                                className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="https://discord.com/api/webhooks/..."
+                            />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">For sending notifications (script uploads, milestones)</p>
+                    </div>
+                    <div>
+                        <label htmlFor="channelId" className="block text-sm font-medium text-gray-700">Channel ID</label>
+                        <input
+                            type="text"
+                            id="channelId"
+                            value={channelId}
+                            onChange={(e) => setChannelId(e.target.value)}
+                            className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="123456789012345678"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">For attendance check mentions and event linking</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="pt-4">
+                <button
+                    type="submit"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    disabled={updateProjectMutation.isPending}
+                >
+                    {updateProjectMutation.isPending ? 'Saving...' : 'Save Settings'}
+                </button>
+            </div>
+        </form>
     );
 };
