@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { myScheduleApi } from './api/mySchedule';
 
 export const MySchedulePage: React.FC = () => {
-    const { data: mySchedule, isLoading } = useQuery({
+    const { data: mySchedule, isLoading, error } = useQuery({
         queryKey: ['mySchedule'],
         queryFn: () => myScheduleApi.getMySchedule(),
     });
@@ -77,7 +77,14 @@ ${props.notes ? `備考: ${props.notes}` : ''}
                 {/* Debug Info */}
                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
                     <p><strong>Debug:</strong></p>
+                    <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
                     <p>API Response: {mySchedule ? 'Loaded' : 'None'}</p>
+                    <p>Error: {error ? (error as any).message || 'Yes' : 'None'}</p>
+                    {error && (
+                        <pre className="mt-2 p-2 bg-red-50 border border-red-200 rounded overflow-auto max-h-40">
+                            {JSON.stringify((error as any).response?.data || error, null, 2)}
+                        </pre>
+                    )}
                     <p>Events Count: {mySchedule?.events?.length || 0}</p>
                     <p>Calendar Events: {events.length}</p>
                     {mySchedule?.events && mySchedule.events.length > 0 && (
