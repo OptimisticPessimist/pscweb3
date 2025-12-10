@@ -103,8 +103,8 @@ export const SceneChartPage = () => {
                                     // Sort characters? Maybe by name?
                                     // Ideally specific order.
                                     return uniqueChars.map(char => (
-                                        <th key={char.id} scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                            <div className="transform -rotate-45 origin-bottom-left translate-x-4 mb-2 whitespace-nowrap">
+                                        <th key={char.id} scope="col" className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                                            <div style={{ writingMode: 'vertical-rl', textOrientation: 'upright' }} className="mx-auto whitespace-nowrap h-32 flex items-center justify-center">
                                                 {char.name}
                                             </div>
                                         </th>
