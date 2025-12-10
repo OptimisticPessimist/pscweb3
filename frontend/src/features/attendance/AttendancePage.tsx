@@ -350,7 +350,8 @@ export const AttendancePage: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            ))
+                            );
+                        })
                     )}
                 </div>
             </div>
