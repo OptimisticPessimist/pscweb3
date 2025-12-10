@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '@/features/scripts/api/scripts';
 import { sceneChartsApi } from '@/features/scene_charts/api/sceneCharts';
-import type { SceneChart } from '@/types';
 
 export const SceneChartPage = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const [selectedScriptId, setSelectedScriptId] = useState<string>('');
-    const queryClient = useQueryClient();
 
     // 1. プロジェクトの脚本一覧を取得
     const { data: scripts, isLoading: scriptsLoading } = useQuery({
@@ -36,7 +34,7 @@ export const SceneChartPage = () => {
     }, [scripts, selectedScriptId]);
 
     // 3. 選択された脚本の香盤表を取得
-    const { data: chart, isLoading: chartLoading, error: chartError } = useQuery({
+    const { data: chart, isLoading: chartLoading } = useQuery({
         queryKey: ['sceneChart', selectedScriptId],
         queryFn: () => sceneChartsApi.getSceneChart(selectedScriptId),
         enabled: !!selectedScriptId,
@@ -62,21 +60,6 @@ export const SceneChartPage = () => {
                         </p>
                     )}
                 </div>
-            </div>
-
-            {/* Debug Panel */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded text-xs overflow-auto max-h-40">
-                <p><strong>Debug Info:</strong></p>
-                <p>Project ID: {projectId}</p>
-                <p>Scripts Loading: {scriptsLoading ? 'Yes' : 'No'}</p>
-                <p>Scripts: {scripts ? `${scripts.length} loaded` : 'undefined'}</p>
-                {scripts && scripts.map(s => <div key={s.id}>{s.id} - {s.title} ({s.uploaded_at})</div>)}
-                <p>Selected Script ID: {selectedScriptId}</p>
-                <p>Chart Loading: {chartLoading ? 'Yes' : 'No'}</p>
-                <p>Chart Error: {chartError ? JSON.stringify((chartError as any).response?.data || chartError) : 'None'}</p>
-                <p>Chart Data: {chart ? 'Loaded' : 'None'}</p>
-                {chart && <p>Scene Count: {chart.scenes.length}</p>}
-                {chart && chart.scenes.length > 0 && <p>Sample Scene: {JSON.stringify(chart.scenes[0])}</p>}
             </div>
 
             {/* Matrix View */}
