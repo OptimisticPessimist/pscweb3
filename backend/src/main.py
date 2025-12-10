@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users
+from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard
 from src.config import settings
 from src.core.logger import configure_logger
 from src.middleware.request_logging import RequestLoggingMiddleware
@@ -57,6 +57,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["認証"])
 app.include_router(projects.router, prefix="/api/projects", tags=["プロジェクト"])
 app.include_router(invitations.router, prefix="/api/invitations", tags=["招待"])
+app.include_router(attendance.router, prefix="/api/projects", tags=["出欠確認"])
+app.include_router(interactions.router, prefix="/api", tags=["Discord Interactions"])
 # 香盤表はscriptsの下 (scripts.routerより先に定義して、具体的なパスを優先させる)
 app.include_router(scene_charts.router, prefix="/api/scripts", tags=["香盤表"]) 
 app.include_router(scripts.router, prefix="/api/scripts", tags=["脚本"])
@@ -64,6 +66,7 @@ app.include_router(scripts.router, prefix="/api/scripts", tags=["脚本"])
 app.include_router(characters.router, prefix="/api/projects", tags=["キャスティング"])
 app.include_router(rehearsals.project_router, prefix="/api/projects", tags=["稽古スケジュール"])
 app.include_router(rehearsals.router, prefix="/api", tags=["稽古スケジュール"])
+app.include_router(dashboard.router, prefix="/api/projects", tags=["ダッシュボード"])
 app.include_router(users.router, prefix="/api/users", tags=["ユーザー"])
 
 

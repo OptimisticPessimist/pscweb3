@@ -25,7 +25,11 @@ if TYPE_CHECKING:
         SceneCharacterMapping,
         Script,
         ProjectInvitation,
+        ProjectInvitation,
         AuditLog,
+        Milestone,
+        AttendanceEvent,
+        AttendanceTarget,
     )
 
 
@@ -41,13 +45,13 @@ class User(Base):
 
     # リレーション
     project_members: Mapped[list["ProjectMember"]] = relationship(
-        back_populates="user", lazy="selectin"
+        back_populates="user", cascade="all, delete-orphan"
     )
     character_castings: Mapped[list["CharacterCasting"]] = relationship(
-        back_populates="user", lazy="selectin"
+        back_populates="user", cascade="all, delete-orphan"
     )
     notification_settings: Mapped["NotificationSettings | None"] = relationship(
-        back_populates="user", lazy="selectin", uselist=False
+        back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
     # invitations (created_by) ? relationship not defined in User usually needed unless back_populates used.
     # checking ProjectInvitation down below, it has creator relationship.
@@ -62,14 +66,15 @@ class TheaterProject(Base):
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     discord_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    discord_channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
     # リレーション
     members: Mapped[list["ProjectMember"]] = relationship(
-        back_populates="project", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="project", cascade="all, delete-orphan"
     )
     scripts: Mapped[list["Script"]] = relationship(
-        back_populates="project", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="project", cascade="all, delete-orphan"
     )
     schedules: Mapped[list["RehearsalSchedule"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
@@ -78,6 +83,9 @@ class TheaterProject(Base):
         back_populates="project", cascade="all, delete-orphan"
     )
     audit_logs: Mapped[list["AuditLog"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    milestones: Mapped[list["Milestone"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
     
@@ -123,13 +131,13 @@ class Script(Base):
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")
     uploader: Mapped["User"] = relationship()
     scenes: Mapped[list["Scene"]] = relationship(
-        back_populates="script", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="script", cascade="all, delete-orphan"
     )
     characters: Mapped[list["Character"]] = relationship(
-        back_populates="script", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="script", cascade="all, delete-orphan"
     )
     scene_chart: Mapped["SceneChart | None"] = relationship(
-        back_populates="script", lazy="selectin", uselist=False, cascade="all, delete-orphan"
+        back_populates="script", uselist=False, cascade="all, delete-orphan"
     )
 
 
@@ -148,7 +156,7 @@ class Scene(Base):
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="scenes")
     lines: Mapped[list["Line"]] = relationship(
-        back_populates="scene", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="scene", cascade="all, delete-orphan"
     )
 
 
@@ -164,10 +172,10 @@ class Character(Base):
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="characters")
     castings: Mapped[list["CharacterCasting"]] = relationship(
-        back_populates="character", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="character", cascade="all, delete-orphan"
     )
     lines: Mapped[list["Line"]] = relationship(
-        back_populates="character", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="character", cascade="all, delete-orphan"
     )
 
 
@@ -187,6 +195,7 @@ class Line(Base):
     character: Mapped["Character"] = relationship(back_populates="lines")
 
 
+
 class SceneChart(Base):
     """香盤表."""
 
@@ -202,7 +211,7 @@ class SceneChart(Base):
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="scene_chart")
     mappings: Mapped[list["SceneCharacterMapping"]] = relationship(
-        back_populates="chart", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="chart", cascade="all, delete-orphan"
     )
 
 
@@ -274,7 +283,7 @@ class RehearsalSchedule(Base):
     project: Mapped["TheaterProject"] = relationship(back_populates="schedules")
     script: Mapped["Script"] = relationship()
     rehearsals: Mapped[list["Rehearsal"]] = relationship(
-        back_populates="schedule", lazy="selectin", cascade="all, delete-orphan"
+        back_populates="schedule", cascade="all, delete-orphan"
     )
 
 
@@ -378,3 +387,62 @@ class AuditLog(Base):
     # リレーション
     user: Mapped["User | None"] = relationship()
     project: Mapped["TheaterProject | None"] = relationship(back_populates="audit_logs")
+
+
+class Milestone(Base):
+    """プロジェクトのマイルストーン（本番、GP、小屋入りなど）."""
+
+    __tablename__ = "milestones"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
+    title: Mapped[str] = mapped_column(String(200))  # "本番初日", "顔合わせ"
+    start_date: Mapped[datetime] = mapped_column(DateTime)  # 日時
+    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 終了日時（任意）
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    location: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # HEX colorカレンダー表示用の色コード (e.g. "#FF0000")
+
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship(back_populates="milestones")
+
+class AttendanceEvent(Base):
+    """出欠確認イベント."""
+
+    __tablename__ = "attendance_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
+    message_id: Mapped[str] = mapped_column(String(50))  # Discord Message ID
+    channel_id: Mapped[str] = mapped_column(String(50))  # Discord Channel ID
+    title: Mapped[str] = mapped_column(String(200))  # イベント名
+    schedule_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 稽古日時
+    deadline: Mapped[datetime] = mapped_column(DateTime)  # 回答期限
+    completed: Mapped[bool] = mapped_column(default=False)  # 完了フラグ
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship()
+    targets: Mapped[list["AttendanceTarget"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
+
+
+class AttendanceTarget(Base):
+    """出欠確認対象者."""
+
+    __tablename__ = "attendance_targets"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("attendance_events.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, reacted, reminded
+
+    # リレーション
+    event: Mapped["AttendanceEvent"] = relationship(back_populates="targets")
+    user: Mapped["User"] = relationship()
+
+    # ユニーク制約
+    __table_args__ = (
+        UniqueConstraint("event_id", "user_id", name="uq_attendance_event_user"),
+    )

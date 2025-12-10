@@ -1,17 +1,28 @@
-"""プロジェクト管理APIエンドポイント."""
-
 from uuid import UUID
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from structlog import get_logger
 
 from src.db import get_db
-from src.db.models import AuditLog, ProjectMember, TheaterProject, User
+from src.db.models import AuditLog, ProjectMember, TheaterProject, User, Milestone
 from src.dependencies.auth import get_current_user_dep
 from src.dependencies.permissions import get_project_member_dep, get_project_owner_dep
-from src.schemas.project import ProjectCreate, ProjectResponse, ProjectMemberResponse, MemberRoleUpdate
+from src.schemas.project import (
+    ProjectCreate,
+    ProjectResponse,
+    ProjectMemberResponse,
+    ProjectUpdate,
+    MemberRoleUpdate,
+    MilestoneCreate,
+    MilestoneResponse,
+)
 from src.services.discord import DiscordService, get_discord_service
+from src.services.attendance import AttendanceService
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -128,6 +139,19 @@ async def list_projects(
     return projects_response
 
 
+def _build_project_response(project: TheaterProject, role: str) -> ProjectResponse:
+    """プロジェクトレスポンスを構築するヘルパー関数."""
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        discord_webhook_url=project.discord_webhook_url,
+        discord_channel_id=project.discord_channel_id,
+        created_at=project.created_at,
+        role=role
+    )
+
+
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(
     project_id: UUID,
@@ -148,14 +172,61 @@ async def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
     
-    return ProjectResponse(
-        id=project.id,
-        name=project.name,
-        description=project.description,
-        discord_webhook_url=project.discord_webhook_url,
-        created_at=project.created_at,
-        role=current_member.role
+    return _build_project_response(project, current_member.role)
+
+
+@router.put("/{project_id}", response_model=ProjectResponse)
+async def update_project(
+    project_id: UUID,
+    project_update: ProjectUpdate,
+    current_member: ProjectMember = Depends(get_project_owner_dep),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectResponse:
+    """プロジェクト情報を更新 (オーナーのみ).
+
+    Args:
+        project_id: プロジェクトID
+        project_update: 更新データ
+        current_member: 実行者（オーナー）
+        db: データベースセッション
+
+    Returns:
+        ProjectResponse: 更新後のプロジェクト情報
+    """
+    project = await db.get(TheaterProject, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
+
+    # 更新
+    if project_update.name is not None:
+        project.name = project_update.name
+    if project_update.description is not None:
+        project.description = project_update.description
+    if project_update.discord_webhook_url is not None:
+        if project_update.discord_webhook_url == "":
+            project.discord_webhook_url = None
+        else:
+            project.discord_webhook_url = project_update.discord_webhook_url
+    if project_update.discord_channel_id is not None:
+        if project_update.discord_channel_id == "":
+            project.discord_channel_id = None
+        else:
+            project.discord_channel_id = project_update.discord_channel_id
+
+    # 監査ログ
+    audit = AuditLog(
+        event="project.update",
+        user_id=current_member.user_id,
+        project_id=project.id,
+        details=f"Project updated. Name: {project.name}, Webhook: {'Set' if project.discord_webhook_url else 'Unset'}",
     )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(project)
+
+    return _build_project_response(project, current_member.role)
+
 
 
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
@@ -414,3 +485,145 @@ async def delete_project(
     return {"message": "プロジェクトを削除しました"}
 
 
+
+
+@router.post("/{project_id}/milestones", response_model=MilestoneResponse)
+async def create_milestone(
+    project_id: UUID,
+    milestone_data: MilestoneCreate,
+    background_tasks: BackgroundTasks,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
+) -> MilestoneResponse:
+    """マイルストーンを作成."""
+    logger.info(f"Create Milestone Request: {milestone_data.model_dump()}")
+
+    if current_member.role == "viewer":
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    # Timezone handling: DB expects naive UTC
+    start_date = milestone_data.start_date
+    if start_date.tzinfo:
+        start_date = start_date.astimezone(timezone.utc).replace(tzinfo=None)
+        
+    end_date = milestone_data.end_date
+    if end_date and end_date.tzinfo:
+        end_date = end_date.astimezone(timezone.utc).replace(tzinfo=None)
+
+    milestone = Milestone(
+        project_id=project_id,
+        title=milestone_data.title,
+        start_date=start_date,
+        end_date=end_date,
+        location=milestone_data.location,
+        color=milestone_data.color,
+    )
+    db.add(milestone)
+    await db.commit()
+    await db.refresh(milestone)
+
+
+    # 出席確認作成（オプション）
+    # 出席確認作成（オプション）
+    logger.info(f"Attendance check request: {milestone_data.create_attendance_check}")
+    if milestone_data.create_attendance_check:
+        project = await db.get(TheaterProject, project_id)
+        if project:
+            logger.info(f"Project found: {project.name}, Channel ID: {project.discord_channel_id}")
+            if project.discord_channel_id:
+                # 期限設定（未指定なら開始日時の24時間前）
+                deadline = milestone_data.attendance_deadline
+                if not deadline:
+                    from datetime import timedelta
+                    deadline = milestone.start_date - timedelta(hours=24)
+                
+                attendance_service = AttendanceService(db, discord_service)
+                title = f"イベント出席確認: {milestone.title}"
+                result = await attendance_service.create_attendance_event(
+                    project=project,
+                    title=title,
+                    deadline=deadline,
+                    schedule_date=milestone.start_date,
+                    location=milestone.location,
+                    description=milestone.description
+                )
+                logger.info(f"Attendance service result: {result}")
+            else:
+                logger.warning("Discord Channel ID is missing")
+        else:
+            logger.warning("Project not found")
+
+    # Discord通知 (Webhook)
+    project = await db.get(TheaterProject, project_id)
+    if project.discord_webhook_url:
+        date_str = milestone.start_date.strftime("%Y/%m/%d")
+        if milestone.end_date:
+            date_str += f" - {milestone.end_date.strftime('%Y/%m/%d')}"
+        
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=f"📅 **新しいマイルストーンが作成されました**\nプロジェクト: {project.name}\nタイトル: {milestone.title}\n日程: {date_str}\n場所: {milestone.location or '未定'}\n詳細: {milestone.description or 'なし'}",
+            webhook_url=project.discord_webhook_url,
+        )
+
+    return MilestoneResponse(
+        id=milestone.id,
+        project_id=milestone.project_id,
+        title=milestone.title,
+        start_date=milestone.start_date,
+        end_date=milestone.end_date,
+        description=milestone.description,
+        location=milestone.location,
+        color=milestone.color,
+    )
+
+
+@router.get("/{project_id}/milestones", response_model=list[MilestoneResponse])
+async def list_milestones(
+    project_id: UUID,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> list[MilestoneResponse]:
+    """マイルストーン一覧を取得."""
+    stmt = select(Milestone).where(Milestone.project_id == project_id).order_by(Milestone.start_date)
+    result = await db.execute(stmt)
+    milestones = result.scalars().all()
+    
+    return [MilestoneResponse.model_validate(m) for m in milestones]
+
+
+@router.delete("/{project_id}/milestones/{milestone_id}", status_code=204)
+async def delete_milestone(
+    project_id: UUID,
+    milestone_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
+) -> None:
+    """マイルストーンを削除."""
+    if current_member.role == "viewer":
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    stmt = select(Milestone).where(Milestone.id == milestone_id, Milestone.project_id == project_id)
+    result = await db.execute(stmt)
+    milestone = result.scalar_one_or_none()
+    
+    if not milestone:
+        raise HTTPException(status_code=404, detail="マイルストーンが見つかりません")
+
+    # Discord通知用データ退避
+    milestone_title = milestone.title
+    
+    await db.delete(milestone)
+    await db.commit()
+
+    # Discord通知
+    project = await db.get(TheaterProject, project_id)
+    if project.discord_webhook_url:
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=f"🗑️ **マイルストーンが削除されました**\nプロジェクト: {project.name}\nタイトル: {milestone_title}",
+            webhook_url=project.discord_webhook_url,
+        )

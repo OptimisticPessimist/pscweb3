@@ -14,6 +14,8 @@ class DiscordService:
     def __init__(self) -> None:
         """初期化."""
         self.default_webhook_url = settings.discord_webhook_url
+        self.bot_token = settings.discord_bot_token
+        self.api_base = "https://discord.com/api/v10"
 
     async def send_notification(
         self,
@@ -22,69 +24,111 @@ class DiscordService:
         embeds: list[dict] | None = None,
         file: dict | None = None,
     ) -> None:
-        """Discordに通知を送信.
-
-        Args:
-            content: メッセージ本文
-            webhook_url: 送信先Webhook URL (指定がなければデフォルト)
-            embeds: 埋め込みメッセージ (オプション)
-            file: 添付ファイル {"filename": str, "content": bytes} (オプション)
-        """
+        """Discordに通知を送信 (Webhook)."""
         target_url = webhook_url or self.default_webhook_url
 
         if not target_url or "discord.com/api/webhooks" not in target_url:
             logger.warning("Invalid or missing Discord Webhook URL", url=target_url)
             return
 
-        # multipart/form-data requests require specific handling
-        if file:
-            files = {
-                "file": (file["filename"], file["content"])
-            }
-            # When sending files, payload_json field can be used for JSON data
-            # OR we can just send data fields. 
-            # httpx handles multipart if 'files' is provided.
-            # We should pass 'content' and 'embeds' as data/json.
-            
-            # Simple approach: content is form field
-            data = {"content": content}
-            # embedded json is tricky in multipart in some libs, but Discord accepts 'payload_json'
-            # Let's try simple fields first.
-            
-            # Note: with files, we use 'data' for non-file fields? 
-            # Discord API says: parameters can be passed as form data.
-            pass
-        else:
-            payload = {"content": content}
-            if embeds:
-                payload["embeds"] = embeds
-
         try:
             async with httpx.AsyncClient() as client:
                 if file:
-                    # Construct multipart request
                     import json
                     
                     payload_dict = {"content": content}
                     if embeds:
                         payload_dict["embeds"] = embeds
                     
-                    # 'payload_json' is the key for the JSON part of the multipart body
                     data = {"payload_json": json.dumps(payload_dict)}
                     files = {"file": (file["filename"], file["content"])}
                     
                     response = await client.post(target_url, data=data, files=files)
                 else:
+                    payload = {"content": content}
+                    if embeds:
+                        payload["embeds"] = embeds
                     response = await client.post(target_url, json=payload)
                 
                 response.raise_for_status()
                 logger.info("Discord notification sent", url=target_url)
 
-
         except httpx.HTTPError as e:
             logger.error("Failed to send Discord notification", error=str(e))
         except Exception as e:
             logger.error("Unexpected error sending Discord notification", error=str(e))
+
+    async def send_channel_message(
+        self,
+        channel_id: str,
+        content: str,
+        embeds: list[dict] | None = None,
+        components: list[dict] | None = None,
+    ) -> dict | None:
+        """チャンネルにメッセージを送信 (Bot)."""
+        if not self.bot_token:
+            logger.warning("Discord Bot Token not configured")
+            return None
+
+        url = f"{self.api_base}/channels/{channel_id}/messages"
+        headers = {"Authorization": f"Bot {self.bot_token}"}
+        
+        payload = {"content": content}
+        if embeds:
+            payload["embeds"] = embeds
+        if components:
+            payload["components"] = components
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error("Failed to send Discord channel message", error=str(e), channel_id=channel_id)
+            return None
+
+    async def get_reactions(self, channel_id: str, message_id: str, emoji: str) -> list[str]:
+        """リアクションをしたユーザーのIDリストを取得."""
+        if not self.bot_token:
+            return []
+
+        import urllib.parse
+        encoded_emoji = urllib.parse.quote(emoji)
+        
+        url = f"{self.api_base}/channels/{channel_id}/messages/{message_id}/reactions/{encoded_emoji}"
+        headers = {"Authorization": f"Bot {self.bot_token}"}
+        
+        all_users = []
+        after = None
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                while True:
+                    params = {"limit": 100}
+                    if after:
+                        params["after"] = after
+                        
+                    response = await client.get(url, headers=headers, params=params)
+                    if response.status_code == 404:
+                        logger.warning("Message or emoji not found", message_id=message_id)
+                        break
+                    response.raise_for_status()
+                    
+                    users = response.json()
+                    if not users:
+                        break
+                        
+                    all_users.extend([u["id"] for u in users])
+                    after = users[-1]["id"]
+                    if len(users) < 100:
+                        break
+                        
+            return all_users
+
+        except Exception as e:
+            logger.error("Failed to get reactions", error=str(e))
+            return []
 
 
 def get_discord_service() -> DiscordService:

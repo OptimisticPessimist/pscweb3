@@ -6,8 +6,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.db.models import ProjectMember, Script, User, TheaterProject
+from src.db.models import (
+    ProjectMember, Script, User, TheaterProject, Scene, Line, Character,
+    SceneChart, SceneCharacterMapping, Rehearsal, CharacterCasting, RehearsalCast
+)
 from src.dependencies.auth import get_current_user_dep, get_optional_current_user_dep
 from src.db import get_db
 from src.schemas.script import ScriptListResponse, ScriptResponse, ScriptSummary
@@ -133,7 +137,8 @@ async def upload_script(
         
         # Clear old related data (Scenes, Characters, SceneCharts)
         from sqlalchemy import delete
-        from src.db.models import Scene, Character, SceneChart, Line, SceneCharacterMapping
+        
+        # 依存関係の順序で削除
         
         # 依存関係の順序で削除
         
@@ -153,7 +158,6 @@ async def upload_script(
         
         if scene_ids:
             # Rehearsalのscene_idをNULLにする (稽古自体は残す)
-            from src.db.models import Rehearsal
             from sqlalchemy import update
             await db.execute(
                 update(Rehearsal)
@@ -168,7 +172,6 @@ async def upload_script(
         
         # 4. キャラクター (Lineなどに依存される)
         # CharacterCasting, RehearsalCastも削除が必要
-        from src.db.models import CharacterCasting, RehearsalCast
         character_result = await db.execute(select(Character.id).where(Character.script_id == script.id))
         character_ids = [r for r in character_result.scalars().all()]
         if character_ids:
@@ -199,14 +202,33 @@ async def upload_script(
         await parse_fountain_and_create_models(script, fountain_text, db)
         
         # 新しく作成されたシーンを認識させるためにリフレッシュ
-        # これがないと script.scenes が空のままになり、香盤表が生成されない
-        await db.refresh(script, attribute_names=["scenes"])
-        
+        # N+1対策: 明示的にリレーションをロード
+        stmt = (
+            select(Script)
+            .where(Script.id == script.id)
+            .options(
+                selectinload(Script.scenes).options(
+                    selectinload(Scene.lines).options(
+                        selectinload(Line.character)
+                    )
+                ),
+                selectinload(Script.characters)
+            )
+        )
+        result = await db.execute(stmt)
+        script = result.scalar_one()
+
         # 香盤表の自動生成
         from src.services.scene_chart_generator import generate_scene_chart
         await generate_scene_chart(script, db)
 
         await db.commit()
+
+        # レスポンス生成のために再取得（確実にロードされた状態にする）
+        result = await db.execute(stmt)
+        script = result.scalar_one()
+
+
     except Exception as e:
         await db.rollback()
         import traceback
@@ -216,7 +238,8 @@ async def upload_script(
             f.write(f"[{datetime.now()}] Script Upload Error: {str(e)}\n{error_msg}\n")
         print(error_msg) # consoleにも出す
         raise HTTPException(status_code=500, detail=f"脚本の解析またはデータ保存中にエラーが発生しました: {str(e)}")
-    await db.refresh(script)
+    # await db.refresh(script) # 上記でロード済みのため不要
+
     
     # Discord通知
     project = await db.get(TheaterProject, project_id)
@@ -311,9 +334,14 @@ async def get_script(
     Raises:
         HTTPException: 脚本が見つからない、または権限エラー
     """
-    # 脚本取得
+    # 脚本取得（関連データもロード）
     result = await db.execute(
-        select(Script).where(Script.id == script_id, Script.project_id == project_id)
+        select(Script)
+        .where(Script.id == script_id, Script.project_id == project_id)
+        .options(
+            selectinload(Script.scenes).selectinload(Scene.lines).selectinload(Line.character),
+            selectinload(Script.characters)
+        )
     )
     script = result.scalar_one_or_none()
     if script is None:

@@ -74,5 +74,11 @@ async def get_or_create_user_from_discord(
         db.add(user)
 
     await db.commit()
-    await db.refresh(user)
+    await db.commit()
+    
+    # Refresh to get ID and other fields populated from DB
+    # Using execute/scalar to avoid potential greenlet/asyncio conflicts with implicit refresh
+    result = await db.execute(select(User).where(User.discord_id == discord_id))
+    user = result.scalar_one()
+    
     return user

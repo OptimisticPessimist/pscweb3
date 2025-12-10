@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from structlog import get_logger
 
 from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
@@ -23,8 +24,11 @@ from src.db.models import (
     TheaterProject,
     Line,
     Character,
-    CharacterCasting
+    CharacterCasting,
+    AttendanceEvent,
+    AttendanceTarget,
 )
+from datetime import timedelta
 from src.schemas.rehearsal import (
     RehearsalCastCreate,
     RehearsalCastResponse,
@@ -35,9 +39,11 @@ from src.schemas.rehearsal import (
     RehearsalUpdate,
     RehearsalParticipantUpdate,
 )
+from src.services.attendance import AttendanceService
 
 router = APIRouter()
 project_router = APIRouter()
+
 
 
 @project_router.post("/{project_id}/rehearsal-schedule", response_model=RehearsalScheduleResponse)
@@ -350,6 +356,8 @@ async def add_rehearsal(
         HTTPException: 認証エラーまたは権限エラー
     """
     # 認証チェック
+    logger = get_logger(__name__)
+    logger.info("add_rehearsal called", schedule_id=str(schedule_id), create_attendance=rehearsal_data.create_attendance_check)
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
@@ -479,7 +487,7 @@ async def add_rehearsal(
     project = await db.get(TheaterProject, schedule.project_id)
     
     date_str = rehearsal.date.strftime("%Y/%m/%d %H:%M")
-    content = f"📅 **実習(稽古)が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+    content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
     if scene_heading:
         content += f"\nシーン: {scene_heading}"
         
@@ -488,6 +496,28 @@ async def add_rehearsal(
         content=content,
         webhook_url=project.discord_webhook_url,
     )
+
+    # 出席確認作成（オプション）
+    # 出席確認作成（オプション）
+    if rehearsal_data.create_attendance_check:
+        # 期限設定（未指定なら稽古日の24時間前）
+        deadline = rehearsal_data.attendance_deadline
+        if not deadline:
+            deadline = rehearsal.date - timedelta(hours=24)
+        
+        # プロジェクト取得
+        if project and project.discord_channel_id:
+            # AttendanceServiceを使用
+            attendance_service = AttendanceService(db, discord_service)
+            title = f"稽古出席確認: {scene_heading or '稽古'}"
+            await attendance_service.create_attendance_event(
+                project=project,
+                title=title,
+                deadline=deadline,
+                schedule_date=rehearsal.date,
+                location=rehearsal.location,
+                description=None
+            )
 
     return RehearsalResponse(
         id=rehearsal.id,
@@ -725,8 +755,10 @@ async def add_participant(
 @router.delete("/rehearsals/{rehearsal_id}")
 async def delete_rehearsal(
     rehearsal_id: UUID,
+    background_tasks: BackgroundTasks,
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ) -> dict[str, str]:
     """稽古を削除.
 
@@ -768,9 +800,21 @@ async def delete_rehearsal(
     if member is None or member.role == "viewer":
         raise HTTPException(status_code=403, detail="稽古削除の権限がありません")
 
+    # Discord通知用データ退避
+    rehearsal_date = rehearsal.date.strftime("%Y/%m/%d %H:%M")
+    
     # 削除
     await db.delete(rehearsal)
     await db.commit()
+
+    # Discord通知
+    project = await db.get(TheaterProject, schedule.project_id)
+    if project.discord_webhook_url:
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=f"🗑️ **稽古が削除されました**\nプロジェクト: {project.name}\n日時: {rehearsal_date}",
+            webhook_url=project.discord_webhook_url,
+        )
 
     return {"message": "稽古を削除しました"}
 

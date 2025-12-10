@@ -11,6 +11,8 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.environment == "development",
     pool_pre_ping=True,
+    # Supabase Transaction Pooler (PgBouncer) does not support prepared statements
+    connect_args={"statement_cache_size": 0},
 )
 
 # 非同期セッションファクトリ

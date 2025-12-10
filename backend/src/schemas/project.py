@@ -11,6 +11,15 @@ class ProjectCreate(BaseModel):
     description: str | None = Field(None, description="説明")
 
 
+class ProjectUpdate(BaseModel):
+    """プロジェクト更新スキーマ."""
+
+    name: str | None = Field(None, min_length=1, max_length=200, description="プロジェクト名")
+    description: str | None = Field(None, description="説明")
+    discord_webhook_url: str | None = Field(None, description="Discord Webhook URL")
+    discord_channel_id: str | None = Field(None, description="Discord Channel ID")
+
+
 class ProjectResponse(BaseModel):
     """プロジェクトレスポンス."""
 
@@ -19,6 +28,7 @@ class ProjectResponse(BaseModel):
     description: str | None = None
     role: str | None = None  # ユーザーの権限 (owner, editor, etc.)
     discord_webhook_url: str | None = None
+    discord_channel_id: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -43,3 +53,31 @@ class MemberRoleUpdate(BaseModel):
     role: str = Field(..., pattern="^(owner|editor|viewer)$", description="新しいロール")
     default_staff_role: str | None = Field(None, description="基本的な役割（演出、照明など）")
     display_name: str | None = Field(None, description="表示名")
+
+
+class MilestoneCreate(BaseModel):
+    """マイルストーン作成スキーマ."""
+    
+    title: str = Field(..., min_length=1, max_length=200)
+    start_date: datetime
+    end_date: datetime | None = None
+    description: str | None = None
+    location: str | None = Field(None, description="場所")
+    color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    create_attendance_check: bool = Field(False, description="出席確認を作成")
+    attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合はstart_dateの24時間前）")  # Simple hex validation
+
+
+class MilestoneResponse(BaseModel):
+    """マイルストーンレスポンス."""
+    
+    id: UUID
+    project_id: UUID
+    title: str
+    start_date: datetime
+    end_date: datetime | None = None
+    description: str | None = None
+    location: str | None = None
+    color: str | None = None
+    
+    model_config = {"from_attributes": True}

@@ -64,6 +64,8 @@ class RehearsalCreate(BaseModel):
     duration_minutes: int = Field(120, description="稽古時間（分）")
     location: str | None = Field(None, description="場所")
     notes: str | None = Field(None, description="備考")
+    create_attendance_check: bool = Field(False, description="出席確認を作成")
+    attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合は稽古日の24時間前）")
 
 
 class RehearsalUpdate(BaseModel):

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     discord_client_secret: str = "test_client_secret"
     discord_redirect_uri: str = "http://localhost:8000/auth/callback"
     discord_bot_token: str | None = None
+    discord_public_key: str | None = None # Interactions受信用
     discord_webhook_url: str = "https://discord.com/api/webhooks/test/test"
 
     # Frontend
