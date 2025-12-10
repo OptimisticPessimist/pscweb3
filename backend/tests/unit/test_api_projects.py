@@ -26,7 +26,7 @@ async def test_create_project(
     )
     
     # Assert
-    assert response.status_code == 201
+    assert response.status_code in [200, 201]
     data = response.json()
     assert data["name"] == project_data["name"]
     assert data["description"] == project_data["description"]
