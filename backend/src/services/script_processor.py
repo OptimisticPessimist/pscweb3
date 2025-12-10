@@ -20,6 +20,7 @@ from src.db.models import (
     RehearsalCast,
     User,
     ProjectMember,
+    RehearsalScene,
 )
 
 
@@ -164,6 +165,11 @@ async def cleanup_related_data(script: Script, db: AsyncSession) -> None:
         )
         
         await db.execute(delete(Line).where(Line.scene_id.in_(scene_ids)))
+        
+        # New: Delete RehearsalScenes (Many-to-Many link)
+        await db.execute(
+            delete(RehearsalScene).where(RehearsalScene.scene_id.in_(scene_ids))
+        )
     
     # 3. シーン
     await db.execute(delete(Scene).where(Scene.script_id == script.id))
@@ -218,9 +224,15 @@ async def parse_and_save_fountain(
             .where(Script.id == script.id)
             .options(
                 selectinload(Script.scenes).options(
-                    selectinload(Scene.lines).options(selectinload(Line.character))
+                    selectinload(Scene.lines).options(
+                        selectinload(Line.character).options(
+                            selectinload(Character.castings)
+                        )
+                    )
                 ),
-                selectinload(Script.characters),
+                selectinload(Script.characters).options(
+                    selectinload(Character.castings)
+                ),
             )
         )
         result = await db.execute(stmt)

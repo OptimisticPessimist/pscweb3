@@ -53,9 +53,11 @@ async def get_scripts(
         select(Script)
         .where(Script.project_id == project_id)
         .options(
-            selectinload(Script.characters),
+            selectinload(Script.characters).options(selectinload(Character.castings)),
             selectinload(Script.scenes).options(
-                selectinload(Scene.lines).options(selectinload(Line.character))
+                selectinload(Scene.lines).options(
+                    selectinload(Line.character).options(selectinload(Character.castings))
+                )
             ),
         )
     )
@@ -155,6 +157,7 @@ async def get_scenes(
         select(Scene)
         .where(Scene.script_id == script_id)
         .order_by(Scene.act_number, Scene.scene_number)
+        .options(selectinload(Scene.lines))
     )
     scenes = result.scalars().all()
 
@@ -177,7 +180,11 @@ async def get_characters(
     # 権限チェックはDepends(get_project_member_dep)で完了済み
 
     # 登場人物取得
-    result = await db.execute(select(Character).where(Character.script_id == script_id))
+    result = await db.execute(
+        select(Character)
+        .where(Character.script_id == script_id)
+        .options(selectinload(Character.castings))
+    )
     characters = result.scalars().all()
 
     return {"characters": characters}

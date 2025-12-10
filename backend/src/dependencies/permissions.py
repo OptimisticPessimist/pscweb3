@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db
-from src.db.models import ProjectMember, User, Script, Scene, Line, Character
+from src.db.models import ProjectMember, User, Script, Scene, Line, Character, CharacterCasting
 from sqlalchemy.orm import selectinload
 from src.dependencies.auth import get_current_user_dep
 
@@ -106,7 +106,7 @@ async def get_script_member_dep(
     result = await db.execute(
         select(Script)
         .options(
-            selectinload(Script.characters),
+            selectinload(Script.characters).options(selectinload(Character.castings)),
             selectinload(Script.scenes)
             .selectinload(Scene.lines)
             .selectinload(Line.character)

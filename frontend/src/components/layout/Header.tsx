@@ -1,5 +1,5 @@
 import { Breadcrumbs } from '../Breadcrumbs';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export function Header() {
     return (
@@ -13,20 +13,9 @@ export function Header() {
                 <Breadcrumbs />
             </div>
 
+            {/* 右側の検索・通知エリアは不要なため削除 */}
             <div className="flex items-center gap-4">
-                <div className="relative">
-                    <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
-                    />
-                </div>
-
-                <button className="p-2 rounded-full hover:bg-gray-100 relative">
-                    <Bell className="w-5 h-5 text-gray-600" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                {/* 必要に応じて将来的に機能を追加 */}
             </div>
         </header>
     );
