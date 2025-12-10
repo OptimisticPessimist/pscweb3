@@ -73,6 +73,17 @@ ${props.notes ? `備考: ${props.notes}` : ''}
             <div className="bg-white shadow rounded-lg p-6">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">My Schedule</h1>
                 <p className="text-sm text-gray-600">参加している全プロジェクトの予定</p>
+
+                {/* Debug Info */}
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <p><strong>Debug:</strong></p>
+                    <p>API Response: {mySchedule ? 'Loaded' : 'None'}</p>
+                    <p>Events Count: {mySchedule?.events?.length || 0}</p>
+                    <p>Calendar Events: {events.length}</p>
+                    {mySchedule?.events && mySchedule.events.length > 0 && (
+                        <p>Sample Event: {JSON.stringify(mySchedule.events[0]).slice(0, 100)}...</p>
+                    )}
+                </div>
             </div>
 
             <div className="bg-white shadow rounded-lg p-6 flex-1">
