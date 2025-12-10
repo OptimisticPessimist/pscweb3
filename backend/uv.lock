@@ -865,6 +865,10 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiosqlite" },
+    { name = "httpx" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "ty" },
 ]
 
@@ -898,7 +902,13 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ty", specifier = ">=0.0.1a32" }]
+dev = [
+    { name = "aiosqlite", specifier = ">=0.21.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pytest", specifier = ">=9.0.1" },
+    { name = "pytest-asyncio", specifier = ">=1.3.0" },
+    { name = "ty", specifier = ">=0.0.1a32" },
+]
 
 [[package]]
 name = "pyasn1"
