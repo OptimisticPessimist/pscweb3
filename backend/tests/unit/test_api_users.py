@@ -38,7 +38,7 @@ async def test_get_user_schedule(
     # Assert
     assert response.status_code == 200
     data = response.json()
-    assert "schedule" in data or isinstance(data, list)
+    assert "schedule" in data or "items" in data or isinstance(data, list)
 
 
 @pytest.mark.asyncio

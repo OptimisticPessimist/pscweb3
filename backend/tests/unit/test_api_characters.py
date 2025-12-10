@@ -111,7 +111,7 @@ async def test_remove_casting(
     # Act
     response = await client.delete(
         f"/api/projects/{test_project.id}/characters/{test_character.id}/cast",
-        json={"user_id": str(test_user.id)},
+        params={"user_id": str(test_user.id)},
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
     
