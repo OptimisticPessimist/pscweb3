@@ -15,12 +15,13 @@ export function Header() {
 
     // パスからパンくずリストを構築
     let currentPath = '';
-    pathnames.forEach((segment, index) => {
+    pathnames.forEach((segment) => {
         currentPath += `/${segment}`;
 
         // 翻訳キーに基づいた名前にマッピング
         let name = segment;
-        if (segment === 'projects') name = t('nav.projects');
+        if (segment === 'dashboard') name = t('nav.dashboard');
+        else if (segment === 'projects') name = t('nav.projects');
         else if (segment === 'scripts') name = t('nav.scripts');
         else if (segment === 'casting') name = t('nav.casting');
         else if (segment === 'staff') name = t('nav.staff');
