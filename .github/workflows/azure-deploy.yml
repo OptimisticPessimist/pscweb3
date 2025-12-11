@@ -40,8 +40,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'pscweb3-backend-facdevgvbxhnejf6' # Updated based on URL
-          slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./release.zip
 
