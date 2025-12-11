@@ -23,11 +23,11 @@ export function Header() {
         if (segment === 'dashboard') name = t('nav.dashboard');
         else if (segment === 'projects') name = t('nav.projects');
         else if (segment === 'scripts') name = t('nav.scripts');
-        else if (segment === 'casting') name = t('nav.casting');
+        else if (segment === 'casting' || segment === 'cast') name = t('nav.casting');
         else if (segment === 'staff') name = t('nav.staff');
         else if (segment === 'schedule') name = t('nav.schedule');
         else if (segment === 'attendance') name = t('nav.attendance');
-        else if (segment === 'scene-charts') name = t('nav.sceneChart');
+        else if (segment === 'scene-charts' || segment === 'chart') name = t('nav.sceneChart');
         else if (segment === 'settings') name = t('nav.settings');
         else if (segment === 'my-schedule') name = t('nav.mySchedule');
         // プロジェクトIDやその他のIDは数値の場合そのまま、詳細ページは"Details"等
