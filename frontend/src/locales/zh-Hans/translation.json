@@ -40,11 +40,20 @@
     },
     "dashboard": {
         "title": "仪表板",
-        "recentProjects": "最近的项目",
-        "upcomingRehearsals": "即将进行的排练",
-        "myAttendance": "我的考勤情况",
+        "projects": "项目",
+        "newProject": "新项目",
         "noProjects": "没有项目",
-        "createProject": "创建新项目"
+        "noProjectsMessage": "创建一个新项目开始吧。",
+        "createNewProject": "创建新项目",
+        "errorLoadingProjects": "加载项目时出错",
+        "unknownError": "发生未知错误",
+        "noDescription": "无描述",
+        "deleteProject": "删除项目",
+        "deleteConfirmMessage": "确定要删除此项目吗？此操作无法撤销。包括成员、排练和剧本在内的所有数据将被永久删除。",
+        "creating": "创建中...",
+        "create": "创建",
+        "deleting": "删除中...",
+        "failedToDeleteProject": "删除项目失败"
     },
     "project": {
         "title": "项目",
@@ -55,7 +64,9 @@
         "status": "状态",
         "members": "成员",
         "invite": "邀请",
-        "details": "详情"
+        "details": "详情",
+        "nameRequired": "项目名称为必填项",
+        "enterProjectName": "输入项目名称"
     },
     "script": {
         "title": "剧本",

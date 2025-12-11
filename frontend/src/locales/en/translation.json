@@ -102,11 +102,17 @@
     "schedule": {
         "title": "Schedule",
         "rehearsal": "Rehearsal",
+        "milestone": "Milestone",
         "date": "Date & Time",
         "location": "Location",
         "participants": "Participants",
         "addRehearsal": "Add Rehearsal",
-        "editRehearsal": "Edit Rehearsal"
+        "editRehearsal": "Edit Rehearsal",
+        "allProjectsSchedule": "Schedule for all projects you're participating in",
+        "type": "Type",
+        "start": "Start",
+        "end": "End",
+        "notes": "Notes"
     },
     "attendance": {
         "title": "Attendance",

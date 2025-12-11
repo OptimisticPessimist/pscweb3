@@ -102,11 +102,17 @@
     "schedule": {
         "title": "スケジュール",
         "rehearsal": "稽古",
+        "milestone": "マイルストーン",
         "date": "日時",
         "location": "場所",
         "participants": "参加者",
         "addRehearsal": "稽古追加",
-        "editRehearsal": "稽古編集"
+        "editRehearsal": "稽古編集",
+        "allProjectsSchedule": "参加している全プロジェクトの予定",
+        "type": "種類",
+        "start": "開始",
+        "end": "終了",
+        "notes": "備考"
     },
     "attendance": {
         "title": "出欠",

@@ -5,8 +5,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { myScheduleApi } from './api/mySchedule';
+import { useTranslation } from 'react-i18next';
 
 export const MySchedulePage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { data: mySchedule, isLoading } = useQuery({
         queryKey: ['mySchedule'],
         queryFn: () => myScheduleApi.getMySchedule(),
@@ -51,28 +53,29 @@ export const MySchedulePage: React.FC = () => {
         const event = info.event;
         const props = event.extendedProps;
 
-        // イベント詳細をalertで表示（簡易版）
+        // Event details
+        const typeLabel = props.type === 'rehearsal' ? t('schedule.rehearsal') : t('schedule.milestone');
         const details = `
 【${event.title}】
 
-種類: ${props.type === 'rehearsal' ? '稽古' : 'マイルストーン'}
-プロジェクト: ${props.projectName}
-開始: ${new Date(event.start).toLocaleString('ja-JP')}
-終了: ${new Date(props.actualEndDate).toLocaleString('ja-JP')}
-${props.location ? `場所: ${props.location}` : ''}
-${props.notes ? `備考: ${props.notes}` : ''}
+${t('schedule.type')}: ${typeLabel}
+${t('project.title')}: ${props.projectName}
+${t('schedule.start')}: ${new Date(event.start).toLocaleString(i18n.language)}
+${t('schedule.end')}: ${new Date(props.actualEndDate).toLocaleString(i18n.language)}
+${props.location ? `${t('schedule.location')}: ${props.location}` : ''}
+${props.notes ? `${t('schedule.notes')}: ${props.notes}` : ''}
         `.trim();
 
         alert(details);
     };
 
-    if (isLoading) return <div className="p-6">Loading...</div>;
+    if (isLoading) return <div className="p-6">{t('common.loading')}</div>;
 
     return (
         <div className="space-y-6 h-full flex flex-col">
             <div className="bg-white shadow rounded-lg p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">My Schedule</h1>
-                <p className="text-sm text-gray-600">参加している全プロジェクトの予定</p>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('nav.mySchedule')}</h1>
+                <p className="text-sm text-gray-600">{t('schedule.allProjectsSchedule')}</p>
             </div>
 
             <div className="bg-white shadow rounded-lg p-6 flex-1">
@@ -87,7 +90,7 @@ ${props.notes ? `備考: ${props.notes}` : ''}
                     events={events}
                     eventClick={handleEventClick}
                     height="100%"
-                    locale="ja"
+                    locale={i18n.language}
                 />
             </div>
         </div>
