@@ -36,7 +36,7 @@ export function Header() {
         }
 
         breadcrumbItems.push({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
+            name: name,  // 翻訳済みの名前をそのまま使用
             path: currentPath
         });
     });
