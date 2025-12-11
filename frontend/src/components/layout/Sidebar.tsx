@@ -2,24 +2,33 @@ import { NavLink, useParams } from 'react-router-dom';
 import {
     Home,
     FileText,
-import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Calendar, Users, FileText, BookOpen, Clipboard, UserCircle, Settings, CalendarRange } from 'lucide-react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+    Users,
+    Calendar,
+    Settings,
+    LayoutGrid,
+    Clapperboard,
+    Wrench,
+    ClipboardCheck
+} from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 // tailwind-merge helper
-function cn(...classes: string[]) {
-    return classes.filter(Boolean).join(' ');
+function cn(...inputs: (string | undefined | null | false)[]) {
+    return twMerge(clsx(inputs));
 }
 
 export function Sidebar() {
-    const { user } = useAuth();
+    const { projectId } = useParams<{ projectId: string }>();
     const { t } = useTranslation();
+    const { user } = useAuth();
 
     // プロジェクト選択中かどうかでメニューを切り替える
     // 共通メニュー
     const commonLinks = [
-        { to: '/', icon: Home, label: t('nav.dashboard') },
+        { to: '/', icon: LayoutGrid, label: t('nav.dashboard') },
         { to: '/my-schedule', icon: Calendar, label: t('nav.mySchedule') },
     ];
 
@@ -102,8 +111,8 @@ export function Sidebar() {
 
             {/* User Info at bottom - Discord Info */}
             {user && (
-                <div className="mt-auto pt-4 border-t border-gray-700">
-                    <div className="flex items-center gap-3 px-4 py-3">
+                <div className="p-4 border-t border-gray-800">
+                    <div className="flex items-center gap-3">
                         {/* Discord Avatar */}
                         {user.discord_avatar_url ? (
                             <img
@@ -112,19 +121,19 @@ export function Sidebar() {
                                 className="w-10 h-10 rounded-full ring-2 ring-purple-500"
                             />
                         ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg ring-2 ring-purple-500">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
                                 {(user.screen_name || user.discord_username || user.discord_id).charAt(0).toUpperCase()}
                             </div>
                         )}
 
                         {/* User Info */}
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <span className="text-sm font-semibold text-white truncate">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">
                                 {user.screen_name || user.discord_username}
-                            </span>
-                            <span className="text-xs text-gray-400 truncate">
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">
                                 {user.discord_id}
-                            </span>
+                            </p>
                         </div>
                     </div>
                 </div>
