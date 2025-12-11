@@ -41,6 +41,8 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     discord_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     discord_username: Mapped[str] = mapped_column(String(100))
+    screen_name: Mapped[str | None] = mapped_column(String(100), nullable=True)  # ユーザー設定のスクリーンネーム
+    discord_avatar_hash: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Discordアバターハッシュ
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション

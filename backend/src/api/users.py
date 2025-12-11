@@ -43,7 +43,8 @@ async def get_current_user_info(
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    return UserResponse.model_validate(user)
+    # UserResponse.from_user() を使用してDiscordアバター画像URLを含める
+    return UserResponse.from_user(user)
 
 
 @router.get("/me/schedule", response_model=UserScheduleResponse)

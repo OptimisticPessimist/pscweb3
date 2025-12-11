@@ -66,8 +66,9 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """非同期でマイグレーションを実行."""
+    # DATABASE_URLを直接使用して特殊文字のエスケープ問題を回避
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": settings.database_url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

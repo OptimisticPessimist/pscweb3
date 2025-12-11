@@ -63,17 +63,16 @@ async def get_or_create_user_from_discord(
     if user:
         # ユーザー情報を更新
         user.discord_username = discord_user_data.get("username", user.discord_username)
-        # user.email = discord_user_data.get("email", user.email) # Userモデルにemailがないため無効化
+        user.discord_avatar_hash = discord_user_data.get("avatar")  # アバターハッシュを更新
     else:
         # 新規ユーザーを作成
         user = User(
             discord_id=discord_id,
             discord_username=discord_user_data.get("username", "Unknown"),
-            # email=discord_user_data.get("email"), # Userモデルにemailがないため無効化
+            discord_avatar_hash=discord_user_data.get("avatar"),  # アバターハッシュを保存
         )
         db.add(user)
 
-    await db.commit()
     await db.commit()
     
     # Refresh to get ID and other fields populated from DB
