@@ -1,0 +1,115 @@
+{
+    "nav": {
+        "dashboard": "儀表板",
+        "mySchedule": "我的日程",
+        "projects": "專案",
+        "scripts": "劇本",
+        "sceneChart": "場景表",
+        "casting": "選角",
+        "staff": "工作人員",
+        "schedule": "日程",
+        "attendance": "考勤",
+        "settings": "設定"
+    },
+    "common": {
+        "save": "儲存",
+        "cancel": "取消",
+        "delete": "刪除",
+        "edit": "編輯",
+        "add": "新增",
+        "search": "搜尋",
+        "loading": "載入中...",
+        "error": "發生錯誤",
+        "success": "成功",
+        "confirm": "確認",
+        "close": "關閉",
+        "back": "返回",
+        "next": "下一步",
+        "previous": "上一步",
+        "upload": "上傳",
+        "download": "下載",
+        "export": "匯出",
+        "import": "匯入"
+    },
+    "auth": {
+        "login": "登入",
+        "logout": "登出",
+        "loginWithDiscord": "使用 Discord 登入",
+        "welcome": "歡迎使用 PSC Web 3",
+        "welcomeMessage": "戲劇製作管理系統"
+    },
+    "dashboard": {
+        "title": "儀表板",
+        "recentProjects": "最近的專案",
+        "upcomingRehearsals": "即將進行的排練",
+        "myAttendance": "我的考勤情況",
+        "noProjects": "沒有專案",
+        "createProject": "建立新專案"
+    },
+    "project": {
+        "title": "專案",
+        "name": "專案名稱",
+        "description": "描述",
+        "startDate": "開始日期",
+        "endDate": "結束日期",
+        "status": "狀態",
+        "members": "成員",
+        "invite": "邀請",
+        "details": "詳情"
+    },
+    "script": {
+        "title": "劇本",
+        "upload": "上傳劇本",
+        "fileName": "檔案名稱",
+        "uploadedAt": "上傳時間",
+        "scenes": "場景",
+        "characters": "角色",
+        "fountainFormat": "Fountain 格式"
+    },
+    "sceneChart": {
+        "title": "場景表",
+        "scene": "場景",
+        "character": "角色",
+        "actor": "演員",
+        "generate": "生成場景表"
+    },
+    "casting": {
+        "title": "選角",
+        "character": "角色",
+        "actor": "演員",
+        "castPattern": "演員陣容模式",
+        "doubleCast": "雙重演員陣容",
+        "assign": "分配角色"
+    },
+    "staff": {
+        "title": "工作人員",
+        "name": "姓名",
+        "role": "職務",
+        "email": "電子郵件",
+        "phone": "電話"
+    },
+    "schedule": {
+        "title": "日程",
+        "rehearsal": "排練",
+        "date": "日期和時間",
+        "location": "地點",
+        "participants": "參與者",
+        "addRehearsal": "新增排練",
+        "editRehearsal": "編輯排練"
+    },
+    "attendance": {
+        "title": "考勤",
+        "status": "狀態",
+        "attending": "出席",
+        "absent": "缺席",
+        "tentative": "待定",
+        "markAttendance": "登記考勤"
+    },
+    "language": {
+        "ja": "日本語",
+        "en": "English",
+        "ko": "한국어",
+        "zhHans": "简体中文",
+        "zhHant": "繁體中文"
+    }
+}

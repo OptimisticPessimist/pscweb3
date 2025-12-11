@@ -41,7 +41,7 @@ async def get_current_user_info(
     
     user = await get_current_user(token, db)
     if user is None:
-        raise HTTPException(status_code=401, detail="無効なトークンです")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     return UserResponse.model_validate(user)
 
@@ -58,7 +58,7 @@ async def get_my_schedule(
     token = authorization.split(" ")[1]
     user = await get_current_user(token, db)
     if user is None:
-        raise HTTPException(status_code=401, detail="無効なトークンです")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     # 1. 稽古の取得
     # 参加者またはキャストとして登録されている稽古

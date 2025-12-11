@@ -1,0 +1,115 @@
+{
+    "nav": {
+        "dashboard": "Dashboard",
+        "mySchedule": "My Schedule",
+        "projects": "Projects",
+        "scripts": "Scripts",
+        "sceneChart": "Scene Chart",
+        "casting": "Casting",
+        "staff": "Staff",
+        "schedule": "Schedule",
+        "attendance": "Attendance",
+        "settings": "Settings"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "search": "Search",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "success": "Success",
+        "confirm": "Confirm",
+        "close": "Close",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "upload": "Upload",
+        "download": "Download",
+        "export": "Export",
+        "import": "Import"
+    },
+    "auth": {
+        "login": "Login",
+        "logout": "Logout",
+        "loginWithDiscord": "Login with Discord",
+        "welcome": "Welcome to PSC Web 3",
+        "welcomeMessage": "Theater Production Management System"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "recentProjects": "Recent Projects",
+        "upcomingRehearsals": "Upcoming Rehearsals",
+        "myAttendance": "My Attendance",
+        "noProjects": "No projects available",
+        "createProject": "Create New Project"
+    },
+    "project": {
+        "title": "Project",
+        "name": "Project Name",
+        "description": "Description",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "status": "Status",
+        "members": "Members",
+        "invite": "Invite",
+        "details": "Details"
+    },
+    "script": {
+        "title": "Script",
+        "upload": "Upload Script",
+        "fileName": "File Name",
+        "uploadedAt": "Uploaded At",
+        "scenes": "Scenes",
+        "characters": "Characters",
+        "fountainFormat": "Fountain Format"
+    },
+    "sceneChart": {
+        "title": "Scene Chart",
+        "scene": "Scene",
+        "character": "Character",
+        "actor": "Actor",
+        "generate": "Generate Scene Chart"
+    },
+    "casting": {
+        "title": "Casting",
+        "character": "Character",
+        "actor": "Actor",
+        "castPattern": "Cast Pattern",
+        "doubleCast": "Double Cast",
+        "assign": "Assign Role"
+    },
+    "staff": {
+        "title": "Staff",
+        "name": "Name",
+        "role": "Role",
+        "email": "Email",
+        "phone": "Phone"
+    },
+    "schedule": {
+        "title": "Schedule",
+        "rehearsal": "Rehearsal",
+        "date": "Date & Time",
+        "location": "Location",
+        "participants": "Participants",
+        "addRehearsal": "Add Rehearsal",
+        "editRehearsal": "Edit Rehearsal"
+    },
+    "attendance": {
+        "title": "Attendance",
+        "status": "Status",
+        "attending": "Attending",
+        "absent": "Absent",
+        "tentative": "Tentative",
+        "markAttendance": "Mark Attendance"
+    },
+    "language": {
+        "ja": "日本語",
+        "en": "English",
+        "ko": "한국어",
+        "zhHans": "简体中文",
+        "zhHant": "繁體中文"
+    }
+}

@@ -1,0 +1,115 @@
+{
+    "nav": {
+        "dashboard": "대시보드",
+        "mySchedule": "내 스케줄",
+        "projects": "프로젝트",
+        "scripts": "대본",
+        "sceneChart": "장면표",
+        "casting": "캐스팅",
+        "staff": "스태프",
+        "schedule": "스케줄",
+        "attendance": "출결",
+        "settings": "설정"
+    },
+    "common": {
+        "save": "저장",
+        "cancel": "취소",
+        "delete": "삭제",
+        "edit": "편집",
+        "add": "추가",
+        "search": "검색",
+        "loading": "로딩 중...",
+        "error": "오류가 발생했습니다",
+        "success": "성공했습니다",
+        "confirm": "확인",
+        "close": "닫기",
+        "back": "뒤로",
+        "next": "다음",
+        "previous": "이전",
+        "upload": "업로드",
+        "download": "다운로드",
+        "export": "내보내기",
+        "import": "가져오기"
+    },
+    "auth": {
+        "login": "로그인",
+        "logout": "로그아웃",
+        "loginWithDiscord": "Discord로 로그인",
+        "welcome": "PSC Web 3에 오신 것을 환영합니다",
+        "welcomeMessage": "연극 제작 관리 시스템"
+    },
+    "dashboard": {
+        "title": "대시보드",
+        "recentProjects": "최근 프로젝트",
+        "upcomingRehearsals": "다가오는 리허설",
+        "myAttendance": "내 출결 현황",
+        "noProjects": "프로젝트가 없습니다",
+        "createProject": "새 프로젝트 만들기"
+    },
+    "project": {
+        "title": "프로젝트",
+        "name": "프로젝트 이름",
+        "description": "설명",
+        "startDate": "시작일",
+        "endDate": "종료일",
+        "status": "상태",
+        "members": "멤버",
+        "invite": "초대",
+        "details": "상세"
+    },
+    "script": {
+        "title": "대본",
+        "upload": "대본 업로드",
+        "fileName": "파일명",
+        "uploadedAt": "업로드 일시",
+        "scenes": "장면",
+        "characters": "등장인물",
+        "fountainFormat": "Fountain 형식"
+    },
+    "sceneChart": {
+        "title": "장면표",
+        "scene": "장면",
+        "character": "등장인물",
+        "actor": "배우",
+        "generate": "장면표 생성"
+    },
+    "casting": {
+        "title": "캐스팅",
+        "character": "등장인물",
+        "actor": "배우",
+        "castPattern": "캐스트 패턴",
+        "doubleCast": "더블 캐스트",
+        "assign": "역할 배정"
+    },
+    "staff": {
+        "title": "스태프",
+        "name": "이름",
+        "role": "역할",
+        "email": "이메일",
+        "phone": "전화번호"
+    },
+    "schedule": {
+        "title": "스케줄",
+        "rehearsal": "리허설",
+        "date": "날짜 및 시간",
+        "location": "장소",
+        "participants": "참가자",
+        "addRehearsal": "리허설 추가",
+        "editRehearsal": "리허설 편집"
+    },
+    "attendance": {
+        "title": "출결",
+        "status": "상태",
+        "attending": "출석",
+        "absent": "결석",
+        "tentative": "미정",
+        "markAttendance": "출결 등록"
+    },
+    "language": {
+        "ja": "日本語",
+        "en": "English",
+        "ko": "한국어",
+        "zhHans": "简体中文",
+        "zhHant": "繁體中文"
+    }
+}

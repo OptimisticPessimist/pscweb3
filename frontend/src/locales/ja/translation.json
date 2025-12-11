@@ -1,0 +1,115 @@
+{
+    "nav": {
+        "dashboard": "ダッシュボード",
+        "mySchedule": "マイスケジュール",
+        "projects": "プロジェクト",
+        "scripts": "脚本",
+        "sceneChart": "香盤表",
+        "casting": "配役",
+        "staff": "スタッフ",
+        "schedule": "スケジュール",
+        "attendance": "出欠",
+        "settings": "設定"
+    },
+    "common": {
+        "save": "保存",
+        "cancel": "キャンセル",
+        "delete": "削除",
+        "edit": "編集",
+        "add": "追加",
+        "search": "検索",
+        "loading": "読み込み中...",
+        "error": "エラーが発生しました",
+        "success": "成功しました",
+        "confirm": "確認",
+        "close": "閉じる",
+        "back": "戻る",
+        "next": "次へ",
+        "previous": "前へ",
+        "upload": "アップロード",
+        "download": "ダウンロード",
+        "export": "エクスポート",
+        "import": "インポート"
+    },
+    "auth": {
+        "login": "ログイン",
+        "logout": "ログアウト",
+        "loginWithDiscord": "Discordでログイン",
+        "welcome": "PSC Web 3 へようこそ",
+        "welcomeMessage": "演劇制作管理システム"
+    },
+    "dashboard": {
+        "title": "ダッシュボード",
+        "recentProjects": "最近のプロジェクト",
+        "upcomingRehearsals": "今後の稽古",
+        "myAttendance": "出欠状況",
+        "noProjects": "プロジェクトがありません",
+        "createProject": "新規プロジェクト作成"
+    },
+    "project": {
+        "title": "プロジェクト",
+        "name": "プロジェクト名",
+        "description": "説明",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "status": "ステータス",
+        "members": "メンバー",
+        "invite": "招待",
+        "details": "詳細"
+    },
+    "script": {
+        "title": "脚本",
+        "upload": "脚本アップロード",
+        "fileName": "ファイル名",
+        "uploadedAt": "アップロード日時",
+        "scenes": "シーン",
+        "characters": "登場人物",
+        "fountainFormat": "Fountain形式"
+    },
+    "sceneChart": {
+        "title": "香盤表",
+        "scene": "シーン",
+        "character": "登場人物",
+        "actor": "役者",
+        "generate": "香盤表を生成"
+    },
+    "casting": {
+        "title": "配役",
+        "character": "登場人物",
+        "actor": "役者",
+        "castPattern": "キャストパターン",
+        "doubleCast": "ダブルキャスト",
+        "assign": "配役を割り当て"
+    },
+    "staff": {
+        "title": "スタッフ",
+        "name": "名前",
+        "role": "役割",
+        "email": "メールアドレス",
+        "phone": "電話番号"
+    },
+    "schedule": {
+        "title": "スケジュール",
+        "rehearsal": "稽古",
+        "date": "日時",
+        "location": "場所",
+        "participants": "参加者",
+        "addRehearsal": "稽古追加",
+        "editRehearsal": "稽古編集"
+    },
+    "attendance": {
+        "title": "出欠",
+        "status": "ステータス",
+        "attending": "出席",
+        "absent": "欠席",
+        "tentative": "未定",
+        "markAttendance": "出欠を登録"
+    },
+    "language": {
+        "ja": "日本語",
+        "en": "English",
+        "ko": "한국어",
+        "zhHans": "简体中文",
+        "zhHant": "繁體中文"
+    }
+}

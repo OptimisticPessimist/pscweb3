@@ -36,13 +36,13 @@ async def create_scene_chart(
     """
     # 認証チェック
     if current_user is None:
-        raise HTTPException(status_code=401, detail="認証が必要です")
+        raise HTTPException(status_code=401, detail="Authentication required")
 
     # 脚本取得
     result = await db.execute(select(Script).where(Script.id == script_id))
     script = result.scalar_one_or_none()
     if script is None:
-        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+        raise HTTPException(status_code=404, detail="Script not found")
 
     # プロジェクトメンバーシップチェック
     result = await db.execute(
@@ -53,7 +53,7 @@ async def create_scene_chart(
     )
     member = result.scalar_one_or_none()
     if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+        raise HTTPException(status_code=403, detail="Access denied to this project")
 
     # 香盤表生成
     chart = await generate_scene_chart(script, db)
@@ -102,7 +102,7 @@ async def get_scene_chart(
     )
     member = result.scalar_one_or_none()
     if member is None:
-        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+        raise HTTPException(status_code=403, detail="Access denied to this project")
 
     # 香盤表取得 (関連データも一括取得)
     from sqlalchemy.orm import selectinload
@@ -116,7 +116,7 @@ async def get_scene_chart(
     )
     chart = result.scalar_one_or_none()
     if chart is None:
-        raise HTTPException(status_code=404, detail="香盤表が見つかりません")
+        raise HTTPException(status_code=404, detail="Scene chart not found")
 
     # レスポンス整形
     return _build_scene_chart_response(chart)

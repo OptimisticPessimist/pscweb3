@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Bell, Search, Menu } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export function Header() {
     const location = useLocation();
@@ -35,6 +36,8 @@ export function Header() {
                     <Bell className="w-5 h-5 text-gray-600" />
                     <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
+
+                <LanguageSwitcher />
             </div>
         </header>
     );

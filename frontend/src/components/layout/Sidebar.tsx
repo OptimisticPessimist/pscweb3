@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useTranslation } from 'react-i18next';
 
 // tailwind-merge helper
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -20,24 +21,25 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 export function Sidebar() {
     const { projectId } = useParams<{ projectId: string }>();
+    const { t } = useTranslation();
 
     // プロジェクト選択中かどうかでメニューを切り替える
     // 共通メニュー
     const commonLinks = [
-        { to: '/', icon: LayoutGrid, label: 'Dashboard' },
-        { to: '/my-schedule', icon: Calendar, label: 'My Schedule' },
+        { to: '/', icon: LayoutGrid, label: t('nav.dashboard') },
+        { to: '/my-schedule', icon: Calendar, label: t('nav.mySchedule') },
     ];
 
     // プロジェクト内メニュー
     const projectLinks = projectId ? [
-        { to: `/projects/${projectId}`, icon: Home, label: 'Overview', end: true },
-        { to: `/projects/${projectId}/scripts`, icon: FileText, label: 'Scripts' },
-        { to: `/projects/${projectId}/chart`, icon: Clapperboard, label: 'Scene Chart' },
-        { to: `/projects/${projectId}/cast`, icon: Users, label: 'Cast' },
-        { to: `/projects/${projectId}/staff`, icon: Wrench, label: 'Staff' },
-        { to: `/projects/${projectId}/schedule`, icon: Calendar, label: 'Schedule' },
-        { to: `/projects/${projectId}/attendance`, icon: ClipboardCheck, label: 'Attendance' },
-        { to: `/projects/${projectId}/settings`, icon: Settings, label: 'Settings' },
+        { to: `/projects/${projectId}`, icon: Home, label: t('project.details'), end: true },
+        { to: `/projects/${projectId}/scripts`, icon: FileText, label: t('nav.scripts') },
+        { to: `/projects/${projectId}/chart`, icon: Clapperboard, label: t('nav.sceneChart') },
+        { to: `/projects/${projectId}/cast`, icon: Users, label: t('nav.casting') },
+        { to: `/projects/${projectId}/staff`, icon: Wrench, label: t('nav.staff') },
+        { to: `/projects/${projectId}/schedule`, icon: Calendar, label: t('nav.schedule') },
+        { to: `/projects/${projectId}/attendance`, icon: ClipboardCheck, label: t('nav.attendance') },
+        { to: `/projects/${projectId}/settings`, icon: Settings, label: t('nav.settings') },
     ] : [];
 
     return (

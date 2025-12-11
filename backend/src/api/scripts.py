@@ -136,12 +136,10 @@ async def get_script(
     # 権限チェックはDepends(get_project_member_dep)で完了済み
 
     # 脚本取得
-    result = await db.execute(
-        select(Script).where(Script.id == script_id, Script.project_id == project_id)
-    )
-    script = result.scalar_one_or_none()
-    if script is None:
-        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+    # Verify project membership
+    script = await db.get(Script, script_id)
+    if not script:
+        raise HTTPException(status_code=404, detail="Script not found")
 
     return ScriptResponse.model_validate(script)
 

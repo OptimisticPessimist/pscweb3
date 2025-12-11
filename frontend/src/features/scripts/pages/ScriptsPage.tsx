@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
 import { ScriptUploadModal } from '../components/ScriptUploadModal';
-import { ScriptDetail } from './ScriptDetailPage';
 
 export const ScriptsPage = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -37,11 +36,14 @@ export const ScriptsPage = () => {
 
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 {scripts && scripts.length > 0 ? (
-                    // 1プロジェクト1脚本のため、最初の要素を表示
-                    // ScriptDetail コンポーネントを使用（別ファイルからインポートが必要）
                     <div className="p-4 sm:p-6">
-                        {/* ScriptDetail is imported from ScriptDetailPage */}
-                        <ScriptDetail projectId={projectId!} scriptId={scripts[0].id} />
+                        <h3 className="text-lg font-medium text-gray-900 mb-4">{scripts[0].title}</h3>
+                        <Link
+                            to={`/projects/${projectId}/scripts/${scripts[0].id}`}
+                            className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                            View Details
+                        </Link>
                     </div>
                 ) : (
                     <div className="p-12 text-center text-gray-500">
