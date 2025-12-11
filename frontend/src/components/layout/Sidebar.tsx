@@ -132,7 +132,7 @@ export function Sidebar() {
                                 {user.screen_name || user.discord_username}
                             </p>
                             <p className="text-xs text-gray-400 truncate">
-                                {user.discord_id}
+                                @{user.discord_username}
                             </p>
                         </div>
                     </div>
