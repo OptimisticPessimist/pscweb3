@@ -24,6 +24,8 @@
    - `AZURE_APP_SERVICE`: `true` (バックエンドコードで認識するため)
 
 4. **デプロイメント センター** 設定はGitHub Actionsで自動設定するか、発行プロファイルを取得します。
+   - **重要**: 発行プロファイルをダウンロードするには、**基本認証 (Basic Auth)** が有効になっている必要があります。
+     - **設定 > 構成 > 全般設定** (Settings > Configuration > General settings) に移動し、**SCM 基本認証の発行資格情報** (SCM Basic Auth Publishing Credentials) を **オン** にして保存してください。
    - 今回はGitHub ActionsのSecretに設定するため、**概要** ページの上部にある「**発行プロファイルの取得**」をクリックしてファイルをダウンロードします。
    - ダウンロードしたファイルの中身（XML全体）をコピーします。
    - GitHubリポジトリの **Settings > Secrets and variables > Actions** に移動し、`AZURE_WEBAPP_PUBLISH_PROFILE` という名前で新しいRepository Secretを作成し、値を貼り付けます。
@@ -44,11 +46,23 @@
    - 作成後の **概要** ページで「**デプロイメントトークンの管理**」をクリックし、トークンをコピーします。
    - GitHubリポジトリの **Settings > Secrets and variables > Actions** に移動し、`AZURE_STATIC_WEB_APPS_API_TOKEN` という名前で新しいRepository Secretを作成し、値を貼り付けます。
 
-### 1-3. Neon (Database)
-1. Neonコンソールでプロジェクトを作成します。
-2. 接続文字列 (`postgres://...`) をコピーします。
-3. これを上記の Azure App Service の環境変数 `DATABASE_URL` に設定します。
-   - **注意**: `psycopg2` や `asyncpg` で接続する場合、`sslmode=require` が必要になる場合があります。NeonはデフォルトでSSL接続です。
+### 1-3. Supabase (Database)
+1. [Supabase](https://supabase.com/) にログインし、「New Project」を作成します。
+   - **Name**: 任意 (例: `pscweb3-db`)
+   - **Database Password**: 強固なパスワードを生成して設定します（後で使います）。
+   - **Region**: アプリに近い場所 (例: `Tokyo`)
+
+2. プロジェクト作成後、**Settings > Database** に移動します。
+
+3. **Connection Pooling** セクションを探します（Azure App Service からの接続にはプーリングの利用を強く推奨します）。
+   - **Mode**: `Transaction`
+   - **Session Mode**: (デフォルトのまま)
+   - 接続文字列をコピーします。
+     - 形式: `postgres://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+     - `[password]` の部分を設定したパスワードに置き換えてください。
+
+4. これを上記の Azure App Service の環境変数 `DATABASE_URL` に設定します。
+   - 末尾に `?sslmode=require` を付ける必要がある場合がありますが、Supabase/SQLAlchemyの組み合わせでは通常そのままで動作します。接続エラーが出る場合は試してください。
 
 ## 2. デプロイの実行
 
