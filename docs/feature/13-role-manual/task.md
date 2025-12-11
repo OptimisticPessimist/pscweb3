@@ -7,5 +7,6 @@
     - [x] Manual for Viewers (Cast/Staff) <!-- id: 4 -->
     - [x] Manual for Editors (Staff) <!-- id: 5 -->
     - [x] Manual for Owners (Admins) <!-- id: 6 -->
-- [x] Review and Refine Japanese wording for high school students <!-- id: 7 -->
+- [x] Use simple language and emojis
+- [x] Add role capability comparison table (◯✗) <!-- id: 9 -->
 - [x] Commit and Push <!-- id: 8 -->
