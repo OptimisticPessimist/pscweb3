@@ -1,6 +1,8 @@
 # PSC Web 3 - 演劇制作管理システム
 
-FastAPI + React + PostgreSQL を使用した演劇制作管理システムです。
+本アプリはsatamame様の[pscweb2](https://github.com/satamame/pscweb2)を参考に開発しました。
+
+FastAPI + React + PostgreSQL を使用して、演劇制作における台本管理・スケジュール管理・出欠管理を一元化するWebアプリケーションです。
 
 ## 📋 概要
 
@@ -62,7 +64,7 @@ PSC Web 3 は、演劇制作における台本管理・スケジュール管理�
 
 ```bash
 git clone <repository_url>
-cd pscweb3-1
+cd pscweb3
 ```
 
 ### 2. 環境変数設定
@@ -101,8 +103,6 @@ cd backend
 # 依存関係のインストール
 uv sync
 
-# データベースマイグレーション
-uv run alembic upgrade head
 
 # 開発サーバー起動
 uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
