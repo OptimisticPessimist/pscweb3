@@ -35,7 +35,7 @@ jobs:
       - name: Zip artifact for deployment
         run: |
           cd backend
-          zip -r ../release.zip . -x "src/assets/fonts/*"
+          zip -r ../release.zip .
 
       - name: Debug release.zip
         run: |
