@@ -40,11 +40,20 @@
     },
     "dashboard": {
         "title": "Dashboard",
-        "recentProjects": "Recent Projects",
-        "upcomingRehearsals": "Upcoming Rehearsals",
-        "myAttendance": "My Attendance",
-        "noProjects": "No projects available",
-        "createProject": "Create New Project"
+        "projects": "Projects",
+        "newProject": "New Project",
+        "noProjects": "No projects",
+        "noProjectsMessage": "Get started by creating a new project.",
+        "createNewProject": "Create New Project",
+        "errorLoadingProjects": "Error loading projects",
+        "unknownError": "Unknown error occurred",
+        "noDescription": "No description",
+        "deleteProject": "Delete Project",
+        "deleteConfirmMessage": "Are you sure you want to delete this project? This action cannot be undone. All data including members, rehearsals, and scripts will be permanently removed.",
+        "creating": "Creating...",
+        "create": "Create",
+        "deleting": "Deleting...",
+        "failedToDeleteProject": "Failed to delete project"
     },
     "project": {
         "title": "Project",
@@ -55,7 +64,9 @@
         "status": "Status",
         "members": "Members",
         "invite": "Invite",
-        "details": "Details"
+        "details": "Details",
+        "nameRequired": "Project name is required",
+        "enterProjectName": "Enter project name"
     },
     "script": {
         "title": "Script",

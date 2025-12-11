@@ -40,11 +40,20 @@
     },
     "dashboard": {
         "title": "ダッシュボード",
-        "recentProjects": "最近のプロジェクト",
-        "upcomingRehearsals": "今後の稽古",
-        "myAttendance": "出欠状況",
+        "projects": "プロジェクト",
+        "newProject": "新規プロジェクト",
         "noProjects": "プロジェクトがありません",
-        "createProject": "新規プロジェクト作成"
+        "noProjectsMessage": "新しいプロジェクトを作成して始めましょう。",
+        "createNewProject": "新規プロジェクト作成",
+        "errorLoadingProjects": "プロジェクトの読み込みエラー",
+        "unknownError": "不明なエラーが発生しました",
+        "noDescription": "説明なし",
+        "deleteProject": "プロジェクト削除",
+        "deleteConfirmMessage": "本当にこのプロジェクトを削除しますか？この操作は元に戻せません。メンバー、稽古、脚本を含む全てのデータが完全に削除されます。",
+        "creating": "作成中...",
+        "create": "作成",
+        "deleting": "削除中...",
+        "failedToDeleteProject": "プロジェクトの削除に失敗しました"
     },
     "project": {
         "title": "プロジェクト",
@@ -55,7 +64,9 @@
         "status": "ステータス",
         "members": "メンバー",
         "invite": "招待",
-        "details": "詳細"
+        "details": "詳細",
+        "nameRequired": "プロジェクト名は必須です",
+        "enterProjectName": "プロジェクト名を入力"
     },
     "script": {
         "title": "脚本",
