@@ -90,9 +90,17 @@ export const StaffPage: React.FC = () => {
                                                         <td className="px-6 py-4 whitespace-nowrap">
                                                             <div className="flex items-center">
                                                                 <div className="flex-shrink-0 h-10 w-10">
-                                                                    <span className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-800 font-bold">
-                                                                        {member.discord_username.charAt(0).toUpperCase()}
-                                                                    </span>
+                                                                    {member.discord_avatar_url ? (
+                                                                        <img
+                                                                            src={member.discord_avatar_url}
+                                                                            alt={member.display_name || member.discord_username}
+                                                                            className="h-10 w-10 rounded-full ring-2 ring-purple-500"
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                                                                            {member.discord_username.charAt(0).toUpperCase()}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <div className="ml-4">
                                                                     {editingMember === member.user_id ? (
