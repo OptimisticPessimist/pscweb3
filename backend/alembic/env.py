@@ -31,8 +31,8 @@ from src.db.models import (  # noqa: F401 - モデルをインポートしてマ
 # Alembic Config オブジェクト
 config = context.config
 
-# データベースURLを設定から取得
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# DATABASE_URLは直接settingsから使用（config.set_main_optionで設定すると%文字のinterpolationエラーが発生）
+# config.set_main_option("sqlalchemy.url", settings.database_url)  # <- これを削除
 
 # ロギング設定
 if config.config_file_name is not None:
@@ -44,7 +44,8 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     """オフラインモードでマイグレーションを実行."""
-    url = config.get_main_option("sqlalchemy.url")
+    # DATABASE_URLを直接使用して特殊文字のエスケープ問題を回避
+    url = settings.database_url
     context.configure(
         url=url,
         target_metadata=target_metadata,
