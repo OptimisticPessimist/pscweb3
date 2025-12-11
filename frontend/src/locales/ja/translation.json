@@ -71,11 +71,16 @@
     "script": {
         "title": "脚本",
         "upload": "脚本アップロード",
+        "updateScript": "脚本更新",
         "fileName": "ファイル名",
         "uploadedAt": "アップロード日時",
         "scenes": "シーン",
         "characters": "登場人物",
-        "fountainFormat": "Fountain形式"
+        "fountainFormat": "Fountain形式",
+        "viewDetails": "詳細を見る",
+        "noScript": "脚本がアップロードされていません",
+        "uploadToGetStarted": "Fountain形式の脚本をアップロードして始めましょう。",
+        "errorLoading": "脚本の読み込みエラー"
     },
     "sceneChart": {
         "title": "香盤表",

@@ -71,11 +71,16 @@
     "script": {
         "title": "Script",
         "upload": "Upload Script",
+        "updateScript": "Update Script",
         "fileName": "File Name",
         "uploadedAt": "Uploaded At",
         "scenes": "Scenes",
         "characters": "Characters",
-        "fountainFormat": "Fountain Format"
+        "fountainFormat": "Fountain Format",
+        "viewDetails": "View Details",
+        "noScript": "No script uploaded",
+        "uploadToGetStarted": "Upload a Fountain script to get started.",
+        "errorLoading": "Error loading scripts"
     },
     "sceneChart": {
         "title": "Scene Chart",
