@@ -77,6 +77,7 @@ export interface ProjectMember {
     default_staff_role?: string | null;
     display_name?: string | null;
     joined_at: string;
+    discord_avatar_url?: string | null;
 }
 
 // Rehearsal Types

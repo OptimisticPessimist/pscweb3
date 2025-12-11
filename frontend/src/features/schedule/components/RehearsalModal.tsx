@@ -96,7 +96,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                         isCast: isCast,
                         castCharacterId: castCharacterId,
                         userName: m.discord_username,
-                        displayName: m.display_name
+                        displayName: m.display_name || null
                     };
                 } else {
                     // Update existing entry
@@ -111,7 +111,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                     }
                     // Updating names just in case
                     newState[uid].userName = m.discord_username;
-                    newState[uid].displayName = m.display_name;
+                    newState[uid].displayName = m.display_name || null;
                 }
             });
             return newState;

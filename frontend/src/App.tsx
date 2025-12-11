@@ -1,13 +1,10 @@
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/features/auth/hooks/useAuth';
 import { Toaster } from 'react-hot-toast';
 import './i18n'; // Import i18n configuration
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage';
-import { DashboardPage } from '@/features/dashboard/DashboardPage';
-import { ProjectDetailsPage } from '@/features/projects/ProjectDetailsPage';
+
 import { ProtectedLayout } from '@/layouts/ProtectedLayout';
 import { AppLayout } from '@/layouts/AppLayout';
 import { Loading } from '@/components/Loading';

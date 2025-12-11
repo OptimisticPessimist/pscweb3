@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from './api/projects';
 import { scriptsApi } from '../scripts/api/scripts';
-import { dashboardApi, type DashboardResponse } from '../dashboard/api/dashboard';
+import { dashboardApi } from '../dashboard/api/dashboard';
 import { AlertCircle, Calendar, Clock, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

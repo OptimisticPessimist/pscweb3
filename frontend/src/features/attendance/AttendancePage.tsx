@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/features/attendance/api/attendance';
@@ -8,7 +9,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export const AttendancePage: React.FC = () => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
     const { user } = useAuth();
@@ -46,7 +47,7 @@ export const AttendancePage: React.FC = () => {
             }
         },
         onSuccess: () => {
-            toast.success(`${selectedEvents.size}件の出欠確認にリマインダーを送信しました`);
+            toast.success(`${selectedEvents.size} 件の出欠確認にリマインダーを送信しました`);
             setSelectedEvents(new Set());
         },
         onError: () => {
@@ -154,37 +155,37 @@ export const AttendancePage: React.FC = () => {
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => setFilter('all')}
-                                className={`px-3 py-1 text-sm rounded ${filter === 'all'
+                                className={`px - 3 py - 1 text - sm rounded ${filter === 'all'
                                     ? 'bg-indigo-600 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                    } `}
                             >
                                 全て
                             </button>
                             <button
                                 onClick={() => setFilter('pending')}
-                                className={`px-3 py-1 text-sm rounded ${filter === 'pending'
+                                className={`px - 3 py - 1 text - sm rounded ${filter === 'pending'
                                     ? 'bg-yellow-600 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                    } `}
                             >
                                 未回答
                             </button>
                             <button
                                 onClick={() => setFilter('ok')}
-                                className={`px-3 py-1 text-sm rounded ${filter === 'ok'
+                                className={`px - 3 py - 1 text - sm rounded ${filter === 'ok'
                                     ? 'bg-green-600 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                    } `}
                             >
                                 OK
                             </button>
                             <button
                                 onClick={() => setFilter('ng')}
-                                className={`px-3 py-1 text-sm rounded ${filter === 'ng'
+                                className={`px - 3 py - 1 text - sm rounded ${filter === 'ng'
                                     ? 'bg-red-600 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                    } `}
                             >
                                 NG
                             </button>
@@ -194,7 +195,7 @@ export const AttendancePage: React.FC = () => {
                 <div className="divide-y divide-gray-200">
                     {filteredEvents.length === 0 ? (
                         <div className="p-6 text-center text-gray-500">
-                            {filter === 'all' ? '出欠確認はまだありません' : `${filter === 'pending' ? '未回答' : filter === 'ok' ? 'OK' : 'NG'}の出欠確認はありません`}
+                            {filter === 'all' ? '出欠確認はまだありません' : `${filter === 'pending' ? '未回答' : filter === 'ok' ? 'OK' : 'NG'} の出欠確認はありません`}
                         </div>
                     ) : (
                         filteredEvents.map((event) => {
@@ -215,7 +216,7 @@ export const AttendancePage: React.FC = () => {
                             }
 
                             return (
-                                <div key={event.id} className={`p-6 border-l-4 ${borderColor}`}>
+                                <div key={event.id} className={`p - 6 border - l - 4 ${borderColor} `}>
                                     <div className="flex items-start justify-between">
                                         {/* チェックボックス */}
                                         {event.stats.pending > 0 && (

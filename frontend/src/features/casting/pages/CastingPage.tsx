@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { charactersApi } from '../api/characters';
 import { projectsApi } from '@/features/projects/api/projects';
-import type { CastingUser, ProjectMember } from '@/types';
+import type { ApiError } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 
