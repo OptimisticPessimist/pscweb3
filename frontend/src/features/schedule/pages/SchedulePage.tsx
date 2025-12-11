@@ -10,8 +10,10 @@ import { scriptsApi } from '@/features/scripts/api/scripts';
 import { projectsApi } from '@/features/projects/api/projects';
 import { RehearsalModal } from '../components/RehearsalModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useTranslation } from 'react-i18next';
 
 export const SchedulePage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
     const [selectedRehearsalId, setSelectedRehearsalId] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export const SchedulePage: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    if (isScheduleLoading || !project) return <div className="p-6">Loading schedule...</div>;
+    if (isScheduleLoading || !project) return <div className="p-6">{t('schedule.loadingSchedule')}</div>;
 
     // Handle 404 (No Schedule)
     if (scheduleError || !schedule) {
@@ -103,12 +105,12 @@ export const SchedulePage: React.FC = () => {
 
         return (
             <div className="flex flex-col items-center justify-center h-full p-6 bg-white shadow rounded-lg">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">No Rehearsal Schedule</h2>
-                <p className="text-gray-500 mb-6">Create a schedule to start planning rehearsals.</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t('schedule.noRehearsalSchedule')}</h2>
+                <p className="text-gray-500 mb-6">{t('schedule.createScheduleToStart')}</p>
 
                 {hasScripts ? (
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-700">Select a script to base the schedule on:</p>
+                        <p className="text-sm text-gray-700">{t('schedule.selectScriptForSchedule')}</p>
                         <div className="flex gap-2 justify-center flex-wrap">
                             {scripts.map(script => (
                                 <button
@@ -124,8 +126,8 @@ export const SchedulePage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="text-center">
-                        <p className="text-red-500 mb-4">No scripts found.</p>
-                        <p className="text-sm text-gray-500">Please upload a script in the Scripts section first.</p>
+                        <p className="text-red-500 mb-4">{t('schedule.noScriptsFound')}</p>
+                        <p className="text-sm text-gray-500">{t('schedule.uploadScriptFirst')}</p>
                     </div>
                 )}
             </div>
@@ -138,6 +140,7 @@ export const SchedulePage: React.FC = () => {
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="dayGridMonth"
+                    locale={i18n.language}
                     headerToolbar={{
                         left: 'prev,next today',
                         center: 'title',

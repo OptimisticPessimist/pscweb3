@@ -1,0 +1,121 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.0.1, pluggy-1.6.0 -- F:\src\PythonProject\pscweb3-1\backend\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\src\PythonProject\pscweb3-1\backend
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 14 items
+
+tests/unit/test_models.py::test_create_user PASSED                       [  7%]
+tests/unit/test_models.py::test_create_project PASSED                    [ 14%]
+tests/unit/test_models.py::test_create_script_with_scenes_and_characters PASSED [ 21%]
+tests/unit/test_models.py::test_character_casting_double_cast PASSED     [ 28%]
+tests/unit/test_api_projects.py::test_create_project FAILED              [ 35%]
+tests/unit/test_api_projects.py::test_list_projects PASSED               [ 42%]
+tests/unit/test_api_projects.py::test_get_project PASSED                 [ 50%]
+tests/unit/test_api_projects.py::test_update_project PASSED              [ 57%]
+tests/unit/test_api_projects.py::test_delete_project PASSED              [ 64%]
+tests/unit/test_api_projects.py::test_get_project_members PASSED         [ 71%]
+tests/unit/test_api_projects.py::test_unauthorized_access PASSED         [ 78%]
+tests/unit/test_api_users.py::test_get_current_user PASSED               [ 85%]
+tests/unit/test_api_users.py::test_get_user_schedule FAILED              [ 92%]
+tests/unit/test_api_users.py::test_unauthorized_user_access FAILED       [100%]
+
+================================== FAILURES ===================================
+_____________________________ test_create_project _____________________________
+tests\unit\test_api_projects.py:29: in test_create_project
+    assert response.status_code == 201
+E   assert 200 == 201
+E    +  where 200 = <Response [200 OK]>.status_code
+------------------------------ Captured log call ------------------------------
+ERROR    src.services.discord:discord.py:57 {"error": "Client error '400 Bad Request' for url 'https://discord.com/api/webhooks/xxx/xxx'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400", "event": "Failed to send Discord notification", "request_id": "7cad1cc2-4b6a-41ab-9789-7046c84be8af", "level": "error", "timestamp": "2025-12-10T19:42:19.031976Z"}
+___________________________ test_get_user_schedule ____________________________
+tests\unit\test_api_users.py:41: in test_get_user_schedule
+    assert "schedule" in data or isinstance(data, list)
+E   AssertionError: assert ('schedule' in {'items': []} or False)
+E    +  where False = isinstance({'items': []}, list)
+________________________ test_unauthorized_user_access ________________________
+tests\unit\test_api_users.py:51: in test_unauthorized_user_access
+    assert response.status_code == 401
+E   assert 422 == 401
+E    +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+============================== warnings summary ===============================
+tests/unit/test_api_projects.py::test_create_project
+  F:\src\PythonProject\pscweb3-1\backend\src\main.py:29: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+tests/unit/test_api_projects.py::test_create_project
+  F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\fastapi\applications.py:4580: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.1-final-0 _______________
+
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+src\__init__.py                             0      0   100%
+src\api\__init__.py                         0      0   100%
+src\api\attendance.py                     132    109    17%   36-39, 51-98, 121-172, 184-224, 235-300, 313-342
+src\api\auth.py                            92     76    17%   27-28, 35-67, 72-138, 143-169
+src\api\auth_helper.py                     38     38     0%   1-84
+src\api\characters.py                      80     62    22%   42-86, 113-192, 224-285
+src\api\dashboard.py                       39     27    31%   47-139
+src\api\interactions.py                   102     61    40%   54-66, 75-97, 101-183
+src\api\invitations.py                     70     52    26%   25-60, 76-93, 112-166
+src\api\my_schedule.py                     52     25    52%   42-122
+src\api\projects.py                       201    134    33%   54, 65-91, 119, 128-139, 173, 198, 206-209, 211-214, 226-228, 253-266, 295-345, 378-436, 462, 478-485, 500-570, 589-593, 606-625
+src\api\rehearsals.py                     343    307    10%   75-114, 147-323, 359-522, 558-671, 714-752, 777-819, 846-885, 910-949, 974-1021, 1046-1087
+src\api\scene_charts.py                    53     38    28%   38-64, 87-122, 135-157
+src\api\scripts.py                         49     24    51%   51-63, 95-124, 139-146, 165-172, 191-194
+src\api\users.py                           43     22    49%   38, 43-46, 56, 60-145
+src\auth\__init__.py                        0      0   100%
+src\auth\discord.py                        26     16    38%   36-42, 57-84
+src\auth\jwt.py                            25      4    84%   44, 48-49, 52
+src\config.py                              16      0   100%
+src\core\logger.py                         15      1    93%   38
+src\db\__init__.py                          8      2    75%   32-33
+src\db\base.py                              3      0   100%
+src\db\models.py                          211      0   100%
+src\dependencies\auth.py                   18      7    61%   28-35
+src\dependencies\permissions.py            29     13    55%   40-45, 57-64, 72, 80-82
+src\main.py                                40      3    92%   31, 81, 91
+src\middleware\request_logging.py          24      4    83%   66-75
+src\schemas\__init__.py                     0      0   100%
+src\schemas\attendance.py                  36      0   100%
+src\schemas\auth.py                        11      0   100%
+src\schemas\character.py                   18      0   100%
+src\schemas\dashboard.py                   29      0   100%
+src\schemas\invitation.py                  18      0   100%
+src\schemas\project.py                     51      0   100%
+src\schemas\rehearsal.py                   54      0   100%
+src\schemas\scene_chart.py                 19      0   100%
+src\schemas\schedule.py                    18      0   100%
+src\schemas\script.py                      39      0   100%
+src\services\__init__.py                    0      0   100%
+src\services\attendance.py                 55     43    22%   32-33, 57-175, 183
+src\services\discord.py                    86     61    29%   31-32, 37-46, 50, 54, 58-59, 69-89, 93-131
+src\services\fountain_parser.py            57     53     7%   20-111
+src\services\pdf_generator.py              32     32     0%   1-55
+src\services\scene_chart_generator.py      20     16    20%   20-50
+src\services\script_notification.py        15     15     0%   3-46
+src\services\script_processor.py           84     84     0%   3-292
+---------------------------------------------------------------------
+TOTAL                                    2351   1329    43%
+Coverage HTML written to dir htmlcov
+=========================== short test summary info ===========================
+FAILED tests/unit/test_api_projects.py::test_create_project - assert 200 == 201
+FAILED tests/unit/test_api_users.py::test_get_user_schedule - AssertionError:...
+FAILED tests/unit/test_api_users.py::test_unauthorized_user_access - assert 4...
+================== 3 failed, 11 passed, 2 warnings in 2.41s ===================

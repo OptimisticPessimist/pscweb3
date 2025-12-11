@@ -3,9 +3,12 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { charactersApi } from '../api/characters';
 import { projectsApi } from '@/features/projects/api/projects';
-import type { CastingUser, ProjectMember, ApiError } from '@/types';
+import type { CastingUser, ProjectMember } from '@/types';
+import { useTranslation } from 'react-i18next';
+
 
 export const CastingPage = () => {
+    const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
 
@@ -88,10 +91,10 @@ export const CastingPage = () => {
 
     const isEditable = project?.role === 'owner' || project?.role === 'editor';
 
-    if (charsLoading) return <div className="p-8 text-center">Loading characters...</div>;
+    if (charsLoading) return <div className="p-8 text-center">{t('casting.loadingCharacters')}</div>;
     if (!characters || characters.length === 0) return (
         <div className="p-8 text-center text-gray-500">
-            No characters found. Please upload a script first.
+            {t('script.noScript')}
         </div>
     );
 
@@ -100,7 +103,7 @@ export const CastingPage = () => {
             <div className="md:flex md:items-center md:justify-between">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                        Casting
+                        {t('casting.title')}
                     </h2>
                 </div>
             </div>
@@ -110,10 +113,10 @@ export const CastingPage = () => {
                     <thead className="bg-gray-50">
                         <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
-                                Character
+                                {t('casting.character')}
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Cast
+                                {t('casting.actor')}
                             </th>
                             {isEditable && (
                                 <th scope="col" className="relative px-6 py-3">
@@ -148,7 +151,7 @@ export const CastingPage = () => {
                                                 )}
                                             </span>
                                         ))}
-                                        {char.castings.length === 0 && <span className="text-gray-400 italic">Unassigned</span>}
+                                        {char.castings.length === 0 && <span className="text-gray-400 italic">{t('casting.unassigned')}</span>}
                                     </div>
                                 </td>
                                 {isEditable && (
@@ -157,7 +160,7 @@ export const CastingPage = () => {
                                             onClick={() => openModal(char.id)}
                                             className="text-indigo-600 hover:text-indigo-900"
                                         >
-                                            Add Cast
+                                            {t('casting.assign')}
                                         </button>
                                     </td>
                                 )}
@@ -180,7 +183,7 @@ export const CastingPage = () => {
                                 </h3>
                                 <div className="mt-4 space-y-4">
                                     <div>
-                                        <label htmlFor="member" className="block text-sm font-medium text-gray-700">Member</label>
+                                        <label htmlFor="member" className="block text-sm font-medium text-gray-700">{t('casting.member')}</label>
                                         <select
                                             id="member"
                                             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white text-gray-900"
@@ -196,7 +199,7 @@ export const CastingPage = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label htmlFor="castName" className="block text-sm font-medium text-gray-700">Memo (Optional)</label>
+                                        <label htmlFor="castName" className="block text-sm font-medium text-gray-700">{t('casting.memo')} ({t('casting.optional')})</label>
                                         <input
                                             type="text"
                                             id="castName"
@@ -215,14 +218,14 @@ export const CastingPage = () => {
                                     onClick={handleAdd}
                                     disabled={!selectedUserId || addCastingMutation.isPending}
                                 >
-                                    {addCastingMutation.isPending ? 'Saving...' : 'Save'}
+                                    {addCastingMutation.isPending ? t('common.loading') : t('common.save')}
                                 </button>
                                 <button
                                     type="button"
                                     className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                                     onClick={closeModal}
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                             </div>
                         </div>

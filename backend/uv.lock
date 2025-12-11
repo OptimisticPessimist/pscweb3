@@ -865,6 +865,7 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest-cov" },
     { name = "ty" },
 ]
 
@@ -898,7 +899,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ty", specifier = ">=0.0.1a32" }]
+dev = [
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "ty", specifier = ">=0.0.1a32" },
+]
 
 [[package]]
 name = "pyasn1"

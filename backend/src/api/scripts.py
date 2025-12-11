@@ -130,8 +130,14 @@ async def get_script(
     tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
 ) -> ScriptResponse:
     """指定した脚本の詳細を取得."""
-    # 権限チェックはDepends(get_script_member_dep)で完了済み
-    member, script = tuple_data
+    # 権限チェックはDepends(get_project_member_dep)で完了済み
+
+    # 脚本取得
+    # Verify project membership
+    script = await db.get(Script, script_id)
+    if not script:
+        raise HTTPException(status_code=404, detail="Script not found")
+
     return ScriptResponse.model_validate(script)
 
 

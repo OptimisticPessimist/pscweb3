@@ -1,0 +1,44 @@
+﻿uv : warning: The following rules have been removed and ignoring them has
+ no effect:
+At line:1 char:1
++ uv run ruff check src --select D --output-format=concise 2>&1 | Out-F .
+..
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: The fo... has no e 
+   ffect::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    - ANN101
+    - ANN102
+
+src\api\auth_helper.py:1:1: D100 Missing docstring in public module
+src\api\auth_helper.py:8:11: D103 Missing docstring in public function
+src\api\characters.py:92:11: D417 Missing argument descriptions in the docstring for `add_casting`: `background_tasks`, `discord_service`
+src\api\characters.py:204:11: D417 Missing argument descriptions in the docstring for `remove_casting`: `background_tasks`, `discord_service`
+src\api\interactions.py:31:7: D101 Missing docstring in public class
+src\api\interactions.py:35:7: D101 Missing docstring in public class
+src\api\interactions.py:40:7: D101 Missing docstring in public class
+src\api\interactions.py:43:7: D101 Missing docstring in public class
+src\api\invitations.py:1:1: D100 Missing docstring in public module
+src\api\invitations.py:24:5: D415 First line should end with a period, question mark, or exclamation point
+src\api\invitations.py:75:5: D415 First line should end with a period, question mark, or exclamation point
+src\api\invitations.py:111:5: D415 First line should end with a period, question mark, or exclamation point
+src\api\my_schedule.py:1:1: D100 Missing docstring in public module
+src\api\my_schedule.py:16:7: D101 Missing docstring in public class
+src\api\my_schedule.py:30:7: D101 Missing docstring in public class
+src\api\my_schedule.py:39:5: D200 One-line docstring should fit on one line
+src\api\my_schedule.py:39:5: D212 [*] Multi-line docstring summary should start at the first line
+src\api\projects.py:1:1: D100 Missing docstring in public module
+src\api\rehearsals.py:869:11: D417 Missing argument descriptions in the docstring for `delete_rehearsal`: `background_tasks`, `discord_service`
+src\auth\jwt.py:1:1: D100 Missing docstring in public module
+src\dependencies\auth.py:1:1: D100 Missing docstring in public module
+src\main.py:43:11: D103 Missing docstring in public function
+src\schemas\invitation.py:1:1: D100 Missing docstring in public module
+src\schemas\invitation.py:7:5: D415 First line should end with a period, question mark, or exclamation point
+src\schemas\invitation.py:12:5: D415 First line should end with a period, question mark, or exclamation point
+src\schemas\invitation.py:24:5: D415 First line should end with a period, question mark, or exclamation point
+src\schemas\project.py:1:1: D100 Missing docstring in public module
+src\schemas\schedule.py:1:1: D100 Missing docstring in public module
+src\services\pdf_generator.py:1:1: D100 Missing docstring in public module
+Found 29 errors.
+[*] 1 fixable with the `--fix` option (7 hidden fixes can be enabled with the `--unsafe-fixes` option).
