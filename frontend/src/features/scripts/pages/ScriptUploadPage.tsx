@@ -4,8 +4,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useDropzone } from 'react-dropzone';
 import { scriptsApi } from '../api/scripts';
 import { Upload, X, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ScriptUploadPage: React.FC = () => {
+    const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
@@ -56,9 +58,9 @@ export const ScriptUploadPage: React.FC = () => {
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">Upload Script</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t('script.uploadTitle')}</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                    Upload a .fountain file to add a new script or update an existing one.
+                    {t('script.uploadDescription')}
                 </p>
             </div>
 
@@ -147,14 +149,14 @@ export const ScriptUploadPage: React.FC = () => {
                         onClick={() => navigate(`/projects/${projectId}/scripts`)}
                         className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={!file || !title || uploadMutation.isPending}
                         className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                     >
-                        {uploadMutation.isPending ? 'Uploading...' : 'Upload Script'}
+                        {uploadMutation.isPending ? t('script.uploading') : t('script.uploadAction')}
                     </button>
                 </div>
             </form>

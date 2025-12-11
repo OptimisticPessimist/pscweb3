@@ -23,9 +23,11 @@ i18n
     .init({
         resources,
         fallbackLng: 'ja',
-        debug: false,
+        debug: true,
         interpolation: {
             escapeValue: false, // React already escapes values
+            prefix: '{',
+            suffix: '}',
         },
         detection: {
             order: ['localStorage', 'navigator'],

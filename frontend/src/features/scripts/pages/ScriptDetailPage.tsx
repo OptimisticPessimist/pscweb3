@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
 import { FileText, ArrowLeft, Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ScriptDetailPage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { projectId, scriptId } = useParams<{ projectId: string; scriptId: string }>();
 
     const { data: script, isLoading } = useQuery({
@@ -31,8 +33,8 @@ export const ScriptDetailPage: React.FC = () => {
         }
     };
 
-    if (isLoading) return <div>Loading script...</div>;
-    if (!script) return <div>Script not found</div>;
+    if (isLoading) return <div>{t('common.loading')}</div>;
+    if (!script) return <div>{t('script.notFound')}</div>;
 
     return (
         <div className="space-y-6">
@@ -53,16 +55,16 @@ export const ScriptDetailPage: React.FC = () => {
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         <Download className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
-                        Download PDF
+                        {t('script.downloadPdf')}
                     </button>
                 </div>
             </div>
 
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Script Content</h3>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('script.content')}</h3>
                     <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                        Uploaded by {script.uploaded_at ? new Date(script.uploaded_at).toLocaleString() : 'Unknown'}
+                        Uploaded by {script.uploaded_at ? new Date(script.uploaded_at).toLocaleString(i18n.language) : 'Unknown'}
                     </p>
                 </div>
                 <div className="bg-gray-50 px-4 py-5 sm:p-6 font-mono text-sm whitespace-pre-wrap overflow-x-auto">

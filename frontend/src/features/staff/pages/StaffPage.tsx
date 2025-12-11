@@ -3,8 +3,10 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/features/projects/api/projects';
 import { ProjectDetailsHeader } from '@/features/projects/components/ProjectDetailsHeader';
+import { useTranslation } from 'react-i18next';
 
 export const StaffPage: React.FC = () => {
+    const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
     const [editingMember, setEditingMember] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export const StaffPage: React.FC = () => {
         },
     });
 
-    if (isProjectLoading || isMembersLoading || !project) return <div>Loading...</div>;
+    if (isProjectLoading || isMembersLoading || !project) return <div>{t('common.loading')}</div>;
 
     const isOwner = project.role === 'owner';
 
@@ -67,17 +69,17 @@ export const StaffPage: React.FC = () => {
                                             <thead className="bg-gray-50">
                                                 <tr>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Name
+                                                        {t('staff.name')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Staff Role
+                                                        {t('staff.role')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         Contact (Discord)
                                                     </th>
                                                     {isOwner && (
                                                         <th scope="col" className="relative px-6 py-3">
-                                                            <span className="sr-only">Edit</span>
+                                                            <span className="sr-only">{t('common.edit')}</span>
                                                         </th>
                                                     )}
                                                 </tr>
@@ -153,13 +155,13 @@ export const StaffPage: React.FC = () => {
                                                                             disabled={updateMemberMutation.isPending}
                                                                             className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
                                                                         >
-                                                                            Save
+                                                                            {t('common.save')}
                                                                         </button>
                                                                         <button
                                                                             onClick={() => setEditingMember(null)}
                                                                             className="text-gray-600 hover:text-gray-900"
                                                                         >
-                                                                            Cancel
+                                                                            {t('common.cancel')}
                                                                         </button>
                                                                     </div>
                                                                 ) : (
@@ -167,7 +169,7 @@ export const StaffPage: React.FC = () => {
                                                                         onClick={() => startEditing(member.user_id, member.default_staff_role, member.display_name)}
                                                                         className="text-indigo-600 hover:text-indigo-900"
                                                                     >
-                                                                        Edit
+                                                                        {t('common.edit')}
                                                                     </button>
                                                                 )}
                                                             </td>

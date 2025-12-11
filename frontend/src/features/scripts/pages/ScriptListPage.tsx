@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
 import { FileText, Download, Trash2, Plus, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const ScriptListPage: React.FC = () => {
+    const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
 
@@ -47,9 +49,9 @@ export const ScriptListPage: React.FC = () => {
         <div className="space-y-6">
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Scripts</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">{t('script.title')}</h2>
                     <p className="mt-1 text-sm text-gray-500">
-                        Manage your Fountain scripts and screenplays.
+                        {t('script.manageScripts')}
                     </p>
                 </div>
                 <div className="mt-4 sm:mt-0">
@@ -58,7 +60,7 @@ export const ScriptListPage: React.FC = () => {
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                        Upload Script
+                        {t('script.upload')}
                     </Link>
                 </div>
             </div>
@@ -67,7 +69,7 @@ export const ScriptListPage: React.FC = () => {
                 <ul role="list" className="divide-y divide-gray-200">
                     {scripts?.length === 0 && (
                         <li className="px-4 py-12 text-center text-gray-500">
-                            No scripts found. Upload one to get started!
+                            {t('script.uploadToGetStarted')}
                         </li>
                     )}
                     {scripts?.map((script) => (

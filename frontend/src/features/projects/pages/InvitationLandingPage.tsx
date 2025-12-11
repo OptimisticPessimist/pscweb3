@@ -3,8 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { invitationsApi } from '../api/invitations';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 export const InvitationLandingPage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { token } = useParams<{ token: string }>();
     const navigate = useNavigate();
     const location = useLocation();
@@ -43,7 +45,7 @@ export const InvitationLandingPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Loading Invitation...</h2>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">{t('invitation.loading')}</h2>
                 </div>
             </div>
         );
@@ -53,9 +55,9 @@ export const InvitationLandingPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-red-600">Invitation Invalid</h2>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-red-600">{t('invitation.invalid')}</h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
-                        This invitation link may have expired or is invalid.
+                        {t('invitation.expiredOrInvalid')}
                     </p>
                 </div>
             </div>
@@ -78,7 +80,7 @@ export const InvitationLandingPage: React.FC = () => {
                     <div className="space-y-6">
                         <div>
                             <p className="text-center text-sm text-gray-500 mb-4">
-                                Expires at: {new Date(invitation.expires_at).toLocaleString()}
+                                {t('invitation.expiresAt')}: {new Date(invitation.expires_at).toLocaleString(i18n.language)}
                             </p>
 
                             {user ? (
@@ -87,16 +89,16 @@ export const InvitationLandingPage: React.FC = () => {
                                     disabled={acceptMutation.isPending}
                                     className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                                 >
-                                    {acceptMutation.isPending ? 'Joining...' : 'Accept Invitation'}
+                                    {acceptMutation.isPending ? t('invitation.joining') : t('invitation.accept')}
                                 </button>
                             ) : (
                                 <div className="text-center">
-                                    <p className="text-sm text-gray-700 mb-4">You need to sign in to join.</p>
+                                    <p className="text-sm text-gray-700 mb-4">{t('invitation.signInRequired')}</p>
                                     <button
                                         onClick={handleLogin}
                                         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                     >
-                                        Sign in with Discord
+                                        {t('auth.loginWithDiscord')}
                                     </button>
                                 </div>
                             )}

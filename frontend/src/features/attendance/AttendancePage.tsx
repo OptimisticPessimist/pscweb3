@@ -5,8 +5,10 @@ import { attendanceApi } from '@/features/attendance/api/attendance';
 import { Calendar, Clock, AlertCircle, Bell } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export const AttendancePage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
     const { user } = useAuth();
@@ -100,14 +102,14 @@ export const AttendancePage: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">出欠確認</h1>
-                <p className="text-sm text-gray-600">プロジェクトの出欠確認一覧</p>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('attendance.title')}</h1>
+                <p className="text-sm text-gray-600">{t('attendance.description')}</p>
 
                 {/* 検索バー */}
                 <div className="mt-4">
                     <input
                         type="text"
-                        placeholder="イベントタイトルで検索..."
+                        placeholder={t('attendance.searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
