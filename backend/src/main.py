@@ -45,9 +45,16 @@ app.add_middleware(RequestLoggingMiddleware)
 
 
 # CORS設定
+# CORS設定
+origins = []
+if settings.environment == "development":
+    origins.append("*")
+if settings.frontend_url:
+    origins.append(settings.frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.environment == "development" else [],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
