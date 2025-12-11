@@ -44,7 +44,9 @@
 
 3. 作成すると、自動的にGitHub Actionsのワークフローファイルがリポジトリに追加（コミット）される場合がありますが、今回は手動で作成した `.github/workflows/azure-deploy.yml` を使用します。
    - 作成後の **概要** ページで「**デプロイメントトークンの管理**」をクリックし、トークンをコピーします。
-   - GitHubリポジトリの **Settings > Secrets and variables > Actions** に移動し、`AZURE_STATIC_WEB_APPS_API_TOKEN` という名前で新しいRepository Secretを作成し、値を貼り付けます。
+   - GitHubリポジトリの **Settings > Secrets and variables > Actions** に移動し、以下のSecretsを設定します。
+     - `AZURE_STATIC_WEB_APPS_API_TOKEN`: デプロイメントトークン
+     - `VITE_API_URL`: バックエンドのApp Service URL (例: `https://pscweb3-backend.azurewebsites.net`) **※末尾にスラッシュを付けないでください**
 
 ### 1-3. Supabase (Database)
 1. [Supabase](https://supabase.com/) にログインし、「New Project」を作成します。
