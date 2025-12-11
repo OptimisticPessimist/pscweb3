@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db
-from src.db.models import ProjectMember, User
+from src.db.models import ProjectMember, User, Script, Scene, Line, Character
+from sqlalchemy.orm import selectinload
 from src.dependencies.auth import get_current_user_dep
 
 
@@ -80,3 +81,54 @@ async def get_project_editor_dep(
     if member.role not in ["owner", "editor"]:
         raise HTTPException(status_code=403, detail="編集権限が必要です")
     return member
+
+
+
+async def get_script_member_dep(
+    script_id: UUID,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+) -> tuple[ProjectMember, Script]:
+    """脚本IDからアクセス権を確認し、メンバー情報と脚本を返す.
+
+    Args:
+        script_id: 脚本ID (Path parameter)
+        current_user: 認証ユーザー
+        db: データベースセッション
+
+    Returns:
+        tuple[ProjectMember, Script]: メンバー情報と脚本
+    """
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    # 脚本取得
+    result = await db.execute(
+        select(Script)
+        .options(
+            selectinload(Script.characters),
+            selectinload(Script.scenes)
+            .selectinload(Scene.lines)
+            .selectinload(Line.character)
+            .selectinload(Character.castings)
+        )
+        .where(Script.id == script_id)
+    )
+    script = result.scalar_one_or_none()
+    
+    if script is None:
+        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+
+    # 権限チェック
+    result = await db.execute(
+        select(ProjectMember).where(
+            ProjectMember.project_id == script.project_id,
+            ProjectMember.user_id == current_user.id,
+        )
+    )
+    member = result.scalar_one_or_none()
+    
+    if member is None:
+        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+        
+    return member, script

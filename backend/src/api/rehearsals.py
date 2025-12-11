@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from structlog import get_logger
@@ -12,12 +12,14 @@ from structlog import get_logger
 from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
 from src.services.discord import DiscordService, get_discord_service
+from src.services.attendance import AttendanceService
 from src.db.models import (
     ProjectMember,
     Rehearsal,
     RehearsalCast,
     RehearsalParticipant,
     RehearsalSchedule,
+    RehearsalScene,
     Scene,
     Script,
     User,
@@ -384,43 +386,116 @@ async def add_rehearsal(
     date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
 
     # 稽古作成
+    # 稽古作成
     rehearsal = Rehearsal(
         schedule_id=schedule_id,
-        scene_id=rehearsal_data.scene_id,
+        # scene_idは非推奨だが、互換性のためにセット（最初の1つまたは指定されたもの）
+        scene_id=rehearsal_data.scene_id or (rehearsal_data.scene_ids[0] if rehearsal_data.scene_ids else None),
         date=date_naive,
         duration_minutes=rehearsal_data.duration_minutes,
         location=rehearsal_data.location,
         notes=rehearsal_data.notes,
     )
     db.add(rehearsal)
-    await db.commit()
-    # Display Name Map & Default Staff Auto-Assignment
-    member_result = await db.execute(
-        select(ProjectMember).where(ProjectMember.project_id == schedule.project_id)
-    )
-    members = member_result.scalars().all()
-    display_name_map = {m.user_id: m.display_name for m in members}
+    await db.flush() # ID生成のため
+
+    # シーン紐付け (Multi-Scene)
+    target_scene_ids = set()
+    if rehearsal_data.scene_ids:
+        target_scene_ids.update(rehearsal_data.scene_ids)
+    elif rehearsal_data.scene_id:
+        target_scene_ids.add(rehearsal_data.scene_id)
     
-    # Auto-assign Default Staff
-    participants_list = []
-    for m in members:
-        if m.default_staff_role:
-            # Create participant entry
+    if target_scene_ids:
+        # Explicitly add to association table to avoid AsyncIO issues with relationship assignment
+        for sid in target_scene_ids:
+            db.add(RehearsalScene(rehearsal_id=rehearsal.id, scene_id=sid))
+
+    # 参加者・キャスト登録
+    target_user_ids = set()
+
+    # Staffs
+    if rehearsal_data.participants is not None:
+        # 明示的な指定がある場合
+        for p in rehearsal_data.participants:
             new_participant = RehearsalParticipant(
                 rehearsal_id=rehearsal.id,
-                user_id=m.user_id,
-                staff_role=m.default_staff_role,
+                user_id=p.user_id,
+                staff_role=p.staff_role,
             )
             db.add(new_participant)
-            # Add to response list (optimistic)
-            # We need to fetch User object for response... or just use what we have?
-            # ProjectMember doesn't eager load User by default usually...
-            # But get_project_members does join... here we just did select(ProjectMember)
-            # We might need to fetch the User info to return it properly or re-fetch everything at the end.
-            
-    # Commit the new participants
-    await db.commit()
+            target_user_ids.add(p.user_id)
+    else:
+        # Legacy: Default Staff Auto-Assignment
+        member_result = await db.execute(
+            select(ProjectMember).where(ProjectMember.project_id == schedule.project_id)
+        )
+        members = member_result.scalars().all()
+        for m in members:
+            if m.default_staff_role:
+                new_participant = RehearsalParticipant(
+                    rehearsal_id=rehearsal.id,
+                    user_id=m.user_id,
+                    staff_role=m.default_staff_role,
+                )
+                db.add(new_participant)
+                target_user_ids.add(m.user_id)
     
+    # Casts
+    if rehearsal_data.casts is not None:
+        for c in rehearsal_data.casts:
+            new_cast = RehearsalCast(
+                rehearsal_id=rehearsal.id,
+                character_id=c.character_id,
+                user_id=c.user_id
+            )
+            db.add(new_cast)
+            target_user_ids.add(c.user_id)
+    
+    # Commit changes
+    await db.commit()
+
+    # Attendance Check
+    if rehearsal_data.create_attendance_check:
+        # 期限設定（未指定なら稽古日の24時間前）
+        deadline = rehearsal_data.attendance_deadline
+        if not deadline:
+            deadline = rehearsal_data.date - timedelta(hours=24)
+        
+        # ターゲット指定がある場合はそれを使用、なければ全員（後方互換性として、Frontendがparticipantsを送ってこない場合は全員にするか？
+        # いや、Frontendが古い場合、target_user_idsはDefault Staffのみになる。
+        # 古い挙動は「全員」だった。
+        # なので、rehearsal_data.participants/castsがNoneの場合は、target_user_ids=None (All) を渡すべき。
+        # しかし、Default Staff Auto-Assignmentでtarget_user_idsに追加している。
+        # ユーザーの意図としては「登録された人＝出欠確認対象」
+        # 新UIからは明示的に送られる。
+        # 旧UI（もしあれば）からはNoneが来る -> Default Staffのみになる -> これだと全員に飛ばない。
+        # 安全策: participants/castsがNoneの場合は target_user_ids=None を渡して「全員」にする。
+        # 指定がある場合は target_user_ids を渡す。
+        
+        attendance_targets = list(target_user_ids) if (rehearsal_data.participants is not None or rehearsal_data.casts is not None) else None
+
+        attendance_service = AttendanceService(db, discord_service)
+        # BackgroundTaskにするとコンテキストが切れる可能性があるのでawaitで実行するか、sessionを共有する必要がある。
+        # ここではawaitで実行。
+        # Project取得 (Explicit select to avoid potential db.get issues)
+        project_result = await db.execute(select(TheaterProject).where(TheaterProject.id == schedule.project_id))
+        project = project_result.scalar_one()
+
+        # Naive conversion for AttendanceEvent (since columns are stored as naive)
+        deadline_naive = deadline.replace(tzinfo=None) if deadline and deadline.tzinfo else deadline
+        schedule_date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
+
+        await attendance_service.create_attendance_event(
+            project=project,
+            title=f"稽古: {rehearsal_data.date.strftime('%m/%d %H:%M')}",
+            deadline=deadline_naive,
+            schedule_date=schedule_date_naive,
+            location=rehearsal_data.location,
+            description=rehearsal_data.notes,
+            target_user_ids=attendance_targets
+        )
+
     # Re-fetch everything to be safe and consistent with update_rehearsal
      # Re-fetch rehearsal with full options to ensure relationships are loaded for response
     result = await db.execute(
@@ -435,7 +510,23 @@ async def add_rehearsal(
         )
     )
     rehearsal = result.scalar_one()
+
+    # Display Name Map for manual response construction (if needed)
+    # But response model uses relations?
+    # RehearsalResponse defines participants as list[RehearsalParticipantResponse]
+    # RehearsalParticipantResponse configuration: from_attributes = True?
+    # Let's check schema. RehearsalParticipantResponse uses `user_name` etc.
+    # We might need manual mapping if relations are not strictly matching pydantic fields.
     
+    # Old logic constructed `participants_response` manually.
+    # Let's keep manual construction to be safe because of `display_name` map.
+    
+    member_result = await db.execute(
+        select(ProjectMember).where(ProjectMember.project_id == schedule.project_id)
+    )
+    members = member_result.scalars().all()
+    display_name_map = {m.user_id: m.display_name for m in members}
+
     participants_response = [
         RehearsalParticipantResponse(
             user_id=p.user_id,
@@ -444,57 +535,44 @@ async def add_rehearsal(
             staff_role=p.staff_role
         ) for p in rehearsal.participants
     ]
+    casts_response = [
+        RehearsalCastResponse(
+            character_id=c.character_id,
+            character_name=c.character.name,
+            user_id=c.user_id,
+            user_name=c.user.discord_username,
+            display_name=display_name_map.get(c.user_id),
+        ) for c in rehearsal.casts
+    ]
 
-    scene_heading = None
-    casts_response_list = []
-    
-    if rehearsal.scene_id:
-        # Scene取得（Lines, Characters, Castings, UsersまでEager Loadが必要）
-        result = await db.execute(
-            select(Scene)
-            .where(Scene.id == rehearsal.scene_id)
-            .options(
-                selectinload(Scene.lines).options(
-                    selectinload(Line.character).options(
-                        selectinload(Character.castings).options(
-                            selectinload(CharacterCasting.user)
-                        )
-                    )
-                )
-            )
-        )
-        scene = result.scalar_one_or_none()
-        if scene:
-            scene_heading = scene.heading
-            
-            # デフォルト配役の取得
-            unique_characters = {}
-            for line in scene.lines:
-                if line.character_id not in unique_characters:
-                    unique_characters[line.character_id] = line.character
-            
-            for char_id, char in unique_characters.items():
-                 for casting in char.castings:
-                     casts_response_list.append(RehearsalCastResponse(
-                         character_id=char.id,
-                         character_name=char.name,
-                         user_id=casting.user_id,
-                         user_name=casting.user.discord_username,
-                         display_name=display_name_map.get(casting.user_id)
-                     ))
-
-    # Discord通知
+    # Webhook通知（既存機能の維持）
     project = await db.get(TheaterProject, schedule.project_id)
+    scene_headings = [s.heading for s in rehearsal.scenes]
+    scene_text = ", ".join(scene_headings) if scene_headings else None
     
     date_str = rehearsal.date.strftime("%Y/%m/%d %H:%M")
     content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
-    if scene_heading:
-        content += f"\nシーン: {scene_heading}"
+    if scene_text:
+        content += f"\nシーン: {scene_text}"
         
-    background_tasks.add_task(
-        discord_service.send_notification,
-        content=content,
-        webhook_url=project.discord_webhook_url,
+    if project.discord_webhook_url:
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=content,
+            webhook_url=project.discord_webhook_url,
+        )
+
+    return RehearsalResponse(
+        id=rehearsal.id,
+        schedule_id=rehearsal.schedule_id,
+        scene_id=rehearsal.scene_id, # Deprecated
+        scene_heading=scene_text, # Join headings
+        date=rehearsal.date,
+        duration_minutes=rehearsal.duration_minutes,
+        location=rehearsal.location,
+        notes=rehearsal.notes,
+        participants=participants_response,
+        casts=casts_response
     )
 
     # 出席確認作成（オプション）
@@ -584,6 +662,19 @@ async def update_rehearsal(
     # 更新
     if rehearsal_data.scene_id is not None:
         rehearsal.scene_id = rehearsal_data.scene_id
+    
+    # 複数シーン更新
+    if rehearsal_data.scene_ids is not None:
+        if not rehearsal_data.scene_ids:
+            rehearsal.scenes = []
+            rehearsal.scene_id = None # Legacy ID clear
+        else:
+            scenes_result = await db.execute(select(Scene).where(Scene.id.in_(rehearsal_data.scene_ids)))
+            scenes = scenes_result.scalars().all()
+            rehearsal.scenes = scenes
+            # Legacy ID sync (first one)
+            rehearsal.scene_id = scenes[0].id if scenes else None
+
     if rehearsal_data.date is not None:
         # Naive UTC conversion for DB
         date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
@@ -594,6 +685,30 @@ async def update_rehearsal(
         rehearsal.location = rehearsal_data.location
     if rehearsal_data.notes is not None:
         rehearsal.notes = rehearsal_data.notes
+        
+    # 参加者更新 (全置換)
+    if rehearsal_data.participants is not None:
+        # 既存削除
+        await db.execute(delete(RehearsalParticipant).where(RehearsalParticipant.rehearsal_id == rehearsal.id))
+        # 新規追加
+        for p in rehearsal_data.participants:
+            db.add(RehearsalParticipant(
+                rehearsal_id=rehearsal.id, 
+                user_id=p.user_id, 
+                staff_role=p.staff_role
+            ))
+
+    # キャスト更新 (全置換)
+    if rehearsal_data.casts is not None:
+        # 既存削除
+        await db.execute(delete(RehearsalCast).where(RehearsalCast.rehearsal_id == rehearsal.id))
+        # 新規追加
+        for c in rehearsal_data.casts:
+            db.add(RehearsalCast(
+                rehearsal_id=rehearsal.id, 
+                user_id=c.user_id, 
+                character_id=c.character_id
+            ))
 
     await db.commit()
     # Re-fetch rehearsal with full options to ensure relationships are loaded for response
@@ -611,7 +726,9 @@ async def update_rehearsal(
     rehearsal = result.scalar_one()
 
     # シーン情報 & キャスト構成
-    scene_heading = None
+    scene_headings = [s.heading for s in rehearsal.scenes]
+    scene_heading = ", ".join(scene_headings) if scene_headings else None
+    
     casts_response_list = []
     
     rehearsal_cast_map = {c.character_id: c for c in rehearsal.casts}

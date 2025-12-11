@@ -22,7 +22,7 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
             setInvitation(data);
             setCopied(false);
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             console.error('Failed to create invitation:', error);
             alert('Failed to generate invitation link.');
         }
