@@ -11,6 +11,7 @@ from src.db import get_db
 from src.db.models import ProjectMember, SceneChart, Script, User, SceneCharacterMapping
 from src.schemas.scene_chart import CharacterInScene, SceneChartResponse, SceneInChart
 from src.services.scene_chart_generator import generate_scene_chart
+from src.dependencies.permissions import get_script_member_dep
 
 router = APIRouter()
 
@@ -18,21 +19,18 @@ router = APIRouter()
 @router.post("/{script_id}/generate-scene-chart", response_model=SceneChartResponse)
 async def create_scene_chart(
     script_id: UUID,
-    current_user: User | None = Depends(get_current_user_dep),
+    member_and_script: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
     db: AsyncSession = Depends(get_db),
 ) -> SceneChartResponse:
     """脚本から香盤表を自動生成.
 
     Args:
         script_id: 脚本ID
-        current_user: 認証ユーザー
+        member_and_script: メンバー情報と脚本（依存関係から取得）
         db: データベースセッション
 
     Returns:
         SceneChartResponse: 生成された香盤表
-
-    Raises:
-        HTTPException: 認証エラー、権限エラー、または脚本が見つからない
     """
     # 認証チェック
     if current_user is None:
@@ -65,23 +63,21 @@ async def create_scene_chart(
 
 
 @router.get("/{script_id}/scene-chart", response_model=SceneChartResponse)
+@router.get("/{script_id}/scene-chart", response_model=SceneChartResponse)
 async def get_scene_chart(
     script_id: UUID,
-    current_user: User | None = Depends(get_current_user_dep),
+    member_and_script: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
     db: AsyncSession = Depends(get_db),
 ) -> SceneChartResponse:
     """香盤表を取得.
 
     Args:
         script_id: 脚本ID
-        current_user: 認証ユーザー
+        member_and_script: メンバー情報と脚本
         db: データベースセッション
 
     Returns:
         SceneChartResponse: 香盤表
-
-    Raises:
-        HTTPException: 認証エラー、権限エラー、または香盤表が見つからない
     """
     # 認証チェック
     if current_user is None:
@@ -103,6 +99,7 @@ async def get_scene_chart(
     member = result.scalar_one_or_none()
     if member is None:
         raise HTTPException(status_code=403, detail="Access denied to this project")
+
 
     # 香盤表取得 (関連データも一括取得)
     from sqlalchemy.orm import selectinload

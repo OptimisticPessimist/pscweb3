@@ -23,12 +23,13 @@ from src.db.models import (
     TheaterProject,
     User,
 )
+
 from src.dependencies.auth import get_current_user_dep
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.fountain_parser import parse_fountain_and_create_models
 from src.services.scene_chart_generator import generate_scene_chart
 from src.services.discord import DiscordService, get_discord_service
-from src.dependencies.permissions import get_project_member_dep
+from src.dependencies.permissions import get_project_member_dep, get_script_member_dep
 
 router = APIRouter(tags=["scripts"])
 
@@ -126,11 +127,7 @@ async def upload_script(
 
 @router.get("/{project_id}/{script_id}", response_model=ScriptResponse)
 async def get_script(
-    project_id: UUID,
-    script_id: UUID,
-    current_user: User = Depends(get_current_user_dep),
-    member: ProjectMember = Depends(get_project_member_dep),
-    db: AsyncSession = Depends(get_db),
+    tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
 ) -> ScriptResponse:
     """指定した脚本の詳細を取得."""
     # 権限チェックはDepends(get_project_member_dep)で完了済み

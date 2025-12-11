@@ -38,7 +38,7 @@ export const ScriptUploadPage: React.FC = () => {
         onSuccess: () => {
             navigate(`/projects/${projectId}/scripts`);
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             alert(`Upload failed: ${error.message || 'Unknown error'}`);
         }
     });

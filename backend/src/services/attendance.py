@@ -1,6 +1,7 @@
 """出席確認サービス."""
 
 from datetime import datetime, timedelta
+import uuid
 from typing import Optional
 
 from sqlalchemy import select
@@ -40,6 +41,7 @@ class AttendanceService:
         schedule_date: datetime,
         location: Optional[str] = None,
         description: Optional[str] = None,
+        target_user_ids: Optional[list[uuid.UUID]] = None,
     ) -> Optional[AttendanceEvent]:
         """出席確認イベントを作成し、Disocrdに通知を送信する.
 
@@ -50,6 +52,7 @@ class AttendanceService:
             schedule_date: イベント日時
             location: 場所（オプション）
             description: 説明（オプション）
+            target_user_ids: 対象ユーザーIDのリスト（Noneの場合は全メンバー）
 
         Returns:
             Optional[AttendanceEvent]: 作成されたイベント、失敗時はNone
@@ -60,20 +63,28 @@ class AttendanceService:
             
         logger.info(f"Creating attendance for project {project.name}, channel {project.discord_channel_id}")
 
-        # メンバー全員を対象とする
-        all_members_result = await self.db.execute(
-            select(ProjectMember).where(ProjectMember.project_id == project.id)
-        )
-        all_members = all_members_result.scalars().all()
-        target_user_ids = [m.user_id for m in all_members]
-        logger.info(f"Found {len(target_user_ids)} members")
-
-        # ユーザー取得（discord_id所持者のみ）
-        users_result = await self.db.execute(
-            select(User).where(User.id.in_(target_user_ids), User.discord_id.isnot(None))
-        )
-        valid_users = users_result.scalars().all()
-        logger.info(f"Found {len(valid_users)} valid discord users")
+        valid_users = []
+        if target_user_ids:
+            # 指定されたユーザーを取得（discord_id所持者のみ）
+            users_result = await self.db.execute(
+                select(User).where(User.id.in_(target_user_ids), User.discord_id.isnot(None))
+            )
+            valid_users = users_result.scalars().all()
+            logger.info(f"Found {len(valid_users)} valid discord users from specified targets")
+        else:
+            # メンバー全員を対象とする
+            all_members_result = await self.db.execute(
+                select(ProjectMember).where(ProjectMember.project_id == project.id)
+            )
+            all_members = all_members_result.scalars().all()
+            all_target_ids = [m.user_id for m in all_members]
+            
+            # ユーザー取得（discord_id所持者のみ）
+            users_result = await self.db.execute(
+                select(User).where(User.id.in_(all_target_ids), User.discord_id.isnot(None))
+            )
+            valid_users = users_result.scalars().all()
+            logger.info(f"Found {len(valid_users)} valid discord users from all members")
 
         if not valid_users:
             logger.info("No valid Discord users found for attendance check", project_id=project.id)

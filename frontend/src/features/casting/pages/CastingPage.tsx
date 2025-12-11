@@ -6,6 +6,7 @@ import { projectsApi } from '@/features/projects/api/projects';
 import type { CastingUser, ProjectMember } from '@/types';
 import { useTranslation } from 'react-i18next';
 
+
 export const CastingPage = () => {
     const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
@@ -44,7 +45,7 @@ export const CastingPage = () => {
             queryClient.invalidateQueries({ queryKey: ['characters', projectId] });
             closeModal();
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             alert('Failed to add casting: ' + (error.response?.data?.detail || error.message));
         }
     });
@@ -55,7 +56,7 @@ export const CastingPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['characters', projectId] });
         },
-        onError: (error: any) => {
+        onError: (error: ApiError) => {
             alert('Failed to remove casting: ' + (error.response?.data?.detail || error.message));
         }
     });
