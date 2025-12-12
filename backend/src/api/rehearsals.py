@@ -222,9 +222,10 @@ async def get_rehearsal_schedule(
             )
              scene = result.scalar_one_or_none()
              if scene:
-                 for line in scene.lines:
-                     for casting in line.character.castings:
-                         all_user_ids.add(casting.user_id)
+                for line in scene.lines:
+                    if line.character:
+                        for casting in line.character.castings:
+                            all_user_ids.add(casting.user_id)
 
     user_map = {}
     if all_user_ids:
@@ -290,7 +291,7 @@ async def get_rehearsal_schedule(
                 # 登場人物をユニークにする
                 unique_characters = {}
                 for line in scene.lines:
-                    if line.character_id not in unique_characters:
+                    if line.character_id and line.character and line.character_id not in unique_characters:
                         unique_characters[line.character_id] = line.character
                 
                 for char_id, char in unique_characters.items():
