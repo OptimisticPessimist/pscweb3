@@ -115,8 +115,7 @@ async def upload_script(
         )
     except Exception as e:
         import traceback
-        with open("upload_debug.log", "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now()}] Upload Failed: {e}\n{traceback.format_exc()}\n")
+        print(f"[Upload Failed] {e}\n{traceback.format_exc()}")
         raise e
 
     # 4. Discord通知（バックグラウンド）

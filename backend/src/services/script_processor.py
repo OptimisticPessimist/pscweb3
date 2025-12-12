@@ -17,6 +17,7 @@ from src.db.models import (
     SceneCharacterMapping,
     CharacterCasting,
     Rehearsal,
+    RehearsalScene,
     RehearsalCast,
     User,
     ProjectMember,
@@ -156,6 +157,11 @@ async def cleanup_related_data(script: Script, db: AsyncSession) -> None:
     scene_ids = [r for r in scene_result.scalars().all()]
     
     if scene_ids:
+        # RehearsalSceneを先に削除 (rehearsal_scenes テーブル)
+        await db.execute(
+            delete(RehearsalScene).where(RehearsalScene.scene_id.in_(scene_ids))
+        )
+        
         # Rehearsalのscene_idをNULLにする (稽古自体は残す)
         await db.execute(
             update(Rehearsal)
@@ -244,12 +250,8 @@ async def parse_and_save_fountain(
         import traceback
         error_msg = traceback.format_exc()
         
-        # デバッグログ出力
-        with open("debug_panic.log", "a", encoding="utf-8") as f:
-            f.write(
-                f"[{datetime.now()}] Script Upload Error: {str(e)}\n{error_msg}\n"
-            )
-        print(error_msg)
+        # デバッグログ出力（console only - Azure is read-only filesystem）
+        print(f"[Script Upload Error] {error_msg}")
         
         raise HTTPException(
             status_code=500,
