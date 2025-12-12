@@ -1,13 +1,13 @@
 {
     "nav": {
         "dashboard": "儀表板",
-        "mySchedule": "我的日程",
+        "mySchedule": "我的行程",
         "projects": "專案",
         "scripts": "劇本",
         "sceneChart": "場景表",
         "casting": "選角",
         "staff": "工作人員",
-        "schedule": "日程",
+        "schedule": "行程安排",
         "attendance": "考勤",
         "settings": "設定"
     },

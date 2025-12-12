@@ -1,14 +1,14 @@
 {
     "nav": {
         "dashboard": "대시보드",
-        "mySchedule": "내 스케줄",
+        "mySchedule": "내 일정",
         "projects": "프로젝트",
         "scripts": "대본",
-        "sceneChart": "장면표",
+        "sceneChart": "장면 표",
         "casting": "캐스팅",
         "staff": "스태프",
-        "schedule": "스케줄",
-        "attendance": "출결",
+        "schedule": "일정",
+        "attendance": "출석",
         "settings": "설정"
     },
     "common": {
