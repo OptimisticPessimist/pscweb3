@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/re
 import { projectsApi } from '../api/projects';
 import { ProjectDetailsHeader } from '../components/ProjectDetailsHeader';
 import { InvitationPanel } from '../components/InvitationPanel';
+import { MilestoneSettings } from '../components/MilestoneSettings';
 
 export const ProjectSettingsPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -72,6 +73,13 @@ export const ProjectSettingsPage: React.FC = () => {
                             </div>
                         )}
                     </div>
+                </div>
+
+            </div>
+
+            <div className="bg-white shadow sm:rounded-lg mb-6">
+                <div className="px-4 py-5 sm:p-6">
+                    <MilestoneSettings projectId={projectId!} isOwner={isOwner} />
                 </div>
             </div>
 
@@ -226,10 +234,12 @@ export const ProjectSettingsPage: React.FC = () => {
                 </div>
             </div>
 
-            {isOwner && (
-                <InvitationPanel projectId={projectId!} />
-            )}
-        </div>
+            {
+                isOwner && (
+                    <InvitationPanel projectId={projectId!} />
+                )
+            }
+        </div >
     );
 };
 

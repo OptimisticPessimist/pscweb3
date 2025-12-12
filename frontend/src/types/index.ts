@@ -186,3 +186,26 @@ export interface ApiError extends Error {
         };
     };
 }
+
+// Milestone Types
+export interface Milestone {
+    id: string;
+    project_id: string;
+    title: string;
+    start_date: string;
+    end_date: string | null;
+    description: string | null;
+    location: string | null;
+    color: string;
+}
+
+export interface MilestoneCreate {
+    title: string;
+    start_date: string;
+    end_date?: string | null;
+    description?: string | null;
+    location?: string | null;
+    color: string;
+    create_attendance_check?: boolean;
+    attendance_deadline?: string | null;
+}

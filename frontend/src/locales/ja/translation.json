@@ -138,6 +138,29 @@
             "placeholders": {
                 "staffRole": "例: 演出"
             },
+            "milestones": {
+                "title": "マイルストーン設定",
+                "list": "マイルストーン一覧",
+                "add": "新規マイルストーン追加",
+                "form": {
+                    "title": "タイトル",
+                    "startDate": "開始日",
+                    "endDate": "終了日 (任意)",
+                    "color": "カラー",
+                    "location": "場所 (任意)",
+                    "description": "説明 (任意)",
+                    "attendanceCheck": "出欠確認を作成",
+                    "attendanceDeadline": "回答期限 (任意)",
+                    "add": "追加",
+                    "adding": "追加中...",
+                    "cancel": "キャンセル"
+                },
+                "messages": {
+                    "addSuccess": "マイルストーンを追加しました。",
+                    "deleteSuccess": "マイルストーンを削除しました。",
+                    "deleteConfirm": "マイルストーン '{title}' を削除してもよろしいですか？"
+                }
+            },
             "messages": {
                 "updateSuccess": "プロジェクト設定を更新しました。",
                 "updateError": "設定の更新に失敗しました",

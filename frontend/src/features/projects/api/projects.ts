@@ -29,4 +29,18 @@ export const projectsApi = {
     async deleteMember(projectId: string, userId: string): Promise<void> {
         await apiClient.delete(`/projects/${projectId}/members/${userId}`);
     },
+
+    async getMilestones(projectId: string): Promise<import('@/types').Milestone[]> {
+        const response = await apiClient.get(`/projects/${projectId}/milestones`);
+        return response.data;
+    },
+
+    async createMilestone(projectId: string, data: import('@/types').MilestoneCreate): Promise<import('@/types').Milestone> {
+        const response = await apiClient.post(`/projects/${projectId}/milestones`, data);
+        return response.data;
+    },
+
+    async deleteMilestone(projectId: string, milestoneId: string): Promise<void> {
+        await apiClient.delete(`/projects/${projectId}/milestones/${milestoneId}`);
+    },
 };

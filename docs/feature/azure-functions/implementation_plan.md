@@ -1,77 +1,19 @@
-# Azure Functions デプロイ & タイマー通知機能 実装計画
+# Implement Milestone Settings UI
 
-## 目的
-既存のFastAPIバックエンドを **Azure Functions** にデプロイし、出欠確認の回答期限が過ぎたにもかかわらず未回答のメンバーに対して自動的にDiscord通知を送る **Timer Function** を実装します。
+## Goal Description
+Provide a user interface for managing project milestones (create, list, delete) within the Project Settings page.
 
-## ユーザー確認事項
-> [!IMPORTANT]
-> **データベーススキーマ変更**: 重複通知を防ぐため、`attendance_events` テーブルに `reminder_sent_at` カラムを追加します。
-> **Azureリソース**: Azure Function App（無料枠には従量課金プランが推奨）と、適切に設定された `AzureWebJobsStorage` 接続文字列が必要です。
+## Proposed Changes
 
-## 変更内容
+### Frontend
+#### [MODIFY] [projects.ts](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/api/projects.ts)
+- Add API methods: `getMilestones`, `createMilestone`, `deleteMilestone`.
 
-### バックエンド インフラ (`backend/`)
-#### [NEW] [function_app.py](file:///f:/src/PythonProject/pscweb3-1/backend/function_app.py)
- - Azure Functions v2 プログラミングモデルのエントリーポイント。
- - `AsgiFunctionApp` を使用してFastAPIアプリをラップし、HTTPリクエストを処理します。
- - `schedule_attendance_reminder` タイマートリガーを定義します（30分ごとに実行）。
+#### [NEW] [MilestoneSettings.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/components/MilestoneSettings.tsx)
+- Create a new component to list existing milestones and provide a form to add new ones.
+- Features:
+    - List view with delete button
+    - Add form (Title, Date, optional EndDate, Color, Location, Description)
 
-#### [NEW] [host.json](file:///f:/src/PythonProject/pscweb3-1/backend/host.json)
- - Azure Functions ホストの設定ファイル（ログ設定、拡張機能バンドルなど）。
-
-### データベーススキーマ (`backend/src/db/models.py`)
-#### [MODIFY] [models.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/db/models.py)
- - `AttendanceEvent` モデルに `reminder_sent_at: Mapped[datetime | None]` を追加します。
-
-#### [NEW] Migration Script
- - スキーマ変更を適用するためのAlembicマイグレーションスクリプトを作成します。
-
-### サービスロジック (`backend/src/services/scripts/`)
-#### [NEW] [attendance_tasks.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/attendance_tasks.py)
- - 期限切れかつ未通知のイベントを検索し、Discord通知を送信するロジック。
- - 既存の `DiscordService` とデータベース依存関係を再利用します。
- - **ロジック詳細**:
-   2. 各イベントについて:
-      a. `status == 'pending'` のターゲットユーザーを取得します。
-      b. Discordメッセージを送信します（既存の `remind_pending_users` ロジックを再利用）。
-      c. `reminder_sent_at` を現在時刻で更新します。
-
-### バグ修正
-#### [MODIFY] [backend/src/api/scene_charts.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/api/scene_charts.py)
- - 重複したルートデコレータを削除。
- - 未定義の `current_user` エラーを修正。
-
-#### [MODIFY] [backend/src/services/script_processor.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/script_processor.py)
- - 外部キー制約エラーを避けるため、削除順序を修正。
- - Azure Functions の Read-only File System エラーを避けるため、ファイル書き込みロジックを削除。
-
-### フロントエンド (`frontend/`)
 #### [MODIFY] [ProjectSettingsPage.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/pages/ProjectSettingsPage.tsx)
- - Discord設定セクションにBot招待リンクを追加（オーナーのみ表示）。
- - 多言語対応（ja, en, ko, zh-Hans, zh-Hant）。
-
-### ドキュメント (`docs/`)
-#### [MODIFY] [README.md](file:///f:/src/PythonProject/pscweb3-1/README.md)
- - Azureデプロイ情報を更新。
-
-#### [MODIFY] [azure_functions_setup.md](file:///f:/src/PythonProject/pscweb3-1/docs/azure_functions_setup.md)
- - Static Web Appsのセットアップ手順を追加。
- - トラブルシューティング情報を拡充。
-
-#### [MODIFY] [role_manual.md](file:///f:/src/PythonProject/pscweb3-1/docs/role_manual.md)
- - 全言語のマニュアルに「Discord Botの招待方法」を追加。
-
-## 検証計画
-
-### 自動テスト
-- `attendance_tasks.py` のユニットテストを作成し、DBとDiscordサービスをモック化してテストします。
-- `check_deadlines` ロジックが正しく期限切れイベントを特定できることを検証します。
-
-### 手動検証
-1. **ローカルでのFunction実行**:
-   - `func start` コマンドを使用してロジックをローカルで実行します。
-   - 手動で「期限が1分後」のイベントを作成します。
-   - タイマーが発火するのを待つ（またはHTTP管理者エンドポイント経由で手動トリガーする）し、Discordメッセージが送信されることを確認します。
-2. **Azureへのデプロイ**:
-   - Azure Functionsへデプロイします。
-   - Azure Portalの `Log Stream` を確認し、タイマーが定期実行されていることを確認します。
+- Integrate `MilestoneSettings` component below the General Settings or Members section.

@@ -23,3 +23,4 @@
 - [x] ドキュメント作成 (Attendance Debug Manual)
 - [x] タイムゾーン処理の統一 (DB Schema Change & Code Cleanup)
 - [x] 機能追加 (Discord通知へのメンション追加: 稽古削除・脚本)
+- [x] UI実装 (マイルストーン設定画面: ProjectSettingsPage)

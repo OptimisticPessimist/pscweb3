@@ -25,6 +25,7 @@
 - **Discord Bot 招待リンク**: プロジェクト設定画面への追加。
 - **メンション機能**: 稽古追加・削除時のDiscord通知に、対象となる参加者・キャストへのメンション (`<@user_id>`) を追加しました。脚本更新時には `@here` で通知されます。
 - **Discord Timestamp Formatting**: Discord通知の日時表示に `<t:TIMESTAMP:f>` 形式を採用し、閲覧者のローカルタイムで表示されるようにしました。
+- **マイルストーン設定画面**: プロジェクト設定ページにマイルストーンの一覧・追加・削除機能を追加しました。これにより、マイルストーン管理が容易になりました。
 
 ### 5. リファクタリング (Timezone Handling)
 - **DB Schema Change**: `Rehearsal`, `Milestone`, `AttendanceEvent` などの主要な日時カラムを `DateTime(timezone=True)` (UTC Aware) に変更しました。これにより、タイムゾーン情報の欠落による混乱を防ぎます。
