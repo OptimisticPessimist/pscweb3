@@ -7,7 +7,7 @@ from src.db import get_db
 from src.db.models import User, ProjectMember, RehearsalSchedule, Rehearsal, Milestone
 from typing import List
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter()
 
