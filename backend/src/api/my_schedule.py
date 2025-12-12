@@ -102,13 +102,15 @@ async def get_my_schedule(
                 if not (is_participant or is_cast):
                     continue
 
-                end_time = rehearsal.date + timedelta(minutes=rehearsal.duration_minutes) if rehearsal.duration_minutes else None
+                start_time = rehearsal.date.replace(tzinfo=timezone.utc)
+                end_time = (start_time + timedelta(minutes=rehearsal.duration_minutes)) if rehearsal.duration_minutes else None
+                
                 # scene.headingを取得（sceneがNoneの場合は'Rehearsal'）
                 scene_title = rehearsal.scene.heading if rehearsal.scene else None
                 events.append(MyScheduleEvent(
                     id=f"rehearsal-{rehearsal.id}",
                     title=f"{scene_title or 'Rehearsal'} ({project.name})",
-                    start=rehearsal.date,
+                    start=start_time,
                     end=end_time,
                     type="rehearsal",
                     project_id=str(project.id),
@@ -127,11 +129,14 @@ async def get_my_schedule(
         milestones = milestone_result.scalars().all()
         
         for milestone in milestones:
+            m_start = milestone.start_date.replace(tzinfo=timezone.utc)
+            m_end = milestone.end_date.replace(tzinfo=timezone.utc) if milestone.end_date else None
+            
             events.append(MyScheduleEvent(
                 id=f"milestone-{milestone.id}",
                 title=f"{milestone.title} ({project.name})",
-                start=milestone.start_date,
-                end=milestone.end_date,
+                start=m_start,
+                end=m_end,
                 type="milestone",
                 project_id=str(project.id),
                 project_name=project.name,

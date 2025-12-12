@@ -17,3 +17,6 @@
 - [x] ドキュメント更新 (README, Azure Setup, Role Manual)
   - [x] Discord Interactions Setup (Public Key, Endpoint URL)
 - [x] Discord Bot 招待リンクの実装 (Frontend + i18n)
+- [x] バグ修正 (Timezone issue in My Schedule)
+- [x] 機能追加 (Discord通知へのメンション追加)
+- [x] ドキュメント作成 (Attendance Debug Manual)

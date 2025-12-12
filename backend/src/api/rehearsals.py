@@ -555,6 +555,21 @@ async def add_rehearsal(
     content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
     if scene_text:
         content += f"\nシーン: {scene_text}"
+
+    # メンションの追加
+    mention_ids = set()
+    # Participants
+    for p in rehearsal.participants:
+        if p.user and p.user.discord_id:
+            mention_ids.add(p.user.discord_id)
+    # Casts
+    for c in rehearsal.casts:
+        if c.user and c.user.discord_id:
+            mention_ids.add(c.user.discord_id)
+    
+    if mention_ids:
+        mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
+        content += f"\n\n{mentions}"
         
     if project.discord_webhook_url:
         background_tasks.add_task(
