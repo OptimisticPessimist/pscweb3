@@ -6,10 +6,10 @@ import type { MilestoneCreate } from '@/types';
 
 interface MilestoneSettingsProps {
     projectId: string;
-    isOwner: boolean;
+    canManage: boolean;
 }
 
-export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId, isOwner }) => {
+export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId, canManage }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [isAdding, setIsAdding] = useState(false);
@@ -84,7 +84,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">{t('project.settings.milestones.title')}</h3>
-                {isOwner && !isAdding && (
+                {canManage && !isAdding && (
                     <button
                         onClick={() => setIsAdding(true)}
                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -135,7 +135,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                             </p>
                                         )}
                                     </div>
-                                    {isOwner && (
+                                    {canManage && (
                                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                                             <button
                                                 onClick={() => {

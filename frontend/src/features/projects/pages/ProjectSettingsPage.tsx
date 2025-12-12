@@ -50,6 +50,8 @@ export const ProjectSettingsPage: React.FC = () => {
 
     const isOwner = project.role === 'owner';
 
+    const canManageMilestones = isOwner || project.role === 'editor';
+
     return (
         <div className="space-y-6">
             <ProjectDetailsHeader project={project} />
@@ -79,7 +81,7 @@ export const ProjectSettingsPage: React.FC = () => {
 
             <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
-                    <MilestoneSettings projectId={projectId!} isOwner={isOwner} />
+                    <MilestoneSettings projectId={projectId!} canManage={canManageMilestones} />
                 </div>
             </div>
 
