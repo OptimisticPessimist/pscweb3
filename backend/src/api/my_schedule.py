@@ -74,13 +74,34 @@ async def get_my_schedule(
         schedule_stmt = select(RehearsalSchedule).where(
             RehearsalSchedule.project_id == project.id
         ).options(
-            selectinload(RehearsalSchedule.rehearsals).selectinload(Rehearsal.scene)
+            selectinload(RehearsalSchedule.rehearsals).options(
+                selectinload(Rehearsal.scene),
+                selectinload(Rehearsal.participants),
+                selectinload(Rehearsal.casts)
+            )
         )
         schedule_result = await db.execute(schedule_stmt)
-        schedule = schedule_result.scalar_one_or_none()
+        # 複数のスケジュールが存在する可能性があるため（本来は1つのはずだが）、最初に見つかったものを利用する、あるいは全て処理する
+        # ここではシンプルに最初に見つかったものを採用する
+        schedule = schedule_result.scalars().first()
         
         if schedule and schedule.rehearsals:
+            # print(f"Debug: Project {project.name}, Rehearsals count: {len(schedule.rehearsals)}")
             for rehearsal in schedule.rehearsals:
+                # ユーザーが参加者(Staff)またはキャスト(Cast)に含まれているか確認
+                is_participant = any(p.user_id == current_user.id for p in rehearsal.participants)
+                is_cast = any(c.user_id == current_user.id for c in rehearsal.casts)
+                
+                # print(f"Debug: Rehearsal {rehearsal.id}")
+                # print(f"  Current User: {current_user.id} (Type: {type(current_user.id)})")
+                # print(f"  Participants: {[p.user_id for p in rehearsal.participants]}")
+                # print(f"  Casts: {[c.user_id for c in rehearsal.casts]}")
+                # print(f"  is_participant: {is_participant}, is_cast: {is_cast}")
+
+                # どちらにも該当しない場合はスキップ（表示しない）
+                if not (is_participant or is_cast):
+                    continue
+
                 end_time = rehearsal.date + timedelta(minutes=rehearsal.duration_minutes) if rehearsal.duration_minutes else None
                 # scene.headingを取得（sceneがNoneの場合は'Rehearsal'）
                 scene_title = rehearsal.scene.heading if rehearsal.scene else None
