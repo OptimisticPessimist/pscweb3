@@ -104,8 +104,15 @@ async def _send_reminder(event: AttendanceEvent, pending_targets: list[Attendanc
         logger.info("No Discord users to mention.")
         return False
 
-    deadline_str = event.deadline.strftime('%Y-%m-%d %H:%M')
-    schedule_str = event.schedule_date.strftime('%Y-%m-%d %H:%M') if event.schedule_date else "未定"
+    # Convert to Discord Timestamp (UTC Naive -> UTC Aware -> Unix Timestamp)
+    # <t:TIMESTAMP:f> displays as "2024年12月13日 00:00" in user's locale.
+    deadline_ts = int(event.deadline.replace(tzinfo=timezone.utc).timestamp())
+    deadline_str = f"<t:{deadline_ts}:f> (<t:{deadline_ts}:R>)" # date + relative
+    
+    schedule_str = "未定"
+    if event.schedule_date:
+         schedule_ts = int(event.schedule_date.replace(tzinfo=timezone.utc).timestamp())
+         schedule_str = f"<t:{schedule_ts}:f>"
     
     # メッセージ本文
     message_content = (

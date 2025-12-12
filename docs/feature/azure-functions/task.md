@@ -19,4 +19,5 @@
 - [x] Discord Bot 招待リンクの実装 (Frontend + i18n)
 - [x] バグ修正 (Timezone issue in My Schedule)
 - [x] 機能追加 (Discord通知へのメンション追加)
+- [x] 機能追加 (Discord Timestamp Formatting for Local Time)
 - [x] ドキュメント作成 (Attendance Debug Manual)

@@ -551,7 +551,8 @@ async def add_rehearsal(
     scene_headings = [s.heading for s in rehearsal.scenes]
     scene_text = ", ".join(scene_headings) if scene_headings else None
     
-    date_str = rehearsal.date.strftime("%Y/%m/%d %H:%M")
+    rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
+    date_str = f"<t:{rehearsal_ts}:f>" # User local time
     content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
     if scene_text:
         content += f"\nシーン: {scene_text}"
