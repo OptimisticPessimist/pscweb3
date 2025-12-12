@@ -62,25 +62,15 @@ export const CastingPage = () => {
     });
 
     // ... (inside JSX)
-    <button
-        type="button"
-        onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleRemove(char.id, cast.user_id);
-        }}
-        className="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-indigo-400 hover:bg-indigo-200 hover:text-indigo-500 focus:outline-none focus:bg-indigo-500 focus:text-white"
-    >
-
     const openModal = (charId: string) => {
-            setSelectedCharId(charId);
+        setSelectedCharId(charId);
         setSelectedUserId('');
         setCastName('');
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
-            setIsModalOpen(false);
+        setIsModalOpen(false);
         setSelectedCharId(null);
     };
 
@@ -95,21 +85,21 @@ export const CastingPage = () => {
     };
 
     const handleRemove = (charId: string, userId: string) => {
-        if (window.confirm('Are you sure you want to remove this cast?')) {
-            removeCastingMutation.mutate({ charId, userId });
-        }
+        // 確認ダイアログが原因で削除できないケースがあるため、一時的にダイアログを廃止します。
+        // 将来的にはカスタムモーダル等の実装を検討します。
+        removeCastingMutation.mutate({ charId, userId });
     };
 
-        const isEditable = project?.role === 'owner' || project?.role === 'editor';
+    const isEditable = project?.role === 'owner' || project?.role === 'editor';
 
-        if (charsLoading) return <div className="p-8 text-center">{t('casting.loadingCharacters')}</div>;
-        if (!characters || characters.length === 0) return (
+    if (charsLoading) return <div className="p-8 text-center">{t('casting.loadingCharacters')}</div>;
+    if (!characters || characters.length === 0) return (
         <div className="p-8 text-center text-gray-500">
             {t('script.noScript')}
         </div>
-        );
+    );
 
-        return (
+    return (
         <div className="space-y-6">
             <div className="md:flex md:items-center md:justify-between">
                 <div className="min-w-0 flex-1">
@@ -248,5 +238,5 @@ export const CastingPage = () => {
                 </div>
             )}
         </div>
-        );
+    );
 };
