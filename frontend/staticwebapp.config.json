@@ -1,0 +1,27 @@
+{
+    "navigationFallback": {
+        "rewrite": "/index.html",
+        "exclude": [
+            "/assets/*",
+            "/*.css",
+            "/*.js",
+            "/*.png",
+            "/*.jpg",
+            "/*.svg",
+            "/*.ico"
+        ]
+    },
+    "routes": [
+        {
+            "route": "/api/*",
+            "allowedRoles": [
+                "authenticated",
+                "anonymous"
+            ]
+        }
+    ],
+    "globalHeaders": {
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff"
+    }
+}
