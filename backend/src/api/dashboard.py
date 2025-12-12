@@ -44,7 +44,7 @@ async def get_project_dashboard(
     Returns:
         DashboardResponse: ダッシュボード情報
     """
-    now = datetime.now()  # timezone-naive for database comparison
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # UTC naive for DB comparison
     
     # 1. 次回の稽古を取得
     next_rehearsal = None
