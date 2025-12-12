@@ -14,9 +14,11 @@ from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
 
+from uuid import UUID
+
 @router.post("/projects/{project_id}/invitations", response_model=InvitationResponse)
 async def create_invitation(
-    project_id: int,
+    project_id: UUID,
     invitation_in: InvitationCreate,
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),

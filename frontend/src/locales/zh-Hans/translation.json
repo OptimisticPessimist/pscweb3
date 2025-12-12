@@ -41,6 +41,37 @@
         "welcome": "欢迎使用 PSC Web 3",
         "welcomeMessage": "戏剧制作管理系统"
     },
+    "invitation": {
+        "loading": "正在加载邀请...",
+        "invalid": "无效的邀请",
+        "expiredOrInvalid": "此邀请链接已过期或无效。",
+        "expiresAt": "过期时间",
+        "joining": "正在加入...",
+        "accept": "接受邀请",
+        "signInRequired": "需要登录才能加入。",
+        "panel": {
+            "title": "邀请新成员",
+            "description": "生成链接以邀请人员加入此项目。",
+            "form": {
+                "expiresIn": "有效期",
+                "maxUses": "最大使用次数（可选）",
+                "maxUsesPlaceholder": "无限制",
+                "generate": "生成新链接",
+                "expiresOptions": {
+                    "1day": "1天",
+                    "3days": "3天",
+                    "1week": "1周",
+                    "30days": "30天"
+                }
+            },
+            "generatedLink": "邀请链接",
+            "copy": "复制",
+            "copied": "已复制！",
+            "messages": {
+                "generateError": "生成邀请链接失败。"
+            }
+        }
+    },
     "dashboard": {
         "title": "仪表板",
         "projects": "项目",

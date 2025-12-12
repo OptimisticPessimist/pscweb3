@@ -45,7 +45,29 @@
         "expiresAt": "有効期限",
         "joining": "参加中...",
         "accept": "招待を承諾",
-        "signInRequired": "参加するにはサインインが必要です。"
+        "signInRequired": "参加するにはサインインが必要です。",
+        "panel": {
+            "title": "新規メンバー招待",
+            "description": "招待リンクを生成して、プロジェクトに参加するメンバーを招待します。",
+            "form": {
+                "expiresIn": "有効期限",
+                "maxUses": "最大使用回数 (任意)",
+                "maxUsesPlaceholder": "制限なし",
+                "generate": "新規リンク生成",
+                "expiresOptions": {
+                    "1day": "1日",
+                    "3days": "3日",
+                    "1week": "1週間",
+                    "30days": "30日"
+                }
+            },
+            "generatedLink": "招待リンク",
+            "copy": "コピー",
+            "copied": "コピーしました!",
+            "messages": {
+                "generateError": "招待リンクの生成に失敗しました。"
+            }
+        }
     },
     "auth": {
         "login": "ログイン",

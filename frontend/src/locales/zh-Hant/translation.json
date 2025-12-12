@@ -41,6 +41,37 @@
         "welcome": "歡迎使用 PSC Web 3",
         "welcomeMessage": "戲劇製作管理系統"
     },
+    "invitation": {
+        "loading": "正在載入邀請...",
+        "invalid": "無效的邀請",
+        "expiredOrInvalid": "此邀請連結已過期或無效。",
+        "expiresAt": "過期時間",
+        "joining": "正在加入...",
+        "accept": "接受邀請",
+        "signInRequired": "需要登入才能加入。",
+        "panel": {
+            "title": "邀請新成員",
+            "description": "生成連結以邀請人員加入此專案。",
+            "form": {
+                "expiresIn": "有效期",
+                "maxUses": "最大使用次數（可選）",
+                "maxUsesPlaceholder": "無限制",
+                "generate": "生成新連結",
+                "expiresOptions": {
+                    "1day": "1天",
+                    "3days": "3天",
+                    "1week": "1週",
+                    "30days": "30天"
+                }
+            },
+            "generatedLink": "邀請連結",
+            "copy": "複製",
+            "copied": "已複製！",
+            "messages": {
+                "generateError": "生成邀請連結失敗。"
+            }
+        }
+    },
     "dashboard": {
         "title": "儀表板",
         "projects": "專案",

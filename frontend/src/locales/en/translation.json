@@ -42,6 +42,37 @@
         "welcomeMessage": "Theater Production Management System",
         "authenticating": "Authenticating..."
     },
+    "invitation": {
+        "loading": "Loading invitation...",
+        "invalid": "Invalid invitation",
+        "expiredOrInvalid": "This invitation link is expired or invalid.",
+        "expiresAt": "Expires at",
+        "joining": "Joining...",
+        "accept": "Accept Invitation",
+        "signInRequired": "Sign in required to join.",
+        "panel": {
+            "title": "Invite New Members",
+            "description": "Generate a link to invite people to this project.",
+            "form": {
+                "expiresIn": "Expires In",
+                "maxUses": "Max Uses (Optional)",
+                "maxUsesPlaceholder": "Unlimited",
+                "generate": "Generate New Link",
+                "expiresOptions": {
+                    "1day": "1 Day",
+                    "3days": "3 Days",
+                    "1week": "1 Week",
+                    "30days": "30 Days"
+                }
+            },
+            "generatedLink": "Invitation Link",
+            "copy": "Copy",
+            "copied": "Copied!",
+            "messages": {
+                "generateError": "Failed to generate invitation link."
+            }
+        }
+    },
     "dashboard": {
         "title": "Dashboard",
         "projects": "Projects",
