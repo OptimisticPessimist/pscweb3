@@ -141,6 +141,10 @@
         "noCharacters": "未找到角色。",
         "noContent": "無可用解析內容。",
         "fountainFormat": "Fountain 格式",
+        "manageScripts": "管理 Fountain 格式的劇本。",
+        "uploadTitle": "上傳劇本",
+        "uploadDescription": "上傳 .fountain 檔案以新增或更新劇本。",
+        "content": "劇本內容",
         "form": {
             "titleLabel": "劇本標題",
             "titlePlaceholder": "例如：我的精彩劇本",
