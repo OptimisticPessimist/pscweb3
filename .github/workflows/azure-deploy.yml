@@ -36,7 +36,7 @@ jobs:
       - name: Zip artifact for deployment
         run: |
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          zip -r ../release.zip . -x ".venv/*" -x "__pycache__/*" -x "*.pyc" -x "tests/*" -x "htmlcov/*" -x "*.log" -x "*.txt" -x ".env"
+          zip -r ../release.zip . -x ".venv/*" -x "__pycache__/*" -x "*.pyc" -x "tests/*" -x "htmlcov/*" -x "*.log" -x ".env" -x "pyproject.toml" -x "uv.lock"
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
@@ -44,8 +44,8 @@ jobs:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
           package: './release.zip'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
 
   # Static Web Apps でフロントエンドをデプロイ
   build_and_deploy_frontend:
