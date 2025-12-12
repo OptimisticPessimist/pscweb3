@@ -198,7 +198,14 @@
         "role": "Role",
         "email": "Email",
         "phone": "Phone",
-        "staffList": "Staff List"
+        "staffList": "Staff List",
+        "contactDiscord": "Contact (Discord)",
+        "displayNamePlaceholder": "Display Name",
+        "projectOwner": "Project Owner",
+        "memberEditor": "Member (Editor)",
+        "memberViewer": "Member (Viewer)",
+        "staffRolePlaceholder": "e.g. Director",
+        "noSpecificRole": "No specific role"
     },
     "schedule": {
         "title": "Schedule",

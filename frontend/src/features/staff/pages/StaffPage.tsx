@@ -60,7 +60,7 @@ export const StaffPage: React.FC = () => {
 
             <div className="bg-white shadow sm:rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Staff List</h3>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('staff.staffList')}</h3>
                     <div className="mt-5">
                         <div className="flex flex-col">
                             <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -76,7 +76,7 @@ export const StaffPage: React.FC = () => {
                                                         {t('staff.role')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Contact (Discord)
+                                                        {t('staff.contactDiscord')}
                                                     </th>
                                                     {isOwner && (
                                                         <th scope="col" className="relative px-6 py-3">
@@ -110,7 +110,7 @@ export const StaffPage: React.FC = () => {
                                                                             value={editDisplayName}
                                                                             onChange={(e) => setEditDisplayName(e.target.value)}
                                                                             className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                                            placeholder="Display Name"
+                                                                            placeholder={t('staff.displayNamePlaceholder')}
                                                                         />
                                                                     ) : (
                                                                         <>
@@ -125,8 +125,8 @@ export const StaffPage: React.FC = () => {
                                                                         </>
                                                                     )}
                                                                     <div className="text-sm text-gray-500">
-                                                                        {member.role === 'owner' ? 'Project Owner' :
-                                                                            member.role === 'editor' ? 'Member (Editor)' : 'Member (Viewer)'}
+                                                                        {member.role === 'owner' ? t('staff.projectOwner') :
+                                                                            member.role === 'editor' ? t('staff.memberEditor') : t('staff.memberViewer')}
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -138,7 +138,7 @@ export const StaffPage: React.FC = () => {
                                                                     value={editRoleValue}
                                                                     onChange={(e) => setEditRoleValue(e.target.value)}
                                                                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                                    placeholder="e.g. Director"
+                                                                    placeholder={t('staff.staffRolePlaceholder')}
                                                                 />
                                                             ) : (
                                                                 member.default_staff_role ? (
@@ -147,7 +147,7 @@ export const StaffPage: React.FC = () => {
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-gray-400 text-sm italic">
-                                                                        No specific role
+                                                                        {t('staff.noSpecificRole')}
                                                                     </span>
                                                                 )
                                                             )}

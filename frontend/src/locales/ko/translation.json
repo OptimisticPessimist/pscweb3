@@ -188,7 +188,14 @@
         "role": "역할",
         "email": "이메일",
         "phone": "전화번호",
-        "staffList": "스태프 목록"
+        "staffList": "스태프 목록",
+        "contactDiscord": "연락처 (Discord)",
+        "displayNamePlaceholder": "표시 이름",
+        "projectOwner": "프로젝트 소유자",
+        "memberEditor": "멤버 (편집자)",
+        "memberViewer": "멤버 (뷰어)",
+        "staffRolePlaceholder": "예: 연출",
+        "noSpecificRole": "특정 직책 없음"
     },
     "schedule": {
         "title": "일정",

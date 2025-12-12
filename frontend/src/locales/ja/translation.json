@@ -212,7 +212,14 @@
         "role": "役割",
         "email": "メールアドレス",
         "phone": "電話番号",
-        "staffList": "スタッフ一覧"
+        "staffList": "スタッフ一覧",
+        "contactDiscord": "連絡先 (Discord)",
+        "displayNamePlaceholder": "表示名",
+        "projectOwner": "プロジェクトオーナー",
+        "memberEditor": "メンバー (編集者)",
+        "memberViewer": "メンバー (閲覧者)",
+        "staffRolePlaceholder": "例: 演出",
+        "noSpecificRole": "役職なし"
     },
     "schedule": {
         "title": "スケジュール",

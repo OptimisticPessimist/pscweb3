@@ -188,7 +188,14 @@
         "role": "职务",
         "email": "邮箱",
         "phone": "电话",
-        "staffList": "工作人员列表"
+        "staffList": "工作人员列表",
+        "contactDiscord": "联系方式 (Discord)",
+        "displayNamePlaceholder": "显示名称",
+        "projectOwner": "项目所有者",
+        "memberEditor": "成员 (编辑者)",
+        "memberViewer": "成员 (查看者)",
+        "staffRolePlaceholder": "例如：导演",
+        "noSpecificRole": "无特定职务"
     },
     "schedule": {
         "title": "日程安排",

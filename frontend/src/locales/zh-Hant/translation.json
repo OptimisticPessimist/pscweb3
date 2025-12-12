@@ -188,7 +188,14 @@
         "role": "職務",
         "email": "電子郵件",
         "phone": "電話",
-        "staffList": "工作人員列表"
+        "staffList": "工作人員列表",
+        "contactDiscord": "聯絡方式 (Discord)",
+        "displayNamePlaceholder": "顯示名稱",
+        "projectOwner": "專案擁有者",
+        "memberEditor": "成員 (編輯者)",
+        "memberViewer": "成員 (檢視者)",
+        "staffRolePlaceholder": "例如：導演",
+        "noSpecificRole": "無特定職務"
     },
     "schedule": {
         "title": "行程安排",
