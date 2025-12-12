@@ -43,6 +43,7 @@ export const CastingPage = () => {
             charactersApi.addCasting(projectId!, data.charId, data.userId, data.castName),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['characters', projectId] });
+            queryClient.invalidateQueries({ queryKey: ['mySchedule'] }); // Update My Schedule
             closeModal();
         },
         onError: (error: ApiError) => {
@@ -55,6 +56,7 @@ export const CastingPage = () => {
             charactersApi.removeCasting(projectId!, data.charId, data.userId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['characters', projectId] });
+            queryClient.invalidateQueries({ queryKey: ['mySchedule'] }); // Update My Schedule
         },
         onError: (error: ApiError) => {
             alert('Failed to remove casting: ' + (error.response?.data?.detail || error.message));
