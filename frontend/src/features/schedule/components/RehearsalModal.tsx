@@ -76,9 +76,11 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
 
             targetScenes.forEach((scene: any) => {
                 scene.lines.forEach((line: any) => {
-                    line.character.castings.forEach((casting: any) => {
-                        neededCasts[casting.user_id] = line.character.id;
-                    });
+                    if (line.character && line.character.castings) {
+                        line.character.castings.forEach((casting: any) => {
+                            neededCasts[casting.user_id] = line.character.id;
+                        });
+                    }
                 });
             });
 
