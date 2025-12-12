@@ -85,7 +85,51 @@
         "pendingAttendance": "有 {count} 个未响应的出席确认",
         "rehearsalInHours": "排练将在 {hours} 小时后开始",
         "milestoneInDays": "里程碑 \"{title}\" 将在 {days} 天后",
-        "daysRemaining": "剩余 {days} 天"
+        "daysRemaining": "剩余 {days} 天",
+        "settings": {
+            "title": "项目设置",
+            "general": "常规设置",
+            "members": "项目成员与角色",
+            "discord": "Discord 集成",
+            "form": {
+                "name": "项目名称",
+                "description": "描述",
+                "scriptWebhook": "剧本通知 Webhook URL",
+                "scriptWebhookHelper": "仅发送剧本上传和更新通知。（如果未设置，则使用上面的“一般通知”）。",
+                "generalWebhook": "一般通知 Webhook URL",
+                "generalWebhookHelper": "发送里程碑创建、成员权限更改等除剧本以外的通知。",
+                "attendanceChannel": "考勤通知频道 ID",
+                "attendanceChannelHelper": "Bot 发送考勤确认消息的频道 ID。（Bot 需要有访问该频道的权限）。",
+                "save": "保存设置",
+                "saving": "保存中..."
+            },
+            "memberTable": {
+                "user": "用户",
+                "screenName": "显示名称",
+                "accessRole": "访问权限",
+                "staffRole": "默认职位（角色）",
+                "edit": "编辑",
+                "delete": "删除",
+                "cancel": "取消",
+                "save": "保存"
+            },
+            "roles": {
+                "owner": "所有者",
+                "editor": "编辑者",
+                "viewer": "查看者"
+            },
+            "placeholders": {
+                "staffRole": "例如：导演"
+            },
+            "messages": {
+                "updateSuccess": "项目设置已更新。",
+                "updateError": "更新设置失败",
+                "memberRemoveSuccess": "成员已删除。",
+                "memberRemoveError": "删除成员失败",
+                "memberRemoveConfirm": "确定要删除 {username} 吗？",
+                "selfRoleError": "您不能在此更改自己的权限。"
+            }
+        }
     },
     "script": {
         "title": "剧本",

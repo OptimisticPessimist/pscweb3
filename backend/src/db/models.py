@@ -68,6 +68,7 @@ class TheaterProject(Base):
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     discord_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    discord_script_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 脚本通知用Webhook
     discord_channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 

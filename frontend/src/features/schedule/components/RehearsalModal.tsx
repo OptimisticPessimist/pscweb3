@@ -503,14 +503,39 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                 </div>
                                 {createAttendance && (
                                     <div className="mt-2 ml-7">
-                                        <label htmlFor="attendance_deadline" className="block text-xs font-medium text-gray-700">Deadline</label>
+                                        <label htmlFor="attendance_deadline" className="block text-xs font-medium text-gray-700">Deadline (30分単位)</label>
                                         <input
                                             type="datetime-local"
                                             id="attendance_deadline"
                                             value={attendanceDeadline}
                                             onChange={(e) => setAttendanceDeadline(e.target.value)}
+                                            step="1800"
+                                            onBlur={(e) => {
+                                                if (!e.target.value) return;
+                                                const val = e.target.value;
+                                                const d = new Date(val);
+                                                const minutes = d.getMinutes();
+                                                const remainder = minutes % 30;
+
+                                                if (remainder !== 0) {
+                                                    // Round to nearest 30
+                                                    if (remainder >= 15) {
+                                                        d.setMinutes(minutes + (30 - remainder));
+                                                    } else {
+                                                        d.setMinutes(minutes - remainder);
+                                                    }
+                                                    d.setSeconds(0);
+                                                    d.setMilliseconds(0);
+
+                                                    // Format: YYYY-MM-DDTHH:mm
+                                                    // Adjust for timezone offset for local input
+                                                    const newStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                                    setAttendanceDeadline(newStr);
+                                                }
+                                            }}
                                             className="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                         />
+                                        <p className="text-xs text-gray-500 mt-1">※00分または30分に自動補正されます</p>
                                     </div>
                                 )}
                             </div>

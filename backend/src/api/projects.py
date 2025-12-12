@@ -93,6 +93,7 @@ async def create_project(
         name=project.name,
         description=project.description,
         discord_webhook_url=project.discord_webhook_url,
+        discord_script_webhook_url=project.discord_script_webhook_url,
         created_at=project.created_at,
         role="owner"
     )
@@ -132,6 +133,7 @@ async def list_projects(
             name=project.name,
             description=project.description,
             discord_webhook_url=project.discord_webhook_url,
+            discord_script_webhook_url=project.discord_script_webhook_url,
             created_at=project.created_at,
             role=role
         ))
@@ -146,6 +148,7 @@ def _build_project_response(project: TheaterProject, role: str) -> ProjectRespon
         name=project.name,
         description=project.description,
         discord_webhook_url=project.discord_webhook_url,
+        discord_script_webhook_url=project.discord_script_webhook_url,
         discord_channel_id=project.discord_channel_id,
         created_at=project.created_at,
         role=role
@@ -207,6 +210,11 @@ async def update_project(
             project.discord_webhook_url = None
         else:
             project.discord_webhook_url = project_update.discord_webhook_url
+    if project_update.discord_script_webhook_url is not None:
+        if project_update.discord_script_webhook_url == "":
+            project.discord_script_webhook_url = None
+        else:
+            project.discord_script_webhook_url = project_update.discord_script_webhook_url
     if project_update.discord_channel_id is not None:
         if project_update.discord_channel_id == "":
             project.discord_channel_id = None

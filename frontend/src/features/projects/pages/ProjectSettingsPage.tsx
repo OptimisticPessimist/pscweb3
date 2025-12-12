@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import type { Project } from '@/types';
 import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { InvitationPanel } from '../components/InvitationPanel';
 
 export const ProjectSettingsPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [editingMember, setEditingMember] = useState<string | null>(null);
 
@@ -36,14 +38,14 @@ export const ProjectSettingsPage: React.FC = () => {
         mutationFn: (userId: string) => projectsApi.deleteMember(projectId!, userId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projectMembers', projectId] });
-            alert('Member removed successfully.');
+            alert(t('project.settings.messages.memberRemoveSuccess'));
         },
         onError: (error: Error) => {
-            alert(`Failed to remove member: ${error.message || 'Unknown error'}`);
+            alert(`${t('project.settings.messages.memberRemoveError')}: ${error.message || t('common.unknown')}`);
         }
     });
 
-    if (isLoading || !project) return <div>Loading...</div>;
+    if (isLoading || !project) return <div>{t('common.loading')}</div>;
 
     const isOwner = project.role === 'owner';
 
@@ -53,19 +55,19 @@ export const ProjectSettingsPage: React.FC = () => {
 
             <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">General Settings</h3>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('project.settings.general')}</h3>
                     <div className="mt-5 max-w-xl">
                         {isOwner ? (
                             <ProjectUpdateForm project={project} projectId={projectId!} queryClient={queryClient} />
                         ) : (
                             <div className="space-y-4">
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Project Name</dt>
+                                    <dt className="text-sm font-medium text-gray-500">{t('project.settings.form.name')}</dt>
                                     <dd className="mt-1 text-sm text-gray-900">{project.name}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm font-medium text-gray-500">Description</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{project.description || 'No description'}</dd>
+                                    <dt className="text-sm font-medium text-gray-500">{t('project.settings.form.description')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{project.description || t('project.noDescription')}</dd>
                                 </div>
                             </div>
                         )}
@@ -75,7 +77,7 @@ export const ProjectSettingsPage: React.FC = () => {
 
             <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Project Members & Staff Roles</h3>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('project.settings.members')}</h3>
                     <div className="mt-5">
                         <div className="flex flex-col">
                             <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -85,16 +87,16 @@ export const ProjectSettingsPage: React.FC = () => {
                                             <thead className="bg-gray-50">
                                                 <tr>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        User
+                                                        {t('project.settings.memberTable.user')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Screen Name
+                                                        {t('project.settings.memberTable.screenName')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Access Role
+                                                        {t('project.settings.memberTable.accessRole')}
                                                     </th>
                                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                        Default Staff Role (Position)
+                                                        {t('project.settings.memberTable.staffRole')}
                                                     </th>
                                                     <th scope="col" className="relative px-6 py-3">
                                                         <span className="sr-only">Edit</span>
@@ -121,7 +123,7 @@ export const ProjectSettingsPage: React.FC = () => {
                                                                     defaultValue={member.display_name || ''}
                                                                     id={`display-name-${member.user_id}`}
                                                                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                                    placeholder="Display Name"
+                                                                    placeholder={t('project.settings.memberTable.screenName')}
                                                                 />
                                                             ) : (
                                                                 <div className="text-sm text-gray-900">
@@ -136,15 +138,15 @@ export const ProjectSettingsPage: React.FC = () => {
                                                                     id={`role-${member.user_id}`}
                                                                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                                                                 >
-                                                                    <option value="owner">Owner</option>
-                                                                    <option value="editor">Editor</option>
-                                                                    <option value="viewer">Viewer</option>
+                                                                    <option value="owner">{t('project.settings.roles.owner')}</option>
+                                                                    <option value="editor">{t('project.settings.roles.editor')}</option>
+                                                                    <option value="viewer">{t('project.settings.roles.viewer')}</option>
                                                                 </select>
                                                             ) : (
                                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.role === 'owner' ? 'bg-purple-100 text-purple-800' :
                                                                     member.role === 'editor' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                                                     }`}>
-                                                                    {member.role}
+                                                                    {t(`project.settings.roles.${member.role}`)}
                                                                 </span>
                                                             )}
                                                         </td>
@@ -155,7 +157,7 @@ export const ProjectSettingsPage: React.FC = () => {
                                                                     defaultValue={member.default_staff_role || ''}
                                                                     id={`staff-role-${member.user_id}`}
                                                                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                                                    placeholder="e.g. Director, Lighting"
+                                                                    placeholder={t('project.settings.placeholders.staffRole')}
                                                                 />
                                                             ) : (
                                                                 member.default_staff_role || <span className="text-gray-400 italic">None</span>
@@ -179,13 +181,13 @@ export const ProjectSettingsPage: React.FC = () => {
                                                                             }}
                                                                             className="text-indigo-600 hover:text-indigo-900"
                                                                         >
-                                                                            Save
+                                                                            {t('project.settings.memberTable.save')}
                                                                         </button>
                                                                         <button
                                                                             onClick={() => setEditingMember(null)}
                                                                             className="text-gray-600 hover:text-gray-900"
                                                                         >
-                                                                            Cancel
+                                                                            {t('project.settings.memberTable.cancel')}
                                                                         </button>
                                                                     </div>
                                                                 ) : (
@@ -193,7 +195,7 @@ export const ProjectSettingsPage: React.FC = () => {
                                                                         onClick={() => setEditingMember(member.user_id)}
                                                                         className="text-indigo-600 hover:text-indigo-900"
                                                                     >
-                                                                        Edit
+                                                                        {t('project.settings.memberTable.edit')}
                                                                     </button>
                                                                 )
                                                             )}
@@ -202,13 +204,13 @@ export const ProjectSettingsPage: React.FC = () => {
                                                             {isOwner && member.role !== 'owner' && (
                                                                 <button
                                                                     onClick={() => {
-                                                                        if (window.confirm(`Are you sure you want to remove ${member.discord_username}?`)) {
+                                                                        if (window.confirm(t('project.settings.messages.memberRemoveConfirm', { username: member.discord_username }))) {
                                                                             deleteMemberMutation.mutate(member.user_id);
                                                                         }
                                                                     }}
                                                                     className="text-red-600 hover:text-red-900 ml-4"
                                                                 >
-                                                                    Remove
+                                                                    {t('project.settings.memberTable.delete')}
                                                                 </button>
                                                             )}
                                                         </td>
@@ -232,19 +234,21 @@ export const ProjectSettingsPage: React.FC = () => {
 };
 
 const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryClient: QueryClient }> = ({ project, projectId, queryClient }) => {
+    const { t } = useTranslation();
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || '');
     const [webhookUrl, setWebhookUrl] = useState(project.discord_webhook_url || '');
+    const [scriptWebhookUrl, setScriptWebhookUrl] = useState(project.discord_script_webhook_url || '');
     const [channelId, setChannelId] = useState(project.discord_channel_id || '');
 
     const updateProjectMutation = useMutation({
         mutationFn: (data: Partial<Project>) => projectsApi.updateProject(projectId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-            alert('Project settings updated.');
+            alert(t('project.settings.messages.updateSuccess'));
         },
         onError: (error: Error) => {
-            alert(`Failed to update settings: ${error.message || 'Unknown error'}`);
+            alert(`${t('project.settings.messages.updateError')}: ${error.message || t('common.unknown')}`);
         }
     });
 
@@ -254,6 +258,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
             name,
             description,
             discord_webhook_url: webhookUrl,
+            discord_script_webhook_url: scriptWebhookUrl,
             discord_channel_id: channelId
         });
     };
@@ -261,7 +266,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Project Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('project.settings.form.name')}</label>
                 <input
                     type="text"
                     id="name"
@@ -272,7 +277,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                 />
             </div>
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('project.settings.form.description')}</label>
                 <textarea
                     id="description"
                     value={description}
@@ -283,10 +288,10 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
             </div>
 
             <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Discord Integration</h4>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">{t('project.settings.discord')}</h4>
                 <div className="space-y-4">
                     <div>
-                        <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-700">Webhook URL</label>
+                        <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-700">{t('project.settings.form.generalWebhook')}</label>
                         <div className="mt-1 flex rounded-md shadow-sm">
                             <input
                                 type="text"
@@ -297,10 +302,26 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                                 placeholder="https://discord.com/api/webhooks/..."
                             />
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">For sending notifications (script uploads, milestones)</p>
+                        <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.generalWebhookHelper')}</p>
                     </div>
+
                     <div>
-                        <label htmlFor="channelId" className="block text-sm font-medium text-gray-700">Channel ID</label>
+                        <label htmlFor="scriptWebhookUrl" className="block text-sm font-medium text-gray-700">{t('project.settings.form.scriptWebhook')}</label>
+                        <div className="mt-1 flex rounded-md shadow-sm">
+                            <input
+                                type="text"
+                                id="scriptWebhookUrl"
+                                value={scriptWebhookUrl}
+                                onChange={(e) => setScriptWebhookUrl(e.target.value)}
+                                className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="https://discord.com/api/webhooks/..."
+                            />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.scriptWebhookHelper')}</p>
+                    </div>
+
+                    <div>
+                        <label htmlFor="channelId" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceChannel')}</label>
                         <input
                             type="text"
                             id="channelId"
@@ -309,7 +330,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                             className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="123456789012345678"
                         />
-                        <p className="mt-1 text-xs text-gray-500">For attendance check mentions and event linking</p>
+                        <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceChannelHelper')}</p>
                     </div>
                 </div>
             </div>
@@ -320,7 +341,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                     className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     disabled={updateProjectMutation.isPending}
                 >
-                    {updateProjectMutation.isPending ? 'Saving...' : 'Save Settings'}
+                    {updateProjectMutation.isPending ? t('project.settings.form.saving') : t('project.settings.form.save')}
                 </button>
             </div>
         </form>

@@ -99,7 +99,51 @@
         "pendingAttendance": "未回答の出欠確認が{count}件あります",
         "rehearsalInHours": "稽古まで{hours}時間",
         "milestoneInDays": "マイルストーン\"{title}\"まで{days}日",
-        "daysRemaining": "残り{days}日"
+        "daysRemaining": "残り{days}日",
+        "settings": {
+            "title": "プロジェクト設定",
+            "general": "一般設定",
+            "members": "プロジェクトメンバーと役割",
+            "discord": "Discord連携",
+            "form": {
+                "name": "プロジェクト名",
+                "description": "説明",
+                "scriptWebhook": "脚本通知用 Webhook URL",
+                "scriptWebhookHelper": "脚本のアップロードや更新通知のみが送信されます。（未設定の場合は上記「一般通知」が使用されます）",
+                "generalWebhook": "一般通知用 Webhook URL",
+                "generalWebhookHelper": "マイルストーン作成、メンバ権限変更など、脚本以外の通知が送信されます。",
+                "attendanceChannel": "出欠確認用 チャンネルID",
+                "attendanceChannelHelper": "Botが出欠確認メッセージを送信するチャンネルのIDです。（Botがそのチャンネルにアクセスできる必要があります）",
+                "save": "設定を保存",
+                "saving": "保存中..."
+            },
+            "memberTable": {
+                "user": "ユーザー",
+                "screenName": "表示名",
+                "accessRole": "アクセス権限",
+                "staffRole": "基本の役割（役職）",
+                "edit": "編集",
+                "delete": "削除",
+                "cancel": "キャンセル",
+                "save": "保存"
+            },
+            "roles": {
+                "owner": "オーナー",
+                "editor": "編集者",
+                "viewer": "閲覧者"
+            },
+            "placeholders": {
+                "staffRole": "例: 演出"
+            },
+            "messages": {
+                "updateSuccess": "プロジェクト設定を更新しました。",
+                "updateError": "設定の更新に失敗しました",
+                "memberRemoveSuccess": "メンバーを削除しました。",
+                "memberRemoveError": "メンバーの削除に失敗しました",
+                "memberRemoveConfirm": "本当に {username} を削除してよろしいですか？",
+                "selfRoleError": "自分自身の権限はここでは変更できません。"
+            }
+        }
     },
     "script": {
         "title": "脚本",

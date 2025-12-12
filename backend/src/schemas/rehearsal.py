@@ -4,7 +4,7 @@ from datetime import datetime
 
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class RehearsalParticipantResponse(BaseModel):
@@ -85,6 +85,24 @@ class RehearsalCreate(BaseModel):
     # 参加者・キャストの明示的な指定（指定がない場合は自動決定ロジックが走る場合があるが、基本はFrontendから送る）
     participants: list[RehearsalParticipantCreate] | None = Field(None, description="スタッフ参加者リスト")
     casts: list[RehearsalCastCreate] | None = Field(None, description="キャスト参加者リスト")
+
+    @field_validator("attendance_deadline")
+    @classmethod
+    def validate_deadline_minutes(cls, v: datetime | None) -> datetime | None:
+        if v is None:
+            return v
+        
+        # Ensure minutes are 0 or 30 (seconds/microsecond check excluded for leniency if needed, but strict is better)
+        # Assuming frontend sends precise times or backend conversion needs to be careful.
+        # Let's enforce 0 or 30 minutes.
+        if v.minute not in (0, 30):
+             raise ValueError("Attendance deadline must be in 30-minute intervals (XX:00 or XX:30).")
+        
+        # We can auto-strip seconds if we want, or enforce them.
+        # "2025-12-13T10:00:45" should probably fail or strip?
+        # Let's enforce minutes check primarily.
+            
+        return v
 
 
 class RehearsalUpdate(BaseModel):

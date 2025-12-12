@@ -17,6 +17,7 @@ class ProjectUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=200, description="プロジェクト名")
     description: str | None = Field(None, description="説明")
     discord_webhook_url: str | None = Field(None, description="Discord Webhook URL")
+    discord_script_webhook_url: str | None = Field(None, description="脚通知用 Webhook URL")
     discord_channel_id: str | None = Field(None, description="Discord Channel ID")
 
 
@@ -28,6 +29,7 @@ class ProjectResponse(BaseModel):
     description: str | None = None
     role: str | None = None  # ユーザーの権限 (owner, editor, etc.)
     discord_webhook_url: str | None = None
+    discord_script_webhook_url: str | None = None
     discord_channel_id: str | None = None
     created_at: datetime
 

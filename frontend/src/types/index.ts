@@ -14,6 +14,7 @@ export interface Project {
     created_at: string;
     updated_at?: string; // Optional if not always present
     discord_webhook_url: string | null;
+    discord_script_webhook_url: string | null;
     discord_channel_id: string | null;
     role: 'owner' | 'editor' | 'viewer';
 }

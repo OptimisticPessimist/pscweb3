@@ -85,7 +85,51 @@
         "pendingAttendance": "有 {count} 個未回應的出席確認",
         "rehearsalInHours": "排練將在 {hours} 小時後開始",
         "milestoneInDays": "里程碑 \"{title}\" 將在 {days} 天後",
-        "daysRemaining": "剩餘 {days} 天"
+        "daysRemaining": "剩餘 {days} 天",
+        "settings": {
+            "title": "專案設定",
+            "general": "一般設定",
+            "members": "專案成員與角色",
+            "discord": "Discord 整合",
+            "form": {
+                "name": "專案名稱",
+                "description": "描述",
+                "scriptWebhook": "劇本通知 Webhook URL",
+                "scriptWebhookHelper": "僅發送劇本上傳和更新通知。（如果未設定，則使用上方的「一般通知」）。",
+                "generalWebhook": "一般通知 Webhook URL",
+                "generalWebhookHelper": "發送里程碑建立、成員權限變更等除劇本以外的通知。",
+                "attendanceChannel": "缺勤通知頻道 ID",
+                "attendanceChannelHelper": "Bot 發送缺勤確認訊息的頻道 ID。（Bot 需要有存取該頻道的權限）。",
+                "save": "儲存設定",
+                "saving": "儲存中..."
+            },
+            "memberTable": {
+                "user": "使用者",
+                "screenName": "顯示名稱",
+                "accessRole": "存取權限",
+                "staffRole": "預設職位（角色）",
+                "edit": "編輯",
+                "delete": "刪除",
+                "cancel": "取消",
+                "save": "儲存"
+            },
+            "roles": {
+                "owner": "擁有者",
+                "editor": "編輯者",
+                "viewer": "檢視者"
+            },
+            "placeholders": {
+                "staffRole": "例如：導演"
+            },
+            "messages": {
+                "updateSuccess": "專案設定已更新。",
+                "updateError": "更新設定失敗",
+                "memberRemoveSuccess": "成員已刪除。",
+                "memberRemoveError": "刪除成員失敗",
+                "memberRemoveConfirm": "確定要刪除 {username} 嗎？",
+                "selfRoleError": "您無法在此變更自己的權限。"
+            }
+        }
     },
     "script": {
         "title": "劇本",

@@ -86,7 +86,51 @@
         "pendingAttendance": "You have {count} pending attendance confirmations",
         "rehearsalInHours": "Rehearsal starts in {hours} hours",
         "milestoneInDays": "Milestone \"{title}\" in {days} days",
-        "daysRemaining": "{days} days remaining"
+        "daysRemaining": "{days} days remaining",
+        "settings": {
+            "title": "Project Settings",
+            "general": "General Settings",
+            "members": "Project Members & Staff Roles",
+            "discord": "Discord Integration",
+            "form": {
+                "name": "Project Name",
+                "description": "Description",
+                "scriptWebhook": "Script Notification Webhook URL",
+                "scriptWebhookHelper": "Notifications for script uploads and updates only. (If not set, the General Webhook above is used)",
+                "generalWebhook": "General Notification Webhook URL",
+                "generalWebhookHelper": "Notifications for milestones, member changes, etc.",
+                "attendanceChannel": "Attendance Notification Channel ID",
+                "attendanceChannelHelper": "Channel ID where the Bot sends attendance checks.",
+                "save": "Save Settings",
+                "saving": "Saving..."
+            },
+            "memberTable": {
+                "user": "User",
+                "screenName": "Screen Name",
+                "accessRole": "Access Role",
+                "staffRole": "Default Staff Role",
+                "edit": "Edit",
+                "delete": "Remove",
+                "cancel": "Cancel",
+                "save": "Save"
+            },
+            "roles": {
+                "owner": "Owner",
+                "editor": "Editor",
+                "viewer": "Viewer"
+            },
+            "placeholders": {
+                "staffRole": "e.g. Director"
+            },
+            "messages": {
+                "updateSuccess": "Project settings updated.",
+                "updateError": "Failed to update settings",
+                "memberRemoveSuccess": "Member removed successfully.",
+                "memberRemoveError": "Failed to remove member",
+                "memberRemoveConfirm": "Are you sure you want to remove {username}?",
+                "selfRoleError": "You cannot change your own role here."
+            }
+        }
     },
     "script": {
         "title": "Script",

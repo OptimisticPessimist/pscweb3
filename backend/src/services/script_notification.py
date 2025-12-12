@@ -42,7 +42,10 @@ async def send_script_notification(
         # PDF生成失敗しても通知は送る
         message += f"\n\n⚠️ PDF生成に失敗しました: {e}"
     
+    # 通知先URL判定
+    webhook_url = project.discord_script_webhook_url or project.discord_webhook_url
+    
     # Discord通知送信
     await discord_service.send_notification(
-        content=message, webhook_url=project.discord_webhook_url, file=pdf_file
+        content=message, webhook_url=webhook_url, file=pdf_file
     )
