@@ -200,6 +200,20 @@
 ### 🔔 Discord 通知設定
 將專案通知發送到 Discord 的設定。
 
+#### 🤖 邀請 Discord Bot（僅限首次）
+要發送帶有按鈕的考勤確認訊息，您需要將 Discord Bot 邀請到您的伺服器。
+
+> ⚠️ **此操作需要 Discord 伺服器管理員權限。**
+
+1. 存取以下 URL：
+   
+   👉 **[邀請 Discord Bot](https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot)**
+2. 選擇要邀請 Bot 的 Discord 伺服器。
+3. 點擊 **「授權」**。
+4. 確認 Bot 已加入伺服器。
+
+> 💡 **所需權限**: 只需要「發送訊息」權限。
+
 #### Webhook URL（一般通知）
 接收專案更新等通知。
 

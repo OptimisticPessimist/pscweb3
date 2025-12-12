@@ -200,6 +200,20 @@ Fountain 형식의 대본 파일을 업로드합니다.
 ### 🔔 Discord 알림 설정
 프로젝트 알림을 Discord로 보내기 위한 설정입니다.
 
+#### 🤖 Discord Bot 초대 (최초 1회)
+버튼이 포함된 출석 확인 메시지를 보내려면 Discord Bot을 서버에 초대해야 합니다.
+
+> ⚠️ **이 작업에는 Discord 서버 관리자 권한이 필요합니다.**
+
+1. 다음 URL에 접속합니다:
+   
+   👉 **[Discord Bot 초대하기](https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot)**
+2. Bot을 초대할 Discord 서버를 선택합니다.
+3. **"승인"**을 클릭합니다.
+4. Bot이 서버에 참여했는지 확인합니다.
+
+> 💡 **필요한 권한**: "메시지 보내기"만 필요합니다.
+
 #### Webhook URL (일반 알림)
 프로젝트 업데이트 등의 알림을 받습니다.
 

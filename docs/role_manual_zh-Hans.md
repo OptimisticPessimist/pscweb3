@@ -200,6 +200,20 @@
 ### 🔔 Discord 通知设置
 将项目通知发送到 Discord 的设置。
 
+#### 🤖 邀请 Discord Bot（仅限首次）
+要发送带有按钮的考勤确认消息，您需要将 Discord Bot 邀请到您的服务器。
+
+> ⚠️ **此操作需要 Discord 服务器管理员权限。**
+
+1. 访问以下 URL：
+   
+   👉 **[邀请 Discord Bot](https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot)**
+2. 选择要邀请 Bot 的 Discord 服务器。
+3. 点击 **"授权"**。
+4. 确认 Bot 已加入服务器。
+
+> 💡 **所需权限**: 只需要"发送消息"权限。
+
 #### Webhook URL（常规通知）
 接收项目更新等通知。
 

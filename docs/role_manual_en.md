@@ -200,6 +200,20 @@ Change a member's role (Owner/Editor/Viewer).
 ### 🔔 Discord Notification Settings
 Settings for sending project notifications to Discord.
 
+#### 🤖 Inviting the Discord Bot (First Time Only)
+To send attendance confirmation messages with buttons, you need to invite the Discord Bot to your server.
+
+> ⚠️ **This operation requires Discord server administrator permission.**
+
+1. Access the following URL:
+   
+   👉 **[Invite Discord Bot](https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot)**
+2. Select the Discord server to invite the bot to.
+3. Click **"Authorize"**.
+4. Confirm that the Bot has joined the server.
+
+> 💡 **Required Permission**: Only "Send Messages" is needed.
+
 #### Webhook URL (General Notifications)
 Receive notifications for project updates, etc.
 
