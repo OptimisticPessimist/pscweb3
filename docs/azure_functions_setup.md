@@ -218,3 +218,25 @@ Static Web Apps にビルド時環境変数を設定します：
 
 > [!NOTE]
 > このファイルはビルド後に `dist` フォルダにコピーされます（GitHub Actions ワークフローで設定済み）。
+
+## 6. データベースマイグレーション（本番環境）
+
+Azure Functions上のアプリケーションが参照するデータベース（Neon等）に対して、テーブル作成や変更を適用する手順です。
+
+推奨される方法は、**ローカル環境からリモートデータベースに対して Alembic を実行する**ことです。
+
+### 手順
+
+1. `backend/.env` ファイルの `DATABASE_URL` を、**本番環境のデータベース接続文字列** に書き換えます。
+   ```ini
+   DATABASE_URL=postgresql+asyncpg://user:password@endpoint.neon.tech/neondb
+   ```
+   > ⚠️ **注意**: 作業が終わったら、必ずローカル開発用のURLに戻してください。
+
+2. マイグレーションを実行します。
+   ```bash
+   cd backend
+   uv run alembic upgrade head
+   ```
+
+3. 完了したら `.env` を元に戻します。
