@@ -172,24 +172,38 @@
         "name": "이름",
         "role": "역할",
         "email": "이메일",
-        "phone": "전화번호"
+        "phone": "전화번호",
+        "staffList": "스태프 목록"
     },
     "schedule": {
-        "title": "스케줄",
+        "title": "일정",
         "rehearsal": "리허설",
-        "date": "날짜 및 시간",
+        "milestone": "마일스톤",
+        "date": "일시",
         "location": "장소",
         "participants": "참가자",
         "addRehearsal": "리허설 추가",
-        "editRehearsal": "리허설 편집"
+        "editRehearsal": "리허설 편집",
+        "allProjectsSchedule": "참여 중인 모든 프로젝트의 일정",
+        "type": "종류",
+        "start": "시작",
+        "end": "종료",
+        "notes": "비고",
+        "noRehearsalSchedule": "리허설 일정이 없습니다",
+        "createScheduleToStart": "일정을 생성하여 리허설 계획을 시작하세요.",
+        "selectScriptForSchedule": "일정의 기초로 할 대본 선택:",
+        "noScriptsFound": "대본을 찾을 수 없습니다.",
+        "uploadScriptFirst": "먼저 대본 섹션에서 대본을 업로드하십시오.",
+        "loadingSchedule": "일정을 불러오는 중..."
     },
     "attendance": {
-        "title": "출결",
-        "status": "상태",
-        "attending": "출석",
-        "absent": "결석",
-        "tentative": "미정",
-        "markAttendance": "출결 등록"
+        "title": "출석",
+        "description": "프로젝트 출석 확인 목록",
+        "searchPlaceholder": "이벤트 제목으로 검색...",
+        "pending": "미응답",
+        "ok": "출석",
+        "ng": "결석",
+        "all": "전체"
     },
     "language": {
         "ja": "日本語",
@@ -199,3 +213,4 @@
         "zhHant": "繁體中文"
     }
 }
+```

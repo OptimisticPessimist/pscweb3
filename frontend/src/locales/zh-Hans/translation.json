@@ -171,25 +171,39 @@
         "title": "工作人员",
         "name": "姓名",
         "role": "职务",
-        "email": "电子邮件",
-        "phone": "电话"
+        "email": "邮箱",
+        "phone": "电话",
+        "staffList": "工作人员列表"
     },
     "schedule": {
-        "title": "日程",
+        "title": "日程安排",
         "rehearsal": "排练",
-        "date": "日期和时间",
+        "milestone": "里程碑",
+        "date": "日期",
         "location": "地点",
         "participants": "参与者",
         "addRehearsal": "添加排练",
-        "editRehearsal": "编辑排练"
+        "editRehearsal": "编辑排练",
+        "allProjectsSchedule": "所有参与项目的日程",
+        "type": "类型",
+        "start": "开始",
+        "end": "结束",
+        "notes": "备注",
+        "noRehearsalSchedule": "没有排练日程",
+        "createScheduleToStart": "创建日程以开始排练计划。",
+        "selectScriptForSchedule": "选择作为日程基础的剧本：",
+        "noScriptsFound": "未找到剧本。",
+        "uploadScriptFirst": "请先在剧本部分上传剧本。",
+        "loadingSchedule": "正在加载日程..."
     },
     "attendance": {
         "title": "考勤",
-        "status": "状态",
-        "attending": "出席",
-        "absent": "缺席",
-        "tentative": "待定",
-        "markAttendance": "登记考勤"
+        "description": "项目考勤列表",
+        "searchPlaceholder": "搜索活动标题...",
+        "pending": "待定",
+        "ok": "出席",
+        "ng": "缺席",
+        "all": "全部"
     },
     "language": {
         "ja": "日本語",
@@ -199,3 +213,4 @@
         "zhHant": "繁體中文"
     }
 }
+```

@@ -172,24 +172,38 @@
         "name": "姓名",
         "role": "職務",
         "email": "電子郵件",
-        "phone": "電話"
+        "phone": "電話",
+        "staffList": "工作人員列表"
     },
     "schedule": {
-        "title": "日程",
+        "title": "行程安排",
         "rehearsal": "排練",
-        "date": "日期和時間",
+        "milestone": "里程碑",
+        "date": "日期",
         "location": "地點",
         "participants": "參與者",
         "addRehearsal": "新增排練",
-        "editRehearsal": "編輯排練"
+        "editRehearsal": "編輯排練",
+        "allProjectsSchedule": "所有參與專案的行程",
+        "type": "類型",
+        "start": "開始",
+        "end": "結束",
+        "notes": "備註",
+        "noRehearsalSchedule": "沒有排練行程",
+        "createScheduleToStart": "建立行程以開始排練計畫。",
+        "selectScriptForSchedule": "選擇作為行程基礎的劇本：",
+        "noScriptsFound": "未找到劇本。",
+        "uploadScriptFirst": "請先在劇本部分上傳劇本。",
+        "loadingSchedule": "正在讀取行程..."
     },
     "attendance": {
         "title": "考勤",
-        "status": "狀態",
-        "attending": "出席",
-        "absent": "缺席",
-        "tentative": "待定",
-        "markAttendance": "登記考勤"
+        "description": "專案考勤列表",
+        "searchPlaceholder": "搜尋活動標題...",
+        "pending": "待定",
+        "ok": "出席",
+        "ng": "缺席",
+        "all": "全部"
     },
     "language": {
         "ja": "日本語",
@@ -199,3 +213,4 @@
         "zhHant": "繁體中文"
     }
 }
+```
