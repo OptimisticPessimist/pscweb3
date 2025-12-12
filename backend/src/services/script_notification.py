@@ -28,7 +28,8 @@ async def send_script_notification(
         f"📝 **脚本が{action_text}されました{revision_text}**\n"
         f"プロジェクト: {project.name}\n"
         f"タイトル: {script.title}\n"
-        f"ユーザー: {current_user.discord_username}"
+        f"ユーザー: {current_user.discord_username}\n"
+        f"@here"
     )
     
     # PDF生成（通知添付用）

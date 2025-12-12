@@ -936,6 +936,30 @@ async def delete_rehearsal(
 
     # Discord通知用データ退避
     rehearsal_date = rehearsal.date.strftime("%Y/%m/%d %H:%M")
+
+    # 削除前に関係者のDiscord IDを取得 (メンション用)
+    target_discord_ids = set()
+    
+    # 参加者
+    p_result = await db.execute(
+        select(User.discord_id)
+        .join(RehearsalParticipant, RehearsalParticipant.user_id == User.id)
+        .where(RehearsalParticipant.rehearsal_id == rehearsal_id)
+        .where(User.discord_id.isnot(None))
+    )
+    target_discord_ids.update(p_result.scalars().all())
+
+    # キャスト
+    c_result = await db.execute(
+        select(User.discord_id)
+        .join(RehearsalCast, RehearsalCast.user_id == User.id)
+        .where(RehearsalCast.rehearsal_id == rehearsal_id)
+        .where(User.discord_id.isnot(None))
+    )
+    target_discord_ids.update(c_result.scalars().all())
+    
+    mentions = [f"<@{uid}>" for uid in target_discord_ids]
+    mention_str = " ".join(mentions)
     
     # 削除
     await db.delete(rehearsal)
@@ -944,9 +968,13 @@ async def delete_rehearsal(
     # Discord通知
     project = await db.get(TheaterProject, schedule.project_id)
     if project.discord_webhook_url:
+        content = f"🗑️ **稽古が削除されました**\nプロジェクト: {project.name}\n日時: {rehearsal_date}"
+        if mention_str:
+            content += f"\n関係者: {mention_str}"
+
         background_tasks.add_task(
             discord_service.send_notification,
-            content=f"🗑️ **稽古が削除されました**\nプロジェクト: {project.name}\n日時: {rehearsal_date}",
+            content=content,
             webhook_url=project.discord_webhook_url,
         )
 
