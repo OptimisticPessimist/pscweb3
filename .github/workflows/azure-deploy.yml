@@ -70,6 +70,7 @@ jobs:
           cd frontend
           npm install
           npm run build
+          cp staticwebapp.config.json dist/
 
       - name: Deploy to Static Web App
         id: builddeploy
