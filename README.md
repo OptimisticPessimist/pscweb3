@@ -41,9 +41,11 @@ PSC Web 3 は、演劇制作における台本管理・スケジュール管理�
 - **ビルドツール**: Vite
 
 ### インフラ
-- **ホスティング**: Azure (予定)
+- **バックエンド**: Azure Functions (従量課金プラン)
+- **フロントエンド**: Azure Static Web Apps
+- **データベース**: PostgreSQL (Neon)
 - **CI/CD**: GitHub Actions
-- **コンテナ**: Docker (開発環境)
+- **コンテナ**: Docker (ローカル開発環境)
 
 ## 📦 前提条件
 
@@ -257,18 +259,43 @@ uv sync
 
 ## 🚢 デプロイ
 
-### Azure へのデプロイ (予定)
+### Azure へのデプロイ
 
-GitHub Actions による CI/CD を設定予定です。
+本アプリケーションは以下のAzureサービスにデプロイされています：
 
-```bash
-# 本番ビルド (フロントエンド)
-cd frontend
-npm run build
+| サービス | 用途 | URL |
+|----------|------|-----|
+| **Azure Functions** | バックエンドAPI + Timer Function | `https://pscweb3-functions-*.azurewebsites.net` |
+| **Azure Static Web Apps** | フロントエンド (React SPA) | `https://*.azurestaticapps.net` |
+| **Neon PostgreSQL** | データベース | - |
 
-# 本番用環境変数の設定
-# Azure Portal で環境変数を設定してください
-```
+#### デプロイ設定
+
+GitHub Actions による CI/CD が設定されています。`main` ブランチへのプッシュで自動デプロイされます。
+
+**必要なGitHub Secrets:**
+
+| シークレット名 | 説明 |
+|---------------|------|
+| `AZURE_FUNCTIONAPP_NAME` | Function App名 |
+| `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` | Function Appの発行プロファイル |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Static Web Appsのデプロイトークン |
+| `VITE_API_URL` | Function AppのURL (例: `https://pscweb3-functions-*.azurewebsites.net`) |
+
+**Azure Function App環境変数:**
+
+| 変数名 | 説明 |
+|--------|------|
+| `DATABASE_URL` | PostgreSQL接続文字列 |
+| `JWT_SECRET_KEY` | JWT認証用シークレットキー |
+| `DISCORD_CLIENT_ID` | Discord OAuthクライアントID |
+| `DISCORD_CLIENT_SECRET` | Discord OAuthクライアントシークレット |
+| `DISCORD_BOT_TOKEN` | Discord Bot トークン |
+| `DISCORD_REDIRECT_URI` | Discord OAuth リダイレクトURI |
+| `FRONTEND_URL` | Static Web AppsのURL |
+
+> [!TIP]
+> 詳細なセットアップ手順は [docs/azure_functions_setup.md](docs/azure_functions_setup.md) を参照してください。
 
 ## 📝 ドキュメント
 

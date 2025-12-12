@@ -41,13 +41,20 @@ Function Appが作成されたら、以下の環境変数を設定します：
 2. **「設定」 → 「環境変数」** をクリックします。
 3. **「+ 追加」** をクリックして以下を追加します：
 
-   | 名前 | 値 |
-   |------|-----|
-   | `DATABASE_URL` | Neon/SupabaseのPostgreSQL接続文字列 |
-   | `JWT_SECRET_KEY` | バックエンドと同じシークレットキー |
-   | `DISCORD_BOT_TOKEN` | Discordボットトークン（通知送信用） |
+   | 名前 | 値 | 説明 |
+   |------|-----|------|
+   | `DATABASE_URL` | `postgresql+asyncpg://...` | Neon/SupabaseのPostgreSQL接続文字列 |
+   | `JWT_SECRET_KEY` | (任意の文字列) | JWT認証用シークレットキー |
+   | `DISCORD_CLIENT_ID` | Discord Dev Portal から | Discord OAuthクライアントID |
+   | `DISCORD_CLIENT_SECRET` | Discord Dev Portal から | Discord OAuthクライアントシークレット |
+   | `DISCORD_BOT_TOKEN` | Discord Dev Portal から | Discordボットトークン（通知送信用） |
+   | `DISCORD_REDIRECT_URI` | `https://<function-app>.azurewebsites.net/auth/callback` | Discord OAuth リダイレクトURI |
+   | `FRONTEND_URL` | `https://<static-web-app>.azurestaticapps.net` | Static Web AppsのURL |
 
 4. **「保存」** をクリックします。
+
+> [!IMPORTANT]
+> `DISCORD_REDIRECT_URI` は Function App のURLを使用します。Discord Developer Portal の OAuth2 Redirects にも同じURLを登録してください。
 
 ## 2. GitHub シークレットの設定
 
@@ -124,3 +131,73 @@ Timer Functionを手動でテスト実行するには：
 1. Function App が実行中か確認（停止していないか）
 2. 「関数」一覧に関数が表示されているか確認
 3. Application Insights でエラーログを確認
+
+### API コールが失敗する場合
+
+1. **CORS設定**: Function App「API」→「CORS」で フロントエンドURLを許可しているか確認
+2. **環境変数**: `FRONTEND_URL` が正しく設定されているか確認
+3. **Discord OAuth**: `DISCORD_REDIRECT_URI` が Function App の URL になっているか確認
+
+### 500エラーが発生する場合
+
+1. Azure Portal の **「監視」→「ログストリーム」** でエラー詳細を確認
+2. 主な原因:
+   - データベース接続エラー（`DATABASE_URL` の確認）
+   - 外部キー制約エラー（関連データの削除順序）
+   - 読み取り専用ファイルシステムへの書き込み（Azure Functionsはファイル書き込み不可）
+
+---
+
+## 5. Azure Static Web Apps のセットアップ
+
+### 5-1. Azure Portal でリソース作成
+
+1. **「リソースの作成」** → **「Static Web App」** を検索してクリック
+2. 以下の設定を行います：
+
+   | 項目 | 設定値 |
+   |------|--------|
+   | **サブスクリプション** | お使いのサブスクリプション |
+   | **リソースグループ** | `rg-pscweb3` (既存) |
+   | **名前** | `pscweb3-frontend` |
+   | **ホスティングプラン** | **Free** |
+   | **地域** | East Asia |
+   | **ソース** | GitHub |
+   | **組織** | あなたのGitHubアカウント |
+   | **リポジトリ** | `pscweb3` |
+   | **ブランチ** | `main` |
+
+3. **ビルドの詳細**:
+   - **ビルドプリセット**: `React`
+   - **アプリの場所**: `/frontend`
+   - **API の場所**: (空欄)
+   - **出力先**: `dist`
+
+4. **「確認および作成」** → **「作成」**
+
+### 5-2. 環境変数の設定
+
+Static Web Apps にビルド時環境変数を設定します：
+
+1. GitHub リポジトリの **「Settings」→「Secrets and variables」→「Actions」**
+2. 以下のシークレットを追加：
+
+   | 名前 | 値 |
+   |------|-----|
+   | `VITE_API_URL` | Function App の URL (例: `https://pscweb3-functions-*.azurewebsites.net`) |
+
+### 5-3. SPAルーティング設定
+
+`frontend/staticwebapp.config.json` ファイルでSPAルーティングを設定しています：
+
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/api/*"]
+  }
+}
+```
+
+> [!NOTE]
+> このファイルはビルド後に `dist` フォルダにコピーされます（GitHub Actions ワークフローで設定済み）。
