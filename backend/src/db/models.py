@@ -448,6 +448,7 @@ class AttendanceEvent(Base):
     schedule_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 稽古日時
     deadline: Mapped[datetime] = mapped_column(DateTime)  # 回答期限
     completed: Mapped[bool] = mapped_column(default=False)  # 完了フラグ
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # リマインダー送信日時
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション
