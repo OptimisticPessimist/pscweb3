@@ -172,7 +172,15 @@
         "actor": "배우",
         "castPattern": "캐스트 패턴",
         "doubleCast": "더블 캐스트",
-        "assign": "역할 배정"
+        "assign": "배역 할당",
+        "assignCast": "배역 할당",
+        "selectMember": "멤버 선택",
+        "loadingCharacters": "등장인물 불러오는 중...",
+        "unassigned": "미할당",
+        "member": "멤버",
+        "memo": "메모",
+        "optional": "선택 사항",
+        "castNamePlaceholder": "예: A팀"
     },
     "staff": {
         "title": "스태프",

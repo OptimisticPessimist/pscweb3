@@ -183,11 +183,14 @@
         "castPattern": "Cast Pattern",
         "doubleCast": "Double Cast",
         "assign": "Assign Role",
+        "assignCast": "Assign Cast",
+        "selectMember": "Select a member",
         "loadingCharacters": "Loading characters...",
         "unassigned": "Unassigned",
         "member": "Member",
         "memo": "Memo",
-        "optional": "Optional"
+        "optional": "Optional",
+        "castNamePlaceholder": "e.g. Pattern A"
     },
     "staff": {
         "title": "Staff",

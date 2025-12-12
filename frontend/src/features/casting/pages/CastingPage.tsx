@@ -186,7 +186,7 @@ export const CastingPage = () => {
                         <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                             <div>
                                 <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                    Assign Cast
+                                    {t('casting.assignCast')}
                                 </h3>
                                 <div className="mt-4 space-y-4">
                                     <div>
@@ -197,7 +197,7 @@ export const CastingPage = () => {
                                             value={selectedUserId}
                                             onChange={(e) => setSelectedUserId(e.target.value)}
                                         >
-                                            <option value="">Select a member</option>
+                                            <option value="">{t('casting.selectMember')}</option>
                                             {members?.map((member) => (
                                                 <option key={member.user_id} value={member.user_id}>
                                                     {member.display_name || member.discord_username}
@@ -211,7 +211,7 @@ export const CastingPage = () => {
                                             type="text"
                                             id="castName"
                                             className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md p-2 bg-white text-gray-900"
-                                            placeholder="e.g. Pattern A"
+                                            placeholder={t('casting.castNamePlaceholder')}
                                             value={castName}
                                             onChange={(e) => setCastName(e.target.value)}
                                         />

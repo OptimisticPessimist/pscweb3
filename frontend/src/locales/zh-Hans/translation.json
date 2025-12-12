@@ -172,7 +172,15 @@
         "actor": "演员",
         "castPattern": "演员阵容模式",
         "doubleCast": "双重演员阵容",
-        "assign": "分配角色"
+        "assign": "分配角色",
+        "assignCast": "分配角色",
+        "selectMember": "选择成员",
+        "loadingCharacters": "正在加载角色...",
+        "unassigned": "未分配",
+        "member": "成员",
+        "memo": "备注",
+        "optional": "可选",
+        "castNamePlaceholder": "例如：A组"
     },
     "staff": {
         "title": "工作人员",

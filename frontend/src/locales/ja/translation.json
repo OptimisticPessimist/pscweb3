@@ -197,11 +197,14 @@
         "castPattern": "キャストパターン",
         "doubleCast": "ダブルキャスト",
         "assign": "配役を割り当て",
+        "assignCast": "配役を割り当て",
+        "selectMember": "メンバーを選択",
         "loadingCharacters": "登場人物を読み込み中...",
         "unassigned": "未割り当て",
         "member": "メンバー",
         "memo": "メモ",
-        "optional": "オプション"
+        "optional": "オプション",
+        "castNamePlaceholder": "例: パターンA"
     },
     "staff": {
         "title": "スタッフ",
