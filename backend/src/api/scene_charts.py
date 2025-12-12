@@ -32,26 +32,8 @@ async def create_scene_chart(
     Returns:
         SceneChartResponse: 生成された香盤表
     """
-    # 認証チェック
-    if current_user is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    # 脚本取得
-    result = await db.execute(select(Script).where(Script.id == script_id))
-    script = result.scalar_one_or_none()
-    if script is None:
-        raise HTTPException(status_code=404, detail="Script not found")
-
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == script.project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="Access denied to this project")
+    # member_and_script は get_script_member_dep で認証・権限チェック済み
+    member, script = member_and_script
 
     # 香盤表生成
     chart = await generate_scene_chart(script, db)
@@ -62,7 +44,6 @@ async def create_scene_chart(
     return _build_scene_chart_response(chart)
 
 
-@router.get("/{script_id}/scene-chart", response_model=SceneChartResponse)
 @router.get("/{script_id}/scene-chart", response_model=SceneChartResponse)
 async def get_scene_chart(
     script_id: UUID,
@@ -79,27 +60,8 @@ async def get_scene_chart(
     Returns:
         SceneChartResponse: 香盤表
     """
-    # 認証チェック
-    if current_user is None:
-        raise HTTPException(status_code=401, detail="認証が必要です")
-
-    # 脚本取得
-    result = await db.execute(select(Script).where(Script.id == script_id))
-    script = result.scalar_one_or_none()
-    if script is None:
-        raise HTTPException(status_code=404, detail="脚本が見つかりません")
-
-    # プロジェクトメンバーシップチェック
-    result = await db.execute(
-        select(ProjectMember).where(
-            ProjectMember.project_id == script.project_id,
-            ProjectMember.user_id == current_user.id,
-        )
-    )
-    member = result.scalar_one_or_none()
-    if member is None:
-        raise HTTPException(status_code=403, detail="Access denied to this project")
-
+    # member_and_script は get_script_member_dep で認証・権限チェック済み
+    member, script = member_and_script
 
     # 香盤表取得 (関連データも一括取得)
     from sqlalchemy.orm import selectinload
