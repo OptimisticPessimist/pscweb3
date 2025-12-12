@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -11,7 +12,7 @@ class InvitationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
     token: str
-    project_id: int
+    project_id: UUID
     project_name: str
     created_by: str  # 作成者名
     expires_at: datetime
@@ -20,6 +21,6 @@ class InvitationResponse(BaseModel):
 
 class InvitationAcceptResponse(BaseModel):
     """招待受諾レスポンス。"""
-    project_id: int
+    project_id: UUID
     project_name: str
     message: str
