@@ -9,7 +9,8 @@
         "staff": "スタッフ",
         "schedule": "スケジュール",
         "attendance": "出欠",
-        "settings": "設定"
+        "settings": "設定",
+        "manual": "マニュアル"
     },
     "common": {
         "save": "保存",

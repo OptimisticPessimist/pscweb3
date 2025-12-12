@@ -9,7 +9,8 @@
         "staff": "스태프",
         "schedule": "일정",
         "attendance": "출석",
-        "settings": "설정"
+        "settings": "설정",
+        "manual": "매뉴얼"
     },
     "common": {
         "save": "저장",

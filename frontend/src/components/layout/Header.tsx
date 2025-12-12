@@ -1,5 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home, BookOpen } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
@@ -73,8 +73,16 @@ export function Header() {
                 })}
             </nav>
 
-            {/* Right: Language Switcher */}
-            <div className="flex items-center">
+            {/* Right: Manual Link + Language Switcher */}
+            <div className="flex items-center gap-4">
+                <Link
+                    to="/manual"
+                    className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors"
+                    title={t('nav.manual')}
+                >
+                    <BookOpen className="w-5 h-5" />
+                    <span className="text-sm hidden sm:inline">{t('nav.manual')}</span>
+                </Link>
                 <LanguageSwitcher />
             </div>
         </header>

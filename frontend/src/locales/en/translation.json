@@ -9,7 +9,8 @@
         "staff": "Staff",
         "schedule": "Schedule",
         "attendance": "Attendance",
-        "settings": "Settings"
+        "settings": "Settings",
+        "manual": "Manual"
     },
     "common": {
         "save": "Save",

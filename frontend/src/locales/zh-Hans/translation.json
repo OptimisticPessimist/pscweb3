@@ -9,7 +9,8 @@
         "staff": "工作人员",
         "schedule": "日程安排",
         "attendance": "考勤",
-        "settings": "设置"
+        "settings": "设置",
+        "manual": "使用手册"
     },
     "common": {
         "save": "保存",
