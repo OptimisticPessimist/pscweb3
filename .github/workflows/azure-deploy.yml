@@ -31,7 +31,8 @@ jobs:
         shell: bash
         run: |
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          uv pip install --system -r requirements.txt
+          mkdir -p .python_packages/lib/site-packages
+          pip install -r requirements.txt --target=.python_packages/lib/site-packages
 
       - name: Zip artifact for deployment
         run: |
