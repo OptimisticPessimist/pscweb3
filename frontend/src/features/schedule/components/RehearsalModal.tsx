@@ -226,6 +226,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             setStatusMessage('Success! Closing...');
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
+                queryClient.invalidateQueries({ queryKey: ['mySchedule'] });
                 onClose();
             }, 1000);
         },
@@ -240,6 +241,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             setStatusMessage('Success! Closing...');
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
+                queryClient.invalidateQueries({ queryKey: ['mySchedule'] });
                 onClose();
             }, 1000);
         },
@@ -254,6 +256,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             setStatusMessage('Deleted. Closing...');
             setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
+                queryClient.invalidateQueries({ queryKey: ['mySchedule'] });
                 onClose();
             }, 1000);
         },
