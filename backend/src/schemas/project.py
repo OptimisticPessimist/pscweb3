@@ -44,6 +44,7 @@ class ProjectMemberResponse(BaseModel):
     role: str
     default_staff_role: str | None = None  # 基本的な役割
     display_name: str | None = None  # 表示名
+    discord_avatar_url: str | None = None  # DiscordアバターURL
     joined_at: datetime
     
     model_config = {"from_attributes": True}

@@ -58,6 +58,13 @@ class User(Base):
     # invitations (created_by) ? relationship not defined in User usually needed unless back_populates used.
     # checking ProjectInvitation down below, it has creator relationship.
 
+    @property
+    def discord_avatar_url(self) -> str | None:
+        """DiscordアバターURLを生成."""
+        if self.discord_avatar_hash:
+            return f"https://cdn.discordapp.com/avatars/{self.discord_id}/{self.discord_avatar_hash}.png"
+        return None
+
 
 class TheaterProject(Base):
     """舞台プロジェクト."""

@@ -268,6 +268,7 @@ async def list_project_members(
             role=pm.role,
             default_staff_role=pm.default_staff_role,
             display_name=pm.display_name,
+            discord_avatar_url=user.discord_avatar_url,
             joined_at=pm.joined_at,
         ))
     
@@ -356,6 +357,7 @@ async def update_member_role(
         role=target_member.role,
         default_staff_role=target_member.default_staff_role,
         display_name=target_member.display_name,
+        discord_avatar_url=user.discord_avatar_url,
         joined_at=target_member.joined_at,
     )
 

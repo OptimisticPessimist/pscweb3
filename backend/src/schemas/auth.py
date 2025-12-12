@@ -18,17 +18,12 @@ class UserResponse(BaseModel):
     @classmethod
     def from_user(cls, user):
         """UserモデルからUserResponseを生成."""
-        # Discord CDN URL を生成
-        avatar_url = None
-        if user.discord_avatar_hash:
-            avatar_url = f"https://cdn.discordapp.com/avatars/{user.discord_id}/{user.discord_avatar_hash}.png"
-        
         return cls(
             id=user.id,
             discord_id=user.discord_id,
             discord_username=user.discord_username,
             screen_name=user.screen_name,
-            discord_avatar_url=avatar_url
+            discord_avatar_url=user.discord_avatar_url
         )
 
 
