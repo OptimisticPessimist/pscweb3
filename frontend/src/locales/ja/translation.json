@@ -67,6 +67,13 @@
             "messages": {
                 "generateError": "招待リンクの生成に失敗しました。"
             }
+        },
+        "landing": {
+            "joinProject": "{projectName} に参加",
+            "invitedBy": "{userName} から招待されました",
+            "error": {
+                "joinFailed": "プロジェクトへの参加に失敗しました: {message}"
+            }
         }
     },
     "auth": {

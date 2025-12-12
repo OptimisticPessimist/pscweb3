@@ -71,6 +71,13 @@
             "messages": {
                 "generateError": "Failed to generate invitation link."
             }
+        },
+        "landing": {
+            "joinProject": "Join {projectName}",
+            "invitedBy": "You have been invited by {userName}",
+            "error": {
+                "joinFailed": "Failed to join project: {message}"
+            }
         }
     },
     "dashboard": {

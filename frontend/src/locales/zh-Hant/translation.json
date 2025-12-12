@@ -70,6 +70,13 @@
             "messages": {
                 "generateError": "生成邀請連結失敗。"
             }
+        },
+        "landing": {
+            "joinProject": "加入 {projectName}",
+            "invitedBy": "您受 {userName} 邀請",
+            "error": {
+                "joinFailed": "加入專案失敗: {message}"
+            }
         }
     },
     "dashboard": {

@@ -70,6 +70,13 @@
             "messages": {
                 "generateError": "초대 링크 생성에 실패했습니다."
             }
+        },
+        "landing": {
+            "joinProject": "{projectName}에 참여",
+            "invitedBy": "{userName}님으로부터 초대받았습니다",
+            "error": {
+                "joinFailed": "프로젝트 참여 실패: {message}"
+            }
         }
     },
     "dashboard": {

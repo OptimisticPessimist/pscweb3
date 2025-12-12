@@ -25,19 +25,12 @@ export const InvitationLandingPage: React.FC = () => {
             navigate(`/projects/${data.project_id}`);
         },
         onError: (err: Error) => {
-            alert(`Failed to join project: ${err.message || 'Unknown error'}`);
+            alert(t('invitation.landing.error.joinFailed', { message: err.message || 'Unknown error' }));
         }
     });
 
     // Handle login redirection if needed
     const handleLogin = () => {
-        // Redirect to login page, preserving return url
-        // Assuming LoginPage handles ?redirect= or similar, or we can just go to /login
-        // Since login logic might be complex with Discord, checking how to trigger it.
-        // If useAuth has login, maybe it redirects?
-        // Checking existing LoginPage, it likely just shows a button to backend auth.
-        // Simplest: Navigate to /login and hope AuthProvider preserves state or we pass state.
-        // For now, simple navigation.
         navigate('/login', { state: { from: location } });
     };
 
@@ -68,10 +61,10 @@ export const InvitationLandingPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    Join {invitation.project_name}
+                    {t('invitation.landing.joinProject', { projectName: invitation.project_name })}
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    You have been invited by {invitation.created_by}
+                    {t('invitation.landing.invitedBy', { userName: invitation.created_by })}
                 </p>
             </div>
 
