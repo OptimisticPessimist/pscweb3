@@ -1,45 +1,48 @@
-# Azure Functions Timer通知機能 実装ウォークスルー
+# Azure Functions Deployment & Fixes Walkthrough
 
 ## 概要
-出欠確認の回答期限が過ぎた場合に、未回答のメンバーに対してDiscord通知を自動送信するTimer Functionを実装しました。
+本セッションでは、Azure Functions へのデプロイにおける複数の問題を解決し、ドキュメントを整備し、ユーザビリティ向上のために Discord Bot 招待リンクを実装しました。
 
-## 実装内容
+## 実施した変更
 
-### 1. Azure Functions 設定ファイル
-| ファイル | 説明 |
-|---------|------|
-| [host.json](file:///f:/src/PythonProject/pscweb3-1/backend/host.json) | Azure Functionsホスト設定 |
-| [function_app.py](file:///f:/src/PythonProject/pscweb3-1/backend/function_app.py) | FastAPIラッパー & Timer Trigger定義 |
+### 1. バグ修正 (Azure Functions)
+- **Script Upload 500 Error**:
+    - `rehearsal_scenes` テーブルの外部キー制約違反を解決するため、削除順序を修正しました。
+    - Azure Functions の Read-only File System エラーを回避するため、デバッグログのファイル出力を削除しました。
+- **Scene Chart API 500 Error**:
+    - `get_scene_chart` エンドポイントでの重複した `@router` デコレータを削除しました。
+    - 未定義だった `current_user` 変数を `Depends` から取得した `member` を使用するように修正しました。
 
-### 2. データベーススキーマ変更
-- **変更ファイル**: [models.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/db/models.py)
-- **追加カラム**: `reminder_sent_at` (リマインダー送信日時)
+### 2. 環境設定 & デプロイ
+- **API URL**:
+    - フロントエンドの `API_URL` を `VITE_API_URL` 環境変数から取得するように修正し、本番環境で正しい Function App URL を使用するようにしました。
+- **Static Web Apps**:
+    - `staticwebapp.config.json` を追加し、SPAのルーティング設定を行いました。
 
-### 3. Timer Functionロジック
-- **新規ファイル**: [attendance_tasks.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/attendance_tasks.py)
-- **機能**:
-  - 30分ごとに実行
-  - 期限切れ かつ 未完了 かつ 未通知のイベントを検索
-  - PendingユーザーにメンションしたリマインダーをDiscord送信
-  - 送信後 `reminder_sent_at` を更新して重複通知を防止
+### 3. ドキュメント更新
+- **README.md**: Azure Functions と Static Web Apps のデプロイ情報を反映しました。
+- **azure_functions_setup.md**: Static Web Apps の手順と、詳細なトラブルシューティングガイドを追加しました。
+- **role_manual.md (全言語)**: 管理者向けに Discord Bot の招待手順とリンクを追加しました。
 
-### 4. テスト
-- **テストファイル**: [test_attendance_tasks.py](file:///f:/src/PythonProject/pscweb3-1/backend/tests/test_attendance_tasks.py)
-- **テストケース**:
-  - 期限切れイベントがない場合
-  - リマインダー送信成功
-  - 未回答ユーザーがいない場合
-  - DiscordチャンネルID未設定の場合
+### 4. 機能追加
+- **Discord Bot 招待リンク**:
+    - プロジェクト設定画面（`ProjectSettingsPage.tsx`）に、Bot招待ボタンを追加しました（オーナーのみ表示）。
+    - Client ID を含む招待リンクを設定しました。
+    - 全5言語（ja, en, ko, zh-Hans, zh-Hant）に対応しました。
 
 ## 検証結果
-```
-tests/test_attendance_tasks.py::test_check_deadlines_no_events PASSED
-tests/test_attendance_tasks.py::test_check_deadlines_send_reminder PASSED
-tests/test_attendance_tasks.py::test_check_deadlines_no_pending_users PASSED
-tests/test_attendance_tasks.py::test_check_deadlines_no_discord_channel PASSED
-```
 
-## 次のステップ
-1. Azure Function Appリソースの作成
-2. GitHub Actionsまたは手動でAzureへデプロイ
-3. Azure Portalの Log Stream でTimer実行を確認
+### ✅ スクリプトアップロード
+Azure Functions 環境でも 500 エラーが発生せず、正常にアップロードとデータクリーンアップ（再アップロード時）が行われることを確認しました。
+
+### ✅ 香盤表表示
+APIルートの修正により、香盤表の生成と取得が正常に行われるようになりました。
+
+### ✅ Discord Bot 招待
+プロジェクト設定画面から直接 Bot を招待できるようになり、UXが向上しました。
+
+### ✅ マニュアル
+管理者が必要な情報（Bot招待URLなど）にアクセスしやすくなりました。
+
+### ✅ 出欠確認 (Interactions)
+Discord Developer Portal の `Interactions Endpoint URL` を設定し、Azure Functions 側の `DISCORD_PUBLIC_KEY` 環境変数を設定することで、出欠確認ボタンが機能することを確認するための手順書を整備しました。

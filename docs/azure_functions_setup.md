@@ -48,6 +48,7 @@ Function Appが作成されたら、以下の環境変数を設定します：
    | `DISCORD_CLIENT_ID` | Discord Dev Portal から | Discord OAuthクライアントID |
    | `DISCORD_CLIENT_SECRET` | Discord Dev Portal から | Discord OAuthクライアントシークレット |
    | `DISCORD_BOT_TOKEN` | Discord Dev Portal から | Discordボットトークン（通知送信用） |
+   | `DISCORD_PUBLIC_KEY` | Discord Dev Portal から | Discord公開鍵（Interactions検証用） |
    | `DISCORD_REDIRECT_URI` | `https://<function-app>.azurewebsites.net/auth/callback` | Discord OAuth リダイレクトURI |
    | `FRONTEND_URL` | `https://<static-web-app>.azurestaticapps.net` | Static Web AppsのURL |
 
@@ -55,6 +56,21 @@ Function Appが作成されたら、以下の環境変数を設定します：
 
 > [!IMPORTANT]
 > `DISCORD_REDIRECT_URI` は Function App のURLを使用します。Discord Developer Portal の OAuth2 Redirects にも同じURLを登録してください。
+
+### 1-3. Discord Developer Portal の設定
+
+出欠確認機能（Interactions）を使用するには、Discord Developer Portal で以下の設定が必要です：
+
+1. [Discord Developer Portal](https://discord.com/developers/applications) にアクセスし、アプリケーションを選択します。
+2. 左メニューの **「General Information」** にある **「PUBLIC KEY」** をコピーし、上記環境変数 `DISCORD_PUBLIC_KEY` に設定します。
+3. **「Interactions Endpoint URL」** に Function App のURLを設定します：
+   ```
+   https://<function-app-name>.azurewebsites.net/api/discord/interactions
+   ```
+4. **「Save Changes」** をクリックします。
+
+> [!NOTE]
+> 設定時にDiscordがエンドポイントに検証リクエストを送信します。Function Appがデプロイされ、環境変数が設定された後でないと保存できません。
 
 ## 2. GitHub シークレットの設定
 
@@ -141,10 +157,11 @@ Timer Functionを手動でテスト実行するには：
 ### 500エラーが発生する場合
 
 1. Azure Portal の **「監視」→「ログストリーム」** でエラー詳細を確認
-2. 主な原因:
-   - データベース接続エラー（`DATABASE_URL` の確認）
-   - 外部キー制約エラー（関連データの削除順序）
-   - 読み取り専用ファイルシステムへの書き込み（Azure Functionsはファイル書き込み不可）
+4. 主な原因:
+   - **Discord Interactions エラー**: `DISCORD_PUBLIC_KEY` が環境変数に設定されていない場合、署名検証に失敗し 500 エラーになります。
+   - **データベース接続エラー**: `DATABASE_URL` の確認
+   - **外部キー制約エラー**: 関連データの削除順序
+   - **読み取り専用ファイルシステム**: Azure Functionsでのファイル書き込み（ログ出力など）はエラーになります。
 
 ---
 

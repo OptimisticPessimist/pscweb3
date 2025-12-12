@@ -100,7 +100,9 @@
                 "generalWebhook": "일반 알림 Webhook URL",
                 "generalWebhookHelper": "마일스톤 생성, 멤버 권한 변경 등 대본 이외의 알림이 전송됩니다.",
                 "attendanceChannel": "출석 알림 채널 ID",
-                "attendanceChannelHelper": "Bot이 출석 확인 메시지를 전송할 채널 ID입니다. (Bot이 해당 채널에 액세스할 수 있어야 합니다)",
+                "attendanceChannelHelper": "Bot이 출석 확인 메시지를 보낼 채널의 ID입니다. (Bot이 해당 채널에 액세스할 수 있어야 합니다)",
+                "botInviteDescription": "Bot을 서버에 초대하여 출석 확인과 같은 기능을 활성화하세요.",
+                "inviteBot": "Bot 초대",
                 "save": "설정 저장",
                 "saving": "저장 중..."
             },

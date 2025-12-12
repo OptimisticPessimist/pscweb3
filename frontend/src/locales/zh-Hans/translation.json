@@ -100,7 +100,9 @@
                 "generalWebhook": "一般通知 Webhook URL",
                 "generalWebhookHelper": "发送里程碑创建、成员权限更改等除剧本以外的通知。",
                 "attendanceChannel": "考勤通知频道 ID",
-                "attendanceChannelHelper": "Bot 发送考勤确认消息的频道 ID。（Bot 需要有访问该频道的权限）。",
+                "attendanceChannelHelper": "Bot 发送考勤信息的频道 ID。（Bot 需要有访问该频道的权限）",
+                "botInviteDescription": "邀请 Bot 加入服务器以启用考勤确认等功能。",
+                "inviteBot": "邀请 Bot",
                 "save": "保存设置",
                 "saving": "保存中..."
             },

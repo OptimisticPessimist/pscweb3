@@ -116,7 +116,9 @@
                 "attendanceChannel": "出欠確認用 チャンネルID",
                 "attendanceChannelHelper": "Botが出欠確認メッセージを送信するチャンネルのIDです。（Botがそのチャンネルにアクセスできる必要があります）",
                 "save": "設定を保存",
-                "saving": "保存中..."
+                "saving": "保存中...",
+                "botInviteDescription": "Botをサーバーに招待して、出欠確認などの機能を利用可能にします。",
+                "inviteBot": "Botを招待する"
             },
             "memberTable": {
                 "user": "ユーザー",

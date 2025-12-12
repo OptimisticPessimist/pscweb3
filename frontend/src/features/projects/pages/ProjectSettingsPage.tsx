@@ -289,6 +289,22 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
 
             <div className="pt-4 border-t border-gray-200">
                 <h4 className="text-sm font-medium text-gray-900 mb-2">{t('project.settings.discord')}</h4>
+
+                {/* Discord Bot Invitation Link */}
+                <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-md">
+                    <p className="text-sm text-indigo-700 mb-2">
+                        {t('project.settings.form.botInviteDescription')}
+                    </p>
+                    <a
+                        href="https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                        🤖 {t('project.settings.form.inviteBot')}
+                    </a>
+                </div>
+
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="webhookUrl" className="block text-sm font-medium text-gray-700">{t('project.settings.form.generalWebhook')}</label>

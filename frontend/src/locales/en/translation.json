@@ -101,9 +101,11 @@
                 "generalWebhook": "General Notification Webhook URL",
                 "generalWebhookHelper": "Notifications for milestones, member changes, etc.",
                 "attendanceChannel": "Attendance Notification Channel ID",
-                "attendanceChannelHelper": "Channel ID where the Bot sends attendance checks.",
+                "attendanceChannelHelper": "The ID of the channel where the Bot will send attendance messages. (The Bot needs to have access to that channel)",
                 "save": "Save Settings",
-                "saving": "Saving..."
+                "saving": "Saving...",
+                "botInviteDescription": "Invite the Bot to your server to enable features like attendance confirmation.",
+                "inviteBot": "Invite Bot"
             },
             "memberTable": {
                 "user": "User",

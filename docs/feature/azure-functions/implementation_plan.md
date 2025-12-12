@@ -31,11 +31,35 @@
  - 期限切れかつ未通知のイベントを検索し、Discord通知を送信するロジック。
  - 既存の `DiscordService` とデータベース依存関係を再利用します。
  - **ロジック詳細**:
-   1. `deadline <= 現在時刻` かつ `reminder_sent_at IS NULL` である `AttendanceEvent` をクエリします。
    2. 各イベントについて:
       a. `status == 'pending'` のターゲットユーザーを取得します。
       b. Discordメッセージを送信します（既存の `remind_pending_users` ロジックを再利用）。
       c. `reminder_sent_at` を現在時刻で更新します。
+
+### バグ修正
+#### [MODIFY] [backend/src/api/scene_charts.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/api/scene_charts.py)
+ - 重複したルートデコレータを削除。
+ - 未定義の `current_user` エラーを修正。
+
+#### [MODIFY] [backend/src/services/script_processor.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/script_processor.py)
+ - 外部キー制約エラーを避けるため、削除順序を修正。
+ - Azure Functions の Read-only File System エラーを避けるため、ファイル書き込みロジックを削除。
+
+### フロントエンド (`frontend/`)
+#### [MODIFY] [ProjectSettingsPage.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/pages/ProjectSettingsPage.tsx)
+ - Discord設定セクションにBot招待リンクを追加（オーナーのみ表示）。
+ - 多言語対応（ja, en, ko, zh-Hans, zh-Hant）。
+
+### ドキュメント (`docs/`)
+#### [MODIFY] [README.md](file:///f:/src/PythonProject/pscweb3-1/README.md)
+ - Azureデプロイ情報を更新。
+
+#### [MODIFY] [azure_functions_setup.md](file:///f:/src/PythonProject/pscweb3-1/docs/azure_functions_setup.md)
+ - Static Web Appsのセットアップ手順を追加。
+ - トラブルシューティング情報を拡充。
+
+#### [MODIFY] [role_manual.md](file:///f:/src/PythonProject/pscweb3-1/docs/role_manual.md)
+ - 全言語のマニュアルに「Discord Botの招待方法」を追加。
 
 ## 検証計画
 

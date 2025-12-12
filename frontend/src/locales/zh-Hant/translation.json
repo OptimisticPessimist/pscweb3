@@ -100,9 +100,11 @@
                 "generalWebhook": "一般通知 Webhook URL",
                 "generalWebhookHelper": "發送里程碑建立、成員權限變更等除劇本以外的通知。",
                 "attendanceChannel": "缺勤通知頻道 ID",
-                "attendanceChannelHelper": "Bot 發送缺勤確認訊息的頻道 ID。（Bot 需要有存取該頻道的權限）。",
+                "attendanceChannelHelper": "Bot 發送考勤訊息的頻道 ID。（Bot 需要有存取該頻道的權限）",
                 "save": "儲存設定",
-                "saving": "儲存中..."
+                "saving": "儲存中...",
+                "botInviteDescription": "邀請 Bot 加入伺服器以啟用考勤確認等功能。",
+                "inviteBot": "邀請 Bot"
             },
             "memberTable": {
                 "user": "使用者",

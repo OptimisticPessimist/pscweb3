@@ -12,4 +12,8 @@
 - [x] テストと検証
     - [x] ユニットテストの作成
     - [x] ローカル実行での動作確認
-    - [ ] Azure 環境へのデプロイと確認 (次のステップ)
+- [x] Azure 環境へのデプロイと確認
+- [x] バグ修正（Script Upload 500, Scene Chart Route Duplicate）
+- [x] ドキュメント更新 (README, Azure Setup, Role Manual)
+  - [x] Discord Interactions Setup (Public Key, Endpoint URL)
+- [x] Discord Bot 招待リンクの実装 (Frontend + i18n)
