@@ -235,3 +235,129 @@ INT. 部屋 - 昼
     # Assert
     assert script is not None
     assert script.title == "日本語テスト"
+
+
+@pytest.mark.asyncio
+async def test_parse_fountain_with_action_togaki(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """ト書き（Action）を含むFountain脚本のパーステスト."""
+    # Arrange
+    fountain_content = """Title: Action Togaki Test
+
+INT. ROOM - DAY
+
+Action line here (Togaki).
+
+CHARACTER
+Dialogue line.
+
+Another action line.
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Action Togaki Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    # Reload script with lines
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+    
+    result = await db.execute(
+        select(Script)
+        .where(Script.id == script.id)
+        .options(selectinload(Script.scenes).selectinload(Scene.lines))
+    )
+    script_loaded = result.scalar_one()
+    
+    assert len(script_loaded.scenes) == 1
+    lines = sorted(script_loaded.scenes[0].lines, key=lambda x: x.order)
+    assert len(lines) == 3
+    
+    # 1. Action
+    assert lines[0].content == "Action line here (Togaki)."
+    assert lines[0].character_id is None
+    
+    # 2. Dialogue
+    assert lines[1].content == "Dialogue line."
+    assert lines[1].character_id is not None
+    
+    # 3. Action
+    assert lines[2].content == "Another action line."
+    assert lines[2].character_id is None
+
+
+@pytest.mark.asyncio
+async def test_parse_fountain_with_character_description(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """登場人物の紹介文を含むFountain脚本のパーステスト."""
+    # Arrange
+    fountain_content = """Title: Character Description Test
+
+# 登場人物
+
+TARO: 主人公。元気な男の子。
+HANAKO: ヒロイン。
+
+# Characters
+
+JIRO: 太郎の弟。
+
+INT. ROOM - DAY
+
+TARO
+Hello!
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Character Description Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    # Reload characters
+    from sqlalchemy import select
+    from src.db.models import Character
+    
+    result = await db.execute(
+        select(Character).where(Character.script_id == script.id)
+    )
+    characters = result.scalars().all()
+    char_map = {c.name: c for c in characters}
+    
+    assert "TARO" in char_map
+    assert char_map["TARO"].description == "主人公。元気な男の子。"
+    
+    assert "HANAKO" in char_map
+    assert char_map["HANAKO"].description == "ヒロイン。"
+
+    assert "JIRO" in char_map
+    assert char_map["JIRO"].description == "太郎の弟。"
+

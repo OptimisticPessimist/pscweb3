@@ -106,7 +106,7 @@ async def get_script_member_dep(
     result = await db.execute(
         select(Script)
         .options(
-            selectinload(Script.characters),
+            selectinload(Script.characters).selectinload(Character.castings),
             selectinload(Script.scenes)
             .selectinload(Scene.lines)
             .selectinload(Line.character)

@@ -30,7 +30,8 @@
         "upload": "上传",
         "download": "下载",
         "export": "导出",
-        "import": "导入"
+        "import": "导入",
+        "unknown": "未知"
     },
     "auth": {
         "login": "登录",
@@ -93,7 +94,19 @@
         "uploadedAt": "上传时间",
         "scenes": "场景",
         "characters": "角色",
-        "fountainFormat": "Fountain 格式"
+        "noCharacters": "未找到角色。",
+        "noContent": "无可用解析内容。",
+        "fountainFormat": "Fountain 格式",
+        "form": {
+            "titleLabel": "剧本标题",
+            "titlePlaceholder": "例如：我的精彩剧本",
+            "fileLabel": "剧本文件 (.fountain)",
+            "uploadFile": "上传文件",
+            "dragDrop": "或拖放",
+            "fileType": "仅限 .fountain 文件",
+            "publicLabel": "公开",
+            "publicDescription": "允许未认证成员查看（如果全局启用）。"
+        }
     },
     "sceneChart": {
         "title": "场景表",

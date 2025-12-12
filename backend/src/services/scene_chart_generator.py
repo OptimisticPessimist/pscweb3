@@ -33,7 +33,7 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
     # 各シーンに登場する人物を抽出してマッピング
     for scene in script.scenes:
         # このシーンに登場する人物を取得（Lineから抽出）
-        character_ids = {line.character_id for line in scene.lines}
+        character_ids = {line.character_id for line in scene.lines if line.character_id is not None}
 
         # マッピング作成
         for character_id in character_ids:

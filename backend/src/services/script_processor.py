@@ -218,9 +218,11 @@ async def parse_and_save_fountain(
             .where(Script.id == script.id)
             .options(
                 selectinload(Script.scenes).options(
-                    selectinload(Scene.lines).options(selectinload(Line.character))
+                    selectinload(Scene.lines).options(
+                        selectinload(Line.character).selectinload(Character.castings)
+                    )
                 ),
-                selectinload(Script.characters),
+                selectinload(Script.characters).selectinload(Character.castings),
             )
         )
         result = await db.execute(stmt)

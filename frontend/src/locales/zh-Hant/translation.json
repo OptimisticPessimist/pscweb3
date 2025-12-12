@@ -30,7 +30,8 @@
         "upload": "上傳",
         "download": "下載",
         "export": "匯出",
-        "import": "匯入"
+        "import": "匯入",
+        "unknown": "未知"
     },
     "auth": {
         "login": "登入",
@@ -93,7 +94,19 @@
         "uploadedAt": "上傳時間",
         "scenes": "場景",
         "characters": "角色",
-        "fountainFormat": "Fountain 格式"
+        "noCharacters": "未找到角色。",
+        "noContent": "無可用解析內容。",
+        "fountainFormat": "Fountain 格式",
+        "form": {
+            "titleLabel": "劇本標題",
+            "titlePlaceholder": "例如：我的精彩劇本",
+            "fileLabel": "劇本檔案 (.fountain)",
+            "uploadFile": "上傳檔案",
+            "dragDrop": "或拖放",
+            "fileType": "僅限 .fountain 檔案",
+            "publicLabel": "公開",
+            "publicDescription": "允許未認證成員查看（如果全域啟用）。"
+        }
     },
     "sceneChart": {
         "title": "場景表",

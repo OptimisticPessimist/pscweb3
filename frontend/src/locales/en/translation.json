@@ -30,7 +30,8 @@
         "upload": "Upload",
         "download": "Download",
         "export": "Export",
-        "import": "Import"
+        "import": "Import",
+        "unknown": "Unknown"
     },
     "auth": {
         "login": "Login",
@@ -101,12 +102,25 @@
         "errorLoading": "Failed to load script.",
         "notFound": "Script not found",
         "downloadPdf": "Download PDF",
+        "characters": "Characters",
+        "noCharacters": "No characters found.",
+        "noContent": "No parsed content available.",
         "content": "Script Content",
         "manageScripts": "Manage your Fountain scripts and screenplays.",
         "uploadTitle": "Upload Script",
         "uploadDescription": "Upload a .fountain file to add a new script or update an existing one.",
         "uploading": "Uploading...",
-        "uploadAction": "Upload Script"
+        "uploadAction": "Upload Script",
+        "form": {
+            "titleLabel": "Script Title",
+            "titlePlaceholder": "e.g. My Great Play",
+            "fileLabel": "Script File (.fountain)",
+            "uploadFile": "Upload a file",
+            "dragDrop": "or drag and drop",
+            "fileType": ".fountain files only",
+            "publicLabel": "Public",
+            "publicDescription": "Allow members to view even if not authenticated (if enabled globally)."
+        }
     },
     "sceneChart": {
         "title": "Scene Chart",

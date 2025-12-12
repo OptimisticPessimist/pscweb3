@@ -170,6 +170,7 @@ class Character(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"))
     name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="characters")
@@ -188,13 +189,13 @@ class Line(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     scene_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scenes.id"))
-    character_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("characters.id"))
+    character_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("characters.id"), nullable=True)
     content: Mapped[str] = mapped_column(Text)
     order: Mapped[int]
 
     # リレーション
     scene: Mapped["Scene"] = relationship(back_populates="lines")
-    character: Mapped["Character"] = relationship(back_populates="lines")
+    character: Mapped["Character | None"] = relationship(back_populates="lines")
 
 
 

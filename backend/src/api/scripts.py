@@ -53,9 +53,11 @@ async def get_scripts(
         select(Script)
         .where(Script.project_id == project_id)
         .options(
-            selectinload(Script.characters),
+            selectinload(Script.characters).selectinload(Character.castings),
             selectinload(Script.scenes).options(
-                selectinload(Scene.lines).options(selectinload(Line.character))
+                selectinload(Scene.lines).options(
+                    selectinload(Line.character).selectinload(Character.castings)
+                )
             ),
         )
     )
@@ -107,9 +109,15 @@ async def upload_script(
     fountain_text = file_content.decode("utf-8")
 
     # 3. スクリプト処理
-    script, is_update = await process_script_upload(
-        project_id, current_user.id, title, fountain_text, is_public, db
-    )
+    try:
+        script, is_update = await process_script_upload(
+            project_id, current_user.id, title, fountain_text, is_public, db
+        )
+    except Exception as e:
+        import traceback
+        with open("upload_debug.log", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now()}] Upload Failed: {e}\n{traceback.format_exc()}\n")
+        raise e
 
     # 4. Discord通知（バックグラウンド）
     project = await db.get(TheaterProject, project_id)
@@ -132,12 +140,7 @@ async def get_script(
     """指定した脚本の詳細を取得."""
     # 権限チェックはDepends(get_project_member_dep)で完了済み
 
-    # 脚本取得
-    # Verify project membership
-    script = await db.get(Script, script_id)
-    if not script:
-        raise HTTPException(status_code=404, detail="Script not found")
-
+    member, script = tuple_data
     return ScriptResponse.model_validate(script)
 
 

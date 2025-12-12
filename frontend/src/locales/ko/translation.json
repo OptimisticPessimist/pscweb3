@@ -30,7 +30,8 @@
         "upload": "업로드",
         "download": "다운로드",
         "export": "내보내기",
-        "import": "가져오기"
+        "import": "가져오기",
+        "unknown": "알 수 없음"
     },
     "auth": {
         "login": "로그인",
@@ -93,7 +94,19 @@
         "uploadedAt": "업로드 일시",
         "scenes": "장면",
         "characters": "등장인물",
-        "fountainFormat": "Fountain 형식"
+        "noCharacters": "등장인물을 찾을 수 없습니다.",
+        "noContent": "분석된 콘텐츠가 없습니다.",
+        "fountainFormat": "Fountain 형식",
+        "form": {
+            "titleLabel": "대본 제목",
+            "titlePlaceholder": "예: 나의 훌륭한 연극",
+            "fileLabel": "대본 파일 (.fountain)",
+            "uploadFile": "파일 업로드",
+            "dragDrop": "또는 드래그 앤 드롭",
+            "fileType": ".fountain 파일만",
+            "publicLabel": "공개",
+            "publicDescription": "인증되지 않은 멤버도 볼 수 있도록 허용합니다 (전역 설정에서 활성화된 경우)."
+        }
     },
     "sceneChart": {
         "title": "장면표",

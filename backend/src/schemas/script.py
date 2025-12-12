@@ -18,6 +18,7 @@ class CharacterResponse(BaseModel):
 
     id: UUID = Field(..., description="登場人物ID")
     name: str = Field(..., description="登場人物名")
+    description: str | None = Field(None, description="紹介文")
     castings: list[CastingResponse] = Field(default_factory=list, description="キャスティング情報")
 
     model_config = {"from_attributes": True}
@@ -27,7 +28,7 @@ class LineResponse(BaseModel):
     """セリフレスポンス."""
 
     id: UUID = Field(..., description="セリフID")
-    character: CharacterResponse = Field(..., description="登場人物")
+    character: CharacterResponse | None = Field(None, description="登場人物")
     content: str = Field(..., description="セリフ内容")
     order: int = Field(..., description="順番")
 

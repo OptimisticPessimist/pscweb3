@@ -21,7 +21,7 @@ from src.middleware.request_logging import RequestLoggingMiddleware
 configure_logger()
 
 app = FastAPI(
-    title="PSC Web 3 API",
+    title="PSCWeb3 API",
     description="演劇制作管理システム - Fountain脚本管理、香盤表、稽古スケジュール",
     version="0.1.0",
 )

@@ -67,7 +67,7 @@ export const ScriptUploadPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 shadow sm:rounded-md">
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                        Script Title
+                        {t('script.form.titleLabel') || 'Script Title'}
                     </label>
                     <div className="mt-1">
                         <input
@@ -77,13 +77,13 @@ export const ScriptUploadPage: React.FC = () => {
                             onChange={(e) => setTitle(e.target.value)}
                             required
                             className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                            placeholder="e.g. My Great Play"
+                            placeholder={t('script.form.titlePlaceholder') || 'e.g. My Great Play'}
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Script File (.fountain)</label>
+                    <label className="block text-sm font-medium text-gray-700">{t('script.form.fileLabel') || 'Script File (.fountain)'}</label>
                     <div
                         {...getRootProps()}
                         className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
@@ -114,11 +114,11 @@ export const ScriptUploadPage: React.FC = () => {
                                     <Upload className="mx-auto h-12 w-12 text-gray-400" />
                                     <div className="flex text-sm text-gray-600 justify-center">
                                         <span className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                            <span>Upload a file</span>
+                                            <span>{t('script.form.uploadFile') || 'Upload a file'}</span>
                                         </span>
-                                        <p className="pl-1">or drag and drop</p>
+                                        <p className="pl-1">{t('script.form.dragDrop') || 'or drag and drop'}</p>
                                     </div>
-                                    <p className="text-xs text-gray-500">.fountain files only</p>
+                                    <p className="text-xs text-gray-500">{t('script.form.fileType') || '.fountain files only'}</p>
                                 </>
                             )}
                         </div>
@@ -137,9 +137,9 @@ export const ScriptUploadPage: React.FC = () => {
                     </div>
                     <div className="ml-3 text-sm">
                         <label htmlFor="is_public" className="font-medium text-gray-700">
-                            Public
+                            {t('script.form.publicLabel') || 'Public'}
                         </label>
-                        <p className="text-gray-500">Allow members to view even if not authenticated (if enabled globally).</p>
+                        <p className="text-gray-500">{t('script.form.publicDescription') || 'Allow members to view even if not authenticated (if enabled globally).'}</p>
                     </div>
                 </div>
 

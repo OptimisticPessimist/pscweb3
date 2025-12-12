@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
@@ -32,6 +33,16 @@ export const ScriptDetailPage: React.FC = () => {
         }
     };
 
+    const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+
+    const toggleCharacter = (id: string) => {
+        if (selectedCharacterId === id) {
+            setSelectedCharacterId(null);
+        } else {
+            setSelectedCharacterId(id);
+        }
+    };
+
     if (isLoading) return <div>{t('common.loading')}</div>;
     if (!script) return <div>{t('script.notFound')}</div>;
 
@@ -59,11 +70,47 @@ export const ScriptDetailPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Character List */}
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('script.characters') || 'Characters'}</h3>
+                </div>
+                <div className="bg-gray-50 px-4 py-5 sm:p-6">
+                    {script.characters && script.characters.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {script.characters.map((character) => (
+                                <div
+                                    key={character.id}
+                                    onClick={() => toggleCharacter(character.id)}
+                                    className={`bg-white p-3 rounded shadow-sm border cursor-pointer transition-colors ${selectedCharacterId === character.id
+                                        ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50'
+                                        : 'border-gray-200 hover:border-indigo-300'
+                                        } flex flex-col justify-center`}
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <span className={`font-bold text-center ${selectedCharacterId === character.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                                            {character.name}
+                                        </span>
+                                    </div>
+                                    {character.description && (
+                                        <p className="mt-2 text-xs text-gray-500 text-center border-t pt-2 w-full">
+                                            {character.description}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 italic">{t('script.noCharacters') || 'No characters found.'}</p>
+                    )}
+                </div>
+            </div>
+
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">{t('script.content')}</h3>
                     <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                        Uploaded by {script.uploaded_at ? new Date(script.uploaded_at).toLocaleString(i18n.language) : 'Unknown'}
+                        Uploaded by {script.uploaded_at ? new Date(script.uploaded_at).toLocaleString(i18n.language) : t('common.unknown')}
                     </p>
                 </div>
                 <div className="bg-gray-50 px-4 py-5 sm:p-6 font-mono text-sm whitespace-pre-wrap overflow-x-auto">
@@ -78,22 +125,34 @@ export const ScriptDetailPage: React.FC = () => {
                                         <p className="text-gray-600 italic whitespace-pre-wrap">{scene.description}</p>
                                     )}
                                     <div className="space-y-1 pl-4 border-l-2 border-gray-200">
-                                        {scene.lines.map((line) => (
-                                            <div key={line.id} className="grid grid-cols-12 gap-2">
-                                                <div className="col-span-3 sm:col-span-2 font-bold text-gray-700 text-right pr-2">
-                                                    {line.character.name}
+                                        {scene.lines.map((line) => {
+                                            const isHighlighted = selectedCharacterId && line.character?.id === selectedCharacterId;
+                                            return (
+                                                <div key={line.id} className={`grid grid-cols-12 gap-2 p-1 rounded ${isHighlighted ? 'bg-yellow-100' : ''}`}>
+                                                    {line.character ? (
+                                                        <>
+                                                            <div className={`col-span-3 sm:col-span-2 font-bold text-right pr-2 ${isHighlighted ? 'text-indigo-800' : 'text-gray-700'}`}>
+                                                                {line.character.name}
+                                                            </div>
+                                                            <div className={`col-span-9 sm:col-span-10 ${isHighlighted ? 'text-gray-900 font-medium' : 'text-gray-900'}`}>
+                                                                {line.content}
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="col-span-12 pl-4 md:pl-0 md:col-start-3 md:col-span-10 text-gray-600 italic">
+                                                            {/* Stage Direction (Togaki) */}
+                                                            {line.content}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="col-span-9 sm:col-span-10 text-gray-900">
-                                                    {line.content}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500 italic">No parsed content available.</p>
+                        <p className="text-gray-500 italic">{t('script.noContent') || 'No parsed content available.'}</p>
                     )}
                 </div>
             </div>

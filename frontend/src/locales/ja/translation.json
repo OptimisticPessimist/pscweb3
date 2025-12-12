@@ -34,7 +34,8 @@
         "create": "作成",
         "submit": "送信",
         "yes": "はい",
-        "no": "いいえ"
+        "no": "いいえ",
+        "unknown": "不明"
     },
     "invitation": {
         "loading": "招待状を読み込み中...",
@@ -109,6 +110,8 @@
         "uploadedAt": "アップロード日時",
         "scenes": "シーン",
         "characters": "登場人物",
+        "noCharacters": "登場人物が見つかりません。",
+        "noContent": "解析されたコンテンツがありません。",
         "fountainFormat": "Fountain形式",
         "viewDetails": "詳細を見る",
         "noScript": "脚本がありません。",
@@ -121,7 +124,17 @@
         "uploadTitle": "脚本アップロード",
         "uploadDescription": ".fountainファイルをアップロードして新しい脚本を追加または更新。",
         "uploading": "アップロード中...",
-        "uploadAction": "脚本をアップロード"
+        "uploadAction": "脚本をアップロード",
+        "form": {
+            "titleLabel": "脚本タイトル",
+            "titlePlaceholder": "例: 私の素晴らしい劇",
+            "fileLabel": "脚本ファイル (.fountain)",
+            "uploadFile": "ファイルをアップロード",
+            "dragDrop": "またはドラッグ＆ドロップ",
+            "fileType": ".fountainファイルのみ",
+            "publicLabel": "公開",
+            "publicDescription": "認証されていないメンバーでも閲覧できるようにします（グローバル設定で有効な場合）。"
+        }
     },
     "sceneChart": {
         "title": "香盤表",

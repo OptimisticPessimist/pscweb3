@@ -27,14 +27,14 @@ export interface ScriptSummary {
 }
 
 export interface Script extends ScriptSummary {
-    characters: { id: string; name: string }[];
+    characters: { id: string; name: string; description?: string | null }[];
     scenes: {
         id: string;
         act_number: number | null;
         scene_number: number;
         heading: string;
         description: string | null;
-        lines: { id: string; character: { id: string; name: string }; content: string; order: number }[];
+        lines: { id: string; character: { id: string; name: string } | null; content: string; order: number }[];
     }[];
 }
 export interface CharacterInScene {
@@ -67,6 +67,7 @@ export interface CastingUser {
 export interface CharacterWithCastings {
     id: string;
     name: string;
+    description?: string | null;
     castings: CastingUser[];
 }
 
