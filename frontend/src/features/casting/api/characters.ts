@@ -19,9 +19,7 @@ export const charactersApi = {
 
     // キャスト削除
     removeCasting: async (projectId: string, characterId: string, userId: string): Promise<CastingUser[]> => {
-        const response = await apiClient.delete(`/projects/${projectId}/characters/${characterId}/cast`, {
-            data: { user_id: userId }, // DELETE with body
-        });
+        const response = await apiClient.delete(`/projects/${projectId}/characters/${characterId}/cast/${userId}`);
         return response.data;
     },
 };

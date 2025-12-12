@@ -198,11 +198,11 @@ async def add_casting(
     ]
 
 
-@router.delete("/{project_id}/characters/{character_id}/cast", response_model=list[CastingUser])
+@router.delete("/{project_id}/characters/{character_id}/cast/{user_id}", response_model=list[CastingUser])
 async def remove_casting(
     project_id: UUID,
     character_id: UUID,
-    delete_data: CastingDelete,
+    user_id: UUID,
     background_tasks: BackgroundTasks,
     editor_member: ProjectMember = Depends(get_project_editor_dep), # 編集権限以上
     db: AsyncSession = Depends(get_db),
@@ -213,7 +213,7 @@ async def remove_casting(
     Args:
         project_id: プロジェクトID
         character_id: キャラクターID
-        delete_data: 解除データ（ユーザーID指定）
+        user_id: 解除するユーザーID
         editor_member: 実行者
         db: DBセッション
         
@@ -235,7 +235,7 @@ async def remove_casting(
     result = await db.execute(
         select(CharacterCasting).where(
             CharacterCasting.character_id == character_id,
-            CharacterCasting.user_id == delete_data.user_id
+            CharacterCasting.user_id == user_id
         )
     )
     casting = result.scalar_one_or_none()
@@ -245,7 +245,7 @@ async def remove_casting(
         
     # ユーザー名取得（通知用）
     user_name = "Unknown"
-    user_res = await db.execute(select(User.discord_username).where(User.id == delete_data.user_id))
+    user_res = await db.execute(select(User.discord_username).where(User.id == user_id))
     u = user_res.scalar_one_or_none()
     if u:
         user_name = u
