@@ -21,3 +21,4 @@
 - [x] 機能追加 (Discord通知へのメンション追加)
 - [x] 機能追加 (Discord Timestamp Formatting for Local Time)
 - [x] ドキュメント作成 (Attendance Debug Manual)
+- [x] タイムゾーン処理の統一 (DB Schema Change & Code Cleanup)

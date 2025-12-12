@@ -600,7 +600,18 @@ async def list_milestones(
     result = await db.execute(stmt)
     milestones = result.scalars().all()
     
-    return [MilestoneResponse.model_validate(m) for m in milestones]
+    return [
+        MilestoneResponse(
+            id=m.id,
+            project_id=m.project_id,
+            title=m.title,
+            start_date=m.start_date,
+            end_date=m.end_date,
+            description=m.description,
+            location=m.location,
+            color=m.color,
+        ) for m in milestones
+    ]
 
 
 @router.delete("/{project_id}/milestones/{milestone_id}", status_code=204)

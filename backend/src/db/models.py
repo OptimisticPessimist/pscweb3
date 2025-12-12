@@ -306,7 +306,7 @@ class Rehearsal(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     schedule_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rehearsal_schedules.id"))
     scene_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("scenes.id"), nullable=True)
-    date: Mapped[datetime] = mapped_column(DateTime)
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     duration_minutes: Mapped[int] = mapped_column(default=120)  # 稽古時間（分）
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -426,8 +426,8 @@ class Milestone(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
     title: Mapped[str] = mapped_column(String(200))  # "本番初日", "顔合わせ"
-    start_date: Mapped[datetime] = mapped_column(DateTime)  # 日時
-    end_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 終了日時（任意）
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # 日時
+    end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 終了日時（任意）
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # HEX colorカレンダー表示用の色コード (e.g. "#FF0000")
@@ -445,8 +445,8 @@ class AttendanceEvent(Base):
     message_id: Mapped[str] = mapped_column(String(50))  # Discord Message ID
     channel_id: Mapped[str] = mapped_column(String(50))  # Discord Channel ID
     title: Mapped[str] = mapped_column(String(200))  # イベント名
-    schedule_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 稽古日時
-    deadline: Mapped[datetime] = mapped_column(DateTime)  # 回答期限
+    schedule_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 稽古日時
+    deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # 回答期限
     completed: Mapped[bool] = mapped_column(default=False)  # 完了フラグ
     reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # リマインダー送信日時
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

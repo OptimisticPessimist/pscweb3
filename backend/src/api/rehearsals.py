@@ -314,7 +314,7 @@ async def get_rehearsal_schedule(
                 schedule_id=rehearsal.schedule_id,
                 scene_id=rehearsal.scene_id,
                 scene_heading=scene_heading,
-                date=rehearsal.date.replace(tzinfo=timezone.utc),
+                date=rehearsal.date,
                 duration_minutes=rehearsal.duration_minutes,
                 location=rehearsal.location,
                 notes=rehearsal.notes,
@@ -383,8 +383,8 @@ async def add_rehearsal(
     if member is None or member.role == "viewer":
         raise HTTPException(status_code=403, detail="稽古追加の権限がありません")
 
-    # Naive UTC conversion for DB
-    date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
+    # Naive UTC conversion for DB no longer needed
+    # date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
 
     # 稽古作成
     # 稽古作成
@@ -392,7 +392,7 @@ async def add_rehearsal(
         schedule_id=schedule_id,
         # scene_idは非推奨だが、互換性のためにセット（最初の1つまたは指定されたもの）
         scene_id=rehearsal_data.scene_id or (rehearsal_data.scene_ids[0] if rehearsal_data.scene_ids else None),
-        date=date_naive,
+        date=rehearsal_data.date, # Adjusted to use aware datetime
         duration_minutes=rehearsal_data.duration_minutes,
         location=rehearsal_data.location,
         notes=rehearsal_data.notes,
@@ -483,15 +483,15 @@ async def add_rehearsal(
         project_result = await db.execute(select(TheaterProject).where(TheaterProject.id == schedule.project_id))
         project = project_result.scalar_one()
 
-        # Naive conversion for AttendanceEvent (since columns are stored as naive)
-        deadline_naive = deadline.replace(tzinfo=None) if deadline and deadline.tzinfo else deadline
-        schedule_date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
+        # Naive conversion for AttendanceEvent no longer needed for DB, but we keep the variables
+        deadline = deadline
+        schedule_date = rehearsal_data.date
 
         await attendance_service.create_attendance_event(
             project=project,
             title=f"稽古: {rehearsal_data.date.strftime('%m/%d %H:%M')}",
-            deadline=deadline_naive,
-            schedule_date=schedule_date_naive,
+            deadline=deadline,
+            schedule_date=schedule_date,
             location=rehearsal_data.location,
             description=rehearsal_data.notes,
             target_user_ids=attendance_targets
@@ -551,7 +551,9 @@ async def add_rehearsal(
     scene_headings = [s.heading for s in rehearsal.scenes]
     scene_text = ", ".join(scene_headings) if scene_headings else None
     
-    rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
+    # Timestamp conversion (input is already aware or naive, ensure behavior)
+    # If date is aware, timestamp() works correctly returning UTC timestamp
+    rehearsal_ts = int(rehearsal.date.timestamp())
     date_str = f"<t:{rehearsal_ts}:f>" # User local time
     content = f"📅 **稽古が追加されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
     if scene_text:
@@ -619,7 +621,7 @@ async def add_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,
         scene_heading=scene_heading,
-        date=rehearsal.date.replace(tzinfo=timezone.utc),
+        date=rehearsal.date,
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,
         notes=rehearsal.notes,
@@ -693,9 +695,7 @@ async def update_rehearsal(
             rehearsal.scene_id = scenes[0].id if scenes else None
 
     if rehearsal_data.date is not None:
-        # Naive UTC conversion for DB
-        date_naive = rehearsal_data.date.replace(tzinfo=None) if rehearsal_data.date.tzinfo else rehearsal_data.date
-        rehearsal.date = date_naive
+        rehearsal.date = rehearsal_data.date
     if rehearsal_data.duration_minutes is not None:
         rehearsal.duration_minutes = rehearsal_data.duration_minutes
     if rehearsal_data.location is not None:
@@ -807,7 +807,7 @@ async def update_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,
         scene_heading=scene_heading,
-        date=rehearsal.date.replace(tzinfo=timezone.utc),
+                date=rehearsal.date,
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,
         notes=rehearsal.notes,
