@@ -12,6 +12,7 @@ from src.config import settings
 
 async def fix_project_is_public():
     print("Starting data fix for TheaterProject.is_public...")
+    report = []
     
     async for db in get_db():
         # Get all projects
@@ -29,11 +30,22 @@ async def fix_project_is_public():
             
             should_be_public = public_script is not None
             
+            status = {
+                "id": str(project.id),
+                "name": project.name,
+                "current_is_public": project.is_public,
+                "should_be_public": should_be_public,
+                "action": "none"
+            }
+            
             if project.is_public != should_be_public:
                 print(f"Updating Project '{project.name}' (ID: {project.id}): is_public {project.is_public} -> {should_be_public}")
                 project.is_public = should_be_public
                 db.add(project)
                 updated_count += 1
+                status["action"] = "updated"
+            
+            report.append(status)
                 
         if updated_count > 0:
             await db.commit()
@@ -42,6 +54,8 @@ async def fix_project_is_public():
             print("No projects needed update.")
             
         break # get_db is a generator, we only need one session
+        
+    return report
 
 if __name__ == "__main__":
     asyncio.run(fix_project_is_public())

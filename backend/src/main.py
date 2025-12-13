@@ -50,10 +50,10 @@ async def manual_fix_system():
         
         # 2. Run Data Fix
         import fix_data_is_public
-        await fix_data_is_public.fix_project_is_public()
+        report = await fix_data_is_public.fix_project_is_public()
         log.append("Data fix executed successfully.")
         
-        return {"status": "success", "log": log}
+        return {"status": "success", "log": log, "report": report}
     except Exception as e:
         import traceback
         return {"status": "error", "message": str(e), "trace": traceback.format_exc()}
