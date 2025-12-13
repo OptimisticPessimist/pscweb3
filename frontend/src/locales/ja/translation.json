@@ -46,7 +46,8 @@
         "submit": "送信",
         "yes": "はい",
         "no": "いいえ",
-        "unknown": "不明"
+        "unknown": "不明",
+        "public": "公開"
     },
     "invitation": {
         "loading": "招待状を読み込み中...",

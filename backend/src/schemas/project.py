@@ -31,6 +31,7 @@ class ProjectResponse(BaseModel):
     discord_webhook_url: str | None = None
     discord_script_webhook_url: str | None = None
     discord_channel_id: str | None = None
+    is_public: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}

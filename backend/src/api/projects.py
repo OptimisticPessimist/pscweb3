@@ -156,6 +156,7 @@ def _build_project_response(project: TheaterProject, role: str) -> ProjectRespon
         discord_webhook_url=project.discord_webhook_url,
         discord_script_webhook_url=project.discord_script_webhook_url,
         discord_channel_id=project.discord_channel_id,
+        is_public=project.is_public,
         created_at=project.created_at,
         role=role
     )
@@ -684,8 +685,8 @@ async def import_script(
     from src.services.project_limit import check_project_limit
 
     # 1. プロジェクト作成数制限チェック
-    # インポート直後は非公開(is_public=False)となるため、非公開プロジェクトとしてカウント
-    await check_project_limit(current_user.id, db, new_project_is_public=False)
+    # 公開脚本からのインポートは「公開プロジェクト」として作成するため、制限対象外
+    await check_project_limit(current_user.id, db, new_project_is_public=True)
         
     # 2. 脚本取得（公開チェック）
     from src.db.models import Script, Character, Scene, Line, SceneChart, SceneCharacterMapping, CharacterCasting
@@ -705,6 +706,7 @@ async def import_script(
     new_project = TheaterProject(
         name=new_project_name,
         description=f"Imported from script: {source_script.title}",
+        is_public=True, # 公開プロジェクトとして作成
     )
     db.add(new_project)
     await db.flush()
@@ -724,7 +726,7 @@ async def import_script(
         uploaded_by=current_user.id,
         title=source_script.title,
         content=source_script.content,
-        is_public=False, # インポートしたものは非公開スタート
+        is_public=True, # インポート元が公開なので、こちらも一旦公開とする（後で変更可）
         author=source_script.author,
     )
     db.add(new_script)

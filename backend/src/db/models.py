@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 import uuid
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base
@@ -77,6 +77,8 @@ class TheaterProject(Base):
     discord_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)
     discord_script_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 脚本通知用Webhook
     discord_channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション

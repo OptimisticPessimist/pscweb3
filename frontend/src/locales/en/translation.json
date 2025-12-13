@@ -42,7 +42,8 @@
         "download": "Download",
         "export": "Export",
         "import": "Import",
-        "unknown": "Unknown"
+        "unknown": "Unknown",
+        "public": "Public"
     },
     "auth": {
         "login": "Login",

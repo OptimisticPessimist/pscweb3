@@ -6,6 +6,7 @@ export interface Project {
     description: string | null;
     discord_webhook_url: string | null;
     created_at: string;
+    is_public?: boolean;
     role: 'owner' | 'editor' | 'viewer'; // ProjectMemberからの結合データ
 }
 

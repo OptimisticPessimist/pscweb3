@@ -321,6 +321,13 @@ async def process_script_upload(
     if is_update:
         await cleanup_related_data(script, db)
         await db.refresh(script)
+        
+    # プロジェクトの公開設定を同期 (1プロジェクト1脚本のため、脚本の設定=プロジェクトの設定)
+    await db.execute(
+        update(TheaterProject)
+        .where(TheaterProject.id == project_id)
+        .values(is_public=is_public)
+    )
     
     # Fountainパースと保存
     script = await parse_and_save_fountain(script, fountain_text, db)

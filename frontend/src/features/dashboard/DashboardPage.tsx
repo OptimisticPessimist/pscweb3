@@ -15,7 +15,8 @@ export const DashboardPage = () => {
         queryFn: dashboardApi.getProjects,
     });
 
-    const ownedProjectCount = projects?.filter(p => p.role === 'owner').length || 0;
+    // 公開プロジェクトは制限（2つまで）のカウントに含めない
+    const ownedProjectCount = projects?.filter(p => p.role === 'owner' && !p.is_public).length || 0;
     const isProjectLimitReached = ownedProjectCount >= 2;
     const projectLimitMessage = isProjectLimitReached ? t('dashboard.projectLimit') : undefined;
 
@@ -88,8 +89,8 @@ export const DashboardPage = () => {
                     disabled={isProjectLimitReached}
                     title={projectLimitMessage}
                     className={`flex items-center px-4 py-2 text-white rounded-md shadow-sm transition-colors ${isProjectLimitReached
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-indigo-600 hover:bg-indigo-700'
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-indigo-600 hover:bg-indigo-700'
                         }`}
                 >
                     <span className="mr-2">+</span> {t('dashboard.newProject')}
@@ -137,10 +138,17 @@ export const DashboardPage = () => {
                                     {project.description || t('dashboard.noDescription')}
                                 </p>
                                 <div className="mt-4 flex items-center justify-between">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.role === 'owner' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'
-                                        }`}>
-                                        {project.role}
-                                    </span>
+                                    <div className="flex space-x-2">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.role === 'owner' ? 'bg-indigo-100 text-indigo-800' : 'bg-green-100 text-green-800'
+                                            }`}>
+                                            {project.role}
+                                        </span>
+                                        {project.is_public && (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                {t('common.public') || 'Public'}
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="text-xs text-gray-400">
                                         {new Date(project.created_at).toLocaleDateString()}
                                     </span>
@@ -179,8 +187,8 @@ export const DashboardPage = () => {
                             disabled={isProjectLimitReached}
                             title={projectLimitMessage}
                             className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${isProjectLimitReached
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-indigo-600 hover:bg-indigo-700'
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-700'
                                 }`}
                         >
                             {t('dashboard.createNewProject')}
