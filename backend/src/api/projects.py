@@ -663,3 +663,191 @@ async def delete_milestone(
             content=f"🗑️ **マイルストーンが削除されました**\nプロジェクト: {project.name}\nタイトル: {milestone_title}",
             webhook_url=project.discord_webhook_url,
         )
+
+@router.post("/import-script/{script_id}", response_model=ProjectResponse)
+async def import_script(
+    script_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
+) -> ProjectResponse:
+    """公開スクリプトからプロジェクトを作成（インポート）.
+    
+    Args:
+        script_id: 元となる公開スクリプトID
+        background_tasks: バックグラウンドタスク
+        current_user: 認証ユーザー
+        db: データベースセッション
+        discord_service: Discordサービス
+        
+    Returns:
+        ProjectResponse: 作成されたプロジェクト
+        
+    Raises:
+        HTTPException: プロジェクト作成上限、脚本非公開等
+    """
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    # 1. プロジェクト作成数制限チェック (上限2つ)
+    stmt = select(ProjectMember).where(
+        ProjectMember.user_id == current_user.id,
+        ProjectMember.role == "owner"
+    )
+    result = await db.execute(stmt)
+    owned_projects = result.scalars().all()
+    
+    if len(owned_projects) >= 2:
+        raise HTTPException(
+            status_code=400, 
+            detail="プロジェクト作成上限（2つ）に達しているため、インポートできません。"
+        )
+        
+    # 2. 脚本取得（公開チェック）
+    from src.db.models import Script, Character, Scene, Line, SceneChart, SceneCharacterMapping, CharacterCasting
+    
+    source_script = await db.get(Script, script_id)
+    if not source_script:
+        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+        
+    if not source_script.is_public:
+        raise HTTPException(status_code=403, detail="この脚本は公開されていません")
+    
+    # 元のプロジェクト名などを参照
+    source_project = await db.get(TheaterProject, source_script.project_id)
+    new_project_name = f"{source_project.name} (Copy)" if source_project else "Imported Project"
+    
+    # 3. 新規プロジェクト作成
+    new_project = TheaterProject(
+        name=new_project_name,
+        description=f"Imported from script: {source_script.title}",
+    )
+    db.add(new_project)
+    await db.flush()
+    
+    # オーナー追加
+    member = ProjectMember(
+        project_id=new_project.id,
+        user_id=current_user.id,
+        role="owner",
+    )
+    db.add(member)
+    
+    # 4. 脚本データのコピー
+    # Script
+    new_script = Script(
+        project_id=new_project.id,
+        uploaded_by=current_user.id,
+        title=source_script.title,
+        content=source_script.content,
+        is_public=False, # インポートしたものは非公開スタート
+        author=source_script.author,
+    )
+    db.add(new_script)
+    await db.flush()
+
+    # 関連データのコピー（Characters, Scenes, Lines, SceneChart）
+    # 元データを全ロードする必要があるため、少し重いがEager Loadingする
+    
+    # Characters
+    char_map = {} # old_id -> new_instance
+    stmt_char = select(Character).where(Character.script_id == source_script.id)
+    res_char = await db.execute(stmt_char)
+    source_chars = res_char.scalars().all()
+    
+    for sc in source_chars:
+        nc = Character(
+            script_id=new_script.id,
+            name=sc.name,
+            description=sc.description
+        )
+        db.add(nc)
+        await db.flush()
+        char_map[sc.id] = nc
+        
+    # Scenes & Lines
+    stmt_scene = (
+        select(Scene)
+        .where(Scene.script_id == source_script.id)
+        .options(selectinload(Scene.lines))
+        .order_by(Scene.act_number, Scene.scene_number)
+    )
+    res_scene = await db.execute(stmt_scene)
+    source_scenes = res_scene.scalars().all()
+    
+    scene_map = {} # old_id -> new_instance
+
+    for ss in source_scenes:
+        ns = Scene(
+            script_id=new_script.id,
+            act_number=ss.act_number,
+            scene_number=ss.scene_number,
+            heading=ss.heading,
+            description=ss.description
+        )
+        db.add(ns)
+        await db.flush()
+        scene_map[ss.id] = ns
+        
+        # Lines
+        for sl in ss.lines:
+            nl = Line(
+                scene_id=ns.id,
+                character_id=char_map[sl.character_id].id if sl.character_id and sl.character_id in char_map else None,
+                content=sl.content,
+                order=sl.order
+            )
+            db.add(nl)
+            
+    # SceneChart (もしあれば)
+    stmt_chart = (
+        select(SceneChart)
+        .where(SceneChart.script_id == source_script.id)
+        .options(selectinload(SceneChart.mappings))
+    )
+    res_chart = await db.execute(stmt_chart)
+    source_chart = res_chart.scalar_one_or_none()
+    
+    if source_chart:
+        new_chart = SceneChart(script_id=new_script.id)
+        db.add(new_chart)
+        await db.flush()
+        
+        for sm in source_chart.mappings:
+            if sm.scene_id in scene_map and sm.character_id in char_map:
+                nm = SceneCharacterMapping(
+                    chart_id=new_chart.id,
+                    scene_id=scene_map[sm.scene_id].id,
+                    character_id=char_map[sm.character_id].id
+                )
+                db.add(nm)
+
+    # 監査ログ
+    audit = AuditLog(
+        event="project.import_script",
+        user_id=current_user.id,
+        project_id=new_project.id,
+        details=f"Project imported from public script '{source_script.title}' (ID: {source_script.id})",
+    )
+    db.add(audit)
+
+    await db.commit()
+    await db.refresh(new_project)
+    
+    # Discord通知（必要であれば）
+    background_tasks.add_task(
+        discord_service.send_notification,
+        content=f"📥 **脚本がインポートされました**\n新プロジェクト: {new_project.name}\nユーザー: {current_user.discord_username}\n元脚本: {source_script.title}",
+        webhook_url=new_project.discord_webhook_url, # 現在はNone
+    )
+
+    return ProjectResponse(
+        id=new_project.id,
+        name=new_project.name,
+        description=new_project.description,
+        discord_webhook_url=new_project.discord_webhook_url,
+        discord_script_webhook_url=new_project.discord_script_webhook_url,
+        created_at=new_project.created_at,
+        role="owner"
+    )

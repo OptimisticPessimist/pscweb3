@@ -208,7 +208,12 @@
             "publicDescription": "Allow members to view even if not authenticated (if enabled globally).",
             "authorLabel": "Author",
             "authorPlaceholder": "e.g. William Shakespeare"
-        }
+        },
+        "confirmImport": "Create a new project using this script?",
+        "importSuccess": "Project created successfully!",
+        "importToProject": "Use this script",
+        "importFailed": "Failed to import script.",
+        "publicAccessError": "This script may effectively not exist or be private."
     },
     "sceneChart": {
         "title": "Scene Chart",

@@ -44,5 +44,15 @@ export const scriptsApi = {
                 'Content-Type': 'multipart/form-data',
             },
         });
+    },
+
+    getPublicScript: async (scriptId: string): Promise<Script> => {
+        const response = await apiClient.get<Script>(`/public/scripts/${scriptId}`);
+        return response.data;
+    },
+
+    importScript: async (scriptId: string): Promise<any> => {
+        const response = await apiClient.post(`/projects/import-script/${scriptId}`);
+        return response.data;
     }
 };

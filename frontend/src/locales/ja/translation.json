@@ -236,7 +236,12 @@
             "publicDescription": "認証されていないメンバーでも閲覧できるようにします（グローバル設定で有効な場合）。",
             "authorLabel": "著者",
             "authorPlaceholder": "例: ウィリアム・シェイクスピア"
-        }
+        },
+        "confirmImport": "この脚本を使用して新しいプロジェクトを作成しますか？",
+        "importSuccess": "プロジェクトが正常に作成されました！",
+        "importToProject": "この脚本を使う",
+        "importFailed": "脚本のインポートに失敗しました。",
+        "publicAccessError": "この脚本は存在しないか、非公開の可能性があります。"
     },
     "sceneChart": {
         "title": "香盤表",

@@ -25,6 +25,7 @@ export interface ScriptSummary {
     title: string;
     uploaded_at: string;
     revision: number;
+    author?: string | null;
 }
 
 export interface Script extends ScriptSummary {
