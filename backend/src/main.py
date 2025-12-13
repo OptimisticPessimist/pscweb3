@@ -30,7 +30,7 @@ app = FastAPI(
 async def startup_event():
     pass
 
-@app.get("/fix-system")
+@app.get("/api/fix-system")
 async def manual_fix_system():
     """システム修復用エンドポイント (Migration & Data Fix)."""
     log = []
