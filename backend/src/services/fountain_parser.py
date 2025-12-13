@@ -25,6 +25,7 @@ async def parse_fountain_and_create_models(
     lines = fountain_content.splitlines()
     processed_lines = []
     in_char_block = False
+    is_following_char = False
     
     for line in lines:
         stripped = line.strip()
@@ -37,15 +38,54 @@ async def parse_fountain_and_create_models(
             else:
                 in_char_block = False
             processed_lines.append(line)
+            is_following_char = False
         elif in_char_block:
             # Inside character block, ensure strings are separated by blank lines if not empty
             if stripped:
                 processed_lines.append(line)
                 processed_lines.append("") # Force blank line
+                is_following_char = False
             else:
                 processed_lines.append(line)
+                is_following_char = False
         else:
-            processed_lines.append(line)
+            # General body processing
+            
+            # Reset state on blank line
+            if not stripped:
+                is_following_char = False
+                processed_lines.append(line)
+                continue
+
+            # Check for Character line (@Name)
+            if stripped.startswith("@"):
+                # Check if it is one-line dialogue (@Name Dialogue)
+                # If it has space/full-width space, it is one-line dialogue -> Dialogue consumes Character immediately
+                if " " in stripped or "　" in stripped:
+                    is_following_char = False
+                else:
+                    is_following_char = True
+                
+                processed_lines.append(line)
+                continue
+
+            # Check for indented line
+            is_indented = line.startswith(" ") or line.startswith("　")
+            
+            if is_indented:
+                if is_following_char:
+                    # Indented Dialogue following @Name
+                    # Do nothing to preserve as Dialogue (fountain will strip indent but that's standard behavior)
+                    is_following_char = False
+                    processed_lines.append(line)
+                else:
+                    # Indented Action (Togaki) - Force preservation
+                    processed_lines.append("!" + line)
+                    is_following_char = False
+            else:
+                 # Normal line (Action or other)
+                 is_following_char = False
+                 processed_lines.append(line)
             
     fountain_content = "\n".join(processed_lines)
     
@@ -117,39 +157,74 @@ async def parse_fountain_and_create_models(
     current_character: Character | None = None
 
     for element in f.elements:
-        # Act検出 (Section Heading level 1)
-        # FountainのSection Headingは深さを持っているので、#の数で判定するか、fountainライブラリの仕様を確認
-        # 実装上、Section Headingで '#' が1つの場合を幕とみなす
-        if element.element_type == "Section Heading":
-             if element.original_content.strip().startswith("#") and not element.original_content.strip().startswith("##"):
-                  # Level 1 Heading detected
-                  heading_content = element.original_content.strip()
-                  
-                  # "登場人物" や "Character" は幕としてカウントしない
-                  if "登場人物" in heading_content or "Character" in heading_content:
-                      pass
-                  else:
-                      # 幕番号を抽出（簡易的にカウンターでもいいが、ここでは単純にインクリメントするか、内容からパースするか）
-                      # 今回はシンプルに登場順に番号を振る
-                      if current_act_number is None:
-                          current_act_number = 1
-                      else:
-                          current_act_number += 1
-                      logger.info(f"Found Act #{current_act_number}: {heading_content}")
+        content_stripped = element.original_content.strip()
+        
+        # Act検出
+        # 1. Section Heading level 1 (starts with #, not ##)
+        # 2. Forced Scene Heading level 1 (starts with .1)
+        is_section_act = (element.element_type == "Section Heading" and 
+                          content_stripped.startswith("#") and 
+                          not content_stripped.startswith("##"))
+        
+        is_dot_act = (element.element_type == "Scene Heading" and 
+                      content_stripped.startswith(".1"))
+                      
+        if is_section_act or is_dot_act:
+             # Level 1 Heading detected (Act)
+             heading_content = content_stripped
+             
+             # "登場人物" や "Character" は幕としてカウントしない
+             if "登場人物" in heading_content or "Character" in heading_content:
+                 pass
+             else:
+                 # 幕番号作成
+                 if current_act_number is None:
+                     current_act_number = 1
+                 else:
+                     current_act_number += 1
+                 logger.info(f"Found Act #{current_act_number}: {heading_content}")
+                 
+             # .1 の場合はSceneとして処理しないようにcontinueする
+             # ただし、Section Headingの場合はcontinueしなくても下のis_scene_heading等で弾かれる(Section Headingだから)
+             # is_dot_actの場合はScene Headingなので、ここでcontinueしないと下でSceneとして作られてしまう
+             if is_dot_act:
+                 continue
 
-        is_scene_heading = element.element_type == "Scene Heading"
-        is_section_scene = element.element_type == "Section Heading" and element.original_content.strip().startswith("##")
+        # Scene検出
+        # 1. Standard Scene Heading (INT./EXT. etc or Forced . but NOT .1)
+        # 2. Section Heading level 2 (starts with ##)
+        # 3. Forced Scene Heading level 2 (starts with .2)
+        
+        is_scene_heading_type = element.element_type == "Scene Heading"
+        
+        # .1 は上でActとして処理済み。それ以外のScene Headingはシーン
+        # つまり、通常のINT.や、.2 (Level 2), . (Forced) はシーン
+        is_valid_scene_heading = is_scene_heading_type and not content_stripped.startswith(".1")
+        
+        is_section_scene = (element.element_type == "Section Heading" and 
+                            content_stripped.startswith("##"))
 
-        if is_scene_heading or is_section_scene:
-            # 新しいシーン（標準Fountain または Fountain-JP ##）
+        if is_valid_scene_heading or is_section_scene:
+            # 新しいシーン
             scene_number += 1
-            logger.info(f"Found Scene Heading #{scene_number}: {element.original_content.strip()}")
+            logger.info(f"Found Scene Heading #{scene_number}: {content_stripped}")
             line_order = 0
             
-            # 見出しから "##" などを除去して綺麗にする（Section Headingの場合）
-            heading_text = element.original_content.strip()
+            heading_text = content_stripped
+            
+            # Clean up heading text
             if element.element_type == "Section Heading":
+                 # Remove ##...
                  heading_text = heading_text.lstrip("#").strip()
+            
+            if heading_text.startswith("."):
+                # Remove . or .2 etc
+                # If .2, remove .2
+                # If ., remove .
+                if heading_text.startswith(".2"):
+                    heading_text = heading_text[2:].strip()
+                else:
+                    heading_text = heading_text.lstrip(".").strip()
 
             current_scene = Scene(
                 script_id=script.id,
@@ -162,23 +237,73 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Character":
             # セリフを言う登場人物
-            char_name = element.original_content.strip()
+            char_name = content_stripped
             if char_name.startswith("@"):
                 char_name = char_name[1:]
             current_character = character_map.get(char_name)
 
 
         elif element.element_type == "Action":
-            # ト書き (Action)
-            if current_scene:
-                line_order += 1
-                line = Line(
-                    scene_id=current_scene.id,
-                    character_id=None,
-                    content=element.original_content.strip(),
-                    order=line_order,
-                )
-                db.add(line)
+            # ト書き (Action) または 一行セリフ (@Name Dialogue)
+            content = element.original_content.rstrip()  # Preserve leading whitespace for Togaki
+            
+            # Remove forced Action marker '!' if present (added by pre-processor)
+            if content.startswith("!"):
+                content = content[1:]
+
+            stripped_content = content.strip()
+
+            # Check for one-line dialogue: @Character Dialogue (must have at least one space)
+            if stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
+                # Split by first whitespace (half or full width)
+                import re
+                parts = re.split(r'[ 　]', stripped_content, maxsplit=1) # Split by space or full-width space
+                
+                if len(parts) >= 2:
+                    char_name_raw = parts[0][1:] # Remove @
+                    dialogue_content = parts[1]
+                    
+                    # Get or create character
+                    if char_name_raw not in character_map:
+                        new_char = Character(script_id=script.id, name=char_name_raw)
+                        db.add(new_char)
+                        character_map[char_name_raw] = new_char
+                        await db.flush()
+                    
+                    char_obj = character_map[char_name_raw]
+                    
+                    if current_scene:
+                        line_order += 1
+                        line = Line(
+                            scene_id=current_scene.id,
+                            character_id=char_obj.id,
+                            content=dialogue_content,
+                            order=line_order,
+                        )
+                        db.add(line)
+                else:
+                    # Fallback
+                     if current_scene:
+                        line_order += 1
+                        line = Line(
+                            scene_id=current_scene.id,
+                            character_id=None,
+                            content=content,
+                            order=line_order,
+                        )
+                        db.add(line)
+
+            else:
+                # Normal Action (Togaki)
+                if current_scene:
+                    line_order += 1
+                    line = Line(
+                        scene_id=current_scene.id,
+                        character_id=None,
+                        content=content,
+                        order=line_order,
+                    )
+                    db.add(line)
 
         elif element.element_type == "Dialogue":
             # セリフ
