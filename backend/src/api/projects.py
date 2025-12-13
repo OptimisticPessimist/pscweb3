@@ -53,20 +53,11 @@ async def create_project(
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
-    # プロジェクト作成数制限チェック (上限2つ)
-    # Check if user already owns 2 or more projects
-    stmt = select(ProjectMember).where(
-        ProjectMember.user_id == current_user.id,
-        ProjectMember.role == "owner"
-    )
-    result = await db.execute(stmt)
-    owned_projects = result.scalars().all()
-    
-    if len(owned_projects) >= 2:
-        raise HTTPException(
-            status_code=400, 
-            detail="You can only own up to 2 projects."
-        )
+    from src.services.project_limit import check_project_limit
+
+    # プロジェクト作成数制限チェック
+    # 公開脚本を含むプロジェクトは除外、非公開プロジェクトは上限2つ
+    await check_project_limit(current_user.id, db, new_project_is_public=False)
 
     # プロジェクトを作成
     project = TheaterProject(
@@ -690,19 +681,11 @@ async def import_script(
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
-    # 1. プロジェクト作成数制限チェック (上限2つ)
-    stmt = select(ProjectMember).where(
-        ProjectMember.user_id == current_user.id,
-        ProjectMember.role == "owner"
-    )
-    result = await db.execute(stmt)
-    owned_projects = result.scalars().all()
-    
-    if len(owned_projects) >= 2:
-        raise HTTPException(
-            status_code=400, 
-            detail="プロジェクト作成上限（2つ）に達しているため、インポートできません。"
-        )
+    from src.services.project_limit import check_project_limit
+
+    # 1. プロジェクト作成数制限チェック
+    # インポート直後は非公開(is_public=False)となるため、非公開プロジェクトとしてカウント
+    await check_project_limit(current_user.id, db, new_project_is_public=False)
         
     # 2. 脚本取得（公開チェック）
     from src.db.models import Script, Character, Scene, Line, SceneChart, SceneCharacterMapping, CharacterCasting

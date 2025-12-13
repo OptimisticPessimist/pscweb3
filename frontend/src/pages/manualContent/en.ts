@@ -65,6 +65,11 @@ After logging in, you'll see the Dashboard:
 - Upcoming schedules
 - Links to various features
 
+> 💡 **About Project Creation Limits**
+> Normally, a user can own up to **2 private projects**.
+> However, **projects containing "Public" scripts are excluded from this limit**, allowing you to create unlimited public projects.
+> Publish your works and expand your activities!
+
 ### 🌐 Language Switching
 Use the button in the upper right to switch display language:
 - 日本語 / English / 한국어 / 简体中文 / 繁體中文
@@ -103,8 +108,15 @@ Respond to attendance for rehearsals or shoots.
 Access the latest scripts anytime from your phone or PC.
 
 1. Select **"Scripts"** from the menu.
-2. Choose the script you want to read from the list.
+2. Your project's scripts are displayed.
 3. Scripts are displayed in an easy-to-read vertical format.
+
+### 🌍 Viewing Public Scripts
+You can read scripts published by other users.
+
+1. Select **"Public Scripts"** from the dashboard or menu.
+2. Choose a script to view.
+3. You can also **Import** a script you like as your own project (details below).
 
 ### 📊 Viewing Scene Charts
 See which characters appear in each scene.
@@ -128,6 +140,18 @@ Upload script files in Fountain format.
 > 💡 **What is Fountain format?**  
 > A simple text format for writing scripts.  
 > Learn more at [fountain.io](https://fountain.io/).
+>
+> **🇯🇵 Japanese Fountain Syntax**:
+> This system supports extended syntax for easier Japanese script writing.
+> 1. **One-line Dialogue**: Start with \x60@\x60 (e.g., \x60@Character Dialogue\x60).
+> 2. **Forced Headings**: Start with \x60.\x60 (e.g., \x60.1 Act 1\x60, \x60.2 Scene 1\x60).
+> 3. **Indented Action**: Lines starting with a space are treated as Action with indentation preserved.
+
+### 📝 Script Information
+You can set the following when uploading:
+- **Author**: Screenplay author name (Optional).
+- **Public**: Check "Public" to allow other users to view and import.
+    - *Note: Making it public removes the project from your creation limit count.*
 
 ### 🗓 Creating Schedules
 Create rehearsal or shooting schedules.
@@ -135,10 +159,10 @@ Create rehearsal or shooting schedules.
 1. Select **"Schedule"** from the menu.
 2. Click the **"Create New"** button.
 3. Enter and save the following:
-   - Date and time
-   - Location
-   - Target scenes (multiple selection available)
-   - Notes
+    - Date and time
+    - Location
+    - Target scenes (multiple selection available)
+    - Notes
 
 ### 📊 Editing Scene Charts
 Set which characters appear in each scene.
@@ -182,6 +206,15 @@ Create a new production or shooting project.
 2. Enter the project name (production title, etc.).
 3. Enter a description (optional) and click **"Create"**.
 
+### 📥 Importing Scripts
+Create a new project based on a public script.
+
+1. Open the **"Public Scripts"** page.
+2. Click the **"Import"** button on the script you want to use.
+3. Enter a new project name to create.
+   - Imported scripts are saved as **"Private"** (copy) in your project.
+   - You can benefit from the limit exclusion by setting it to Public again.
+
 ### 📩 Inviting Members
 Invite members to the project.
 
@@ -199,6 +232,20 @@ Change a member's role (Owner/Editor/Viewer).
 
 ### 🔔 Discord Notification Settings
 Settings for sending project notifications to Discord.
+
+#### 🤖 Inviting the Discord Bot (First Time Only)
+To send attendance confirmation messages with buttons, you need to invite the Discord Bot to your server.
+
+> ⚠️ **This operation requires Discord server administrator permission.**
+
+1. Access the following URL:
+   
+   👉 **[Invite Discord Bot](https://discord.com/oauth2/authorize?client_id=1447907388337422398&permissions=2048&scope=bot)**
+2. Select the Discord server to invite the bot to.
+3. Click **"Authorize"**.
+4. Confirm that the Bot has joined the server.
+
+> 💡 **Required Permission**: Only "Send Messages" is needed.
 
 #### Webhook URL (General Notifications)
 Receive notifications for project updates, etc.

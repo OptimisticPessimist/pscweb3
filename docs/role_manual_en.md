@@ -65,6 +65,11 @@ After logging in, you'll see the Dashboard:
 - Upcoming schedules
 - Links to various features
 
+> 💡 **About Project Creation Limits**
+> Normally, a user can own up to **2 private projects**.
+> However, **projects containing "Public" scripts are excluded from this limit**, allowing you to create unlimited public projects.
+> Publish your works and expand your activities!
+
 ### 🌐 Language Switching
 Use the button in the upper right to switch display language:
 - 日本語 / English / 한국어 / 简体中文 / 繁體中文
@@ -103,8 +108,15 @@ Respond to attendance for rehearsals or shoots.
 Access the latest scripts anytime from your phone or PC.
 
 1. Select **"Scripts"** from the menu.
-2. Choose the script you want to read from the list.
+2. Your project's scripts are displayed.
 3. Scripts are displayed in an easy-to-read vertical format.
+
+### 🌍 Viewing Public Scripts
+You can read scripts published by other users.
+
+1. Select **"Public Scripts"** from the dashboard or menu.
+2. Choose a script to view.
+3. You can also **Import** a script you like as your own project (details below).
 
 ### 📊 Viewing Scene Charts
 See which characters appear in each scene.
@@ -128,6 +140,18 @@ Upload script files in Fountain format.
 > 💡 **What is Fountain format?**  
 > A simple text format for writing scripts.  
 > Learn more at [fountain.io](https://fountain.io/).
+>
+> **🇯🇵 Japanese Fountain Syntax**:
+> This system supports extended syntax for easier Japanese script writing.
+> 1. **One-line Dialogue**: Start with `@` (e.g., `@Character Dialogue`).
+> 2. **Forced Headings**: Start with `.` (e.g., `.1 Act 1`, `.2 Scene 1`).
+> 3. **Indented Action**: Lines starting with a space are treated as Action with indentation preserved.
+
+### 📝 Script Information
+You can set the following when uploading:
+- **Author**: Screenplay author name (Optional).
+- **Public**: Check "Public" to allow other users to view and import.
+    - *Note: Making it public removes the project from your creation limit count.*
 
 ### 🗓 Creating Schedules
 Create rehearsal or shooting schedules.
@@ -181,6 +205,15 @@ Create a new production or shooting project.
 1. Click **"Create New Project"** on the Dashboard.
 2. Enter the project name (production title, etc.).
 3. Enter a description (optional) and click **"Create"**.
+
+### 📥 Importing Scripts
+Create a new project based on a public script.
+
+1. Open the **"Public Scripts"** page.
+2. Click the **"Import"** button on the script you want to use.
+3. Enter a new project name to create.
+   - Imported scripts are saved as **"Private"** (copy) in your project.
+   - You can benefit from the limit exclusion by setting it to Public again.
 
 ### 📩 Inviting Members
 Invite members to the project.
