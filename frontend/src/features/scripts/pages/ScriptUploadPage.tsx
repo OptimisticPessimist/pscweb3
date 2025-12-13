@@ -12,18 +12,55 @@ export const ScriptUploadPage: React.FC = () => {
     const navigate = useNavigate();
     const [file, setFile] = useState<File | null>(null);
     const [title, setTitle] = useState('');
+    const [author, setAuthor] = useState('');
     const [isPublic, setIsPublic] = useState(false);
 
-    const onDrop = useCallback((acceptedFiles: File[]) => {
+    const extractMetadata = async (file: File) => {
+        const text = await file.text();
+        const lines = text.split('\n');
+        let extractedTitle = '';
+        let extractedAuthor = '';
+
+        // Read first 20 lines for metadata
+        for (let i = 0; i < Math.min(lines.length, 20); i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('Title:')) {
+                extractedTitle = line.substring(6).trim();
+            } else if (line.startsWith('Author:')) {
+                extractedAuthor = line.substring(7).trim();
+            } else if (line.startsWith('Credit:') && !extractedAuthor) {
+                // Fallback if Author not found, sometimes Credit is used? No, Credit is usually "Written by"
+            }
+        }
+
+        // Also checks for "Written by" or similar if needed, but Fountain spec is usually "Author: ..."
+
+        return { extractedTitle, extractedAuthor };
+    };
+
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
         if (acceptedFiles.length > 0) {
             const uploadedFile = acceptedFiles[0];
             setFile(uploadedFile);
-            // Auto-fill title from filename if empty
+
+            // Extract metadata
+            const { extractedTitle, extractedAuthor } = await extractMetadata(uploadedFile);
+
+            // Auto-fill title from metadata or filename if empty
             if (!title) {
-                setTitle(uploadedFile.name.replace('.fountain', ''));
+                if (extractedTitle) {
+                    setTitle(extractedTitle);
+                } else {
+                    setTitle(uploadedFile.name.replace('.fountain', ''));
+                }
+            }
+
+            // Auto-fill author if empty
+            if (!author && extractedAuthor) {
+                setAuthor(extractedAuthor);
             }
         }
-    }, [title]);
+    }, [title, author]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -50,6 +87,9 @@ export const ScriptUploadPage: React.FC = () => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('title', title);
+        if (author) {
+            formData.append('author', author);
+        }
         formData.append('is_public', String(isPublic));
 
         uploadMutation.mutate(formData);
@@ -65,20 +105,38 @@ export const ScriptUploadPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 shadow sm:rounded-md">
-                <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                        {t('script.form.titleLabel') || 'Script Title'}
-                    </label>
-                    <div className="mt-1">
-                        <input
-                            type="text"
-                            id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            required
-                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                            placeholder={t('script.form.titlePlaceholder') || 'e.g. My Great Play'}
-                        />
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                            {t('script.form.titleLabel') || 'Script Title'}
+                        </label>
+                        <div className="mt-1">
+                            <input
+                                type="text"
+                                id="title"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                required
+                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                placeholder={t('script.form.titlePlaceholder') || 'e.g. My Great Play'}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label htmlFor="author" className="block text-sm font-medium text-gray-700">
+                            {t('script.form.authorLabel') || 'Author'}
+                        </label>
+                        <div className="mt-1">
+                            <input
+                                type="text"
+                                id="author"
+                                value={author}
+                                onChange={(e) => setAuthor(e.target.value)}
+                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                placeholder={t('script.form.authorPlaceholder') || 'e.g. William Shakespeare'}
+                            />
+                        </div>
                     </div>
                 </div>
 

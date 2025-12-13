@@ -53,6 +53,7 @@ Hello, world!
     }
     data = {
         "title": "テスト脚本",
+        "author": "Test Author",
         "is_public": "false"
     }
     
@@ -66,6 +67,8 @@ Hello, world!
     
     # Assert
     assert response.status_code in [200, 201]
+    res_data = response.json()
+    assert res_data["author"] == "Test Author"
 
 
 @pytest.mark.skip(reason="MissingGreenletエラーが発生するため")

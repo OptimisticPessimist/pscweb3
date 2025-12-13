@@ -56,6 +56,7 @@ class ScriptResponse(BaseModel):
     title: str = Field(..., description="タイトル")
     uploaded_at: datetime = Field(..., description="アップロード日時")
     revision: int = Field(default=1, description="リビジョン番号")
+    author: str | None = Field(None, description="脚本の著者")
     characters: list[CharacterResponse] = Field(
         default_factory=list, description="登場人物リスト"
     )
@@ -72,6 +73,7 @@ class ScriptSummary(BaseModel):
     title: str = Field(..., description="タイトル")
     uploaded_at: datetime = Field(..., description="アップロード日時")
     revision: int = Field(default=1, description="リビジョン番号")
+    author: str | None = Field(None, description="脚本の著者")
 
     model_config = {"from_attributes": True}
 

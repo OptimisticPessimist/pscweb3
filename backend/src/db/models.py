@@ -136,6 +136,7 @@ class Script(Base):
     is_public: Mapped[bool] = mapped_column(default=False)  # 全体公開フラグ
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     revision: Mapped[int] = mapped_column(default=1)  # リビジョン番号
+    author: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 脚本の著者
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")

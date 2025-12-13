@@ -28,6 +28,7 @@ async def send_script_notification(
         f"📝 **脚本が{action_text}されました{revision_text}**\n"
         f"プロジェクト: {project.name}\n"
         f"タイトル: {script.title}\n"
+        f"著者: {script.author if script.author else '不明'}\n"
         f"ユーザー: {current_user.discord_username}\n"
         f"@here"
     )

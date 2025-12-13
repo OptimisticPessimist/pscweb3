@@ -74,6 +74,7 @@ async def get_or_create_script(
     project_id: UUID,
     user_id: UUID,
     title: str,
+    author: str | None,
     fountain_text: str,
     is_public: bool,
     db: AsyncSession,
@@ -84,6 +85,7 @@ async def get_or_create_script(
         project_id: プロジェクトID
         user_id: ユーザーID
         title: スクリプトタイトル
+        author: 著者
         fountain_text: Fountainテキスト
         is_public: 公開フラグ
         db: データベースセッション
@@ -109,6 +111,7 @@ async def get_or_create_script(
         
         # Update existing script
         script.title = title
+        script.author = author
         script.content = fountain_text
         script.uploaded_by = user_id
         script.uploaded_at = datetime.now(timezone.utc)
@@ -120,6 +123,7 @@ async def get_or_create_script(
             project_id=project_id,
             uploaded_by=user_id,
             title=title,
+            author=author,
             content=fountain_text,
             is_public=is_public,
         )
@@ -263,6 +267,7 @@ async def process_script_upload(
     project_id: UUID,
     user_id: UUID,
     title: str,
+    author: str | None,
     fountain_text: str,
     is_public: bool,
     db: AsyncSession,
@@ -273,6 +278,7 @@ async def process_script_upload(
         project_id: プロジェクトID
         user_id: ユーザーID
         title: スクリプトタイトル
+        author: 著者
         fountain_text: Fountainテキスト
         is_public: 公開フラグ
         db: データベースセッション
@@ -282,7 +288,7 @@ async def process_script_upload(
     """
     # スクリプトの取得または作成
     script, is_update = await get_or_create_script(
-        project_id, user_id, title, fountain_text, is_public, db
+        project_id, user_id, title, author, fountain_text, is_public, db
     )
     
     # 更新の場合は関連データを削除

@@ -71,6 +71,7 @@ async def upload_script(
     project_id: UUID,
     background_tasks: BackgroundTasks,
     title: str = Form(...),
+    author: str | None = Form(None),
     file: UploadFile = File(...),
     is_public: bool = Form(False),
     current_user: User | None = Depends(get_current_user_dep),
@@ -111,7 +112,7 @@ async def upload_script(
     # 3. スクリプト処理
     try:
         script, is_update = await process_script_upload(
-            project_id, current_user.id, title, fountain_text, is_public, db
+            project_id, current_user.id, title, author, fountain_text, is_public, db
         )
     except Exception as e:
         import traceback
