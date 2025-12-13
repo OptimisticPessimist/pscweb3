@@ -8,7 +8,8 @@ import {
     LayoutGrid,
     Clapperboard,
     Wrench,
-    ClipboardCheck
+    ClipboardCheck,
+    X
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -20,7 +21,12 @@ function cn(...inputs: (string | undefined | null | false)[]) {
     return twMerge(clsx(inputs));
 }
 
-export function Sidebar() {
+interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { projectId } = useParams<{ projectId: string }>();
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -45,51 +51,38 @@ export function Sidebar() {
     ] : [];
 
     return (
-        <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col border-r border-gray-800">
-            <div className="h-16 flex items-center px-6 border-b border-gray-800">
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    PSC Web
-                </span>
-            </div>
+        <>
+            {/* Mobile Backdrop */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 md:hidden"
+                    onClick={onClose}
+                />
+            )}
 
-            <nav className="flex-1 overflow-y-auto py-4">
-                <div className="px-3 mb-2">
-                    <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2 px-3">
-                        Apps
-                    </p>
-                    <ul className="space-y-1">
-                        {commonLinks.map((link) => (
-                            <li key={link.to}>
-                                <NavLink
-                                    to={link.to}
-                                    className={({ isActive }) =>
-                                        cn(
-                                            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                            isActive
-                                                ? "bg-purple-500/10 text-purple-400"
-                                                : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                                        )
-                                    }
-                                >
-                                    <link.icon className="w-5 h-5" />
-                                    {link.label}
-                                </NavLink>
-                            </li>
-                        ))}
-                    </ul>
+            <aside className={cn(
+                "fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white min-h-screen flex flex-col border-r border-gray-800 transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto md:z-auto",
+                isOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
+                <div className="h-16 flex items-center justify-between px-6 border-b border-gray-800">
+                    <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        PSC Web
+                    </span>
+                    <button onClick={onClose} className="md:hidden text-gray-400 hover:text-white">
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
-                {projectId && (
-                    <div className="px-3 mt-6">
+                <nav className="flex-1 overflow-y-auto py-4">
+                    <div className="px-3 mb-2">
                         <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2 px-3">
-                            Project
+                            Apps
                         </p>
                         <ul className="space-y-1">
-                            {projectLinks.map((link) => (
+                            {commonLinks.map((link) => (
                                 <li key={link.to}>
                                     <NavLink
                                         to={link.to}
-                                        end={link.end}
                                         className={({ isActive }) =>
                                             cn(
                                                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
@@ -106,55 +99,84 @@ export function Sidebar() {
                             ))}
                         </ul>
                     </div>
-                )}
-            </nav>
 
-            {/* User Info at bottom - Discord Info */}
-            {user && (
-                <div className="p-4 border-t border-gray-800">
-                    <div className="flex items-center gap-3">
-                        {/* Discord Avatar */}
-                        {user.discord_avatar_url ? (
-                            <img
-                                src={user.discord_avatar_url}
-                                alt={user.screen_name || user.discord_id}
-                                className="w-10 h-10 rounded-full ring-2 ring-purple-500"
-                            />
-                        ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-                                {(user.screen_name || user.discord_username || user.discord_id).charAt(0).toUpperCase()}
-                            </div>
-                        )}
-
-                        {/* User Info */}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">
-                                {user.screen_name || user.discord_username}
+                    {projectId && (
+                        <div className="px-3 mt-6">
+                            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2 px-3">
+                                Project
                             </p>
-                            <p className="text-xs text-gray-400 truncate">
-                                @{user.discord_username}
-                            </p>
+                            <ul className="space-y-1">
+                                {projectLinks.map((link) => (
+                                    <li key={link.to}>
+                                        <NavLink
+                                            to={link.to}
+                                            end={link.end}
+                                            className={({ isActive }) =>
+                                                cn(
+                                                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                                    isActive
+                                                        ? "bg-purple-500/10 text-purple-400"
+                                                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                                                )
+                                            }
+                                        >
+                                            <link.icon className="w-5 h-5" />
+                                            {link.label}
+                                        </NavLink>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                    </div>
+                    )}
+                </nav>
 
-                    {/* Logout Button */}
-                    <button
-                        onClick={() => {
-                            // ログアウト処理
-                            localStorage.removeItem('token');
-                            window.location.href = '/login';
-                        }}
-                        className="mt-3 w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
-                        {t('common.logout')}
-                    </button>
-                </div>
-            )}
-        </aside>
+                {/* User Info at bottom - Discord Info */}
+                {user && (
+                    <div className="p-4 border-t border-gray-800">
+                        <div className="flex items-center gap-3">
+                            {/* Discord Avatar */}
+                            {user.discord_avatar_url ? (
+                                <img
+                                    src={user.discord_avatar_url}
+                                    alt={user.screen_name || user.discord_id}
+                                    className="w-10 h-10 rounded-full ring-2 ring-purple-500"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                                    {(user.screen_name || user.discord_username || user.discord_id).charAt(0).toUpperCase()}
+                                </div>
+                            )}
+
+                            {/* User Info */}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-white truncate">
+                                    {user.screen_name || user.discord_username}
+                                </p>
+                                <p className="text-xs text-gray-400 truncate">
+                                    @{user.discord_username}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Logout Button */}
+                        <button
+                            onClick={() => {
+                                // ログアウト処理
+                                localStorage.removeItem('token');
+                                window.location.href = '/login';
+                            }}
+                            className="mt-3 w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            {t('common.logout')}
+                        </button>
+                    </div>
+                )}
+            </aside>
+        </>
     );
 }
