@@ -28,14 +28,36 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
-    # データ不整合の自動修正（一時的）
+    pass
+
+@app.get("/fix-system")
+async def manual_fix_system():
+    """システム修復用エンドポイント (Migration & Data Fix)."""
+    log = []
     try:
-        from fix_data_is_public import fix_project_is_public
-        await fix_project_is_public()
+        # 1. Run Migration
+        import os
+        import sys
+        # backend rootをパスに追加
+        current_dir = os.path.dirname(os.path.abspath(__file__)) # src/
+        backend_dir = os.path.dirname(current_dir) # backend/
+        if backend_dir not in sys.path:
+            sys.path.append(backend_dir)
+            
+        import apply_migration
+        await apply_migration.apply_migration()
+        log.append("Migration executed successfully.")
+        
+        # 2. Run Data Fix
+        import fix_data_is_public
+        await fix_data_is_public.fix_project_is_public()
+        log.append("Data fix executed successfully.")
+        
+        return {"status": "success", "log": log}
     except Exception as e:
-        # 失敗してもアプリ起動は妨げない
-        import logging
-        logging.getLogger("uvicorn.error").error(f"Failed to run data fix: {e}")
+        import traceback
+        return {"status": "error", "message": str(e), "trace": traceback.format_exc()}
+
 
 
 # ミドルウェア登録 (実行順序: 下から上)
