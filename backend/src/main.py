@@ -28,7 +28,14 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
-    pass
+    # データ不整合の自動修正（一時的）
+    try:
+        from fix_data_is_public import fix_project_is_public
+        await fix_project_is_public()
+    except Exception as e:
+        # 失敗してもアプリ起動は妨げない
+        import logging
+        logging.getLogger("uvicorn.error").error(f"Failed to run data fix: {e}")
 
 
 # ミドルウェア登録 (実行順序: 下から上)
