@@ -195,7 +195,9 @@
             "dragDrop": "또는 드래그 앤 드롭",
             "fileType": ".fountain 파일만",
             "publicLabel": "공개",
-            "publicDescription": "인증되지 않은 멤버도 볼 수 있도록 허용합니다 (전역 설정에서 활성화된 경우)."
+            "publicDescription": "인증되지 않은 멤버도 볼 수 있도록 허용합니다 (전역 설정에서 활성화된 경우).",
+            "authorLabel": "작가",
+            "authorPlaceholder": "예: 윌리엄 셰익스피어"
         }
     },
     "sceneChart": {

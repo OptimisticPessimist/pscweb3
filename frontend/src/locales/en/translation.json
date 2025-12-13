@@ -205,7 +205,9 @@
             "dragDrop": "or drag and drop",
             "fileType": ".fountain files only",
             "publicLabel": "Public",
-            "publicDescription": "Allow members to view even if not authenticated (if enabled globally)."
+            "publicDescription": "Allow members to view even if not authenticated (if enabled globally).",
+            "authorLabel": "Author",
+            "authorPlaceholder": "e.g. William Shakespeare"
         }
     },
     "sceneChart": {

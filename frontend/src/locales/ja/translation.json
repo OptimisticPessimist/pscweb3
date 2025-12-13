@@ -233,7 +233,9 @@
             "dragDrop": "またはドラッグ＆ドロップ",
             "fileType": ".fountainファイルのみ",
             "publicLabel": "公開",
-            "publicDescription": "認証されていないメンバーでも閲覧できるようにします（グローバル設定で有効な場合）。"
+            "publicDescription": "認証されていないメンバーでも閲覧できるようにします（グローバル設定で有効な場合）。",
+            "authorLabel": "著者",
+            "authorPlaceholder": "例: ウィリアム・シェイクスピア"
         }
     },
     "sceneChart": {

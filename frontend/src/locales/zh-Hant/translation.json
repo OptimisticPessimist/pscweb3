@@ -195,7 +195,9 @@
             "dragDrop": "或拖放",
             "fileType": "僅限 .fountain 檔案",
             "publicLabel": "公開",
-            "publicDescription": "允許未認證成員查看（如果全域啟用）。"
+            "publicDescription": "允許未認證成員查看（如果全域啟用）。",
+            "authorLabel": "作者",
+            "authorPlaceholder": "例: 威廉·莎士比亞"
         }
     },
     "sceneChart": {
