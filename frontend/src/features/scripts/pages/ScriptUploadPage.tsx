@@ -16,6 +16,38 @@ export const ScriptUploadPage: React.FC = () => {
     const [isPublic, setIsPublic] = useState(false);
     const [publicTerms, setPublicTerms] = useState('');
     const [publicContact, setPublicContact] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch existing script data on mount
+    React.useEffect(() => {
+        const fetchExistingScript = async () => {
+            if (!projectId) return;
+            try {
+                const scripts = await scriptsApi.getScripts(projectId);
+                if (scripts.length > 0) {
+                    const existingScript = scripts[0];
+                    // Pre-fill fields from existing script
+                    if (existingScript.is_public !== undefined) {
+                        setIsPublic(existingScript.is_public);
+                    }
+                    if (existingScript.public_terms) {
+                        setPublicTerms(existingScript.public_terms);
+                    }
+                    if (existingScript.public_contact) {
+                        setPublicContact(existingScript.public_contact);
+                    }
+                    // Optional: pre-fill title/author if we wanted to allow editing without file drop
+                    // But for re-upload, maybe better to let file metadata take precedence OR keep existing title?
+                    // For now, let's stick to just the public settings as requested.
+                }
+            } catch (err) {
+                console.error("Failed to fetch existing script for pre-fill", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchExistingScript();
+    }, [projectId]);
 
     const extractMetadata = async (file: File) => {
         const text = await file.text();
