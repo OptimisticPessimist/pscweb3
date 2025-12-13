@@ -84,8 +84,14 @@ async def parse_fountain_and_create_models(
                     is_following_char = False
             else:
                  # Normal line (Action or other)
-                 is_following_char = False
-                 processed_lines.append(line)
+                 if is_following_char:
+                     # This is likely Dialogue following @Name (Japanese style with no indent)
+                     # Keep it as is, but consume the flag
+                     is_following_char = False
+                     processed_lines.append(line)
+                 else:
+                     is_following_char = False
+                     processed_lines.append(line)
             
     fountain_content = "\n".join(processed_lines)
     
