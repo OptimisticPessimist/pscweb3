@@ -243,6 +243,21 @@ async def update_project(
     return _build_project_response(project, current_member.role)
 
 
+@router.delete("/{project_id}", status_code=204)
+async def delete_project(
+    project_id: UUID,
+    current_member: ProjectMember = Depends(get_project_owner_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """プロジェクトを削除する (オーナーのみ)."""
+    project = await db.get(TheaterProject, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
+        
+    await db.delete(project)
+    await db.commit()
+
+
 
 @router.get("/{project_id}/members", response_model=list[ProjectMemberResponse])
 async def list_project_members(
