@@ -94,7 +94,8 @@
         "creating": "建立中...",
         "create": "建立",
         "deleting": "刪除中...",
-        "failedToDeleteProject": "刪除專案失敗"
+        "failedToDeleteProject": "刪除專案失敗",
+        "projectLimit": "您最多只能建立2個專案。"
     },
     "project": {
         "title": "專案",

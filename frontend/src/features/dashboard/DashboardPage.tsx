@@ -15,6 +15,10 @@ export const DashboardPage = () => {
         queryFn: dashboardApi.getProjects,
     });
 
+    const ownedProjectCount = projects?.filter(p => p.role === 'owner').length || 0;
+    const isProjectLimitReached = ownedProjectCount >= 2;
+    const projectLimitMessage = isProjectLimitReached ? t('dashboard.projectLimit') : undefined;
+
     const [createError, setCreateError] = useState<string | null>(null);
 
     const createProjectMutation = useMutation({
@@ -76,10 +80,17 @@ export const DashboardPage = () => {
                 <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.projects')}</h1>
                 <button
                     onClick={() => {
-                        setIsModalOpen(true);
-                        setCreateError(null);
+                        if (!isProjectLimitReached) {
+                            setIsModalOpen(true);
+                            setCreateError(null);
+                        }
                     }}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 shadow-sm transition-colors"
+                    disabled={isProjectLimitReached}
+                    title={projectLimitMessage}
+                    className={`flex items-center px-4 py-2 text-white rounded-md shadow-sm transition-colors ${isProjectLimitReached
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
+                        }`}
                 >
                     <span className="mr-2">+</span> {t('dashboard.newProject')}
                 </button>
@@ -160,13 +171,23 @@ export const DashboardPage = () => {
                     <div className="mt-6">
                         <button
                             onClick={() => {
-                                setIsModalOpen(true);
-                                setCreateError(null);
+                                if (!isProjectLimitReached) {
+                                    setIsModalOpen(true);
+                                    setCreateError(null);
+                                }
                             }}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                            disabled={isProjectLimitReached}
+                            title={projectLimitMessage}
+                            className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${isProjectLimitReached
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-indigo-600 hover:bg-indigo-700'
+                                }`}
                         >
                             {t('dashboard.createNewProject')}
                         </button>
+                        {isProjectLimitReached && (
+                            <p className="mt-2 text-sm text-red-500">{projectLimitMessage}</p>
+                        )}
                     </div>
                 </div>
             )}

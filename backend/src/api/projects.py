@@ -53,6 +53,21 @@ async def create_project(
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
 
+    # プロジェクト作成数制限チェック (上限2つ)
+    # Check if user already owns 2 or more projects
+    stmt = select(ProjectMember).where(
+        ProjectMember.user_id == current_user.id,
+        ProjectMember.role == "owner"
+    )
+    result = await db.execute(stmt)
+    owned_projects = result.scalars().all()
+    
+    if len(owned_projects) >= 2:
+        raise HTTPException(
+            status_code=400, 
+            detail="You can only own up to 2 projects."
+        )
+
     # プロジェクトを作成
     project = TheaterProject(
         name=project_data.name,
