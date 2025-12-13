@@ -21,6 +21,7 @@ from src.db.models import (
     RehearsalCast,
     User,
     ProjectMember,
+    TheaterProject,
 )
 
 
@@ -323,11 +324,10 @@ async def process_script_upload(
         await db.refresh(script)
         
     # プロジェクトの公開設定を同期 (1プロジェクト1脚本のため、脚本の設定=プロジェクトの設定)
-    await db.execute(
-        update(TheaterProject)
-        .where(TheaterProject.id == project_id)
-        .values(is_public=is_public)
-    )
+    project = await db.get(TheaterProject, project_id)
+    if project:
+        project.is_public = is_public
+        db.add(project)
     
     # Fountainパースと保存
     script = await parse_and_save_fountain(script, fountain_text, db)
