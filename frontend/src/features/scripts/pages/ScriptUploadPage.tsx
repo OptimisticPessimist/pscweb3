@@ -139,157 +139,164 @@ export const ScriptUploadPage: React.FC = () => {
                 </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 shadow sm:rounded-md">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                            {t('script.form.titleLabel') || 'Script Title'}
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                type="text"
-                                id="title"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                required
-                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                placeholder={t('script.form.titlePlaceholder') || 'e.g. My Great Play'}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                        <label htmlFor="author" className="block text-sm font-medium text-gray-700">
-                            {t('script.form.authorLabel') || 'Author'}
-                        </label>
-                        <div className="mt-1">
-                            <input
-                                type="text"
-                                id="author"
-                                value={author}
-                                onChange={(e) => setAuthor(e.target.value)}
-                                className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                placeholder={t('script.form.authorPlaceholder') || 'e.g. William Shakespeare'}
-                            />
-                        </div>
-                    </div>
+            {isLoading ? (
+                <div className="text-center py-12">
+                    <p className="text-gray-500">{t('common.loading') || 'Loading...'}</p>
                 </div>
+            ) : (
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">{t('script.form.fileLabel') || 'Script File (.fountain)'}</label>
-                    <div
-                        {...getRootProps()}
-                        className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
-                            }`}
-                    >
-                        <input {...getInputProps()} />
-                        <div className="space-y-1 text-center">
-                            {file ? (
-                                <div className="flex flex-col items-center">
-                                    <FileText className="h-12 w-12 text-indigo-500" />
-                                    <div className="flex items-center text-sm text-gray-600 mt-2">
-                                        <span className="font-medium">{file.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setFile(null);
-                                            }}
-                                            className="ml-2 text-red-500 hover:text-red-700"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                    <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                                    <div className="flex text-sm text-gray-600 justify-center">
-                                        <span className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                            <span>{t('script.form.uploadFile') || 'Upload a file'}</span>
-                                        </span>
-                                        <p className="pl-1">{t('script.form.dragDrop') || 'or drag and drop'}</p>
-                                    </div>
-                                    <p className="text-xs text-gray-500">{t('script.form.fileType') || '.fountain files only'}</p>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-md space-y-4">
-                    <div className="flex items-start">
-                        <div className="flex items-center h-5">
-                            <input
-                                id="is_public"
-                                type="checkbox"
-                                checked={isPublic}
-                                onChange={(e) => setIsPublic(e.target.checked)}
-                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                            />
-                        </div>
-                        <div className="ml-3 text-sm">
-                            <label htmlFor="is_public" className="font-medium text-gray-700">
-                                {t('script.form.publicLabel') || 'Public'}
+                <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 shadow sm:rounded-md">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                                {t('script.form.titleLabel') || 'Script Title'}
                             </label>
-                            <p className="text-gray-500">{t('script.form.publicDescription') || 'Allow anyone to view this script.'}</p>
+                            <div className="mt-1">
+                                <input
+                                    type="text"
+                                    id="title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    required
+                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                    placeholder={t('script.form.titlePlaceholder') || 'e.g. My Great Play'}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                            <label htmlFor="author" className="block text-sm font-medium text-gray-700">
+                                {t('script.form.authorLabel') || 'Author'}
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    type="text"
+                                    id="author"
+                                    value={author}
+                                    onChange={(e) => setAuthor(e.target.value)}
+                                    className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                    placeholder={t('script.form.authorPlaceholder') || 'e.g. William Shakespeare'}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {isPublic && (
-                        <div className="pl-7 grid grid-cols-1 gap-4">
-                            <div>
-                                <label htmlFor="publicTerms" className="block text-sm font-medium text-gray-700">
-                                    {t('script.form.usageTerms') || "Usage Terms"}
-                                </label>
-                                <div className="mt-1">
-                                    <textarea
-                                        id="publicTerms"
-                                        rows={3}
-                                        value={publicTerms}
-                                        onChange={(e) => setPublicTerms(e.target.value)}
-                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                        placeholder={t('script.form.usageTermsPlaceholder') || "e.g. Please contact for performance rights."}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="publicContact" className="block text-sm font-medium text-gray-700">
-                                    {t('script.form.contactInfo') || "Contact Info"}
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        type="text"
-                                        id="publicContact"
-                                        value={publicContact}
-                                        onChange={(e) => setPublicContact(e.target.value)}
-                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                        placeholder={t('script.form.contactPlaceholder') || "e.g. email@example.com"}
-                                    />
-                                </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">{t('script.form.fileLabel') || 'Script File (.fountain)'}</label>
+                        <div
+                            {...getRootProps()}
+                            className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
+                                }`}
+                        >
+                            <input {...getInputProps()} />
+                            <div className="space-y-1 text-center">
+                                {file ? (
+                                    <div className="flex flex-col items-center">
+                                        <FileText className="h-12 w-12 text-indigo-500" />
+                                        <div className="flex items-center text-sm text-gray-600 mt-2">
+                                            <span className="font-medium">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFile(null);
+                                                }}
+                                                className="ml-2 text-red-500 hover:text-red-700"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                                        <div className="flex text-sm text-gray-600 justify-center">
+                                            <span className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span>{t('script.form.uploadFile') || 'Upload a file'}</span>
+                                            </span>
+                                            <p className="pl-1">{t('script.form.dragDrop') || 'or drag and drop'}</p>
+                                        </div>
+                                        <p className="text-xs text-gray-500">{t('script.form.fileType') || '.fountain files only'}</p>
+                                    </>
+                                )}
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
 
-                <div className="flex justify-end space-x-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate(`/projects/${projectId}/scripts`)}
-                        className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        {t('common.cancel')}
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={!file || !title || uploadMutation.isPending}
-                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                    >
-                        {uploadMutation.isPending ? t('script.uploading') : t('script.uploadAction')}
-                    </button>
-                </div>
-            </form>
+                    <div className="bg-gray-50 p-4 rounded-md space-y-4">
+                        <div className="flex items-start">
+                            <div className="flex items-center h-5">
+                                <input
+                                    id="is_public"
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                />
+                            </div>
+                            <div className="ml-3 text-sm">
+                                <label htmlFor="is_public" className="font-medium text-gray-700">
+                                    {t('script.form.publicLabel') || 'Public'}
+                                </label>
+                                <p className="text-gray-500">{t('script.form.publicDescription') || 'Allow anyone to view this script.'}</p>
+                            </div>
+                        </div>
+
+                        {isPublic && (
+                            <div className="pl-7 grid grid-cols-1 gap-4">
+                                <div>
+                                    <label htmlFor="publicTerms" className="block text-sm font-medium text-gray-700">
+                                        {t('script.form.usageTerms') || "Usage Terms"}
+                                    </label>
+                                    <div className="mt-1">
+                                        <textarea
+                                            id="publicTerms"
+                                            rows={3}
+                                            value={publicTerms}
+                                            onChange={(e) => setPublicTerms(e.target.value)}
+                                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                            placeholder={t('script.form.usageTermsPlaceholder') || "e.g. Please contact for performance rights."}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="publicContact" className="block text-sm font-medium text-gray-700">
+                                        {t('script.form.contactInfo') || "Contact Info"}
+                                    </label>
+                                    <div className="mt-1">
+                                        <input
+                                            type="text"
+                                            id="publicContact"
+                                            value={publicContact}
+                                            onChange={(e) => setPublicContact(e.target.value)}
+                                            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                            placeholder={t('script.form.contactPlaceholder') || "e.g. email@example.com"}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end space-x-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/projects/${projectId}/scripts`)}
+                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            {t('common.cancel')}
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={!file || !title || uploadMutation.isPending}
+                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                        >
+                            {uploadMutation.isPending ? t('script.uploading') : t('script.uploadAction')}
+                        </button>
+                    </div>
+                </form>
+            )}
         </div>
     );
 };
