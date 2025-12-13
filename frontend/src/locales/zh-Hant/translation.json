@@ -10,7 +10,17 @@
         "schedule": "行程安排",
         "attendance": "考勤",
         "settings": "設定",
-        "manual": "使用手冊"
+        "manual": "使用手冊",
+        "publicScripts": "公開劇本"
+    },
+    "publicScript": {
+        "title": "公開劇本",
+        "description": "探索社群分享的劇本。",
+        "noScripts": "未找到公開劇本",
+        "usageInfo": "使用資訊",
+        "terms": "使用條款",
+        "contact": "聯絡方式",
+        "previewOnly": "預覽模式"
     },
     "common": {
         "save": "儲存",
@@ -196,6 +206,10 @@
             "fileType": "僅限 .fountain 檔案",
             "publicLabel": "公開",
             "publicDescription": "允許未認證成員查看（如果全域啟用）。",
+            "usageTerms": "使用條款",
+            "usageTermsPlaceholder": "例如：若演出請聯絡。",
+            "contactInfo": "聯絡資訊",
+            "contactPlaceholder": "例如：email@example.com",
             "authorLabel": "作者",
             "authorPlaceholder": "例: 威廉·莎士比亞"
         }

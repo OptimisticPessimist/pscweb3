@@ -25,7 +25,8 @@ const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage')
 const ProjectSettingsPage = lazy(() => import('@/features/projects/pages/ProjectSettingsPage').then(module => ({ default: module.ProjectSettingsPage })));
 const InvitationLandingPage = lazy(() => import('./features/projects/pages/InvitationLandingPage').then(module => ({ default: module.InvitationLandingPage })));
 const MySchedulePage = lazy(() => import('@/features/schedule/MySchedulePage').then(module => ({ default: module.MySchedulePage })));
-const PublicScriptPage = lazy(() => import('./features/scripts/pages/PublicScriptPage').then(module => ({ default: module.PublicScriptPage })));
+const PublicScriptsPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptsPage').then(module => ({ default: module.PublicScriptsPage })));
+const PublicScriptDetailPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptDetailPage').then(module => ({ default: module.PublicScriptDetailPage })));
 const ManualPage = lazy(() => import('@/pages/ManualPage').then(module => ({ default: module.ManualPage })));
 
 const queryClient = new QueryClient({
@@ -49,7 +50,8 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/invitations/:token" element={<InvitationLandingPage />} />
-              <Route path="/public/scripts/:scriptId" element={<PublicScriptPage />} />
+              <Route path="/public-scripts" element={<PublicScriptsPage />} />
+              <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
               <Route path="/manual" element={<ManualPage />} />
 
               {/* Protected Routes */}

@@ -134,6 +134,8 @@ class Script(Base):
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(Text)  # Fountain脚本の内容を直接保存
     is_public: Mapped[bool] = mapped_column(default=False)  # 全体公開フラグ
+    public_terms: Mapped[str | None] = mapped_column(Text, nullable=True)  # 公開時の使用条件
+    public_contact: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 公開時の連絡先
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     revision: Mapped[int] = mapped_column(default=1)  # リビジョン番号
     author: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 脚本の著者

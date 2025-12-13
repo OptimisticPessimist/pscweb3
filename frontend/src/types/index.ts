@@ -26,6 +26,9 @@ export interface ScriptSummary {
     uploaded_at: string;
     revision: number;
     author?: string | null;
+    is_public?: boolean;
+    public_terms?: string | null;
+    public_contact?: string | null;
 }
 
 export interface Script extends ScriptSummary {

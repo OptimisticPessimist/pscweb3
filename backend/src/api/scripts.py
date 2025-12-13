@@ -74,6 +74,8 @@ async def upload_script(
     author: str | None = Form(None),
     file: UploadFile = File(...),
     is_public: bool = Form(False),
+    public_terms: str | None = Form(None),
+    public_contact: str | None = Form(None),
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
@@ -112,7 +114,8 @@ async def upload_script(
     # 3. スクリプト処理
     try:
         script, is_update = await process_script_upload(
-            project_id, current_user.id, title, author, fountain_text, is_public, db
+            project_id, current_user.id, title, author, fountain_text, is_public, db,
+            public_terms=public_terms, public_contact=public_contact
         )
     except Exception as e:
         import traceback

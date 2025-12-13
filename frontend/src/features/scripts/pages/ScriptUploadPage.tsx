@@ -14,6 +14,8 @@ export const ScriptUploadPage: React.FC = () => {
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [isPublic, setIsPublic] = useState(false);
+    const [publicTerms, setPublicTerms] = useState('');
+    const [publicContact, setPublicContact] = useState('');
 
     const extractMetadata = async (file: File) => {
         const text = await file.text();
@@ -29,12 +31,9 @@ export const ScriptUploadPage: React.FC = () => {
             } else if (line.startsWith('Author:')) {
                 extractedAuthor = line.substring(7).trim();
             } else if (line.startsWith('Credit:') && !extractedAuthor) {
-                // Fallback if Author not found, sometimes Credit is used? No, Credit is usually "Written by"
+                // Fallback if Author not found
             }
         }
-
-        // Also checks for "Written by" or similar if needed, but Fountain spec is usually "Author: ..."
-
         return { extractedTitle, extractedAuthor };
     };
 
@@ -91,6 +90,10 @@ export const ScriptUploadPage: React.FC = () => {
             formData.append('author', author);
         }
         formData.append('is_public', String(isPublic));
+        if (isPublic) {
+            if (publicTerms) formData.append('public_terms', publicTerms);
+            if (publicContact) formData.append('public_contact', publicContact);
+        }
 
         uploadMutation.mutate(formData);
     };
@@ -183,22 +186,59 @@ export const ScriptUploadPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex items-start">
-                    <div className="flex items-center h-5">
-                        <input
-                            id="is_public"
-                            type="checkbox"
-                            checked={isPublic}
-                            onChange={(e) => setIsPublic(e.target.checked)}
-                            className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                        />
+                <div className="bg-gray-50 p-4 rounded-md space-y-4">
+                    <div className="flex items-start">
+                        <div className="flex items-center h-5">
+                            <input
+                                id="is_public"
+                                type="checkbox"
+                                checked={isPublic}
+                                onChange={(e) => setIsPublic(e.target.checked)}
+                                className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                            />
+                        </div>
+                        <div className="ml-3 text-sm">
+                            <label htmlFor="is_public" className="font-medium text-gray-700">
+                                {t('script.form.publicLabel') || 'Public'}
+                            </label>
+                            <p className="text-gray-500">{t('script.form.publicDescription') || 'Allow anyone to view this script.'}</p>
+                        </div>
                     </div>
-                    <div className="ml-3 text-sm">
-                        <label htmlFor="is_public" className="font-medium text-gray-700">
-                            {t('script.form.publicLabel') || 'Public'}
-                        </label>
-                        <p className="text-gray-500">{t('script.form.publicDescription') || 'Allow members to view even if not authenticated (if enabled globally).'}</p>
-                    </div>
+
+                    {isPublic && (
+                        <div className="pl-7 grid grid-cols-1 gap-4">
+                            <div>
+                                <label htmlFor="publicTerms" className="block text-sm font-medium text-gray-700">
+                                    {t('script.form.usageTerms') || "Usage Terms"}
+                                </label>
+                                <div className="mt-1">
+                                    <textarea
+                                        id="publicTerms"
+                                        rows={3}
+                                        value={publicTerms}
+                                        onChange={(e) => setPublicTerms(e.target.value)}
+                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                        placeholder={t('script.form.usageTermsPlaceholder') || "e.g. Please contact for performance rights."}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="publicContact" className="block text-sm font-medium text-gray-700">
+                                    {t('script.form.contactInfo') || "Contact Info"}
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="text"
+                                        id="publicContact"
+                                        value={publicContact}
+                                        onChange={(e) => setPublicContact(e.target.value)}
+                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                        placeholder={t('script.form.contactPlaceholder') || "e.g. email@example.com"}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex justify-end space-x-3">

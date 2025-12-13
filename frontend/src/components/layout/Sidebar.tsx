@@ -36,6 +36,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const commonLinks = [
         { to: '/', icon: LayoutGrid, label: t('nav.dashboard') },
         { to: '/my-schedule', icon: Calendar, label: t('nav.mySchedule') },
+        { to: '/public-scripts', icon: FileText, label: t('nav.publicScripts') || "Public Scripts" },
     ];
 
     // プロジェクト内メニュー

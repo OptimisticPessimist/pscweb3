@@ -10,7 +10,17 @@
         "schedule": "일정",
         "attendance": "출석",
         "settings": "설정",
-        "manual": "매뉴얼"
+        "manual": "매뉴얼",
+        "publicScripts": "공개 대본"
+    },
+    "publicScript": {
+        "title": "공개 대본",
+        "description": "커뮤니티에서 공유된 대본을 탐색합니다.",
+        "noScripts": "공개 대본을 찾을 수 없습니다",
+        "usageInfo": "사용 정보",
+        "terms": "사용 조건",
+        "contact": "연락처",
+        "previewOnly": "미리보기 모드"
     },
     "common": {
         "save": "저장",
@@ -196,6 +206,10 @@
             "fileType": ".fountain 파일만",
             "publicLabel": "공개",
             "publicDescription": "인증되지 않은 멤버도 볼 수 있도록 허용합니다 (전역 설정에서 활성화된 경우).",
+            "usageTerms": "사용 조건",
+            "usageTermsPlaceholder": "예: 공연 시 연락 바랍니다.",
+            "contactInfo": "연락처 정보",
+            "contactPlaceholder": "예: email@example.com",
             "authorLabel": "작가",
             "authorPlaceholder": "예: 윌리엄 셰익스피어"
         }

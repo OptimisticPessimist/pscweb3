@@ -10,7 +10,17 @@
         "schedule": "スケジュール",
         "attendance": "出欠",
         "settings": "設定",
-        "manual": "マニュアル"
+        "manual": "マニュアル",
+        "publicScripts": "公開脚本"
+    },
+    "publicScript": {
+        "title": "公開脚本",
+        "description": "コミュニティによって共有された脚本を探索。",
+        "noScripts": "公開脚本が見つかりません",
+        "usageInfo": "利用情報",
+        "terms": "使用条件",
+        "contact": "連絡先",
+        "previewOnly": "プレビューモード"
     },
     "common": {
         "save": "保存",
@@ -234,6 +244,10 @@
             "fileType": ".fountainファイルのみ",
             "publicLabel": "公開",
             "publicDescription": "認証されていないメンバーでも閲覧できるようにします（グローバル設定で有効な場合）。",
+            "usageTerms": "使用条件",
+            "usageTermsPlaceholder": "例: 上演の際はご連絡ください。",
+            "contactInfo": "連絡先情報",
+            "contactPlaceholder": "例: email@example.com",
             "authorLabel": "著者",
             "authorPlaceholder": "例: ウィリアム・シェイクスピア"
         },

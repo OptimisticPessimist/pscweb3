@@ -10,7 +10,17 @@
         "schedule": "Schedule",
         "attendance": "Attendance",
         "settings": "Settings",
-        "manual": "Manual"
+        "manual": "Manual",
+        "publicScripts": "Public Scripts"
+    },
+    "publicScript": {
+        "title": "Public Scripts",
+        "description": "Explore scripts shared by the community.",
+        "noScripts": "No public scripts found",
+        "usageInfo": "Usage Information",
+        "terms": "Terms",
+        "contact": "Contact",
+        "previewOnly": "Preview Mode"
     },
     "common": {
         "save": "Save",
@@ -206,6 +216,10 @@
             "fileType": ".fountain files only",
             "publicLabel": "Public",
             "publicDescription": "Allow members to view even if not authenticated (if enabled globally).",
+            "usageTerms": "Usage Terms",
+            "usageTermsPlaceholder": "e.g. Please contact for performance rights.",
+            "contactInfo": "Contact Info",
+            "contactPlaceholder": "e.g. email@example.com",
             "authorLabel": "Author",
             "authorPlaceholder": "e.g. William Shakespeare"
         },

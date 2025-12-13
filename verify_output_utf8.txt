@@ -1,0 +1,29 @@
+STDOUT:
+--- Elements ---
+[Scene Heading] '.1 冒頭のシーン'
+[Empty Line] ''
+[Character] '@ピーター'
+[Dialogue] 'ピザが好きなんです。'
+[Empty Line] ''
+[Character] '@花子 (ハナコ)'
+[Dialogue] '私も好きです。'
+[Empty Line] ''
+[Section Heading] '# 第一幕'
+[Empty Line] ''
+[Section Heading] '## シーン2（セクション見出し）'
+[Empty Line] ''
+[Action] 'ただのアクション行（ト書き）。'
+[Empty Line] ''
+[Action] '（空白インデントによるト書き？）'
+[Empty Line] ''
+[Action] '@ピーター 一行で書くセリフ（許容される？）'
+One-line dialogue parsed as: Action
+[Empty Line] ''
+[Action] '!\u3000\u3000強制アクションインデント'
+--- Verification Results ---
+Dot Scene (.1 ...): OK
+At Character (@...): OK
+Section/Scene (## ...): OK
+ALL PASS
+
+STDERR:

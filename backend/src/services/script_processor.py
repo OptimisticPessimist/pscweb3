@@ -78,6 +78,8 @@ async def get_or_create_script(
     fountain_text: str,
     is_public: bool,
     db: AsyncSession,
+    public_terms: str | None = None,
+    public_contact: str | None = None,
 ) -> tuple[Script, bool]:
     """既存スクリプトを取得、または新規作成.
     
@@ -89,6 +91,8 @@ async def get_or_create_script(
         fountain_text: Fountainテキスト
         is_public: 公開フラグ
         db: データベースセッション
+        public_terms: 使用条件
+        public_contact: 連絡先
     
     Returns:
         tuple[Script, bool]: (スクリプト, 更新フラグ)
@@ -116,6 +120,8 @@ async def get_or_create_script(
         script.uploaded_by = user_id
         script.uploaded_at = datetime.now(timezone.utc)
         script.is_public = is_public
+        script.public_terms = public_terms
+        script.public_contact = public_contact
         script.revision += 1
     else:
         # 新規作成
@@ -126,6 +132,8 @@ async def get_or_create_script(
             author=author,
             content=fountain_text,
             is_public=is_public,
+            public_terms=public_terms,
+            public_contact=public_contact,
         )
         db.add(script)
         await db.flush()
@@ -271,6 +279,8 @@ async def process_script_upload(
     fountain_text: str,
     is_public: bool,
     db: AsyncSession,
+    public_terms: str | None = None,
+    public_contact: str | None = None,
 ) -> tuple[Script, bool]:
     """スクリプトアップロード処理のメインロジック.
     
@@ -282,13 +292,29 @@ async def process_script_upload(
         fountain_text: Fountainテキスト
         is_public: 公開フラグ
         db: データベースセッション
+        public_terms: 使用条件
+        public_contact: 連絡先
     
     Returns:
         tuple[Script, bool]: (処理済みスクリプト, 更新フラグ)
     """
+    from src.services.project_limit import check_project_limit
+    
+    # プロジェクト数制限チェック (Loophole Prevention)
+    # 脚本の公開/非公開設定によって、プロジェクトが「非公開」としてカウントされるかどうかが変わる
+    # 既存プロジェクトのため、自分自身を除外して再計算する
+    # ※ 現在は1プロジェクト1脚本制であるため、この脚本設定がプロジェクト全体の属性になる
+    await check_project_limit(
+        user_id=user_id,
+        db=db,
+        project_id_to_exclude=project_id,
+        new_project_is_public=is_public
+    )
+
     # スクリプトの取得または作成
     script, is_update = await get_or_create_script(
-        project_id, user_id, title, author, fountain_text, is_public, db
+        project_id, user_id, title, author, fountain_text, is_public, db,
+        public_terms=public_terms, public_contact=public_contact
     )
     
     # 更新の場合は関連データを削除
