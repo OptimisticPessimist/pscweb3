@@ -168,12 +168,24 @@ async def parse_fountain_and_create_models(
         # Act検出
         # 1. Section Heading level 1 (starts with #, not ##)
         # 2. Forced Scene Heading level 1 (starts with .1)
+        
+        # NOTE: 本来Fountainでは # はSection Heading (Act相当) だが、
+        # ユーザーが "# シーン1" のように書くケース救済のため、キーワードが含まれる場合はシーンとして扱う
+        SCENE_KEYWORDS = ["Scene", "scene", "シーン", "씬", "场", "場"]
+        has_scene_keyword = any(k in content_stripped for k in SCENE_KEYWORDS)
+        
         is_section_act = (element.element_type == "Section Heading" and 
                           content_stripped.startswith("#") and 
-                          not content_stripped.startswith("##"))
+                          not content_stripped.startswith("##") and
+                          not has_scene_keyword) # キーワードがあればActではない
         
         is_dot_act = (element.element_type == "Scene Heading" and 
                       content_stripped.startswith(".1"))
+        
+        # .1の場合でも、シーンキーワードが含まれていれば幕としては扱わない（シーンとして扱い、Actカウンタを上げないため）
+        # ただし、.1 はもともと Scene Heading なので、ここでの除外は Act としての扱いを除外する意味になる。
+        if is_dot_act and has_scene_keyword:
+            is_dot_act = False
                       
         if is_section_act or is_dot_act:
              # Level 1 Heading detected (Act)
@@ -200,15 +212,19 @@ async def parse_fountain_and_create_models(
         # 1. Standard Scene Heading (INT./EXT. etc or Forced . but NOT .1)
         # 2. Section Heading level 2 (starts with ##)
         # 3. Forced Scene Heading level 2 (starts with .2)
+        # 4. Level 1 with scene keyword (# Scene...) [NEW]
         
         is_scene_heading_type = element.element_type == "Scene Heading"
         
         # .1 は上でActとして処理済み。それ以外のScene Headingはシーン
         # つまり、通常のINT.や、.2 (Level 2), . (Forced) はシーン
-        is_valid_scene_heading = is_scene_heading_type and not content_stripped.startswith(".1")
+        # ただし、.1 でもキーワードがあればシーンとして扱う (is_dot_actがFalseになっているはず)
+        is_valid_scene_heading = (is_scene_heading_type and 
+                                  (not content_stripped.startswith(".1") or has_scene_keyword))
         
         is_section_scene = (element.element_type == "Section Heading" and 
-                            content_stripped.startswith("##"))
+                            (content_stripped.startswith("##") or
+                             (content_stripped.startswith("#") and has_scene_keyword)))
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
