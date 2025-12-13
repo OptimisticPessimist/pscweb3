@@ -42,6 +42,11 @@ async def check_project_limit(
     
     current_private_count = len(private_projects)
     
+    # Debug logging
+    print(f"DEBUG: check_project_limit user={user_id}")
+    print(f"DEBUG: Existing private projects: {[p.id for p in private_projects]}")
+    print(f"DEBUG: Count={current_private_count}, NewIsPublic={new_project_is_public}")
+
     # 更新対象のプロジェクトが現在非公開なら、一旦カウントから外す
     if project_id_to_exclude:
         for p in private_projects:
@@ -53,6 +58,8 @@ async def check_project_limit(
     # new_project_is_public=False (非公開) の場合、カウント+1
     if not new_project_is_public:
         current_private_count += 1
+    
+    print(f"DEBUG: Final Count={current_private_count} (Limit: 2)")
         
     if current_private_count > 2:
         raise HTTPException(
