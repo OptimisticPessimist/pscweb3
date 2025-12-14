@@ -109,14 +109,18 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
                                         {copied ? t('invitation.panel.copied') : t('invitation.panel.copy')}
                                     </button>
                                 </div>
-                                <p className="mt-2 text-xs text-gray-500">
-                                    {t('invitation.expiresAt')}: {new Date(invitation.expires_at).toLocaleString()}
+                                {t('invitation.expiresAt')}: {new Date(invitation.expires_at).toLocaleString()}
+                            </p>
+                            {invitation.max_uses && (
+                                <p className="mt-1 text-xs text-gray-500">
+                                    {t('invitation.uses')}: {invitation.used_count} / {invitation.max_uses}
                                 </p>
-                            </div>
+                            )}
                         </div>
                     </div>
+                    </div>
                 )}
-            </div>
         </div>
+        </div >
     );
 };
