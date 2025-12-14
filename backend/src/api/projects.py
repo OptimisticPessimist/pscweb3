@@ -55,8 +55,10 @@ async def create_project(
 
     from src.services.project_limit import check_project_limit
 
-    # プロジェクト作成数制限チェック
-    # 公開脚本を含むプロジェクトは除外、非公開プロジェクトは上限2つ
+    # 公開脚本からのインポート時は、強制的に非公開にする（帰属保護のため）
+    if project_data.source_public_script_id:
+        project_data.is_public = False
+
     # プロジェクト作成数制限チェック
     # 公開脚本を含むプロジェクトは除外、非公開プロジェクトは上限2つ
     await check_project_limit(current_user.id, db, new_project_is_public=project_data.is_public)
@@ -90,7 +92,7 @@ async def create_project(
     # 公開脚本からのインポート処理
     if project_data.source_public_script_id:
         from src.db.models import Script
-        from src.services.script_processor import ScriptProcessor
+        from src.services.script_processor import parse_and_save_fountain
 
         # 公開脚本を取得
         source_script_res = await db.execute(
@@ -116,10 +118,8 @@ async def create_project(
             audit.details += f" Imported from public script '{source_script.title}'."
             
             # ScriptProcessorで解析を実行（バックグラウンドではなく、同期的に実行して結果を反映させる）
-            # 新規プロジェクトなのでコンフリクトの心配はない
-            processor = ScriptProcessor(db)
             try:
-                await processor.process_script(new_script.id)
+                await parse_and_save_fountain(new_script, new_script.content, db)
             except Exception as e:
                 logger.error(f"Failed to process imported script: {e}")
                 # 失敗してもプロジェクト作成は成功とする（後でリトライ可能）

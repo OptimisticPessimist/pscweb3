@@ -114,7 +114,8 @@
         "failedToDeleteProject": "プロジェクトの削除に失敗しました",
         "projectLimit": "作成できるプロジェクトは2つまでです",
         "isPublic": "公開プロジェクトにする",
-        "importedFromPublicScript": "公開脚本からインポート"
+        "importedFromPublicScript": "公開脚本からインポート",
+        "importRestrictionPublic": "帰属保護のため、インポートされた脚本は公開できません。"
     },
     "project": {
         "title": "プロジェクト",

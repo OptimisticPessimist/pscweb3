@@ -279,12 +279,20 @@ export const DashboardPage = () => {
                                                         id="is_public"
                                                         type="checkbox"
                                                         {...register('is_public')}
-                                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                                        disabled={importScriptId !== null}
+                                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded disabled:opacity-50"
                                                     />
                                                 </div>
                                                 <div className="ml-3 text-sm">
-                                                    <label htmlFor="is_public" className="font-medium text-gray-700">{t('dashboard.isPublic')}</label>
-                                                    <p className="text-gray-500">{t('script.form.publicDescription')}</p>
+                                                    <label htmlFor="is_public" className={`font-medium text-gray-700 ${importScriptId ? 'opacity-50' : ''}`}>
+                                                        {t('dashboard.isPublic')}
+                                                    </label>
+                                                    <p className="text-gray-500">
+                                                        {importScriptId
+                                                            ? t('dashboard.importRestrictionPublic') || "Imported scripts cannot be made public to preserve attribution."
+                                                            : t('script.form.publicDescription')
+                                                        }
+                                                    </p>
                                                     {isProjectLimitReached && (
                                                         <p className="text-red-500 mt-1">{t('dashboard.projectLimit')}</p>
                                                     )}

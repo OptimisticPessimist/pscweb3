@@ -14,6 +14,21 @@
 - [x] DBスキーマ変更とロジック実装
   - [x] `TheaterProject` モデルに `is_public` 追加
   - [x] マイグレーション実行
+  - [x] Verify Project Deletion Code (Backend & Frontend routes align)
+- [x] Fix 500 Error on key constraint (AttendanceEvent cascade)
+- [x] Verify Frontend Build (fixed unused variable)
+- [x] Push to main
+- [x] User Deployment & Verification
+- [x] Public Script Enhancements <!-- id: 3 -->
+  - [x] Frontend Layout: Wrap public routes in AppLayout
+  - [x] Backend: Add `source_public_script_id` to `ProjectCreate`
+  - [x] Backend: Logic to copy script in `create_project`
+  - [x] Frontend: Update `DashboardPage.tsx` to handle import state
+  - [x] Frontend: Add "Create Project" button on Public Script detail
+- [x] Restriction: Prevent imported scripts from being made public <!-- id: 4 -->
+  - [x] Frontend: Disable is_public checkbox when importing
+  - [x] Backend: Force is_public=False when source_script is present
+- [x] Fix 500 Error: Backend import error (ScriptProcessor not found) <!-- id: 5 -->
   - [x] `project_limit.py` 更新
   - [x] `script_processor.py` (同期ロジック) 更新
   - [x] `api/projects.py` 更新
