@@ -57,12 +57,15 @@ async def create_project(
 
     # プロジェクト作成数制限チェック
     # 公開脚本を含むプロジェクトは除外、非公開プロジェクトは上限2つ
-    await check_project_limit(current_user.id, db, new_project_is_public=False)
+    # プロジェクト作成数制限チェック
+    # 公開脚本を含むプロジェクトは除外、非公開プロジェクトは上限2つ
+    await check_project_limit(current_user.id, db, new_project_is_public=project_data.is_public)
 
     # プロジェクトを作成
     project = TheaterProject(
         name=project_data.name,
         description=project_data.description,
+        is_public=project_data.is_public,
     )
     db.add(project)
     await db.flush()
@@ -243,19 +246,7 @@ async def update_project(
     return _build_project_response(project, current_member.role)
 
 
-@router.delete("/{project_id}", status_code=204)
-async def delete_project(
-    project_id: UUID,
-    current_member: ProjectMember = Depends(get_project_owner_dep),
-    db: AsyncSession = Depends(get_db),
-):
-    """プロジェクトを削除する (オーナーのみ)."""
-    project = await db.get(TheaterProject, project_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
-        
-    await db.delete(project)
-    await db.commit()
+
 
 
 

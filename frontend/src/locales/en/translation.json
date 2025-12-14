@@ -107,7 +107,8 @@
         "create": "Create",
         "deleting": "Deleting...",
         "failedToDeleteProject": "Failed to delete project",
-        "projectLimit": "You can only create up to 2 projects."
+        "projectLimit": "You can create up to 2 projects",
+        "isPublic": "Make Public Project"
     },
     "project": {
         "title": "Project",

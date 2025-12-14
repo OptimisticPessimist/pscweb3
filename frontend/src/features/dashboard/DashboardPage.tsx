@@ -23,7 +23,7 @@ export const DashboardPage = () => {
     const [createError, setCreateError] = useState<string | null>(null);
 
     const createProjectMutation = useMutation({
-        mutationFn: (data: { name: string; description: string }) => {
+        mutationFn: (data: { name: string; description: string; is_public?: boolean }) => {
             console.log("MutationFn called with:", data);
             return dashboardApi.createProject(data);
         },
@@ -56,9 +56,13 @@ export const DashboardPage = () => {
         }
     });
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<{ name: string; description: string }>();
+    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<{ name: string; description: string; is_public: boolean }>();
 
-    const onSubmit = (data: { name: string; description: string }) => {
+    const onSubmit = (data: { name: string; description: string; is_public: boolean }) => {
+        if (isProjectLimitReached && !data.is_public) {
+            setCreateError(t('dashboard.projectLimit'));
+            return;
+        }
         setCreateError(null);
         createProjectMutation.mutate(data);
     };
@@ -179,17 +183,10 @@ export const DashboardPage = () => {
                     <div className="mt-6">
                         <button
                             onClick={() => {
-                                if (!isProjectLimitReached) {
-                                    setIsModalOpen(true);
-                                    setCreateError(null);
-                                }
+                                setIsModalOpen(true);
+                                setCreateError(null);
                             }}
-                            disabled={isProjectLimitReached}
-                            title={projectLimitMessage}
-                            className={`inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${isProjectLimitReached
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-indigo-600 hover:bg-indigo-700'
-                                }`}
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                         >
                             {t('dashboard.createNewProject')}
                         </button>
@@ -240,6 +237,23 @@ export const DashboardPage = () => {
                                                     {...register('description')}
                                                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                                 />
+                                            </div>
+                                            <div className="flex items-start">
+                                                <div className="flex items-center h-5">
+                                                    <input
+                                                        id="is_public"
+                                                        type="checkbox"
+                                                        {...register('is_public')}
+                                                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                                                    />
+                                                </div>
+                                                <div className="ml-3 text-sm">
+                                                    <label htmlFor="is_public" className="font-medium text-gray-700">{t('dashboard.isPublic')}</label>
+                                                    <p className="text-gray-500">{t('script.form.publicDescription')}</p>
+                                                    {isProjectLimitReached && (
+                                                        <p className="text-red-500 mt-1">{t('dashboard.projectLimit')}</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">

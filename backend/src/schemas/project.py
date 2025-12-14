@@ -9,6 +9,7 @@ class ProjectCreate(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=200, description="プロジェクト名")
     description: str | None = Field(None, description="説明")
+    is_public: bool = Field(False, description="公開プロジェクトかどうか")
 
 
 class ProjectUpdate(BaseModel):

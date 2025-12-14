@@ -13,9 +13,15 @@
 - `backend/src/services/script_processor.py` を修正。
 - 脚本アップロード時に `TheaterProject.is_public` を更新するロジックを、ORMを使用した明示的な更新処理 (`project.is_public = is_public; db.add(project)`) に変更し、確実にDBへ反映されるようにしました。
 
-### 3. [UI改善] 脚本アップロード画面の初期値設定
-- `frontend/src/features/scripts/pages/ScriptUploadPage.tsx` を修正。
-- 画面を開いた際、既存のプロジェクト/脚本設定を取得し、**「全体公開」チェックボックス等の状態を自動的に反映**するようにしました。
+### Script Upload Page UI Fix
+- `ScriptUploadPage.tsx` で初期値が空になる問題（トグルがfalseになる）を修正しました。
+- `useEffect` を追加し、既存のプロジェクト/脚本設定（公開設定、利用規約、連絡先）を取得してフォームに初期セットするようにしました。
+
+### Project Creation & Deletion Fixes
+- **Deletion**: 以前不足していた `DELETE /api/projects/{id}` エンドポイントを実装し、Frontendからの削除リクエストが正常に処理されるようにしました。
+- **Creation Limit**: ユーザーが既に非公開プロジェクトを2つ持っている場合でも、新規プロジェクト作成時に「公開プロジェクト」として作成できるようにしました。
+    - Dashboardの「新規プロジェクト作成」モーダルに「公開プロジェクトにする」チェックボックスを追加しました。
+    - 非公開プロジェクトの上限に達している場合は、警告を表示し、強制的に公開プロジェクトとして作成するように案内（または制御）しました。
 - これにより、再アップロード時に意図せず「非公開」に戻してしまい、プロジェクト数制限に引っかかる事故を防止します。
 
 ## 確認方法
