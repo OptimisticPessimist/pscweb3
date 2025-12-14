@@ -56,7 +56,7 @@ export const DashboardPage = () => {
         }
     });
 
-    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<{ name: string; description: string; is_public: boolean }>();
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<{ name: string; description: string; is_public: boolean }>();
 
     const onSubmit = (data: { name: string; description: string; is_public: boolean }) => {
         if (isProjectLimitReached && !data.is_public) {
