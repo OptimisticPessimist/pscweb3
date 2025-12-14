@@ -8,6 +8,19 @@ from src.services.attendance_tasks import check_deadlines
 # This allows Azure Functions to handle HTTP requests using the FastAPI app
 app = func.AsgiFunctionApp(app=fastapi_app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
+@app.route(route="debug", auth_level=func.AuthLevel.ANONYMOUS)
+async def debug_endpoint(req: func.HttpRequest) -> func.HttpResponse:
+    import json
+    return func.HttpResponse(
+        json.dumps({
+            "status": "ok", 
+            "message": "Function App is running",
+            "url": req.url,
+            "params": dict(req.params)
+        }), 
+        mimetype="application/json"
+    )
+
 # Timer Trigger: Runs every 30 minutes
 # Schedule: "0 */30 * * * *" means every 30 minutes at 00, 30 seconds? No, standard cron is min hour day month year
 # Azure cron: {second} {minute} {hour} {day} {month} {day-of-week}
