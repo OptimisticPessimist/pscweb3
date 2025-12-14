@@ -528,23 +528,36 @@ async def add_rehearsal(
     members = member_result.scalars().all()
     display_name_map = {m.user_id: m.display_name for m in members}
 
-    participants_response = [
-        RehearsalParticipantResponse(
-            user_id=p.user_id,
-            user_name=p.user.discord_username,
-            display_name=display_name_map.get(p.user_id),
-            staff_role=p.staff_role
-        ) for p in rehearsal.participants
-    ]
-    casts_response = [
-        RehearsalCastResponse(
-            character_id=c.character_id,
-            character_name=c.character.name,
-            user_id=c.user_id,
-            user_name=c.user.discord_username,
-            display_name=display_name_map.get(c.user_id),
-        ) for c in rehearsal.casts
-    ]
+    participants_response = []
+    for p in rehearsal.participants:
+        user_name = "Unknown"
+        if p.user:
+            user_name = p.user.discord_username
+        
+        participants_response.append(
+            RehearsalParticipantResponse(
+                user_id=p.user_id,
+                user_name=user_name,
+                display_name=display_name_map.get(p.user_id),
+                staff_role=p.staff_role
+            )
+        )
+
+    casts_response = []
+    for c in rehearsal.casts:
+        user_name = "Unknown"
+        if c.user:
+            user_name = c.user.discord_username
+
+        casts_response.append(
+            RehearsalCastResponse(
+                character_id=c.character_id,
+                character_name=c.character.name,
+                user_id=c.user_id,
+                user_name=user_name,
+                display_name=display_name_map.get(c.user_id),
+            )
+        )
 
     # Webhook通知（既存機能の維持）
     project = await db.get(TheaterProject, schedule.project_id)
@@ -758,12 +771,17 @@ async def update_rehearsal(
     display_name_map = {m.user_id: m.display_name for m in members}
 
     # Explicit casts
+    # Explicit casts
     for rc in rehearsal.casts:
+        user_name = "Unknown"
+        if rc.user:
+            user_name = rc.user.discord_username
+
         casts_response_list.append(RehearsalCastResponse(
             character_id=rc.character_id,
             character_name=rc.character.name,
             user_id=rc.user_id,
-            user_name=rc.user.discord_username,
+            user_name=user_name,
             display_name=display_name_map.get(rc.user_id)
         ))
 
@@ -797,10 +815,18 @@ async def update_rehearsal(
                         casts_response_list.append(RehearsalCastResponse(
                             character_id=char.id,
                             character_name=char.name,
-                            user_id=casting.user_id,
-                            user_name=casting.user.discord_username,
-                            display_name=display_name_map.get(casting.user_id)
-                        ))
+                        for casting in char.castings:
+                            cast_user_name = "Unknown"
+                            if casting.user:
+                                cast_user_name = casting.user.discord_username
+                            
+                            casts_response_list.append(RehearsalCastResponse(
+                                character_id=char.id,
+                                character_name=char.name,
+                                user_id=casting.user_id,
+                                user_name=cast_user_name,
+                                display_name=display_name_map.get(casting.user_id)
+                            ))
 
     return RehearsalResponse(
         id=rehearsal.id,
@@ -814,7 +840,7 @@ async def update_rehearsal(
         participants=[
             RehearsalParticipantResponse(
                 user_id=p.user_id,
-                user_name=p.user.discord_username,
+                user_name=p.user.discord_username if p.user else "Unknown",
                 display_name=display_name_map.get(p.user_id),
                 staff_role=p.staff_role
             ) for p in rehearsal.participants
