@@ -15,6 +15,7 @@
     },
     "publicScript": {
         "title": "公開脚本",
+        "createProject": "この脚本でプロジェクトを作成",
         "description": "コミュニティによって共有された脚本を探索。",
         "noScripts": "公開脚本が見つかりません",
         "usageInfo": "利用情報",
@@ -111,9 +112,9 @@
         "create": "作成",
         "deleting": "削除中...",
         "failedToDeleteProject": "プロジェクトの削除に失敗しました",
-        "failedToDeleteProject": "プロジェクトの削除に失敗しました",
         "projectLimit": "作成できるプロジェクトは2つまでです",
-        "isPublic": "公開プロジェクトにする"
+        "isPublic": "公開プロジェクトにする",
+        "importedFromPublicScript": "公開脚本からインポート"
     },
     "project": {
         "title": "プロジェクト",

@@ -87,6 +87,45 @@ async def create_project(
     )
     db.add(audit)
 
+    # 公開脚本からのインポート処理
+    if project_data.source_public_script_id:
+        from src.db.models import Script
+        from src.services.script_processor import ScriptProcessor
+
+        # 公開脚本を取得
+        source_script_res = await db.execute(
+            select(Script).where(Script.id == project_data.source_public_script_id, Script.is_public == True)
+        )
+        source_script = source_script_res.scalar_one_or_none()
+
+        if source_script:
+            # 脚本をコピーして新規作成
+            new_script = Script(
+                project_id=project.id,
+                uploaded_by=current_user.id,
+                title=source_script.title,
+                content=source_script.content,
+                is_public=False, # コピーしたものは一旦非公開
+                revision=1,
+                author=source_script.author
+            )
+            db.add(new_script)
+            await db.flush()
+
+            # 監査ログ詳細更新
+            audit.details += f" Imported from public script '{source_script.title}'."
+            
+            # ScriptProcessorで解析を実行（バックグラウンドではなく、同期的に実行して結果を反映させる）
+            # 新規プロジェクトなのでコンフリクトの心配はない
+            processor = ScriptProcessor(db)
+            try:
+                await processor.process_script(new_script.id)
+            except Exception as e:
+                logger.error(f"Failed to process imported script: {e}")
+                # 失敗してもプロジェクト作成は成功とする（後でリトライ可能）
+        else:
+            logger.warning(f"Source public script not found: {project_data.source_public_script_id}")
+
     await db.commit()
     await db.refresh(project)
 

@@ -10,6 +10,7 @@ class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="プロジェクト名")
     description: str | None = Field(None, description="説明")
     is_public: bool = Field(False, description="公開プロジェクトかどうか")
+    source_public_script_id: UUID | None = Field(None, description="コピー元の公開脚本ID")
 
 
 class ProjectUpdate(BaseModel):

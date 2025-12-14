@@ -49,7 +49,7 @@ export const dashboardApi = {
         return response.data;
     },
 
-    createProject: async (data: { name: string; description?: string; is_public?: boolean }): Promise<Project> => {
+    createProject: async (data: { name: string; description?: string; is_public?: boolean; source_public_script_id?: string }): Promise<Project> => {
         const response = await apiClient.post<Project>('/projects/', data);
         return response.data;
     },

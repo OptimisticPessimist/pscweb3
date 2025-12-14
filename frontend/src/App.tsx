@@ -47,12 +47,17 @@ function App() {
           <Suspense fallback={<Loading />}>
             <Routes>
               {/* Public Routes */}
+              {/* Public Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/invitations/:token" element={<InvitationLandingPage />} />
-              <Route path="/public-scripts" element={<PublicScriptsPage />} />
-              <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
-              <Route path="/manual" element={<ManualPage />} />
+
+              {/* Public Routes with Layout */}
+              <Route element={<AppLayout />}>
+                <Route path="/public-scripts" element={<PublicScriptsPage />} />
+                <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
+                <Route path="/manual" element={<ManualPage />} />
+              </Route>
 
               {/* Protected Routes */}
               <Route element={<ProtectedLayout />}>

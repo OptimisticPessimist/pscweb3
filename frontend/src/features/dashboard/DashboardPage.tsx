@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dashboardApi } from './api/dashboard';
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -22,10 +22,28 @@ export const DashboardPage = () => {
 
     const [createError, setCreateError] = useState<string | null>(null);
 
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [importScriptId, setImportScriptId] = useState<string | null>(null);
+
+    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<{ name: string; description: string; is_public: boolean }>();
+
+    useEffect(() => {
+        if (location.state?.importScriptId) {
+            setImportScriptId(location.state.importScriptId);
+            setIsModalOpen(true);
+            setValue('name', `Project from ${location.state.importScriptTitle || 'Script'}`);
+            setValue('description', t('dashboard.importedFromPublicScript'));
+        }
+    }, [location.state, setValue, t]);
+
     const createProjectMutation = useMutation({
         mutationFn: (data: { name: string; description: string; is_public?: boolean }) => {
             console.log("MutationFn called with:", data);
-            return dashboardApi.createProject(data);
+            return dashboardApi.createProject({
+                ...data,
+                source_public_script_id: importScriptId || undefined
+            });
         },
         onMutate: () => console.log("onMutate fired"),
         onSuccess: (data) => {
@@ -34,6 +52,9 @@ export const DashboardPage = () => {
             setIsModalOpen(false);
             reset(); // Form reset
             setCreateError(null);
+            setImportScriptId(null);
+            // Clear location state
+            navigate(location.pathname, { replace: true, state: {} });
         },
         onError: (error) => {
             console.error("onError fired:", error);
@@ -56,13 +77,27 @@ export const DashboardPage = () => {
         }
     });
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<{ name: string; description: string; is_public: boolean }>();
-
     const onSubmit = (data: { name: string; description: string; is_public: boolean }) => {
+        // インポート時は制限チェックをスキップするか、is_publicとみなすか？
+        // インポートされたプロジェクトはbackendで is_public=False (private) として作られるが、
+        // ユーザーが is_public=True を選択することも可能。
+        // ここでは通常通りチェックする。
+        if (isProjectLimitReached && !data.is_public && !importScriptId) {
+            // importScriptIdがある場合、backend側でどう扱うか？
+            // Backend実装では new_script.is_public=False. 
+            // もしPrivateプロジェクトの制限に引っかかるならエラーにすべき。
+            // ただし、もしユーザーが「公開プロジェクト」として作成するならOK。
+            setCreateError(t('dashboard.projectLimit'));
+            return;
+        }
+
+        // Import時はPrivateで作られるため、制限チェックが必要。
+        // is_publicチェックボックスの値に従う。
         if (isProjectLimitReached && !data.is_public) {
             setCreateError(t('dashboard.projectLimit'));
             return;
         }
+
         setCreateError(null);
         createProjectMutation.mutate(data);
     };

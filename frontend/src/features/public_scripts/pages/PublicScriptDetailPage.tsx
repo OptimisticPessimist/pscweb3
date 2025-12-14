@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { publicScriptsApi } from '../api/publicScripts';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, Info, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const PublicScriptDetailPage: React.FC = () => {
     const { t, i18n } = useTranslation();
     const { scriptId } = useParams<{ scriptId: string }>();
+    const navigate = useNavigate();
 
     const { data: script, isLoading, error } = useQuery({
         queryKey: ['publicScript', scriptId],
@@ -18,6 +19,15 @@ export const PublicScriptDetailPage: React.FC = () => {
 
     if (isLoading) return <div className="p-6">{t('common.loading')}</div>;
     if (error || !script) return <div className="p-6">{t('script.notFound')}</div>;
+
+    const handleCreateProject = () => {
+        navigate('/dashboard', {
+            state: {
+                importScriptId: script.id,
+                importScriptTitle: script.title
+            }
+        });
+    };
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -37,6 +47,15 @@ export const PublicScriptDetailPage: React.FC = () => {
                             </p>
                         </div>
                     </div>
+                </div>
+                <div className="mt-4 flex md:mt-0 md:ml-4">
+                    <button
+                        onClick={handleCreateProject}
+                        className="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                        {t('publicScript.createProject') || "Create Project"}
+                    </button>
                 </div>
             </div>
 
