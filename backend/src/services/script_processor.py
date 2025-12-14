@@ -62,6 +62,11 @@ async def validate_upload_request(
             status_code=403, detail="このプロジェクトへのアクセス権がありません"
         )
     
+    if member.role not in ["owner", "editor"]:
+        raise HTTPException(
+            status_code=403, detail="権限がありません（閲覧者はアップロードできません）"
+        )
+    
     # ファイル拡張子チェック
     if not filename.endswith(".fountain"):
         raise HTTPException(

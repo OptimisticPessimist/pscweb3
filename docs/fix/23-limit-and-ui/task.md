@@ -31,6 +31,7 @@
 - [x] Fix 500 Error: Backend import error (ScriptProcessor not found) <!-- id: 5 -->
 - [x] Fix Missing Public Badge: Include `is_public` in `list_projects` response <!-- id: 6 -->
 - [x] UI Improvement: Display Invitation Usage Count <!-- id: 7 -->
+- [x] Fix Permission: Restrict Script Upload to Owner/Editor (Block Viewer) <!-- id: 8 -->
   - [x] `project_limit.py` 更新
   - [x] `script_processor.py` (同期ロジック) 更新
   - [x] `api/projects.py` 更新
