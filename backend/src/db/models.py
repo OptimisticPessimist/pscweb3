@@ -100,6 +100,9 @@ class TheaterProject(Base):
     milestones: Mapped[list["Milestone"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
+    attendance_events: Mapped[list["AttendanceEvent"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
     
     # AuditLog has project_id but we don't strictly enforce cascade via relationship there 
     # unless we add back_populates. For now relying on DB Foreign Key or manual cleanup if needed,
@@ -457,7 +460,7 @@ class AttendanceEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション
-    project: Mapped["TheaterProject"] = relationship()
+    project: Mapped["TheaterProject"] = relationship(back_populates="attendance_events")
     targets: Mapped[list["AttendanceTarget"]] = relationship(
         back_populates="event", cascade="all, delete-orphan"
     )
