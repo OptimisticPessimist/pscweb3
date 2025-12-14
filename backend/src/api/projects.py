@@ -182,6 +182,7 @@ async def list_projects(
             description=project.description,
             discord_webhook_url=project.discord_webhook_url,
             discord_script_webhook_url=project.discord_script_webhook_url,
+            is_public=project.is_public,
             created_at=project.created_at,
             role=role
         ))
