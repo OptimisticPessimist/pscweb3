@@ -44,17 +44,7 @@ except Exception as e:
 
     app = func.AsgiFunctionApp(app=error_app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
-@app.route(route="debug", auth_level=func.AuthLevel.ANONYMOUS)
-async def debug_endpoint(req: func.HttpRequest) -> func.HttpResponse:
-    return func.HttpResponse(
-        json.dumps({
-            "status": "ok", 
-            "message": "Function App is running (debug endpoint)",
-            "url": req.url,
-            "params": dict(req.params) 
-        }), 
-        mimetype="application/json"
-    )
+
 
 # Timer Trigger: Runs every 30 minutes
 @app.schedule(schedule="0 */30 * * * *", arg_name="timer", run_on_startup=False,
