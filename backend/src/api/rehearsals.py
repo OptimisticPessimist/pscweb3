@@ -812,21 +812,17 @@ async def update_rehearsal(
             for char_id, char in unique_characters.items():
                 if char_id not in rehearsal_cast_map:
                     for casting in char.castings:
+                        cast_user_name = "Unknown"
+                        if casting.user:
+                            cast_user_name = casting.user.discord_username
+                        
                         casts_response_list.append(RehearsalCastResponse(
                             character_id=char.id,
                             character_name=char.name,
-                        for casting in char.castings:
-                            cast_user_name = "Unknown"
-                            if casting.user:
-                                cast_user_name = casting.user.discord_username
-                            
-                            casts_response_list.append(RehearsalCastResponse(
-                                character_id=char.id,
-                                character_name=char.name,
-                                user_id=casting.user_id,
-                                user_name=cast_user_name,
-                                display_name=display_name_map.get(casting.user_id)
-                            ))
+                            user_id=casting.user_id,
+                            user_name=cast_user_name,
+                            display_name=display_name_map.get(casting.user_id)
+                        ))
 
     return RehearsalResponse(
         id=rehearsal.id,
