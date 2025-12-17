@@ -1,0 +1,209 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.0.2, pluggy-1.6.0 -- F:\src\PythonProject\pscweb3-1\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\src\PythonProject\pscweb3-1\backend
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.0, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 7 items
+
+backend\tests\unit\test_api_projects.py::test_create_project ERROR       [ 14%]
+backend\tests\unit\test_api_projects.py::test_list_projects ERROR        [ 28%]
+backend\tests\unit\test_api_projects.py::test_get_project ERROR          [ 42%]
+backend\tests\unit\test_api_projects.py::test_update_project ERROR       [ 57%]
+backend\tests\unit\test_api_projects.py::test_delete_project ERROR       [ 71%]
+backend\tests\unit\test_api_projects.py::test_get_project_members ERROR  [ 85%]
+backend\tests\unit\test_api_projects.py::test_unauthorized_access ERROR  [100%]
+
+=================================== ERRORS ====================================
+____________________ ERROR at setup of test_create_project ____________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+____________________ ERROR at setup of test_list_projects _____________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+_____________________ ERROR at setup of test_get_project ______________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+____________________ ERROR at setup of test_update_project ____________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+____________________ ERROR at setup of test_delete_project ____________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+_________________ ERROR at setup of test_get_project_members __________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+_________________ ERROR at setup of test_unauthorized_access __________________
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:458: in setup
+    return super().setup()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:743: in pytest_fixture_setup
+    hook_result = yield
+                  ^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:313: in _asyncgen_fixture_wrapper
+    result = runner.run(setup(), context=context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py:720: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:309: in setup
+    res = await gen_obj.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\conftest.py:92: in client
+    from src.main import app
+backend\src\main.py:15: in <module>
+    from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public
+backend\src\api\interactions.py:6: in <module>
+    from nacl.signing import VerifyKey
+E   ModuleNotFoundError: No module named 'nacl'
+=========================== short test summary info ===========================
+ERROR backend\tests\unit\test_api_projects.py::test_create_project - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_list_projects - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_get_project - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_update_project - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_delete_project - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_get_project_members - ModuleNotFoundError: No module named 'nacl'
+ERROR backend\tests\unit\test_api_projects.py::test_unauthorized_access - ModuleNotFoundError: No module named 'nacl'
+============================== 7 errors in 0.84s ==============================
