@@ -1,30 +1,62 @@
 import logging
 import azure.functions as func
-from src.main import app as fastapi_app
-# attendance_tasks will be implemented shortly
-from src.services.attendance_tasks import check_deadlines
+import json
+import traceback
 
-# Use AsgiFunctionApp to wrap FastAPI
-# This allows Azure Functions to handle HTTP requests using the FastAPI app
-app = func.AsgiFunctionApp(app=fastapi_app, http_auth_level=func.AuthLevel.ANONYMOUS)
+# Try to import dictionary to allow detailed error reporting if imports fail
+try:
+    from src.main import app as fastapi_app
+    from src.services.attendance_tasks import check_deadlines
+    
+    # Use AsgiFunctionApp to wrap FastAPI
+    app = func.AsgiFunctionApp(app=fastapi_app, http_auth_level=func.AuthLevel.ANONYMOUS)
+
+except Exception as e:
+    logging.critical(f"Failed to load application: {e}", exc_info=True)
+    error_detail = f"Application failed to start: {str(e)}\n{traceback.format_exc()}"
+    
+    # Create a dummy ASGI app that returns 500 with the error details
+    async def error_app(scope, receive, send):
+        if scope['type'] == 'http':
+            await send({
+                'type': 'http.response.start',
+                'status': 500,
+                'headers': [
+                    [b'content-type', b'application/json'],
+                ],
+            })
+            await send({
+                'type': 'http.response.body',
+                'body': json.dumps({
+                    "error": "Startup Error", 
+                    "message": "The application failed to initialize.",
+                    "details": error_detail
+                }).encode('utf-8'),
+            })
+        elif scope['type'] == 'lifespan':
+            while True:
+                message = await receive()
+                if message['type'] == 'lifespan.startup':
+                    await send({'type': 'lifespan.startup.complete'})
+                elif message['type'] == 'lifespan.shutdown':
+                    await send({'type': 'lifespan.shutdown.complete'})
+                    return
+
+    app = func.AsgiFunctionApp(app=error_app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="debug", auth_level=func.AuthLevel.ANONYMOUS)
 async def debug_endpoint(req: func.HttpRequest) -> func.HttpResponse:
-    import json
     return func.HttpResponse(
         json.dumps({
             "status": "ok", 
-            "message": "Function App is running",
+            "message": "Function App is running (debug endpoint)",
             "url": req.url,
-            "params": dict(req.params)
+            "params": dict(req.params) 
         }), 
         mimetype="application/json"
     )
 
 # Timer Trigger: Runs every 30 minutes
-# Schedule: "0 */30 * * * *" means every 30 minutes at 00, 30 seconds? No, standard cron is min hour day month year
-# Azure cron: {second} {minute} {hour} {day} {month} {day-of-week}
-# "0 */30 * * * *" -> At second 0, every 30th minute
 @app.schedule(schedule="0 */30 * * * *", arg_name="timer", run_on_startup=False,
               use_monitor=False) 
 async def schedule_attendance_reminder(timer: func.TimerRequest) -> None:
@@ -34,9 +66,12 @@ async def schedule_attendance_reminder(timer: func.TimerRequest) -> None:
     logging.info('Attendance Reminder Timer triggered.')
     
     try:
-        # Execute the reminder logic
-        result = await check_deadlines()
-        logging.info(f'Attendance Reminder Check completed: {result}')
+        # Check if check_deadlines is defined (it might not be if import failed)
+        if 'check_deadlines' in globals():
+            result = await check_deadlines()
+            logging.info(f'Attendance Reminder Check completed: {result}')
+        else:
+             logging.error('check_deadlines function is not available due to startup error.')
     except Exception as e:
         logging.error(f'Error in Attendance Reminder Timer: {e}', exc_info=True)
     
