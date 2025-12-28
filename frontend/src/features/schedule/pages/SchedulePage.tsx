@@ -43,6 +43,12 @@ export const SchedulePage: React.FC = () => {
         enabled: !!projectId,
     });
 
+    const { data: milestones } = useQuery({
+        queryKey: ['milestones', projectId],
+        queryFn: () => projectsApi.getMilestones(projectId!),
+        enabled: !!projectId,
+    });
+
     const createScheduleMutation = useMutation({
         mutationFn: (scriptId: string) => rehearsalsApi.createSchedule(projectId!, scriptId),
         onSuccess: () => {
@@ -50,40 +56,60 @@ export const SchedulePage: React.FC = () => {
         },
     });
 
-    const events = schedule?.rehearsals.map(rehearsal => {
-        const startDate = new Date(rehearsal.date);
-        const endDate = new Date(startDate.getTime() + rehearsal.duration_minutes * 60000);
+    const events = [
+        ...(schedule?.rehearsals.map(rehearsal => {
+            const startDate = new Date(rehearsal.date);
+            const endDate = new Date(startDate.getTime() + rehearsal.duration_minutes * 60000);
 
-        // 月表示で日をまたぐ場合、終了時刻を当日の23:59:59に制限
-        // これにより、月表示では1マスに収まる
-        const isSameDay = startDate.getDate() === endDate.getDate() &&
-            startDate.getMonth() === endDate.getMonth() &&
-            startDate.getFullYear() === endDate.getFullYear();
+            // 月表示で日をまたぐ場合、終了時刻を当日の23:59:59に制限
+            // これにより、月表示では1マスに収まる
+            const isSameDay = startDate.getDate() === endDate.getDate() &&
+                startDate.getMonth() === endDate.getMonth() &&
+                startDate.getFullYear() === endDate.getFullYear();
 
-        const displayEnd = isSameDay ? endDate : new Date(
-            startDate.getFullYear(),
-            startDate.getMonth(),
-            startDate.getDate(),
-            23, 59, 59
-        );
+            const displayEnd = isSameDay ? endDate : new Date(
+                startDate.getFullYear(),
+                startDate.getMonth(),
+                startDate.getDate(),
+                23, 59, 59
+            );
 
-        return {
-            id: rehearsal.id,
-            title: rehearsal.scene_heading
-                ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
-                : `Rehearsal (${rehearsal.location || 'TBD'})`,
-            start: rehearsal.date,
-            end: displayEnd.toISOString(),
-            allDay: false, // 時間イベントとして扱う
-            backgroundColor: '#3b82f6', // blue-500
-            borderColor: '#2563eb', // blue-600
-            extendedProps: {
-                type: 'rehearsal',
-                actualEndDate: endDate.toISOString(), // 実際の終了時刻を保持
-                ...rehearsal
-            }
-        };
-    }) || [];
+            return {
+                id: rehearsal.id,
+                title: rehearsal.scene_heading
+                    ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
+                    : `Rehearsal (${rehearsal.location || 'TBD'})`,
+                start: rehearsal.date,
+                end: displayEnd.toISOString(),
+                allDay: false, // 時間イベントとして扱う
+                backgroundColor: '#3b82f6', // blue-500
+                borderColor: '#2563eb', // blue-600
+                extendedProps: {
+                    type: 'rehearsal',
+                    actualEndDate: endDate.toISOString(), // 実際の終了時刻を保持
+                    ...rehearsal
+                }
+            };
+        }) || []),
+        ...(milestones?.map(milestone => {
+            const startDate = new Date(milestone.start_date);
+            const endDate = milestone.end_date ? new Date(milestone.end_date) : new Date(startDate.getTime() + 2 * 60 * 60000);
+
+            return {
+                id: `milestone-${milestone.id}`,
+                title: `🎭 ${milestone.title}`,
+                start: milestone.start_date,
+                end: endDate.toISOString(),
+                allDay: false,
+                backgroundColor: milestone.color || '#ec4899', // pink-500
+                borderColor: milestone.color || '#db2777', // pink-600
+                extendedProps: {
+                    type: 'milestone',
+                    ...milestone
+                }
+            };
+        }) || [])
+    ];
 
     const handleDateClick = (arg: any) => {
         setSelectedRehearsalId(null);
@@ -92,6 +118,11 @@ export const SchedulePage: React.FC = () => {
     };
 
     const handleEventClick = (info: any) => {
+        // マイルストーンの場合、モーダルを開かない（リードオンリー表示）
+        if (info.event.extendedProps.type === 'milestone') {
+            // TODO: マイルストーン詳細表示（必要なら）
+            return;
+        }
         setSelectedRehearsalId(info.event.id);
         setSelectedDate(null);
         setIsModalOpen(true);
