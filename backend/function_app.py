@@ -2,7 +2,7 @@ import logging
 import azure.functions as func
 import json
 import traceback
-
+from src.services.reservation_tasks import check_todays_events
 # Try to import dictionary to allow detailed error reporting if imports fail
 try:
     from src.main import app as fastapi_app
@@ -66,3 +66,15 @@ async def schedule_attendance_reminder(timer: func.TimerRequest) -> None:
         logging.error(f'Error in Attendance Reminder Timer: {e}', exc_info=True)
     
     logging.info('Attendance Reminder Timer finished.')
+
+
+@app.timer_trigger(schedule="0 0 9 * * *", arg_name="timer", run_on_startup=False)
+async def send_event_reminders_timer(timer: func.TimerRequest) -> None:
+    """毎日朝9時(UTC)に実行 - イベントリマインダー送信.
+    
+    Note: Cronスケジュールは UTC で指定。
+    JST 9:00 = UTC 0:00
+    """
+    logging.info("Starting event reminder task...")
+    stats = await check_todays_events()
+    logging.info(f"Event reminder task completed: {stats}")
