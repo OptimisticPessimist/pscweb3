@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../api/projects';
+import { format } from 'date-fns';
 import type { MilestoneCreate } from '@/types';
 
 interface MilestoneSettingsProps {
@@ -120,8 +121,8 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                     </div>
                                     <div className="ml-2 flex-shrink-0 flex">
                                         <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            {new Date(milestone.start_date).toLocaleString()}
-                                            {milestone.end_date && ` - ${new Date(milestone.end_date).toLocaleString()}`}
+                                            {format(new Date(milestone.start_date), 'yyyy/MM/dd HH:mm')}
+                                            {milestone.end_date && ` - ${format(new Date(milestone.end_date), 'yyyy/MM/dd HH:mm')}`}
                                         </p>
                                     </div>
                                 </div>

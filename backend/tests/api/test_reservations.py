@@ -5,6 +5,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from src.db.models import (
     User, TheaterProject, ProjectMember, Milestone, Reservation,
@@ -128,8 +129,18 @@ def test_get_cast_members_public(client: TestClient, project: TheaterProject, ca
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
-    assert data[0]["name"] == "Actor A" # screen_name優先
+    assert data[0]["name"] == "Actor A" # screen_name優先, ProjectMember.display_name設定なし
     
+    # ProjectMemberのdisplay_nameを設定
+    cast_member_pm = db_session.scalar(select(ProjectMember).where(ProjectMember.user_id == cast_member.id))
+    cast_member_pm.display_name = "Stage Name A"
+    db_session.commit()
+    
+    response = client.get(f"/api/public/projects/{project.id}/members?role=cast")
+    assert response.status_code == 200
+    data = response.json()
+    assert data[0]["name"] == "Stage Name A" # display_name優先
+
     # 全員
     response = client.get(f"/api/public/projects/{project.id}/members")
     assert response.status_code == 200

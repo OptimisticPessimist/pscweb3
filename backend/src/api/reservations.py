@@ -108,19 +108,29 @@ async def get_project_members_public(
     db: AsyncSession = Depends(get_db),
 ):
     """紹介者リスト取得 (Public)."""
-    stmt = select(User).join(ProjectMember).where(ProjectMember.project_id == project_id)
+    stmt = select(User, ProjectMember).join(ProjectMember, User.id == ProjectMember.user_id).where(ProjectMember.project_id == project_id)
 
     if role == "cast":
         # キャストとして配役されているユーザーのみ
         stmt = stmt.join(CharacterCasting, CharacterCasting.user_id == User.id)
 
-    result = await db.scalars(stmt.distinct())
-    users = result.all()
+    # 重複排除のためにdistinctを使用する場合、組み合わせに注意が必要だが、
+    # 1ユーザー1メンバーレコードなので基本User単位でユニークになるはず。
+    # ただしCharacterCastingで複数役の場合重複する可能性があるためdistinctする。
+    result = await db.execute(stmt.distinct())
+    rows = result.all()
     
-    return [
-        {"id": user.id, "name": user.screen_name or user.discord_username}
-        for user in users
-    ]
+    response = []
+    seen_ids = set()
+    for user, member in rows:
+        if user.id in seen_ids:
+            continue
+        seen_ids.add(user.id)
+        
+        name = member.display_name or user.screen_name or user.discord_username
+        response.append({"id": user.id, "name": name})
+
+    return response
 
 
 # --- Internal API ---
@@ -156,13 +166,32 @@ async def get_reservations(
     reservations = result.all()
 
     # Response整形
+    # 紹介者の情報を取得するために、Reservation -> ReferralUser -> ProjectMember(そのプロジェクトの) を取得したいが、
+    # Eager Loadingでそこまで絞り込むのは複雑なため、単純にReservation取得後に都度解決するか、
+    # あるいは ProjectMember も join して fetch する。
+    # ここではループ内で取得するコストを避けるため、プロジェクトメンバー辞書を作成しておく。
+    
+    # 全プロジェクトメンバー取得
+    pm_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
+    pm_result = await db.scalars(pm_stmt)
+    pm_map = {pm.user_id: pm for pm in pm_result.all()}
+
+    # Response整形
     results = []
     for r in reservations:
         res_dict = r.__dict__.copy()
         res_dict["milestone_title"] = r.milestone.title
-        res_dict["referral_name"] = (
-            r.referral_user.screen_name or r.referral_user.discord_username
-        ) if r.referral_user else None
+        
+        referral_name = None
+        if r.referral_user:
+            # プロジェクトメンバーとしての情報を優先
+            pm = pm_map.get(r.referral_user_id)
+            if pm and pm.display_name:
+                referral_name = pm.display_name
+            else:
+                referral_name = r.referral_user.screen_name or r.referral_user.discord_username
+        
+        res_dict["referral_name"] = referral_name
         results.append(res_dict)
         
     return results
@@ -240,8 +269,20 @@ async def export_reservations(
         "紹介者", "出席", "予約日時"
     ])
     
+    # 全プロジェクトメンバー取得（名前解決用）
+    pm_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
+    pm_result = await db.scalars(pm_stmt)
+    pm_map = {pm.user_id: pm for pm in pm_result.all()}
+
     for r in reservations:
-        referral = (r.referral_user.screen_name or r.referral_user.discord_username) if r.referral_user else ""
+        referral = ""
+        if r.referral_user:
+            pm = pm_map.get(r.referral_user_id)
+            if pm and pm.display_name:
+                referral = pm.display_name
+            else:
+                referral = r.referral_user.screen_name or r.referral_user.discord_username
+
         date_str = r.milestone.start_date.strftime("%Y/%m/%d %H:%M")
         created_str = r.created_at.strftime("%Y/%m/%d %H:%M:%S")
         writer.writerow([

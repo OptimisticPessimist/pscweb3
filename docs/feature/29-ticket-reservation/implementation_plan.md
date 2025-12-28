@@ -1,36 +1,31 @@
-# マイルストーンの時間管理と予約情報の強化
+# UI Improvements & Favicon Update
 
 ## 目標
-公演スタッフがマイルストーン（公演）の具体的な開始・終了時間を設定できるようにし、予約完了メールやGoogleカレンダーのイベントにプロジェクト名（公演名）を明確に表示する。
-
-## ユーザー確認事項
-なし。
+1.  **日付表示の統一**: フロントエンド（特にマイルストーン設定）での日時表示を `yyyy/MM/dd HH:mm` 等の統一された形式にする。
+2.  **紹介者名の優先順位変更**: 予約時の紹介者選択リストおよび予約一覧・CSVにおける紹介者名を、「プロジェクトメンバーの表示名 (`ProjectMember.display_name`)」 > 「ユーザー表示名 (`User.screen_name`)」 > 「Discord名」の優先順位で表示する。
+3.  **Favicon変更**: アプリケーションのファビコンを更新する。
 
 ## 変更内容
 
 ### Backend
-#### [MODIFY] [project.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/schemas/project.py)
-- `MilestoneCreate` および `MilestoneUpdate` スキーマが `datetime` 入力を正しくサポートしているか確認し、必要に応じて修正する。
-
-#### [MODIFY] [email.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/email.py)
-- `send_reservation_confirmation` メソッドを更新し、`project_name` 引数を受け取るようにする。
-- メールの件名と本文に `project_name` を含める。
-
 #### [MODIFY] [reservations.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/api/reservations.py)
-- `create_reservation` 内でマイルストーンに関連付けられた `project` を取得する。
-- `email_service.send_reservation_confirmation` に `project.name` を渡す。
+- `get_project_members_public`: `User` と `ProjectMember` を結合して取得し、`display_name` を優先して返却する。
+- `get_reservations`: 予約一覧取得時、`ProjectMember` を外部結合（Outer Join）し、プロジェクト内での表示名を取得・返却する。
+- `export_reservations`: CSV出力時も同様にプロジェクト内表示名を使用する。
 
 ### Frontend
 #### [MODIFY] [MilestoneSettings.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/components/MilestoneSettings.tsx)
-- `start_date` と `end_date` の入力タイプを `date` から `datetime-local` に変更する。
-- 状態の初期化と変更ハンドラを更新し、日時文字列（YYYY-MM-DDTHH:mm）を適切に処理するようにする。
+- `toLocaleString()` での表示をやめ、`date-fns` の `format` 関数を使用して `yyyy/MM/dd HH:mm` 形式に統一する。
 
-#### [MODIFY] [ReservationCompletedPage.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/reservations/pages/ReservationCompletedPage.tsx)
-- Googleカレンダーリンク生成時に、イベントタイトルにプロジェクト名を含める（例: `プロジェクト名 - マイルストーン名`）。
+#### [NEW] [favicon.svg / favicon.ico](file:///f:/src/PythonProject/pscweb3-1/frontend/public/favicon.ico)
+- 新しいファビコン画像を生成・配置する。
 
 ## 検証計画
-### 手動検証
-1.  **マイルストーン作成**: 設定ページから具体的な開始・終了時間を指定して新しいマイルストーンを作成し、正しく保存されることを確認する。
-2.  **予約**: そのマイルストーンに対してテスト予約を行う。
-3.  **メール**: 受信したメールの件名と本文にプロジェクト名が含まれているか確認する。
-4.  **カレンダー**: 完了ページのGoogleカレンダーボタンをクリックし、イベントタイトルにプロジェクト名が含まれ、時間が正しく設定されているか確認する。
+1.  **紹介者名表示**:
+    - プロジェクトメンバーの「表示名」を設定したユーザーを用意する。
+    - 予約フォームの紹介者リストにその「表示名」が表示されるか確認。
+    - 予約後の管理画面一覧およびCSVで「表示名」が表示されるか確認。
+2.  **日付表示**:
+    - マイルストーン設定画面で、日時が意図したフォーマット (`yyyy/MM/dd HH:mm`) で表示されているか確認。
+3.  **Favicon**:
+    - ブラウザのタブに新しいアイコンが表示されるか確認。
