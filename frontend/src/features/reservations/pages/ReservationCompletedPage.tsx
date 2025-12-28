@@ -51,6 +51,11 @@ export const ReservationCompletedPage = () => {
                 </p>
 
                 <div className="bg-gray-50 rounded-lg p-4 text-left border border-gray-100">
+                    <p className="text-sm text-gray-500 mb-1">予約ID (キャンセル時に必要です)</p>
+                    <p className="font-mono font-bold text-lg text-indigo-600 mb-3 select-all">
+                        {reservation.id}
+                    </p>
+
                     <p className="text-sm text-gray-500 mb-1">公演</p>
                     <p className="font-bold text-gray-900 mb-3">
                         {milestone.project_name ? `${milestone.project_name} - ` : ''}{milestone.title}
@@ -80,6 +85,15 @@ export const ReservationCompletedPage = () => {
                         </svg>
                         Googleカレンダーに追加
                     </a>
+
+                    <div className="flex justify-between text-sm px-2">
+                        <Link to="/schedule" className="text-gray-500 hover:text-gray-700">
+                            スケジュールへ戻る
+                        </Link>
+                        <Link to="/reservations/cancel" className="text-red-500 hover:text-red-600">
+                            予約をキャンセルする
+                        </Link>
+                    </div>
 
                     <Link
                         to={`/reservations/${milestone.id}`}

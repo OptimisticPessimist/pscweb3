@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db
 from src.db.models import Reservation, User, Milestone, TheaterProject, ProjectMember, CharacterCasting
-from src.schemas.reservation import ReservationCreate, ReservationResponse, ReservationUpdate
+from src.schemas.reservation import ReservationCreate, ReservationResponse, ReservationUpdate, ReservationCancel
 from src.services.email import email_service
 from src.dependencies.auth import get_current_user_dep as get_current_user, get_optional_current_user_dep as get_current_user_optional
 from src.schemas.project import MilestoneResponse
@@ -73,8 +73,45 @@ async def create_reservation(
         milestone_title=milestone.title,
         date_str=date_str,
         count=reservation.count,
-        project_name=project.name if project else "不明なプロジェクト"
+        project_name=project.name if project else "不明なプロジェクト",
+        reservation_id=str(db_reservation.id)
     )
+
+    # Discord通知 (Webhook)
+    # プロジェクトに設定されたWebhookを使用
+    if project and project.discord_webhook_url:
+        from src.services.discord import get_discord_service
+        discord_service = get_discord_service()
+        
+        # 扱い（紹介者）の取得
+        referral_name = "なし"
+        if reservation.referral_user_id:
+            # ここでは簡易的にUserテーブル等から取得（あるいはProjectMember）
+            # get_project_members_public のロジックと同様に解決するのが理想だが、
+            # バックグラウンドタスク内でそこまで重い処理をしたくないため、
+            # 一旦ID解決せず、もしあればキャッシュ等... ないので、
+            # クエリ発行して名前取得
+            try:
+                 ref_user = await db.scalar(select(User).where(User.id == reservation.referral_user_id))
+                 if ref_user:
+                     # ProjectMemberも見てdisplay_nameがあればそれを使う
+                     ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == reservation.referral_user_id, ProjectMember.project_id == project.id))
+                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.screen_name or ref_user.discord_username or "不明"
+            except Exception as e:
+                # 失敗しても通知は送る
+                pass
+
+        notification_content = f"""🎫 **チケット予約完了**
+予約日時: {date_str}
+お名前: {reservation.name}
+予約枚数: {reservation.count}枚
+扱い: {referral_name}
+"""
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=notification_content,
+            webhook_url=project.discord_webhook_url
+        )
 
     return db_reservation
 
@@ -130,6 +167,103 @@ async def get_project_members_public(
         name = member.display_name or user.screen_name or user.discord_username
         response.append({"id": user.id, "name": name})
 
+    return response
+
+
+@router.post("/public/reservations/cancel", status_code=204)
+async def cancel_reservation(
+    cancel_data: ReservationCancel,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    """予約キャンセル (Public)."""
+    reservation = await db.scalar(
+        select(Reservation)
+        .options(selectinload(Reservation.milestone))
+        .where(Reservation.id == cancel_data.reservation_id, Reservation.email == cancel_data.email)
+    )
+    if not reservation:
+        raise HTTPException(status_code=404, detail="Reservation not found or email mismatch")
+
+    # データ保持用
+    milestone_title = reservation.milestone.title
+    start_date = reservation.milestone.start_date
+    project_id = reservation.milestone.project_id
+    res_name = reservation.name
+    res_count = reservation.count
+    res_ref_id = reservation.referral_user_id
+    
+    # 削除
+    await db.delete(reservation)
+    await db.commit()
+
+    # 通知 (Discord)
+    project = await db.scalar(select(TheaterProject).where(TheaterProject.id == project_id))
+    if project and project.discord_webhook_url:
+        from src.services.discord import get_discord_service
+        discord_service = get_discord_service()
+        
+        # 扱い（紹介者）の取得
+        referral_name = "なし"
+        if res_ref_id:
+            try:
+                 ref_user = await db.scalar(select(User).where(User.id == res_ref_id))
+                 if ref_user:
+                     ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == res_ref_id, ProjectMember.project_id == project.id))
+                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.screen_name or ref_user.discord_username or "不明"
+            except:
+                pass
+
+        # 日時JST変換
+        jst = timezone(timedelta(hours=9))
+        start_date_utc = start_date.replace(tzinfo=timezone.utc)
+        date_str = start_date_utc.astimezone(jst).strftime("%Y/%m/%d %H:%M")
+
+        notification_content = f"""🗑️ **チケット予約キャンセル**
+予約日時: {date_str}
+お名前: {res_name}
+予約枚数: {res_count}枚
+扱い: {referral_name}
+"""
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=notification_content,
+            webhook_url=project.discord_webhook_url
+        )
+
+
+
+
+
+@router.get("/public/schedule", response_model=list[MilestoneResponse])
+async def get_public_schedule(
+    db: AsyncSession = Depends(get_db),
+):
+    """公開スケジュール取得."""
+    # 公開プロジェクトの未来のマイルストーンを取得
+    now = datetime.now(timezone.utc)
+    
+    # プロジェクトがpublicで、マイルストーンが未来のもの
+    stmt = (
+        select(Milestone)
+        .join(TheaterProject, Milestone.project_id == TheaterProject.id)
+        .options(selectinload(Milestone.project))
+        .where(
+            TheaterProject.is_public == True,
+            Milestone.start_date >= now
+        )
+        .order_by(Milestone.start_date)
+    )
+    result = await db.scalars(stmt)
+    milestones = result.all()
+    
+    response = []
+    for m in milestones:
+        m_res = MilestoneResponse.model_validate(m)
+        if m.project:
+            m_res.project_name = m.project.name
+        response.append(m_res)
+        
     return response
 
 

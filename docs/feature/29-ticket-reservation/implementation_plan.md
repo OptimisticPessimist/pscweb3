@@ -1,40 +1,55 @@
-# Milestone Capacity Management Description
+# Reservation Enhancements Implementation Plan
 
 ## 目標
-1.  **予約状況の表示**: マイルストーン設定画面で「現在の予約数 / 予約定員」を表示する。
-2.  **定員の変更**: マイルストーン設定画面から予約定員（最大数）を変更可能にする。
-3.  **予約一覧への導線**: マイルストーンごとに「予約一覧」ページへのリンクを設置する。
+1.  **予約キャンセル**: ユーザーが自分で予約をキャンセルできるようにする。
+2.  **Discord通知**: 予約時とキャンセル時にDiscord Webhookへ通知を送る（個人情報配慮）。
+3.  **公開スケジュール**: 公開されているマイルストーン（公演）の一覧ページを作成する。
 
-## 変更内容
+## 実装内容
 
-### Backend
-#### [MODIFY] [project.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/schemas/project.py)
-- `MilestoneUpdate` スキーマを作成（`reservation_capacity` 等を更新可能に）。
-- `MilestoneResponse` に `current_reservation_count: int` を追加。
+### Backend (`backend/src/api/reservations.py`)
+1.  **Discord通知の実装**:
+    - `create_reservation` 内に `discord_service.send_notification` を追加。
+    - 通知内容は指定通り（日時、名前、枚数、扱い）。メールアドレスは除外。
+    - Webhook URLはプロジェクト設定 (`project.discord_webhook_url`) を使用。
 
-#### [MODIFY] [projects.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/api/projects.py)
-- `list_milestones`: `Reservation` を外部結合し、`sum(Reservation.count)` で現在の予約総数を計算して返却するように変更（`group_by` Milestone.id）。
-- `update_milestone`: `PATCH /projects/{project_id}/milestones/{milestone_id}` エンドポイントを追加。
-    - `MilestoneUpdate` スキーマを受け取り、該当マイルストーンを更新する。
+2.  **キャンセルAPI (`POST /public/reservations/cancel`)**:
+    - リクエスト: `reservation_id`, `email`
+    - 処理: IDとEmailが一致する予約を探し、存在すれば削除（またはステータス変更、今回は削除で実装）。
+    - 完了後、Discordにキャンセル通知を送信。
+
+3.  **公開スケジュールAPI (`GET /api/public/schedule`)**:
+    - 公開プロェクト (`is_public=True`) に紐づく、未来のマイルストーンを取得して返す。
+    - 必要な情報: マイルストーン詳細、プロジェクト名、予約可否など。
 
 ### Frontend
-#### [MODIFY] [types/index.ts](file:///f:/src/PythonProject/pscweb3-1/frontend/src/types/index.ts)
-- `Milestone` 型に `current_reservation_count` を追加。
+1.  **公開スケジュールページ (`features/public_schedule/pages/PublicSchedulePage.tsx`)**:
+    - カレンダーまたはリスト形式で公演を表示。
+    - 「予約する」ボタンで `TicketReservationPage` へ遷移。
+    - 既存の `ReservationListPage` とは別物（一般客用）。
 
-#### [MODIFY] [projects.ts](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/api/projects.ts)
-- `updateMilestone` メソッドを追加 (`PATCH`).
+2.  **予約キャンセルページ (`features/reservations/pages/ReservationCancelPage.tsx`)**:
+    - 予約IDとメールアドレス入力フォーム。
+    - 送信してキャンセル実行。
 
-#### [MODIFY] [MilestoneSettings.tsx](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/projects/components/MilestoneSettings.tsx)
-- マイルストーン一覧項目の表示を更新。
-- **予約数表示**: `current_reservation_count` / `reservation_capacity` (または "無制限") を表示。
-- **定員編集**:
-    - `reservation_capacity` 部分をクリックまたは編集アイコンで、インライン編集モードにする（または常時Input）。
-    - 変更を保存 (`onBlur` または保存ボタン)。
-- **予約一覧リンク**:
-    - 各項目の適当な場所（アクションボタン列など）に「予約者一覧」ボタンを追加。
-    - リンク先: `/projects/{projectId}/reservations?milestoneId={milestone.id}` (もしフィルタパラメータがあれば。なければ `/projects/{projectId}/reservations`)
+3.  **予約完了ページ (`ReservationCompletedPage.tsx`)**:
+    - 予約IDを表示。「キャンセル時はこのIDが必要です」と案内。
+    - キャンセルページへのリンクを配置。
 
-## 検証計画
-1.  **表示確認**: 予約済みマイルストーンで「予約数 / 定員」が正しく表示されるか。
-2.  **定員変更**: UIから定員を変更し、リロード後も反映されているか。
-3.  **リンク遷移**: 「予約者一覧」をクリックして、正しい一覧ページ（できればフィルタ済み）に遷移するか。
+4.  **ルーティング (`App.tsx`)**:
+    - `/schedule` -> `PublicSchedulePage`
+    - `/reservations/cancel` -> `ReservationCancelPage`
+
+## 通知フォーマット
+```
+**🎫 チケット予約完了** (or **🗑️ チケット予約キャンセル**)
+予約日時: 2025/01/01 18:00
+お名前: 山田 太郎
+予約枚数: 2枚
+扱い: 佐藤 花子 (キャスト名など)
+```
+
+## 検証
+- Webhook通知が正しく飛ぶか（ログまたは実際のDiscord）。
+- キャンセルが正しく動作するか（DBから消えるか）。
+- スケジュール一覧に正しいデータが表示されるか。

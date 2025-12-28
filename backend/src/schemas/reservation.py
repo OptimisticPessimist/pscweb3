@@ -16,6 +16,11 @@ class ReservationCreate(ReservationBase):
     pass
 
 
+class ReservationCancel(BaseModel):
+    reservation_id: UUID
+    email: EmailStr
+
+
 class ReservationUpdate(BaseModel):
     attended: bool
 

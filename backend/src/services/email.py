@@ -12,7 +12,7 @@ class EmailService:
         self.client = SendGridAPIClient(self.api_key) if self.api_key else None
 
     def send_reservation_confirmation(
-        self, to_email: str, name: str, milestone_title: str, date_str: str, count: int, project_name: str
+        self, to_email: str, name: str, milestone_title: str, date_str: str, count: int, project_name: str, reservation_id: str
     ) -> bool:
         """予約確認メールを送信する."""
         if not self.client:
@@ -27,11 +27,14 @@ class EmailService:
 以下の内容でチケットの予約を承りました。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 予約ID: {reservation_id}
 ■ 公演名: {project_name}
 ■ マイルストーン: {milestone_title}
 ■ 日時: {date_str}
 ■ 枚数: {count} 枚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+キャンセル等の際は、上記「予約ID」が必要となりますので大切に保管してください。
 
 当日は受付にてお名前をお伝えください。
 ご来場を心よりお待ちしております。

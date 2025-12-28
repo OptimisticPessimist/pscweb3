@@ -26,6 +26,15 @@ export const reservationsApi = {
         return response.data;
     },
 
+    cancelReservation: async (data: { reservation_id: string; email: string }): Promise<void> => {
+        await axios.post('/public/reservations/cancel', data);
+    },
+
+    getPublicSchedule: async (): Promise<PublicMilestone[]> => {
+        const response = await axios.get<PublicMilestone[]>('/public/schedule');
+        return response.data;
+    },
+
     // Internal
     getReservations: async (projectId: string): Promise<ReservationResponse[]> => {
         const response = await axios.get<ReservationResponse[]>(`/projects/${projectId}/reservations`);

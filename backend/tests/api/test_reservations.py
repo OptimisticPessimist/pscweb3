@@ -209,3 +209,55 @@ def test_export_csv(client: TestClient, db_session: Session, project: TheaterPro
     assert "CSV User" in response.text
     
     del client.app.dependency_overrides[get_current_user_dep]
+
+
+def test_cancel_reservation(client: TestClient, db_session: Session, milestone: Milestone):
+    """予約キャンセルテスト."""
+    r = Reservation(milestone_id=milestone.id, name="Cancel User", email="cancel@e.com", count=1)
+    db_session.add(r)
+    db_session.commit()
+    r_id = str(r.id)
+    
+    # 成功
+    payload = {"reservation_id": r_id, "email": "cancel@e.com"}
+    
+    # Discordのモック
+    with patch("src.services.discord.DiscordService.send_notification") as mock_discord:
+        response = client.post("/api/public/reservations/cancel", json=payload)
+    
+    assert response.status_code == 204
+    # DBから消えているか
+    assert db_session.get(Reservation, r_id) is None
+    mock_discord.assert_called() # 呼ばれていること
+
+    # 失敗（存在しない）
+    response = client.post("/api/public/reservations/cancel", json=payload)
+    assert response.status_code == 404
+    
+    # 失敗（メール不一致）
+    # 再作成
+    r2 = Reservation(milestone_id=milestone.id, name="User2", email="u2@e.com", count=1)
+    db_session.add(r2)
+    db_session.commit()
+    
+    payload_mismatch = {"reservation_id": str(r2.id), "email": "wrong@e.com"}
+    response = client.post("/api/public/reservations/cancel", json=payload_mismatch)
+    assert response.status_code == 404
+    
+    
+def test_public_schedule(client: TestClient, db_session: Session, project: TheaterProject, milestone: Milestone):
+    """公開スケジュール取得テスト."""
+    milestone.start_date = datetime.now() + timedelta(days=1) # 未来
+    db_session.commit()
+    
+    response = client.get("/api/public/schedule")
+    assert response.status_code == 200
+    data = response.json()
+    
+    # 含まれているか
+    found = any(m["id"] == str(milestone.id) for m in data)
+    assert found
+    
+    # プロジェクト名が含まれているか
+    target = next(m for m in data if m["id"] == str(milestone.id))
+    assert target["project_name"] == project.name
