@@ -120,8 +120,8 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                     </div>
                                     <div className="ml-2 flex-shrink-0 flex">
                                         <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            {new Date(milestone.start_date).toLocaleDateString()}
-                                            {milestone.end_date && ` - ${new Date(milestone.end_date).toLocaleDateString()}`}
+                                            {new Date(milestone.start_date).toLocaleString()}
+                                            {milestone.end_date && ` - ${new Date(milestone.end_date).toLocaleString()}`}
                                         </p>
                                     </div>
                                 </div>
@@ -213,7 +213,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                 </label>
                                 <div className="mt-1">
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         name="start_date"
                                         id="start_date"
                                         required
@@ -230,7 +230,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                 </label>
                                 <div className="mt-1">
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         name="end_date"
                                         id="end_date"
                                         value={endDate}

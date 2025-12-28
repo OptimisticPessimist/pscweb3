@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
@@ -56,15 +56,24 @@ async def create_reservation(
     await db.commit()
     await db.refresh(db_reservation)
 
+    # プロジェクト取得
+    project = await db.scalar(select(TheaterProject).where(TheaterProject.id == milestone.project_id))
+
     # メール送信 (Background)
-    date_str = milestone.start_date.strftime("%Y/%m/%d %H:%M")
+    # DBはNaive UTCで保存されているため、JSTに変換して表示
+    jst = timezone(timedelta(hours=9))
+    start_date_utc = milestone.start_date.replace(tzinfo=timezone.utc)
+    start_date_jst = start_date_utc.astimezone(jst)
+    date_str = start_date_jst.strftime("%Y/%m/%d %H:%M")
+    
     background_tasks.add_task(
         email_service.send_reservation_confirmation,
         to_email=reservation.email,
         name=reservation.name,
         milestone_title=milestone.title,
         date_str=date_str,
-        count=reservation.count
+        count=reservation.count,
+        project_name=project.name if project else "不明なプロジェクト"
     )
 
     return db_reservation
@@ -76,11 +85,20 @@ async def get_public_milestone(
     db: AsyncSession = Depends(get_db),
 ):
     """公開マイルストーン詳細取得."""
-    milestone = await db.scalar(select(Milestone).where(Milestone.id == id))
+    milestone = await db.scalar(
+        select(Milestone)
+        .options(selectinload(Milestone.project))
+        .where(Milestone.id == id)
+    )
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
     
-    return milestone
+    # Pydanticモデルのために辞書化して project_name を追加
+    response = MilestoneResponse.model_validate(milestone)
+    if milestone.project:
+        response.project_name = milestone.project.name
+        
+    return response
 
 
 @router.get("/public/projects/{project_id}/members")

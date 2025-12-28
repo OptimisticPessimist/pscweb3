@@ -21,7 +21,10 @@ export const ReservationCompletedPage = () => {
 
     const googleCalendarUrl = new URL('https://www.google.com/calendar/render');
     googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
-    googleCalendarUrl.searchParams.append('text', `【観劇】${milestone.title}`);
+    const eventTitle = milestone.project_name
+        ? `【観劇】${milestone.project_name} - ${milestone.title}`
+        : `【観劇】${milestone.title}`;
+    googleCalendarUrl.searchParams.append('text', eventTitle);
     googleCalendarUrl.searchParams.append('dates', `${toIso(startDate)}/${toIso(endDate)}`);
     if (milestone.location) {
         googleCalendarUrl.searchParams.append('location', milestone.location);
@@ -49,7 +52,9 @@ export const ReservationCompletedPage = () => {
 
                 <div className="bg-gray-50 rounded-lg p-4 text-left border border-gray-100">
                     <p className="text-sm text-gray-500 mb-1">公演</p>
-                    <p className="font-bold text-gray-900 mb-3">{milestone.title}</p>
+                    <p className="font-bold text-gray-900 mb-3">
+                        {milestone.project_name ? `${milestone.project_name} - ` : ''}{milestone.title}
+                    </p>
 
                     <p className="text-sm text-gray-500 mb-1">日時</p>
                     <p className="font-bold text-gray-900 mb-3">

@@ -32,6 +32,7 @@ export interface PublicMilestone {
     location?: string;
     color?: string;
     reservation_capacity?: number;
+    project_name?: string;
 }
 
 export interface PublicMember {

@@ -87,5 +87,6 @@ class MilestoneResponse(BaseModel):
     location: str | None = None
     color: str | None = None
     reservation_capacity: int | None = None
+    project_name: str | None = None
     
     model_config = {"from_attributes": True}

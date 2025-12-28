@@ -80,8 +80,24 @@ def test_create_reservation_success(client: TestClient, milestone: Milestone):
     assert data["name"] == "Guest User"
     assert data["count"] == 2
     
-    # メール送信タスクが追加されたか (BackgroundTasksなのでテスト環境では実行されない場合もあるが、通常はmockで呼ばれるはず)
-    # FastAPIのTestClientのみではBackgroundTasksの実行までは保証されないが、動作確認としてはOK
+    # BackgroundTasksの実行を確認
+    # TestClientはデフォルトでBackgroundTasksを実行しないため、明示的なチェックは難しいが
+    # patchしているメソッドが呼ばれたか確認したい場合、BackgroundTasksが同期的に実行される環境設定が必要。
+    # StarletteのTestClientは通常BackgroundTasksをコンテキスト終了後に実行する。
+    # ここではmock_sendが呼ばれたことを確認する。
+    # 注意: FastAPIのTestClient実装によるが、withブロックを抜けるときにリクエストが完了し、BackgroundTasksも処理されるはず。
+    
+    # 引数検証
+    # mock_sendはBackgroundTasksによって非同期に呼ばれるが、TestClientでは同期的振る舞いをする場合が多い。
+    # しかし確実にチェックするためには、mock_sendが呼ばれた後にアサートする。
+    mock_send.assert_called()
+    call_args = mock_send.call_args
+    assert call_args is not None
+    _, kwargs = call_args
+    assert kwargs["to_email"] == "guest@example.com"
+    assert kwargs["name"] == "Guest User"
+    assert kwargs["project_name"] == "Test Project"
+    # 他の引数も必要ならチェック
 
 
 def test_create_reservation_capacity_error(client: TestClient, db_session: Session, milestone: Milestone):
