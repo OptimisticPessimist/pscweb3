@@ -55,7 +55,8 @@ export const TicketReservationPage = () => {
         createMutation.mutate({
             ...data,
             milestone_id: milestoneId,
-            count: Number(data.count) // ensure number
+            count: Number(data.count), // ensure number
+            referral_user_id: data.referral_user_id || null // 空文字列をnullに変換
         });
     };
 
