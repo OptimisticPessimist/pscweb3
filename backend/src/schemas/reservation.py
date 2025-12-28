@@ -29,6 +29,7 @@ class ReservationResponse(ReservationBase):
     id: UUID
     user_id: UUID | None = None
     attended: bool
+    reminder_sent_at: datetime | None = None
     created_at: datetime
     
     # 関連情報
