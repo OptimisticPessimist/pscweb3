@@ -1,5 +1,5 @@
 import { useLocation, Link, Navigate } from 'react-router-dom';
-import { ReservationResponse, PublicMilestone } from '../types';
+import type { ReservationResponse, PublicMilestone } from '../types';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 

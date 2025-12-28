@@ -1,5 +1,5 @@
-import { axios } from '@/utils/axios';
-import {
+import { apiClient as axios } from '@/api/client';
+import type {
     ReservationResponse,
     ReservationCreateRequest,
     ReservationUpdateRequest,

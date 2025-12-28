@@ -1,38 +1,33 @@
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 
 import { reservationsApi } from '../api';
-import { Loading } from '@/components/Loading'; // Ensure this path is correct
-// If Loading component not found, I'll fallback to simple div text. 
-// Based on file list earlier, components/Loading exists.
+import type { ReservationResponse } from '../types';
+import { Loading } from '@/components/Loading';
 
 export const ReservationListPage = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
 
-    const { data: reservations = [], isLoading } = useQuery(
-        ['reservations', projectId],
-        () => reservationsApi.getReservations(projectId!),
-        { enabled: !!projectId }
-    );
+    const { data: reservations = [], isLoading } = useQuery({
+        queryKey: ['reservations', projectId],
+        queryFn: () => reservationsApi.getReservations(projectId!),
+        enabled: !!projectId
+    });
 
-    const updateMutation = useMutation(
-        (data: { id: string; attended: boolean }) =>
+    const updateMutation = useMutation({
+        mutationFn: (data: { id: string; attended: boolean }) =>
             reservationsApi.updateAttendance(data.id, data.attended),
-        {
-            onSuccess: () => {
-                queryClient.invalidateQueries(['reservations', projectId]);
-                toast.success('更新しました');
-            },
-            onError: () => {
-                toast.error('更新に失敗しました');
-            }
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reservations', projectId] });
+            toast.success('更新しました');
+        },
+        onError: () => {
+            toast.error('更新に失敗しました');
         }
-    );
+    });
 
     const handleDownloadCsv = async () => {
         try {
@@ -52,12 +47,12 @@ export const ReservationListPage = () => {
     if (isLoading) return <Loading />;
 
     // Group by milestone for better view
-    const grouped = reservations.reduce((acc, curr) => {
+    const grouped = reservations.reduce((acc: Record<string, ReservationResponse[]>, curr: ReservationResponse) => {
         const key = curr.milestone_title || '不明な公演';
         if (!acc[key]) acc[key] = [];
         acc[key].push(curr);
         return acc;
-    }, {} as Record<string, typeof reservations>);
+    }, {} as Record<string, ReservationResponse[]>);
 
     return (
         <div className="space-y-6">
@@ -78,11 +73,11 @@ export const ReservationListPage = () => {
                             {title}
                         </h3>
                         <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                            合計: {items.reduce((sum, r) => sum + r.count, 0)}名 / {items.length}件
+                            合計: {items.reduce((sum: number, r: ReservationResponse) => sum + r.count, 0)}名 / {items.length}件
                         </p>
                     </div>
                     <ul role="list" className="divide-y divide-gray-200">
-                        {items.map((reservation) => (
+                        {items.map((reservation: ReservationResponse) => (
                             <li key={reservation.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                                 <div className="flex items-center justify-between">
                                     <div className="flex-1 min-w-0">
@@ -117,7 +112,7 @@ export const ReservationListPage = () => {
                                                 id: reservation.id,
                                                 attended: !reservation.attended
                                             })}
-                                            disabled={updateMutation.isLoading}
+                                            disabled={updateMutation.isPending}
                                             className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${reservation.attended ? 'bg-green-600' : 'bg-gray-200'}`}
                                         >
                                             <span className="sr-only">Use setting</span>
