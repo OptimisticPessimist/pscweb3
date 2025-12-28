@@ -6,37 +6,40 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.base import get_db
+from src.db import get_db
 from src.db.models import Reservation, User, Milestone, TheaterProject, ProjectMember, CharacterCasting
 from src.schemas.reservation import ReservationCreate, ReservationResponse, ReservationUpdate
 from src.services.email import email_service
 from src.dependencies.auth import get_current_user_dep as get_current_user, get_optional_current_user_dep as get_current_user_optional
+from src.schemas.project import MilestoneResponse
 
 router = APIRouter()
 
 # --- Public API ---
 
 @router.post("/public/reservations", response_model=ReservationResponse)
-def create_reservation(
+async def create_reservation(
     reservation: ReservationCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
     """予約作成 (Public)."""
     # マイルストーン取得
-    milestone = db.scalar(select(Milestone).where(Milestone.id == reservation.milestone_id))
+    milestone = await db.scalar(select(Milestone).where(Milestone.id == reservation.milestone_id))
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
 
     # 定員チェック
     if milestone.reservation_capacity is not None:
-        current_count = db.scalar(
+        result = await db.scalar(
             select(func.sum(Reservation.count))
             .where(Reservation.milestone_id == reservation.milestone_id)
-        ) or 0
+        )
+        current_count = result or 0
         if current_count + reservation.count > milestone.reservation_capacity:
             raise HTTPException(status_code=400, detail="Reservation capacity exceeded")
 
@@ -50,8 +53,8 @@ def create_reservation(
         count=reservation.count,
     )
     db.add(db_reservation)
-    db.commit()
-    db.refresh(db_reservation)
+    await db.commit()
+    await db.refresh(db_reservation)
 
     # メール送信 (Background)
     date_str = milestone.start_date.strftime("%Y/%m/%d %H:%M")
@@ -67,35 +70,24 @@ def create_reservation(
     return db_reservation
 
 
-from src.schemas.project import MilestoneResponse
-
 @router.get("/public/milestones/{id}", response_model=MilestoneResponse)
-def get_public_milestone(
+async def get_public_milestone(
     id: str,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """公開マイルストーン詳細取得."""
-    milestone = db.scalar(select(Milestone).where(Milestone.id == id))
+    milestone = await db.scalar(select(Milestone).where(Milestone.id == id))
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
-    
-    # MilestoneResponseではproject_idが含まれていたりと、必要情報は網羅されている
-    # 必要ならProjectがis_publicかもチェックすべきだが、
-    # 予約リンクを知っている＝アクセス可能、とするか、
-    # あるいは Project.is_public == True もチェックするか。
-    # 以前のRequirementsでは「公演のマイルストーンに対して」とあるので、
-    # 公開プロジェクトのマイルストーン、あるいは予約用URLを知っている前提。
-    # 念のためProjectの存在確認とPublicチェックを入れるのが安全だが、
-    # 一旦チケット予約はURL共有ベースで動くことも多いため、Milestoneが存在すればOKとする。
     
     return milestone
 
 
 @router.get("/public/projects/{project_id}/members")
-def get_project_members_public(
+async def get_project_members_public(
     project_id: str,
     role: str | None = Query(None, description="Filter by role (e.g. 'cast')"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """紹介者リスト取得 (Public)."""
     stmt = select(User).join(ProjectMember).where(ProjectMember.project_id == project_id)
@@ -104,7 +96,8 @@ def get_project_members_public(
         # キャストとして配役されているユーザーのみ
         stmt = stmt.join(CharacterCasting, CharacterCasting.user_id == User.id)
 
-    users = db.scalars(stmt.distinct()).all()
+    result = await db.scalars(stmt.distinct())
+    users = result.all()
     
     return [
         {"id": user.id, "name": user.screen_name or user.discord_username}
@@ -115,15 +108,15 @@ def get_project_members_public(
 # --- Internal API ---
 
 @router.get("/projects/{project_id}/reservations", response_model=list[ReservationResponse])
-def get_reservations(
+async def get_reservations(
     project_id: str,
     milestone_id: str | None = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """予約一覧取得."""
     # 権限チェック: プロジェクトメンバーであること
-    member = db.scalar(
+    member = await db.scalar(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == current_user.id
@@ -141,7 +134,8 @@ def get_reservations(
         selectinload(Reservation.referral_user)
     ).order_by(Reservation.created_at.desc())
     
-    reservations = db.scalars(stmt).all()
+    result = await db.scalars(stmt)
+    reservations = result.all()
 
     # Response整形
     results = []
@@ -157,14 +151,14 @@ def get_reservations(
 
 
 @router.patch("/reservations/{reservation_id}/attendance", response_model=ReservationResponse)
-def update_attendance(
+async def update_attendance(
     reservation_id: str,
     update_data: ReservationUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """出欠更新."""
-    reservation = db.scalar(
+    reservation = await db.scalar(
         select(Reservation).options(selectinload(Reservation.milestone)).where(Reservation.id == reservation_id)
     )
     if not reservation:
@@ -172,7 +166,7 @@ def update_attendance(
 
     # 権限チェック
     project_id = reservation.milestone.project_id
-    member = db.scalar(
+    member = await db.scalar(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == current_user.id
@@ -182,8 +176,8 @@ def update_attendance(
         raise HTTPException(status_code=403, detail="Not a project member")
 
     reservation.attended = update_data.attended
-    db.commit()
-    db.refresh(reservation)
+    await db.commit()
+    await db.refresh(reservation)
 
     res_dict = reservation.__dict__.copy()
     res_dict["milestone_title"] = reservation.milestone.title
@@ -191,15 +185,15 @@ def update_attendance(
 
 
 @router.post("/projects/{project_id}/reservations/export")
-def export_reservations(
+async def export_reservations(
     project_id: str,
     milestone_id: str | None = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """CSVエクスポート."""
         # 権限チェック: プロジェクトメンバーであること
-    member = db.scalar(
+    member = await db.scalar(
         select(ProjectMember).where(
             ProjectMember.project_id == project_id,
             ProjectMember.user_id == current_user.id
@@ -217,7 +211,8 @@ def export_reservations(
         selectinload(Reservation.referral_user)
     ).order_by(Reservation.milestone_id, Reservation.created_at)
     
-    reservations = db.scalars(stmt).all()
+    result = await db.scalars(stmt)
+    reservations = result.all()
 
     # CSV生成
     output = io.StringIO()
