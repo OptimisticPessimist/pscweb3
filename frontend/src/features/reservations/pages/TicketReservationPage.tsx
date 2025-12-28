@@ -20,7 +20,7 @@ export const TicketReservationPage = () => {
     const { milestoneId } = useParams<{ milestoneId: string }>();
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const [roleFilter, setRoleFilter] = useState<'all' | 'cast'>('all');
+    const [roleFilter, setRoleFilter] = useState<'all' | 'cast'>('cast');
 
     const { data: milestone, isLoading: isMilestoneLoading, error: milestoneError } = useQuery({
         queryKey: ['publicMilestone', milestoneId],
@@ -66,6 +66,9 @@ export const TicketReservationPage = () => {
                 <div className="md:flex-col">
                     <div className="p-8 bg-indigo-600 text-white">
                         <div className="uppercase tracking-wide text-sm font-semibold opacity-80">{t('reservation.form.title')}</div>
+                        {milestone.project_name && (
+                            <p className="mt-2 text-lg font-medium opacity-90">{milestone.project_name}</p>
+                        )}
                         <h1 className="block mt-1 text-2xl leading-tight font-bold">{milestone.title}</h1>
                         <p className="mt-2 opacity-90">
                             {format(new Date(milestone.start_date), 'yyyy/MM/dd (EEE) HH:mm', { locale: ja })}
@@ -143,17 +146,17 @@ export const TicketReservationPage = () => {
                                     <div className="text-xs space-x-2">
                                         <button
                                             type="button"
-                                            onClick={() => setRoleFilter('all')}
-                                            className={`px-2 py-0.5 rounded ${roleFilter === 'all' ? 'bg-gray-200 font-bold' : 'text-gray-500'}`}
-                                        >
-                                            {t('reservation.form.roleFilter.all')}
-                                        </button>
-                                        <button
-                                            type="button"
                                             onClick={() => setRoleFilter('cast')}
                                             className={`px-2 py-0.5 rounded ${roleFilter === 'cast' ? 'bg-gray-200 font-bold' : 'text-gray-500'}`}
                                         >
                                             {t('reservation.form.roleFilter.cast')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRoleFilter('all')}
+                                            className={`px-2 py-0.5 rounded ${roleFilter === 'all' ? 'bg-gray-200 font-bold' : 'text-gray-500'}`}
+                                        >
+                                            {t('reservation.form.roleFilter.all')}
                                         </button>
                                     </div>
                                 </div>
