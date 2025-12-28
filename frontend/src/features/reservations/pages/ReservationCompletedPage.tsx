@@ -7,7 +7,10 @@ export const ReservationCompletedPage = () => {
     const location = useLocation();
     const state = location.state as { reservation: ReservationResponse; milestone: PublicMilestone } | null;
 
+    console.log('ReservationCompletedPage - location.state:', state);
+
     if (!state) {
+        console.warn('No state found, redirecting to /');
         return <Navigate to="/" replace />;
     }
 

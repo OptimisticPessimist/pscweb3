@@ -126,6 +126,13 @@ async def get_public_milestone(
     db: AsyncSession = Depends(get_db),
 ):
     """公開マイルストーン詳細取得."""
+    # UUID形式のバリデーション
+    try:
+        from uuid import UUID
+        UUID(id)  # UUIDとして解析できるか確認
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid milestone ID format. Must be a valid UUID.")
+    
     milestone = await db.scalar(
         select(Milestone)
         .options(selectinload(Milestone.project))

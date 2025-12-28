@@ -39,9 +39,12 @@ export const TicketReservationPage = () => {
     const createMutation = useMutation({
         mutationFn: reservationsApi.createReservation,
         onSuccess: (data) => {
+            console.log('Reservation created successfully:', data);
+            console.log('Milestone data:', milestone);
             navigate('/reservations/completed', { state: { reservation: data, milestone } });
         },
         onError: (error: any) => {
+            console.error('Reservation creation failed:', error);
             const msg = error.response?.data?.detail || t('common.error');
             toast.error(msg);
         }
