@@ -70,6 +70,7 @@ class MilestoneCreate(BaseModel):
     description: str | None = None
     location: str | None = Field(None, description="場所")
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    reservation_capacity: int | None = Field(None, ge=1, description="予約定員")
     create_attendance_check: bool = Field(False, description="出席確認を作成")
     attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合はstart_dateの24時間前）")  # Simple hex validation
 
@@ -85,5 +86,6 @@ class MilestoneResponse(BaseModel):
     description: str | None = None
     location: str | None = None
     color: str | None = None
+    reservation_capacity: int | None = None
     
     model_config = {"from_attributes": True}

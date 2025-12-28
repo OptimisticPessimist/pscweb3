@@ -26,6 +26,8 @@ if TYPE_CHECKING:
         Script,
         ProjectInvitation,
         ProjectInvitation,
+        ProjectInvitation,
+        Reservation,
         AuditLog,
         Milestone,
         AttendanceEvent,
@@ -442,6 +444,32 @@ class Milestone(Base):
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="milestones")
+    reservations: Mapped[list["Reservation"]] = relationship(
+        back_populates="milestone", cascade="all, delete-orphan"
+    )
+
+    reservation_capacity: Mapped[int | None] = mapped_column(default=None)  # 予約定員 (None=無制限)
+
+
+class Reservation(Base):
+    """チケット予約."""
+
+    __tablename__ = "reservations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    milestone_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("milestones.id"))
+    referral_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)  # 紹介者
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)  # アプリ内ユーザーID (ログイン時)
+    name: Mapped[str] = mapped_column(String(100))  # 予約者名
+    email: Mapped[str] = mapped_column(String(200))  # 連絡先メールアドレス
+    count: Mapped[int] = mapped_column(default=1)  # 予約人数
+    attended: Mapped[bool] = mapped_column(Boolean, default=False)  # 出席済みフラグ
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # リレーション
+    milestone: Mapped["Milestone"] = relationship(back_populates="reservations")
+    referral_user: Mapped["User | None"] = relationship(foreign_keys=[referral_user_id])
+    user: Mapped["User | None"] = relationship(foreign_keys=[user_id])
 
 class AttendanceEvent(Base):
     """出欠確認イベント."""

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/features/auth/hooks/useAuth';
 import { Toaster } from 'react-hot-toast';
+import { HelmetProvider } from 'react-helmet-async';
 import './i18n'; // Import i18n configuration
 
 import { ProtectedLayout } from '@/layouts/ProtectedLayout';
@@ -28,6 +29,9 @@ const MySchedulePage = lazy(() => import('@/features/schedule/MySchedulePage').t
 const PublicScriptsPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptsPage').then(module => ({ default: module.PublicScriptsPage })));
 const PublicScriptDetailPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptDetailPage').then(module => ({ default: module.PublicScriptDetailPage })));
 const ManualPage = lazy(() => import('@/pages/ManualPage').then(module => ({ default: module.ManualPage })));
+const TicketReservationPage = lazy(() => import('@/features/reservations/pages/TicketReservationPage').then(module => ({ default: module.TicketReservationPage })));
+const ReservationCompletedPage = lazy(() => import('@/features/reservations/pages/ReservationCompletedPage').then(module => ({ default: module.ReservationCompletedPage })));
+const ReservationListPage = lazy(() => import('@/features/reservations/pages/ReservationListPage').then(module => ({ default: module.ReservationListPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,51 +44,63 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Toaster position="top-right" />
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              {/* Public Routes */}
-              {/* Public Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/auth/callback" element={<AuthCallbackPage />} />
-              <Route path="/invitations/:token" element={<InvitationLandingPage />} />
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Toaster position="top-right" />
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                {/* Public Routes */}
+                {/* Public Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                <Route path="/invitations/:token" element={<InvitationLandingPage />} />
 
-              {/* Public Routes with Layout */}
-              <Route element={<AppLayout />}>
-                <Route path="/public-scripts" element={<PublicScriptsPage />} />
-                <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
-                <Route path="/manual" element={<ManualPage />} />
-              </Route>
-
-              {/* Protected Routes */}
-              <Route element={<ProtectedLayout />}>
+                {/* Public Routes with Layout */}
                 <Route element={<AppLayout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/my-schedule" element={<MySchedulePage />} />
-                  <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
-                  <Route path="/projects/:projectId/scripts" element={<ScriptListPage />} />
-                  <Route path="/projects/:projectId/scripts/upload" element={<ScriptUploadPage />} />
-                  <Route path="/projects/:projectId/scripts/:scriptId" element={<ScriptDetailPage />} />
-                  <Route path="/projects/:projectId/chart" element={<SceneChartPage />} />
-                  <Route path="/projects/:projectId/cast" element={<CastingPage />} />
-                  <Route path="/projects/:projectId/staff" element={<StaffPage />} />
-                  <Route path="/projects/:projectId/schedule" element={<SchedulePage />} />
-                  <Route path="/projects/:projectId/attendance" element={<AttendancePage />} />
-                  <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
+                  <Route path="/public-scripts" element={<PublicScriptsPage />} />
+                  <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
+                  <Route path="/manual" element={<ManualPage />} />
+                  {/* Reservation Public Pages - might want to exclude AppLayout for immersion or keep it? 
+                    User requirement: "Ticket Reservation System". Usually standalone or branded. 
+                    Let's put it outside AppLayout or create a specific lightweight layout.
+                    For now, I'll put it outside AppLayout to be safe/clean as requested "email only".
+                    "without Discord login" -> likely don't want sidebar/header for signed-in users. 
+                 */}
                 </Route>
-              </Route>
 
-              {/* Default Redirect */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+                <Route path="/reservations/:milestoneId" element={<TicketReservationPage />} />
+                <Route path="/reservations/completed" element={<ReservationCompletedPage />} />
+
+                {/* Protected Routes */}
+                <Route element={<ProtectedLayout />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/my-schedule" element={<MySchedulePage />} />
+                    <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+                    <Route path="/projects/:projectId/scripts" element={<ScriptListPage />} />
+                    <Route path="/projects/:projectId/scripts/upload" element={<ScriptUploadPage />} />
+                    <Route path="/projects/:projectId/scripts/:scriptId" element={<ScriptDetailPage />} />
+                    <Route path="/projects/:projectId/chart" element={<SceneChartPage />} />
+                    <Route path="/projects/:projectId/cast" element={<CastingPage />} />
+                    <Route path="/projects/:projectId/staff" element={<StaffPage />} />
+                    <Route path="/projects/:projectId/schedule" element={<SchedulePage />} />
+                    <Route path="/projects/:projectId/attendance" element={<AttendancePage />} />
+                    <Route path="/projects/:projectId/reservations" element={<ReservationListPage />} />
+                    <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
+                  </Route>
+                </Route>
+
+                {/* Default Redirect */}
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

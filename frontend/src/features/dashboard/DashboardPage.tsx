@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
+import { PageHead } from '@/components/PageHead';
+
 export const DashboardPage = () => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
@@ -116,6 +118,7 @@ export const DashboardPage = () => {
 
     return (
         <div className="min-h-full">
+            <PageHead title={t('dashboard.title')} />
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.projects')}</h1>
                 <button

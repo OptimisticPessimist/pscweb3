@@ -25,6 +25,7 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "requests>=2.32.5",
     "pynacl>=1.6.1",
+    "sendgrid>=6.12.5",
 ]
 
 [project.optional-dependencies]

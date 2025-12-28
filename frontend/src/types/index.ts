@@ -202,6 +202,7 @@ export interface Milestone {
     description: string | null;
     location: string | null;
     color: string;
+    reservation_capacity?: number | null;
 }
 
 export interface MilestoneCreate {
@@ -213,4 +214,5 @@ export interface MilestoneCreate {
     color: string;
     create_attendance_check?: boolean;
     attendance_deadline?: string | null;
+    reservation_capacity?: number | null;
 }

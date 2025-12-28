@@ -199,7 +199,9 @@
                     "attendanceDeadline": "回答期限 (任意)",
                     "add": "追加",
                     "adding": "追加中...",
-                    "cancel": "キャンセル"
+                    "cancel": "キャンセル",
+                    "reservationCapacity": "予約定員 (空欄で無制限)",
+                    "reservationLink": "予約ページ"
                 },
                 "messages": {
                     "addSuccess": "マイルストーンを追加しました。",
@@ -340,5 +342,42 @@
         "ko": "한국어",
         "zhHans": "简体中文",
         "zhHant": "繁體中文"
+    },
+    "reservation": {
+        "form": {
+            "title": "チケット予約",
+            "name": "お名前",
+            "email": "メールアドレス",
+            "count": "予約枚数",
+            "referral": "扱い（紹介者）",
+            "referralPlaceholder": "選択なし",
+            "referralHelp": "知り合いのキャスト・スタッフがいる場合は選択してください。",
+            "roleFilter": {
+                "all": "全員",
+                "cast": "役者のみ"
+            },
+            "submit": "予約する",
+            "submitting": "送信中...",
+            "sheets": "枚"
+        },
+        "completed": {
+            "title": "予約完了",
+            "description": "ご予約ありがとうございます。\n確認メールを送信しました。",
+            "project": "公演",
+            "date": "日時",
+            "details": "予約内容",
+            "addToGoogleCalendar": "Googleカレンダーに追加",
+            "bookAnother": "別の予約をする"
+        },
+        "admin": {
+            "title": "予約管理",
+            "csvDownload": "CSVダウンロード",
+            "attended": "出席済",
+            "unattended": "未出席",
+            "noReservations": "予約はまだありません",
+            "referral": "紹介者",
+            "updateSuccess": "更新しました",
+            "updateError": "更新に失敗しました"
+        }
     }
 }

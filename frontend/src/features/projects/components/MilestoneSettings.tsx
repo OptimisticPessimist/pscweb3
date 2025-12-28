@@ -23,6 +23,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
     const [description, setDescription] = useState('');
     const [createAttendance, setCreateAttendance] = useState(false);
     const [attendanceDeadline, setAttendanceDeadline] = useState('');
+    const [reservationCapacity, setReservationCapacity] = useState('');
 
     const { data: milestones, isLoading } = useQuery({
         queryKey: ['milestones', projectId],
@@ -61,6 +62,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
         setDescription('');
         setCreateAttendance(false);
         setAttendanceDeadline('');
+        setReservationCapacity('');
         setIsAdding(false);
     };
 
@@ -74,7 +76,8 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
             location: location || null,
             description: description || null,
             create_attendance_check: createAttendance,
-            attendance_deadline: attendanceDeadline ? new Date(attendanceDeadline).toISOString() : null
+            attendance_deadline: attendanceDeadline ? new Date(attendanceDeadline).toISOString() : null,
+            reservation_capacity: reservationCapacity ? parseInt(reservationCapacity) : null
         });
     };
 
@@ -134,6 +137,16 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                                 📝 {milestone.description}
                                             </p>
                                         )}
+                                    </div>
+                                    {milestone.reservation_capacity && (
+                                        <div className="mt-2 text-sm text-gray-500">
+                                            🎫 予約定員: {milestone.reservation_capacity}名
+                                        </div>
+                                    )}
+                                    <div className="mt-2 text-sm text-gray-500">
+                                        🔗 <a href={`/reservations/${milestone.id}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                                            予約ページ
+                                        </a>
                                     </div>
                                     {canManage && (
                                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
