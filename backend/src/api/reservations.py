@@ -456,3 +456,28 @@ async def export_reservations(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@router.post("/admin/tasks/send-event-reminders")
+async def send_event_reminders_manually(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """リマインダーメール手動送信（管理者用）."""
+    # 任意のプロジェクトのownerまたはeditorであることを確認
+    # 簡易的にプロジェクトメンバーであればOKとする
+    member = await db.scalar(
+        select(ProjectMember).where(ProjectMember.user_id == current_user.id)
+    )
+    if not member:
+        raise HTTPException(status_code=403, detail="Not a project member")
+    
+    # タスク実行
+    from src.services.reservation_tasks import check_todays_events
+    stats = await check_todays_events()
+    
+    return {
+        "message": "Event reminder task completed",
+        "stats": stats
+    }
+
