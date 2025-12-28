@@ -102,7 +102,7 @@ async def create_reservation(
                 pass
 
         notification_content = f"""🎫 **チケット予約完了**
-予約日時: {date_str}
+公演日時: {date_str}
 お名前: {reservation.name}
 予約枚数: {reservation.count}枚
 扱い: {referral_name}
@@ -220,7 +220,7 @@ async def cancel_reservation(
         date_str = start_date_utc.astimezone(jst).strftime("%Y/%m/%d %H:%M")
 
         notification_content = f"""🗑️ **チケット予約キャンセル**
-予約日時: {date_str}
+公演日時: {date_str}
 お名前: {res_name}
 予約枚数: {res_count}枚
 扱い: {referral_name}
