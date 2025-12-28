@@ -103,16 +103,33 @@ export const TicketReservationPage = () => {
                                 {errors.email && <p className="text-red-500 text-sm mt-1">{t('common.error')}</p>}
                             </div>
 
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">{t('reservation.form.count')} <span className="text-red-500">*</span></label>
                                 <select
                                     {...register('count', { required: true })}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                                 >
-                                    {[1, 2, 3, 4].map(n => (
-                                        <option key={n} value={n}>{n}{t('reservation.form.sheets')}</option>
-                                    ))}
+                                    {(() => {
+                                        const capacity = milestone?.reservation_capacity;
+                                        const currentCount = milestone?.current_reservation_count || 0;
+                                        const available = capacity ? Math.max(0, capacity - currentCount) : 4;
+                                        const maxSelectable = Math.min(4, available);
+
+                                        if (maxSelectable === 0) {
+                                            return <option value="">満席です</option>;
+                                        }
+
+                                        return Array.from({ length: maxSelectable }, (_, i) => i + 1).map(n => (
+                                            <option key={n} value={n}>{n}{t('reservation.form.sheets')}</option>
+                                        ));
+                                    })()}
                                 </select>
+                                {milestone?.reservation_capacity && (
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        残り {Math.max(0, milestone.reservation_capacity - (milestone.current_reservation_count || 0))} 枚
+                                    </p>
+                                )}
                             </div>
 
                             <div>
