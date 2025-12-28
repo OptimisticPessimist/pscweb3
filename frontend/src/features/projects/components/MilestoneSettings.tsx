@@ -272,6 +272,23 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                 </div>
                             </div>
 
+                            <div className="sm:col-span-3">
+                                <label htmlFor="reservation_capacity" className="block text-sm font-medium text-gray-700">
+                                    {t('project.settings.milestones.form.reservationCapacity')}
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        type="number"
+                                        name="reservation_capacity"
+                                        id="reservation_capacity"
+                                        min="0"
+                                        value={reservationCapacity}
+                                        onChange={(e) => setReservationCapacity(e.target.value)}
+                                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="sm:col-span-6">
                                 <div className="flex items-start">
                                     <div className="flex items-center h-5">
