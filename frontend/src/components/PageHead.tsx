@@ -5,7 +5,7 @@ interface PageHeadProps {
 }
 
 export const PageHead = ({ title }: PageHeadProps) => {
-    const fullTitle = title ? `PSCWEB3 -${title}-` : 'PSCWEB3';
+    const fullTitle = title ? `${title} | PSC Web` : 'PSC Web - 演劇制作管理システム';
     return (
         <Helmet>
             <title>{fullTitle}</title>
