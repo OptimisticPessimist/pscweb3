@@ -54,6 +54,17 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
         }
     });
 
+    const updateMutation = useMutation({
+        mutationFn: (variables: { id: string, data: any }) => projectsApi.updateMilestone(projectId, variables.id, variables.data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['milestones', projectId] });
+            // auto saved toast or silent update
+        },
+        onError: (error: any) => {
+            alert(`${t('common.error')}: ${error.message}`);
+        }
+    });
+
     const resetForm = () => {
         setTitle('');
         setStartDate('');
@@ -139,15 +150,37 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                             </p>
                                         )}
                                     </div>
-                                    {milestone.reservation_capacity && (
-                                        <div className="mt-2 text-sm text-gray-500">
-                                            🎫 予約定員: {milestone.reservation_capacity}名
+                                    {milestone.reservation_capacity !== undefined && (
+                                        <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
+                                            <span>🎫 予約: {milestone.current_reservation_count || 0} / </span>
+                                            {canManage ? (
+                                                <input
+                                                    type="number"
+                                                    className="w-20 px-2 py-1 text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                    defaultValue={milestone.reservation_capacity || ''}
+                                                    placeholder="無制限"
+                                                    onBlur={(e) => {
+                                                        const val = e.target.value ? parseInt(e.target.value) : null;
+                                                        if (val !== milestone.reservation_capacity) {
+                                                            updateMutation.mutate({ id: milestone.id, data: { reservation_capacity: val } });
+                                                        }
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span>{milestone.reservation_capacity || '無制限'}</span>
+                                            )}
+                                            <span>名</span>
                                         </div>
                                     )}
-                                    <div className="mt-2 text-sm text-gray-500">
-                                        🔗 <a href={`/reservations/${milestone.id}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
-                                            予約ページ
+                                    <div className="mt-2 flex space-x-4 text-sm text-gray-500">
+                                        <a href={`/reservations/${milestone.id}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline flex items-center">
+                                            🔗 予約ページ
                                         </a>
+                                        {canManage && (
+                                            <a href={`/projects/${projectId}/reservations?milestoneId=${milestone.id}`} className="text-indigo-600 hover:underline flex items-center">
+                                                📋 予約者一覧
+                                            </a>
+                                        )}
                                     </div>
                                     {canManage && (
                                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">

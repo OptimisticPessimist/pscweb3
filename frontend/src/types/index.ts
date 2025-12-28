@@ -203,6 +203,7 @@ export interface Milestone {
     location: string | null;
     color: string;
     reservation_capacity?: number | null;
+    current_reservation_count?: number;
 }
 
 export interface MilestoneCreate {

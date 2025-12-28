@@ -75,6 +75,18 @@ class MilestoneCreate(BaseModel):
     attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合はstart_dateの24時間前）")  # Simple hex validation
 
 
+class MilestoneUpdate(BaseModel):
+    """マイルストーン更新スキーマ."""
+
+    title: str | None = Field(None, min_length=1, max_length=200)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    description: str | None = None
+    location: str | None = None
+    color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    reservation_capacity: int | None = Field(None, ge=1, description="予約定員")
+
+
 class MilestoneResponse(BaseModel):
     """マイルストーンレスポンス."""
     
@@ -87,6 +99,7 @@ class MilestoneResponse(BaseModel):
     location: str | None = None
     color: str | None = None
     reservation_capacity: int | None = None
+    current_reservation_count: int = 0
     project_name: str | None = None
     
     model_config = {"from_attributes": True}

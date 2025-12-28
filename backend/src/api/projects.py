@@ -2,12 +2,12 @@ from uuid import UUID
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Path
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from structlog import get_logger
 
 from src.db import get_db
-from src.db.models import AuditLog, ProjectMember, TheaterProject, User, Milestone
+from src.db.models import AuditLog, ProjectMember, TheaterProject, User, Milestone, Reservation
 from src.dependencies.auth import get_current_user_dep
 from src.dependencies.permissions import get_project_member_dep, get_project_owner_dep
 from src.schemas.project import (
@@ -18,6 +18,7 @@ from src.schemas.project import (
     MemberRoleUpdate,
     MilestoneCreate,
     MilestoneResponse,
+    MilestoneUpdate,
 )
 from src.services.discord import DiscordService, get_discord_service
 from src.services.attendance import AttendanceService
@@ -649,22 +650,85 @@ async def list_milestones(
     db: AsyncSession = Depends(get_db),
 ) -> list[MilestoneResponse]:
     """マイルストーン一覧を取得."""
-    stmt = select(Milestone).where(Milestone.project_id == project_id).order_by(Milestone.start_date)
+    # 予約数も取得するためにGroup Byする
+    # Reservationテーブルからのsum(count)を取得
+    stmt = (
+        select(Milestone, func.coalesce(func.sum(Reservation.count), 0).label("total_reserved"))
+        .outerjoin(Reservation, Milestone.id == Reservation.milestone_id)
+        .where(Milestone.project_id == project_id)
+        .group_by(Milestone.id)
+        .order_by(Milestone.start_date)
+    )
     result = await db.execute(stmt)
-    milestones = result.scalars().all()
+    rows = result.all()
     
-    return [
-        MilestoneResponse(
-            id=m.id,
-            project_id=m.project_id,
-            title=m.title,
-            start_date=m.start_date,
-            end_date=m.end_date,
-            description=m.description,
-            location=m.location,
-            color=m.color,
-        ) for m in milestones
-    ]
+    response = []
+    for milestone, total_reserved in rows:
+        m_response = MilestoneResponse.model_validate(milestone)
+        m_response.current_reservation_count = total_reserved
+        response.append(m_response)
+        
+    return response
+
+
+    return response
+
+
+@router.patch("/{project_id}/milestones/{milestone_id}", response_model=MilestoneResponse)
+async def update_milestone(
+    project_id: UUID,
+    milestone_id: UUID,
+    milestone_update: MilestoneUpdate,
+    background_tasks: BackgroundTasks,
+    current_member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
+) -> MilestoneResponse:
+    """マイルストーンを更新."""
+    if current_member.role == "viewer":
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    stmt = select(Milestone).where(Milestone.id == milestone_id, Milestone.project_id == project_id)
+    result = await db.execute(stmt)
+    milestone = result.scalar_one_or_none()
+    
+    if not milestone:
+        raise HTTPException(status_code=404, detail="マイルストーンが見つかりません")
+        
+    # 更新
+    if milestone_update.title is not None:
+        milestone.title = milestone_update.title
+    if milestone_update.start_date is not None:
+        # Timezone check
+        sd = milestone_update.start_date
+        if sd.tzinfo:
+            sd = sd.astimezone(timezone.utc).replace(tzinfo=None)
+        milestone.start_date = sd
+    if milestone_update.end_date is not None:
+        ed = milestone_update.end_date
+        if ed.tzinfo:
+            ed = ed.astimezone(timezone.utc).replace(tzinfo=None)
+        milestone.end_date = ed
+    if milestone_update.description is not None:
+        milestone.description = milestone_update.description
+    if milestone_update.location is not None:
+        milestone.location = milestone_update.location
+    if milestone_update.color is not None:
+        milestone.color = milestone_update.color
+    if milestone_update.reservation_capacity is not None:
+        milestone.reservation_capacity = milestone_update.reservation_capacity
+        
+    await db.commit()
+    await db.refresh(milestone)
+    
+    # 現在の予約数を再計算
+    count_stmt = select(func.sum(Reservation.count)).where(Reservation.milestone_id == milestone.id)
+    count_res = await db.scalar(count_stmt)
+    current_count = count_res or 0
+    
+    response = MilestoneResponse.model_validate(milestone)
+    response.current_reservation_count = current_count
+    
+    return response
 
 
 @router.delete("/{project_id}/milestones/{milestone_id}", status_code=204)

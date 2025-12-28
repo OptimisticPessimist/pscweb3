@@ -40,6 +40,11 @@ export const projectsApi = {
         return response.data;
     },
 
+    async updateMilestone(projectId: string, milestoneId: string, data: Partial<import('@/types').MilestoneCreate>): Promise<import('@/types').Milestone> {
+        const response = await apiClient.patch(`/projects/${projectId}/milestones/${milestoneId}`, data);
+        return response.data;
+    },
+
     async deleteMilestone(projectId: string, milestoneId: string): Promise<void> {
         await apiClient.delete(`/projects/${projectId}/milestones/${milestoneId}`);
     },
