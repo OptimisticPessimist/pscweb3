@@ -126,9 +126,14 @@ export const TicketReservationPage = () => {
                                     })()}
                                 </select>
                                 {milestone?.reservation_capacity && (
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        残り {Math.max(0, milestone.reservation_capacity - (milestone.current_reservation_count || 0))} 枚
-                                    </p>
+                                    <div className="mt-1 space-y-1">
+                                        <p className="text-xs text-gray-500">
+                                            残り {Math.max(0, milestone.reservation_capacity - (milestone.current_reservation_count || 0))} 枚
+                                        </p>
+                                        <p className="text-xs text-amber-600">
+                                            ※ 残り枚数は目安です。確定は送信時に行われます。
+                                        </p>
+                                    </div>
                                 )}
                             </div>
 

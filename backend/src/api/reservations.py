@@ -40,8 +40,12 @@ async def create_reservation(
             .where(Reservation.milestone_id == reservation.milestone_id)
         )
         current_count = result or 0
+        remaining = milestone.reservation_capacity - current_count
         if current_count + reservation.count > milestone.reservation_capacity:
-            raise HTTPException(status_code=400, detail="Reservation capacity exceeded")
+            raise HTTPException(
+                status_code=400, 
+                detail=f"申し訳ございません。他の方の予約により残り{remaining}枚となっております。枚数を減らして再度お試しください。"
+            )
 
     # 予約作成
     db_reservation = Reservation(
