@@ -16,7 +16,7 @@ export interface ReservationCreateRequest {
     name: string;
     email: string;
     count: number;
-    referral_user_id?: string;
+    referral_user_id?: string | null;
 }
 
 export interface ReservationUpdateRequest {
