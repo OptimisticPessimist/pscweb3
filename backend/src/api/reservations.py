@@ -402,10 +402,20 @@ async def export_reservations(
     # CSV生成
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "ID", "公演名", "日時", "予約者名", "Email", "人数", 
-        "紹介者", "出席", "予約日時"
-    ])
+    
+    # Viewer権限の場合、メールアドレスを非表示
+    is_viewer = member.role == 'viewer'
+    
+    if is_viewer:
+        writer.writerow([
+            "ID", "公演名", "日時", "予約者名", "人数", 
+            "紹介者", "出席", "予約日時"
+        ])
+    else:
+        writer.writerow([
+            "ID", "公演名", "日時", "予約者名", "Email", "人数", 
+            "紹介者", "出席", "予約日時"
+        ])
     
     # 全プロジェクトメンバー取得（名前解決用）
     pm_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
@@ -423,10 +433,17 @@ async def export_reservations(
 
         date_str = r.milestone.start_date.strftime("%Y/%m/%d %H:%M")
         created_str = r.created_at.strftime("%Y/%m/%d %H:%M:%S")
-        writer.writerow([
-            str(r.id), r.milestone.title, date_str, r.name, r.email, r.count,
-            referral, "済" if r.attended else "未", created_str
-        ])
+        
+        if is_viewer:
+            writer.writerow([
+                str(r.id), r.milestone.title, date_str, r.name, r.count,
+                referral, "済" if r.attended else "未", created_str
+            ])
+        else:
+            writer.writerow([
+                str(r.id), r.milestone.title, date_str, r.name, r.email, r.count,
+                referral, "済" if r.attended else "未", created_str
+            ])
     
     output.seek(0)
     
