@@ -4,12 +4,19 @@ import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 
 import { reservationsApi } from '../api';
+import { projectsApi } from '@/features/projects/api/projects';
 import type { ReservationResponse } from '../types';
 import { Loading } from '@/components/Loading';
 
 export const ReservationListPage = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
+
+    const { data: project } = useQuery({
+        queryKey: ['project', projectId],
+        queryFn: () => projectsApi.getProject(projectId!),
+        enabled: !!projectId
+    });
 
     const { data: reservations = [], isLoading } = useQuery({
         queryKey: ['reservations', projectId],
@@ -90,12 +97,14 @@ export const ReservationListPage = () => {
                                             </span>
                                         </div>
                                         <div className="mt-2 flex">
-                                            <div className="flex items-center text-sm text-gray-500">
-                                                <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                </svg>
-                                                <p className="truncate">{reservation.email}</p>
-                                            </div>
+                                            {project?.current_user_role !== 'viewer' && (
+                                                <div className="flex items-center text-sm text-gray-500">
+                                                    <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <p className="truncate">{reservation.email}</p>
+                                                </div>
+                                            )}
                                         </div>
                                         {reservation.referral_name && (
                                             <div className="mt-1 text-xs text-gray-400">
