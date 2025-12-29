@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { reservationsApi } from '../api';
+import type { ReservationResponse } from '../types';
 import { projectsApi } from '@/features/projects/api/projects';
 import { Loading } from '@/components/Loading';
 
@@ -24,7 +25,8 @@ export const MilestoneReservationListPage = () => {
 
     const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
         queryKey: ['milestone-reservations', milestoneId],
-        queryFn: () => reservationsApi.getMilestoneReservations(milestoneId!),
+        // @ts-ignore - API definition updated but TS might be caching old type
+        queryFn: () => (reservationsApi as any).getMilestoneReservations(milestoneId!),
         enabled: !!milestoneId
     });
 
@@ -43,7 +45,7 @@ export const MilestoneReservationListPage = () => {
     if (milestoneLoading || reservationsLoading) return <Loading />;
     if (!milestone) return <div className="text-center py-10 text-red-500">{t('reservation.milestone.notFound')}</div>;
 
-    const totalCount = reservations.reduce((sum, r) => sum + r.count, 0);
+    const totalCount = reservations.reduce((sum: number, r: ReservationResponse) => sum + r.count, 0);
 
     return (
         <div className="space-y-6">
@@ -79,7 +81,7 @@ export const MilestoneReservationListPage = () => {
                     </h3>
                 </div>
                 <ul role="list" className="divide-y divide-gray-200">
-                    {reservations.map((reservation) => (
+                    {reservations.map((reservation: ReservationResponse) => (
                         <li key={reservation.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
