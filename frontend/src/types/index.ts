@@ -204,6 +204,7 @@ export interface Milestone {
     color: string;
     reservation_capacity?: number | null;
     current_reservation_count?: number;
+    is_public?: boolean;  // 公開設定
 }
 
 export interface MilestoneCreate {
@@ -216,4 +217,5 @@ export interface MilestoneCreate {
     create_attendance_check?: boolean;
     attendance_deadline?: string | null;
     reservation_capacity?: number | null;
+    is_public?: boolean;  // 公開設定
 }

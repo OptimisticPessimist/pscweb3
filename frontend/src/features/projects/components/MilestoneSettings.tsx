@@ -25,6 +25,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
     const [createAttendance, setCreateAttendance] = useState(false);
     const [attendanceDeadline, setAttendanceDeadline] = useState('');
     const [reservationCapacity, setReservationCapacity] = useState('');
+    const [isPublic, setIsPublic] = useState(true);  // 🆕 公開設定
 
     const { data: milestones, isLoading } = useQuery({
         queryKey: ['milestones', projectId],
@@ -75,6 +76,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
         setCreateAttendance(false);
         setAttendanceDeadline('');
         setReservationCapacity('');
+        setIsPublic(true);  // 🆕 デフォルトは公開
         setIsAdding(false);
     };
 
@@ -89,7 +91,8 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
             description: description || null,
             create_attendance_check: createAttendance,
             attendance_deadline: attendanceDeadline ? new Date(attendanceDeadline).toISOString() : null,
-            reservation_capacity: reservationCapacity ? parseInt(reservationCapacity) : null
+            reservation_capacity: reservationCapacity ? parseInt(reservationCapacity) : null,
+            is_public: isPublic  // 🆕 公開設定
         });
     };
 
@@ -124,6 +127,7 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                             <div className="px-4 py-4 sm:px-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
+                                        {!milestone.is_public && <span className="mr-2" title="非公開">🔒</span>}
                                         <span
                                             className="h-4 w-4 rounded-full mr-3"
                                             style={{ backgroundColor: milestone.color }}
@@ -182,6 +186,29 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                             </a>
                                         )}
                                     </div>
+                                    {canManage && (
+                                        <div className="mt-2 flex items-center gap-4">
+                                            {/* 🆕 公開/非公開トグル */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm text-gray-700">公開設定:</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newValue = !milestone.is_public;
+                                                        updateMutation.mutate({ id: milestone.id, data: { is_public: newValue } });
+                                                    }}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${milestone.is_public ? 'bg-indigo-600' : 'bg-gray-200'
+                                                        }`}
+                                                >
+                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${milestone.is_public ? 'translate-x-6' : 'translate-x-1'
+                                                        }`} />
+                                                </button>
+                                                <span className="text-xs text-gray-500">
+                                                    {milestone.is_public ? '公開' : '非公開'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                     {canManage && (
                                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                                             <button
@@ -341,6 +368,32 @@ export const MilestoneSettings: React.FC<MilestoneSettingsProps> = ({ projectId,
                                         </label>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* 🆕 公開設定トグル */}
+                            <div className="sm:col-span-6">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-gray-700">
+                                        公開設定
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPublic(!isPublic)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isPublic ? 'bg-indigo-600' : 'bg-gray-200'
+                                                }`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPublic ? 'translate-x-6' : 'translate-x-1'
+                                                }`} />
+                                        </button>
+                                        <span className="text-sm text-gray-500">
+                                            {isPublic ? '公開' : '非公開'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="mt-1 text-xs text-gray-500">
+                                    公開設定をオフにすると、予約カレンダーに表示されません（ゲネプロ・身内公演向け）
+                                </p>
                             </div>
 
                             {createAttendance && (
