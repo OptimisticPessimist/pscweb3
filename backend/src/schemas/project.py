@@ -71,6 +71,7 @@ class MilestoneCreate(BaseModel):
     location: str | None = Field(None, description="場所")
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     reservation_capacity: int | None = Field(None, ge=1, description="予約定員")
+    is_public: bool = Field(True, description="公開設定")
     create_attendance_check: bool = Field(False, description="出席確認を作成")
     attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合はstart_dateの24時間前）")  # Simple hex validation
 
@@ -85,6 +86,7 @@ class MilestoneUpdate(BaseModel):
     location: str | None = None
     color: str | None = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     reservation_capacity: int | None = Field(None, ge=1, description="予約定員")
+    is_public: bool | None = Field(None, description="公開設定")
 
 
 class MilestoneResponse(BaseModel):
@@ -100,6 +102,7 @@ class MilestoneResponse(BaseModel):
     color: str | None = None
     reservation_capacity: int | None = None
     current_reservation_count: int = 0
+    is_public: bool | None = None
     project_name: str | None = None
     
     model_config = {"from_attributes": True}

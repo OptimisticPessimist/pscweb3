@@ -441,6 +441,8 @@ class Milestone(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # HEX colorカレンダー表示用の色コード (e.g. "#FF0000")
+    reservation_capacity: Mapped[int | None] = mapped_column(default=None)  # 予約定員 (None=無制限)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True)  # 公開設定
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="milestones")

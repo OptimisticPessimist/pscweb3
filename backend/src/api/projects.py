@@ -582,6 +582,8 @@ async def create_milestone(
         end_date=end_date,
         location=milestone_data.location,
         color=milestone_data.color,
+        reservation_capacity=milestone_data.reservation_capacity,
+        is_public=milestone_data.is_public,  # 🆕 公開設定
     )
     db.add(milestone)
     await db.commit()
@@ -716,6 +718,8 @@ async def update_milestone(
         milestone.color = milestone_update.color
     if milestone_update.reservation_capacity is not None:
         milestone.reservation_capacity = milestone_update.reservation_capacity
+    if milestone_update.is_public is not None:  # 🆕 公開設定
+        milestone.is_public = milestone_update.is_public
         
     await db.commit()
     await db.refresh(milestone)

@@ -140,8 +140,13 @@ async def get_public_milestone(
     stmt = (
         select(Milestone, func.coalesce(func.sum(Reservation.count), 0).label("total_reserved"))
         .outerjoin(Reservation, Milestone.id == Reservation.milestone_id)
+        .join(TheaterProject, Milestone.project_id == TheaterProject.id)  # 🆕 JOIN追加
         .options(selectinload(Milestone.project))
-        .where(Milestone.id == id)
+        .where(
+            Milestone.id == id,
+            TheaterProject.is_public == True,  # 🆕 公開プロジェクトのみ
+            Milestone.is_public == True  # 🆕 公開マイルストーンのみ
+        )
         .group_by(Milestone.id)
     )
     
@@ -274,6 +279,7 @@ async def get_public_schedule(
         .options(selectinload(Milestone.project))
         .where(
             TheaterProject.is_public == True,
+            Milestone.is_public == True,  # 🆕 公開マイルストーンのみ
             Milestone.start_date >= now
         )
         .order_by(Milestone.start_date)
