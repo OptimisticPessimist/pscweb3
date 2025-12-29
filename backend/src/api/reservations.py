@@ -137,7 +137,7 @@ async def get_public_milestone(
     
     # マイルストーンと予約数を同時に取得
     from sqlalchemy import func
-    from src.models.reservation import Reservation
+    # ✅ Reservationは既にファイル先頭でインポート済み
     
     stmt = (
         select(Milestone, func.coalesce(func.sum(Reservation.count), 0).label("total_reserved"))
