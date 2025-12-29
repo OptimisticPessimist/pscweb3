@@ -62,7 +62,11 @@ alembic upgrade head
 4.  **UI実装 (`ScriptDetailPage.tsx`)**: 脚本詳細ページに「メタデータ」セクションを追加し、データが存在する場合のみ表示するようにしました。
 
 ### バグ修正 (PDFメタデータ反映)
-`playscript` ライブラリが標準で `Notes` などのフィールドをPDFに反映しないため、`pdf_generator.py` 内で一時的にこれらの情報を `Author` フィールドに追記することで、PDFのタイトルページに表示されるように修正しました。
+`playscript` ライブラリの仕様上、`Author` フィールドは1行のみしか表示されず、以降の行が切り捨てられることが判明しました。また、`script.title` 属性を変更してもPDF生成時のデータ（`script.lines`）には反映されない仕様であることが分かりました。
+
+そのため、`pdf_generator.py` 内で **`script.lines` から `TITLE` 行を特定し、その `text` 属性に直接メタデータを追記する** 形で修正しました。
+さらに、レイアウトの分かりやすさを向上させるため、**`Author` もメタデータの一部として「Author: 名前」の形式で `Title` 下に統合し、元の `Author` 行は出力しない** ように調整しました。
+これにより、全てのメタデータ（Author, Draft Date, Contact, Copyright, Notes, Revision）がPDFのタイトルページに一元化して正しく表示されるようになりました。
 
 ### 検証
 `npm run build` によりビルドエラーがないことを確認しました。

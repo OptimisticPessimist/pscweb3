@@ -15,7 +15,7 @@
     - [x] Update `ScriptDetailPage.tsx`
     - [x] Verify UI Display (Build success)
 - [x] Fix PDF Notes Reflection
-    - [x] Investigate `pdf_generator.py` and `playscript` behavior
-    - [x] Implement fix to include Notes in PDF
+    - [x] Investigate `pdf_generator.py` and `playscript` behavior (Found Author truncation issue)
+    - [x] Implement fix to include Notes in PDF (Moved to Title field)
     - [x] Verify fix
 

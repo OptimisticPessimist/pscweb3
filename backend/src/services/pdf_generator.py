@@ -70,6 +70,7 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     
     extra_info_parts = []
     
+    
     if "draft date" in metadata:
         extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
     elif "date" in metadata:
@@ -85,18 +86,43 @@ def generate_script_pdf(fountain_content: str) -> bytes:
         extra_info_parts.append(f"Revision: {', '.join(metadata['revision'])}")
         
     if "notes" in metadata:
-        # Notesは長くなる可能性があるため、区切り線などを入れるか検討
         extra_info_parts.append(f"\nNotes:\n{'\n'.join(metadata['notes'])}")
+
+    if "author" in metadata:
+        # User requested explicit "Author: ..." labeling
+        # adding it to the top of our metadata block
+        extra_info_parts.insert(0, f"Author: {', '.join(metadata['author'])}")
 
     script = fountain.psc_from_fountain(fountain_content)
     
     if extra_info_parts:
         extra_info_str = "\n".join(extra_info_parts)
-        if hasattr(script, 'author') and script.author:
-            script.author += "\n\n" + extra_info_str
-        else:
-            script.author = extra_info_str
-    
+        # playscriptはscript.linesの内容を使用してPDFを生成するため、
+        # メタデータを表示するにはTITLE行のテキストを直接書き換える必要がある
+        # script.titleを変更しても反映されない
+        from playscript import PScLineType
+        
+        # TITLE行を更新し、AUTHOR行は削除する（重複防止＆複数行表示対応のため）
+        new_lines = []
+        found_title = False
+        
+        for line in script.lines:
+            if line.type == PScLineType.TITLE:
+                line.text += "\n\n" + extra_info_str
+                found_title = True
+                new_lines.append(line)
+            elif line.type == PScLineType.AUTHOR:
+                # 既にTitle行にAuthorを含めたので、元のAuthor行は除外する
+                continue
+            else:
+                new_lines.append(line)
+        
+        script.lines = new_lines
+        
+        # デバッグ用：script.titleも更新しておく
+        if hasattr(script, 'title'):
+             script.title += "\n\n" + extra_info_str
+
     # PDFストリームを生成
     # 縦書き・明朝体を使用
     pdf_stream = pdf.psc_to_pdf(script, font_name=DEFAULT_FONT)
