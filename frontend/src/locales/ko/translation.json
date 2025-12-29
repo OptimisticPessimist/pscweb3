@@ -291,5 +291,52 @@
         "ko": "한국어",
         "zhHans": "简体中文",
         "zhHant": "繁體中文"
+    },
+    "reservation": {
+        "form": {
+            "title": "티켓 예약",
+            "name": "이름",
+            "email": "이메일",
+            "count": "예약 매수",
+            "referral": "추천인",
+            "referralPlaceholder": "선택 안함",
+            "referralHelp": "아는 캐스트 또는 스태프가 있으면 선택하세요.",
+            "roleFilter": {
+                "all": "전체",
+                "cast": "배우만"
+            },
+            "submit": "예약하기",
+            "submitting": "제출 중...",
+            "sheets": "{{count}}매"
+        },
+        "completed": {
+            "title": "예약 완료",
+            "description": "예약해 주셔서 감사합니다.\\n확인 이메일을 전송했습니다.",
+            "project": "공연",
+            "date": "일시",
+            "details": "예약 내용",
+            "addToGoogleCalendar": "Google 캘린더에 추가",
+            "bookAnother": "다른 예약하기"
+        },
+        "admin": {
+            "title": "예약 관리",
+            "csvDownload": "CSV 다운로드",
+            "attended": "출석 완료",
+            "unattended": "미출석",
+            "noReservations": "예약이 아직 없습니다",
+            "referral": "추천인",
+            "updateSuccess": "업데이트되었습니다",
+            "updateError": "업데이트 실패"
+        },
+        "milestone": {
+            "notFound": "마일스톤을 찾을 수 없습니다",
+            "totalReservations": "총 예약: {{count}}명 / {{items}}건",
+            "backToProject": "← 프로젝트로 돌아가기",
+            "reservationList": "예약자 목록",
+            "referralBy": "추천인: {{name}}",
+            "reservedAt": "예약: {{date}}",
+            "updateSuccess": "업데이트되었습니다",
+            "updateError": "업데이트 실패"
+        }
     }
 }

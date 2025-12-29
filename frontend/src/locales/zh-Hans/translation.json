@@ -291,5 +291,52 @@
         "ko": "한국어",
         "zhHans": "简体中文",
         "zhHant": "繁體中文"
+    },
+    "reservation": {
+        "form": {
+            "title": "票务预约",
+            "name": "姓名",
+            "email": "邮箱",
+            "count": "预约张数",
+            "referral": "推荐人",
+            "referralPlaceholder": "不选择",
+            "referralHelp": "如果您认识演员或工作人员,请选择。",
+            "roleFilter": {
+                "all": "全部",
+                "cast": "仅演员"
+            },
+            "submit": "预约",
+            "submitting": "提交中...",
+            "sheets": "{{count}}张"
+        },
+        "completed": {
+            "title": "预约完成",
+            "description": "感谢您的预约。\\n确认邮件已发送。",
+            "project": "演出",
+            "date": "日期时间",
+            "details": "预约详情",
+            "addToGoogleCalendar": "添加到 Google 日历",
+            "bookAnother": "进行其他预约"
+        },
+        "admin": {
+            "title": "预约管理",
+            "csvDownload": "下载 CSV",
+            "attended": "已出席",
+            "unattended": "未出席",
+            "noReservations": "暂无预约",
+            "referral": "推荐人",
+            "updateSuccess": "更新成功",
+            "updateError": "更新失败"
+        },
+        "milestone": {
+            "notFound": "未找到里程碑",
+            "totalReservations": "总预约: {{count}}人 / {{items}}条",
+            "backToProject": "← 返回项目",
+            "reservationList": "预约列表",
+            "referralBy": "推荐人: {{name}}",
+            "reservedAt": "预约: {{date}}",
+            "updateSuccess": "更新成功",
+            "updateError": "更新失败"
+        }
     }
 }

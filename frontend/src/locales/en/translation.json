@@ -313,5 +313,52 @@
         "ko": "한국어",
         "zhHans": "简体中文",
         "zhHant": "繁體中文"
+    },
+    "reservation": {
+        "form": {
+            "title": "Ticket Reservation",
+            "name": "Name",
+            "email": "Email",
+            "count": "Number of Tickets",
+            "referral": "Referred by",
+            "referralPlaceholder": "None",
+            "referralHelp": "Select a cast or staff member if you were referred.",
+            "roleFilter": {
+                "all": "All",
+                "cast": "Cast Only"
+            },
+            "submit": "Reserve",
+            "submitting": "Submitting...",
+            "sheets": "{{count}} tickets"
+        },
+        "completed": {
+            "title": "Reservation Complete",
+            "description": "Thank you for your reservation.\\nA confirmation email has been sent.",
+            "project": "Event",
+            "date": "Date & Time",
+            "details": "Reservation Details",
+            "addToGoogleCalendar": "Add to Google Calendar",
+            "bookAnother": "Make Another Reservation"
+        },
+        "admin": {
+            "title": "Reservation Management",
+            "csvDownload": "Download CSV",
+            "attended": "Attended",
+            "unattended": "Not Attended",
+            "noReservations": "No reservations yet",
+            "referral": "Referred by",
+            "updateSuccess": "Updated successfully",
+            "updateError": "Failed to update"
+        },
+        "milestone": {
+            "notFound": "Milestone not found",
+            "totalReservations": "Total: {{count}} people / {{items}} reservations",
+            "backToProject": "← Back to Project",
+            "reservationList": "Reservation List",
+            "referralBy": "Referred by: {{name}}",
+            "reservedAt": "Reserved: {{date}}",
+            "updateSuccess": "Updated successfully",
+            "updateError": "Failed to update"
+        }
     }
 }

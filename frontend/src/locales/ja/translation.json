@@ -378,6 +378,16 @@
             "referral": "紹介者",
             "updateSuccess": "更新しました",
             "updateError": "更新に失敗しました"
+        },
+        "milestone": {
+            "notFound": "マイルストーンが見つかりません",
+            "totalReservations": "合計予約: {{count}}名 / {{items}}件",
+            "backToProject": "← プロジェクトへ戻る",
+            "reservationList": "予約者一覧",
+            "referralBy": "紹介者: {{name}}",
+            "reservedAt": "予約: {{date}}",
+            "updateSuccess": "更新しました",
+            "updateError": "更新に失敗しました"
         }
     }
 }
