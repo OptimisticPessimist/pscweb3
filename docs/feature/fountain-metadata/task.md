@@ -14,4 +14,8 @@
     - [x] Update Translation Files
     - [x] Update `ScriptDetailPage.tsx`
     - [x] Verify UI Display (Build success)
+- [x] Fix PDF Notes Reflection
+    - [x] Investigate `pdf_generator.py` and `playscript` behavior
+    - [x] Implement fix to include Notes in PDF
+    - [x] Verify fix
 

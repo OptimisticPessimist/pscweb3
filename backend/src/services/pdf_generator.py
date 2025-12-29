@@ -61,7 +61,41 @@ def generate_script_pdf(fountain_content: str) -> bytes:
         bytes: 生成されたPDFのバイナリデータ
     """
     # Playscriptライブラリを使用してFountainをパース
+    from fountain.fountain import Fountain
+    
+    # メタデータを抽出してAuthorフィールドに追記するなどの処理を行う
+    # Playscriptは標準でTitle, Author以外の一部メタデータを無視するため
+    f_parser = Fountain(fountain_content)
+    metadata = f_parser.metadata
+    
+    extra_info_parts = []
+    
+    if "draft date" in metadata:
+        extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
+    elif "date" in metadata:
+        extra_info_parts.append(f"Date: {', '.join(metadata['date'])}")
+        
+    if "contact" in metadata:
+        extra_info_parts.append(f"Contact:\n{'\n'.join(metadata['contact'])}")
+        
+    if "copyright" in metadata:
+        extra_info_parts.append(f"Copyright: {', '.join(metadata['copyright'])}")
+        
+    if "revision" in metadata:
+        extra_info_parts.append(f"Revision: {', '.join(metadata['revision'])}")
+        
+    if "notes" in metadata:
+        # Notesは長くなる可能性があるため、区切り線などを入れるか検討
+        extra_info_parts.append(f"\nNotes:\n{'\n'.join(metadata['notes'])}")
+
     script = fountain.psc_from_fountain(fountain_content)
+    
+    if extra_info_parts:
+        extra_info_str = "\n".join(extra_info_parts)
+        if hasattr(script, 'author') and script.author:
+            script.author += "\n\n" + extra_info_str
+        else:
+            script.author = extra_info_str
     
     # PDFストリームを生成
     # 縦書き・明朝体を使用
