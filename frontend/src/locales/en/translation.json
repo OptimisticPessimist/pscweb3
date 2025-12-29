@@ -229,7 +229,13 @@
         "importSuccess": "Project created successfully!",
         "importToProject": "Use this script",
         "importFailed": "Failed to import script.",
-        "publicAccessError": "This script may effectively not exist or be private."
+        "publicAccessError": "This script may effectively not exist or be private.",
+        "metadata": "Metadata",
+        "draftDate": "Draft Date",
+        "copyright": "Copyright",
+        "contact": "Contact",
+        "notes": "Notes",
+        "revision": "Revision"
     },
     "sceneChart": {
         "title": "Scene Chart",

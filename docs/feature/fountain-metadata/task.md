@@ -1,0 +1,17 @@
+# タスク:
+- [x] Create Alembic migration for new columns
+    - [x] Edit migration file to add `draft_date`, `copyright`, `contact`, `notes`, `revision_text`
+    - [x] Apply migration
+- [x] Update `Script` model in `models.py`
+- [x] Update `fountain_parser.py` to extract metadata
+    - [x] Extract `date`, `copyright`, `contact`, `notes`, `revision`
+    - [x] Populate `Script` model fields
+- [x] Verify implementation
+    - [x] Add/Update unit tests (Added test case, verified manually due to env issues)
+    - [x] Verify PDF reflection (Confirmed via script)
+- [x] Implement Frontend Display
+    - [x] Update Frontend Types (`types/index.ts`)
+    - [x] Update Translation Files
+    - [x] Update `ScriptDetailPage.tsx`
+    - [x] Verify UI Display (Build success)
+

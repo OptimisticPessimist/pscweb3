@@ -1,6 +1,6 @@
 """Fountain脚本パーサーサービス."""
 
-from fountain import fountain
+from fountain.fountain import Fountain
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Line, Scene, Script
@@ -95,8 +95,41 @@ async def parse_fountain_and_create_models(
             
     fountain_content = "\n".join(processed_lines)
     
-    f = fountain.Fountain(fountain_content)
+    fountain_content = "\n".join(processed_lines)
+    
+    f = Fountain(fountain_content)
     logger.info(f"Parsed {len(f.elements)} elements from Fountain content.")
+    
+    # メタデータの抽出と保存
+    metadata = f.metadata
+    
+    if "date" in metadata:
+        script.draft_date = "\n".join(metadata["date"])
+    elif "draft date" in metadata:
+        script.draft_date = "\n".join(metadata["draft date"])
+        
+    if "copyright" in metadata:
+        script.copyright = "\n".join(metadata["copyright"])
+        
+    if "contact" in metadata:
+        script.contact = "\n".join(metadata["contact"])
+        
+    if "notes" in metadata:
+        script.notes = "\n".join(metadata["notes"])
+        
+    if "revision" in metadata:
+        script.revision_text = "\n".join(metadata["revision"])
+        
+    # authorも反映（フォーム入力がない場合などのため、または優先度によるが、ここではファイル内記述を反映させても良い）
+    # ただし、API側で指定されたauthorを優先すべきか？
+    # 通常、Fountainファイルの内容が正となることが多いが、アップロード時のフォームもある。
+    # ここでは、もしフォームで指定がなく（None）、Fountainにあれば埋める、あるいは常に上書きする？
+    # create_or_update logic in script_processor passes author.
+    # If we want to support file-based author, we can update it here.
+    if "author" in metadata:
+        # 既存のauthorがなければ、またはファイル内容を優先する場合
+        # 今回はファイル内の情報を優先して反映させる
+        script.author = "\n".join(metadata["author"])
 
     # 登場人物を抽出してマップを作成
     

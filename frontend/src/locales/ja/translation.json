@@ -263,7 +263,13 @@
         "importSuccess": "プロジェクトが正常に作成されました！",
         "importToProject": "この脚本を使う",
         "importFailed": "脚本のインポートに失敗しました。",
-        "publicAccessError": "この脚本は存在しないか、非公開の可能性があります。"
+        "publicAccessError": "この脚本は存在しないか、非公開の可能性があります。",
+        "metadata": "メタデータ",
+        "draftDate": "ドラフト日付",
+        "copyright": "著作権",
+        "contact": "連絡先",
+        "notes": "メモ",
+        "revision": "リビジョン"
     },
     "sceneChart": {
         "title": "香盤表",

@@ -70,6 +70,49 @@ export const ScriptDetailPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Metadata Section */}
+            {(script.draft_date || script.copyright || script.contact || script.notes || script.revision_text) && (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900">{t('script.metadata')}</h3>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-5 sm:p-6">
+                        <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                            {script.draft_date && (
+                                <div className="sm:col-span-1">
+                                    <dt className="text-sm font-medium text-gray-500">{t('script.draftDate')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{script.draft_date}</dd>
+                                </div>
+                            )}
+                            {script.revision_text && (
+                                <div className="sm:col-span-1">
+                                    <dt className="text-sm font-medium text-gray-500">{t('script.revision')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{script.revision_text}</dd>
+                                </div>
+                            )}
+                            {script.copyright && (
+                                <div className="sm:col-span-1">
+                                    <dt className="text-sm font-medium text-gray-500">{t('script.copyright')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{script.copyright}</dd>
+                                </div>
+                            )}
+                            {script.contact && (
+                                <div className="sm:col-span-1">
+                                    <dt className="text-sm font-medium text-gray-500">{t('script.contact')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{script.contact}</dd>
+                                </div>
+                            )}
+                            {script.notes && (
+                                <div className="sm:col-span-2">
+                                    <dt className="text-sm font-medium text-gray-500">{t('script.notes')}</dt>
+                                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{script.notes}</dd>
+                                </div>
+                            )}
+                        </dl>
+                    </div>
+                </div>
+            )}
+
             {/* Character List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">

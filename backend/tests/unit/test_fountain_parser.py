@@ -2,6 +2,7 @@
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from src.services.fountain_parser import parse_fountain_and_create_models
 from src.db.models import TheaterProject, User, Script
@@ -360,4 +361,64 @@ Hello!
 
     assert "JIRO" in char_map
     assert char_map["JIRO"].description == "太郎の弟。"
+
+
+@pytest.mark.asyncio
+async def test_parse_fountain_with_metadata(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """メタデータを含むFountain脚本のパーステスト."""
+    # Arrange
+    fountain_content = """Title: Metadata Test
+Credit: Written by
+Author: Test Author
+Source: Story by Source
+Draft date: 2023-01-01
+Contact:
+    123 Main St.
+    Anytown, USA
+Copyright: (c) 2023
+Notes:
+    This is a note.
+    Another line of note.
+Revision: 2.0 Blue Revised
+
+INT. ROOM - DAY
+
+Action.
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Metadata Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    # Reload script
+    result = await db.execute(select(Script).where(Script.id == script.id))
+    loaded_script = result.scalar_one()
+    
+    # Check metadata fields
+    assert loaded_script.title == "Metadata Test"
+    assert loaded_script.author == "Test Author"
+    assert loaded_script.draft_date == "2023-01-01"
+    assert loaded_script.copyright == "(c) 2023"
+    assert "123 Main St." in loaded_script.contact
+    assert "Anytown, USA" in loaded_script.contact
+    assert "This is a note." in loaded_script.notes
+    assert "Another line of note." in loaded_script.notes
+    assert loaded_script.revision_text == "2.0 Blue Revised"
+
 
