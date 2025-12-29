@@ -1,6 +1,8 @@
 """脚本管理APIエンドポイント - 権限チェック付き."""
-
+import logging
+import uuid
 from datetime import datetime, timezone
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks, Response
@@ -165,11 +167,12 @@ async def download_script_pdf(
     # ファイル名生成（ASCII文字以外を含む可能性を考慮し、Headerで指定推奨だが今回はシンプルに）
     # 必要であれば urllib.parse.quote でエンコードするなど検討
     filename = f"{script.title}.pdf"
+    filename_encoded = quote(filename)
 
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"}
     )
 
 
