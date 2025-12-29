@@ -12,7 +12,16 @@ class EmailService:
         self.client = SendGridAPIClient(self.api_key) if self.api_key else None
 
     def send_reservation_confirmation(
-        self, to_email: str, name: str, milestone_title: str, date_str: str, count: int, project_name: str, reservation_id: str
+        self, 
+        to_email: str, 
+        name: str, 
+        milestone_title: str, 
+        date_str: str, 
+        count: int, 
+        project_name: str, 
+        reservation_id: str,
+        location: str | None = None,  # 🆕 場所を追加
+        description: str | None = None  # 🆕 説明を追加
     ) -> bool:
         """予約確認メールを送信する."""
         if not self.client:
@@ -80,8 +89,8 @@ class EmailService:
 ご来場をお待ちしております。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-■ 公演名: {project_name}
-■ マイルストーン: {milestone_title}
+■ 劇団名: {project_name}
+■ 公演名: {milestone_title}
 ■ 日時: {date_str}
 {location_info}■ 予約枚数: {count} 枚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
