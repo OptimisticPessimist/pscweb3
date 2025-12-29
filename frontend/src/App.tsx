@@ -33,6 +33,7 @@ const TicketReservationPage = lazy(() => import('@/features/reservations/pages/T
 const ReservationCompletedPage = lazy(() => import('@/features/reservations/pages/ReservationCompletedPage').then(module => ({ default: module.ReservationCompletedPage })));
 const ReservationListPage = lazy(() => import('@/features/reservations/pages/ReservationListPage').then(module => ({ default: module.ReservationListPage })));
 const PublicSchedulePage = lazy(() => import('@/features/reservations/pages/PublicSchedulePage').then(module => ({ default: module.PublicSchedulePage })));
+const PublicCalendarPage = lazy(() => import('@/features/reservations/pages/PublicCalendarPage').then(module => ({ default: module.PublicCalendarPage })));  // 🆕
 const ReservationCancelPage = lazy(() => import('@/features/reservations/pages/ReservationCancelPage').then(module => ({ default: module.ReservationCancelPage })));
 
 const queryClient = new QueryClient({
@@ -74,6 +75,7 @@ function App() {
 
                 {/* Public Reservation Routes */}
                 <Route path="/schedule" element={<PublicSchedulePage />} />
+                <Route path="/schedule/calendar" element={<PublicCalendarPage />} />  {/* 🆕 カレンダー表示 */}
                 <Route path="/reservations/cancel" element={<ReservationCancelPage />} />
                 <Route path="/reservations/completed" element={<ReservationCompletedPage />} />
                 <Route path="/reservations/:milestoneId" element={<TicketReservationPage />} />

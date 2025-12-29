@@ -27,6 +27,18 @@ export const PublicSchedulePage = () => {
                     <p className="mt-3 text-xl text-gray-500">
                         {t('schedule.public.subheadline', 'Check out our schedule and book your tickets.')}
                     </p>
+                    {/* 🆕 ビュー切替ボタン */}
+                    <div className="mt-4 flex justify-center gap-2">
+                        <span className="inline-flex px-3 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-md">
+                            📋 リスト
+                        </span>
+                        <a
+                            href="/schedule/calendar"
+                            className="inline-flex px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        >
+                            📅 カレンダー
+                        </a>
+                    </div>
                 </div>
 
                 <div className="space-y-6">
