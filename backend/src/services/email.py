@@ -33,8 +33,8 @@ class EmailService:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ 予約ID: {reservation_id}
-■ 公演名: {project_name}
-■ マイルストーン: {milestone_title}
+■ 劇団名: {project_name}
+■ 公演名: {milestone_title}
 ■ 日時: {date_str}
 {location_info}■ 枚数: {count} 枚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
