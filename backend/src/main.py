@@ -119,7 +119,7 @@ async def root() -> dict[str, str]:
     return {"message": "PSC Web 3 API"}
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health() -> dict[str, str]:
     """ヘルスチェックエンドポイント.
 
