@@ -3,6 +3,7 @@ import io
 import os
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 
 # フォント登録
 try:
@@ -19,9 +20,20 @@ try:
             DEFAULT_FONT = 'HeiseiMin-W3' 
         except Exception as e:
             print(f"DEBUG: Failed to register font: {e}")
+            # フォールバック用にCIDフォントを登録
+            try:
+                pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
+            except Exception as cid_e:
+                print(f"DEBUG: Failed to register CID font: {cid_e}")
             DEFAULT_FONT = 'HeiseiMin-W3'
     else:
         print(f"DEBUG: Font file not found at {font_path}")
+        # フォールバック用にCIDフォントを登録
+        try:
+            pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
+        except Exception as cid_e:
+            print(f"DEBUG: Failed to register CID font: {cid_e}")
+            
         # Try to list directory to see where we are
         assets_dir = os.path.join(current_dir, "../assets/fonts")
         print(f"DEBUG: Contents of {os.path.abspath(assets_dir)}:")
@@ -33,6 +45,10 @@ try:
         DEFAULT_FONT = 'HeiseiMin-W3'
 except Exception as e:
     print(f"DEBUG: Error in font setup: {e}")
+    try:
+        pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
+    except:
+        pass
     DEFAULT_FONT = 'HeiseiMin-W3'
 
 def generate_script_pdf(fountain_content: str) -> bytes:
