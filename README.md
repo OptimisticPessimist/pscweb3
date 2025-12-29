@@ -18,6 +18,9 @@ PSC Web 3 は、演劇制作における台本管理・スケジュール管理�
 - **📅 スケジュール管理**: 稽古スケジュールの作成・編集・共有
 - **✅ 出欠管理**: 稽古への参加状況を管理
 - **🎭 ダブルキャスト対応**: 複数キャストパターンに対応した配役管理
+- **🎫 チケット予約システム**: マイルストーンごとに予約ページを生成、来場者管理が可能
+- **✉️ メール通知機能**: SendGrid経由で予約確認メールを自動送信（HTML/テキスト対応）
+- **🌐 多言語対応**: 日本語、英語、韓国語、簡体字、繁体字の5言語に対応
 - **🔗 Discord連携**: Discord OAuth認証とBot通知機能
 - **📁 プロジェクト管理**: 複数公演プロジェクトの管理
     - ※ 公開脚本を含むプロジェクトは、プロジェクト作成数制限（通常2つ）のカウント対象外となります。
@@ -30,6 +33,7 @@ PSC Web 3 は、演劇制作における台本管理・スケジュール管理�
 - **データベース**: PostgreSQL (Neon)
 - **ORM**: SQLAlchemy (非同期)
 - **認証**: OAuth 2.0 (Discord)
+- **メール配信**: SendGrid
 - **マイグレーション**: Alembic
 - **パッケージ管理**: uv
 
@@ -38,6 +42,7 @@ PSC Web 3 は、演劇制作における台本管理・スケジュール管理�
 - **フレームワーク**: React 19
 - **ルーティング**: React Router v7
 - **状態管理**: TanStack Query (React Query)
+- **国際化**: React i18next (5言語対応)
 - **UIライブラリ**: Headless UI
 - **スタイリング**: Tailwind CSS v4
 - **カレンダー**: FullCalendar
@@ -86,6 +91,12 @@ DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
 DISCORD_REDIRECT_URI=http://localhost:5173/auth/callback
 DISCORD_BOT_TOKEN=your_bot_token
+
+# SendGrid Email Service
+SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxx
+FROM_EMAIL=noreply@yourdomain.com
+FROM_NAME=PSC Web
+REPLY_TO_EMAIL=support@yourdomain.com
 
 # Authentication
 SECRET_KEY=your_secret_key_here
@@ -297,6 +308,10 @@ GitHub Actions による CI/CD が設定されています。`main` ブランチ
 | `DISCORD_BOT_TOKEN` | Discord Bot トークン |
 | `DISCORD_REDIRECT_URI` | Discord OAuth リダイレクトURI |
 | `FRONTEND_URL` | Static Web AppsのURL |
+| `SENDGRID_API_KEY` | SendGrid APIキー |
+| `FROM_EMAIL` | メール送信元アドレス |
+| `FROM_NAME` | メール送信者名 |
+| `REPLY_TO_EMAIL` | 返信先アドレス |
 
 > [!TIP]
 > 詳細なセットアップ手順は [docs/azure_functions_setup.md](docs/azure_functions_setup.md) を参照してください。

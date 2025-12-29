@@ -9,10 +9,12 @@ It includes features for script management, scheduling, attendance tracking, and
 ## Table of Contents
 1. [About Roles](#1-about-roles)
 2. [Getting Started (For Everyone)](#2-getting-started-for-everyone)
-3. [Viewer Manual](#3-viewer-manual)
-4. [Editor Manual](#4-editor-manual)
-5. [Owner Manual](#5-owner-manual)
-6. [Feature Permissions Table](#6-feature-permissions-table)
+3. [🎫 Ticket Reservation (For General Visitors)](#3-🎫-ticket-reservation-for-general-visitors)
+4. [Viewer Manual](#4-viewer-manual)
+5. [Editor Manual](#5-editor-manual)
+   - [Milestone Reservation List](#🎫-milestone-reservation-list)
+6. [Owner Manual](#6-owner-manual)
+7. [Feature Permissions Table](#7-feature-permissions-table)
 
 ---
 
@@ -76,7 +78,34 @@ Use the button in the upper right to switch display language:
 
 ---
 
-## 3. Viewer Manual
+## 3. 🎫 Ticket Reservation (For General Visitors)
+
+This section is for **general visitors** attending the performance.  
+※ Project members (cast/staff) should refer to the following sections.
+
+### How to Reserve Tickets
+
+1. Access the **reservation page URL** shared via SNS or official website.
+2. Enter the following information:
+   - **Name**: Your name
+   - **Email Address**: Email where you'll receive confirmation
+   - **Number of Tickets**: Number of tickets needed (1 or more)
+   - **Referred by**: (Optional) Select a cast/staff member if you know someone
+3. Click the **"Reserve"** button.
+4. You'll receive a confirmation email - please check the details.
+
+> 💡 **After Reservation**  
+> - The confirmation email includes performance date, location, and reservation details.
+> - It also includes a link to add to Google Calendar.
+> - If you need to cancel, use the cancellation link in the email.
+
+> 🌐 **Multi-language Support**  
+> The reservation page supports 5 languages (Japanese, English, Korean, Simplified Chinese, Traditional Chinese).  
+> It automatically displays in your browser's language setting.
+
+---
+
+## 4. Viewer Manual
 
 Features primarily used by cast and staff members.
 
@@ -126,7 +155,7 @@ See which characters appear in each scene.
 
 ---
 
-## 4. Editor Manual
+## 5. Editor Manual
 
 Features for those managing the project, such as directing and production staff.
 
@@ -164,6 +193,34 @@ Create rehearsal or shooting schedules.
    - Target scenes (multiple selection available)
    - Notes
 
+### 🚩 Milestone Settings
+Set major deadlines and performance dates (milestones).
+
+1. Add from **"Milestone Settings"** in project settings.
+2. Set title, date, color, etc., and save.
+3. Displayed on the schedule; can automatically create attendance confirmation events.
+4. Setting **reservation capacity** generates a ticket reservation page link.
+   - Share the generated link with performance announcements on SNS.
+   - Visitors can reserve by entering name, email, number of tickets, etc.
+
+### 🎫 Milestone Reservation List
+Check reservation status for each performance (milestone) and manage visitor attendance.
+
+1. Open **"Milestone Settings"** in project settings.
+2. Click the **"Reservation Page"** link for milestones with reservation capacity set.
+3. The reservation list displays the following information:
+   - Visitor name and email address
+   - Number of tickets reserved
+   - Referrer (if cast/staff)
+   - Reservation date and time
+4. Use the **attendance toggle** to record visitor attendance.
+   - Toggle ON marks as "Attended".
+   - The list clearly shows attended vs. unattended.
+
+> 💡 **Multi-language Support**  
+> The reservation page supports 5 languages (Japanese, English, Korean, Simplified Chinese, Traditional Chinese).  
+> It automatically displays according to visitors' browser settings.
+
 ### 📊 Editing Scene Charts
 Set which characters appear in each scene.
 
@@ -195,7 +252,7 @@ Send reminders to members who haven't responded.
 
 ---
 
-## 5. Owner Manual
+## 6. Owner Manual
 
 Features for those managing the entire project.
 
@@ -269,7 +326,7 @@ Settings for sending attendance confirmation messages with buttons.
 
 ---
 
-## 6. Feature Permissions Table
+## 7. Feature Permissions Table
 
 | Feature | 👑 Owner | ✏️ Editor | 👀 Viewer |
 | :--- | :---: | :---: | :---: |
@@ -278,6 +335,8 @@ Settings for sending attendance confirmation messages with buttons.
 | **Discord Notification Settings** | ☑ | - | - |
 | **Upload/Edit Scripts** | ☑ | ☑ | - |
 | **Create/Edit Schedules** | ☑ | ☑ | - |
+| **Milestone Management** | ☑ | ☑ | - |
+| **Ticket Reservation Management** | ☑ | ☑ | - |
 | **Edit Scene Charts** | ☑ | ☑ | - |
 | **Configure Casting** | ☑ | ☑ | - |
 | **Set Staff Roles** | ☑ | ☑ | - |

@@ -51,6 +51,10 @@ Function Appが作成されたら、以下の環境変数を設定します：
    | `DISCORD_PUBLIC_KEY` | Discord Dev Portal から | Discord公開鍵（Interactions検証用） |
    | `DISCORD_REDIRECT_URI` | `https://<function-app>.azurewebsites.net/auth/callback` | Discord OAuth リダイレクトURI |
    | `FRONTEND_URL` | `https://<static-web-app>.azurestaticapps.net` | Static Web AppsのURL |
+   | `SENDGRID_API_KEY` | `SG.xxx...` | SendGrid APIキー |
+   | `FROM_EMAIL` | `noreply@yourdomain.com` | メール送信元アドレス |
+   | `FROM_NAME` | `PSC Web` | メール送信者名 |
+   | `REPLY_TO_EMAIL` | `support@yourdomain.com` | 返信先アドレス |
 
 4. **「保存」** をクリックします。
 
@@ -71,6 +75,15 @@ Function Appが作成されたら、以下の環境変数を設定します：
 
 > [!NOTE]
 > 設定時にDiscordがエンドポイントに検証リクエストを送信します。Function Appがデプロイされ、環境変数が設定された後でないと保存できません。
+
+### 1-4. SendGrid の設定
+
+メール通知機能を使用するには SendGrid の設定が必要です：
+
+1. [SendGrid](https://sendgrid.com/) でアカウントを作成（無料プランあり）。
+2. **Settings → API Keys** で API Key を作成し、上記環境変数 `SENDGRID_API_KEY` に設定します。
+3. **Settings → Sender Authentication** で送信元メールアドレス（`FROM_EMAIL`）の認証を行います。
+   - 独自ドメイン推奨ですが、Single Sender Verification でGmailアドレス等も使用可能です。
 
 ## 2. GitHub シークレットの設定
 
