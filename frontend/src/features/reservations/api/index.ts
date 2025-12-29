@@ -53,5 +53,11 @@ export const reservationsApi = {
             responseType: 'blob',
         });
         return response.data;
-    }
+    },
+
+    // 🆕 マイルストーン別予約一覧取得
+    getMilestoneReservations: async (milestoneId: string): Promise<ReservationResponse[]> => {
+        const response = await axios.get<ReservationResponse[]>(`/milestones/${milestoneId}/reservations`);
+        return response.data;
+    },
 };

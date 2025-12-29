@@ -30,6 +30,11 @@ export interface ScriptSummary {
     is_public?: boolean;
     public_terms?: string | null;
     public_contact?: string | null;
+    draft_date?: string | null;
+    copyright?: string | null;
+    contact?: string | null;
+    notes?: string | null;
+    revision_text?: string | null;
 }
 
 export interface Script extends ScriptSummary {

@@ -60,6 +60,11 @@ class ScriptResponse(BaseModel):
     is_public: bool = Field(default=False, description="全体公開フラグ")
     public_terms: str | None = Field(None, description="公開時の使用条件")
     public_contact: str | None = Field(None, description="公開時の連絡先")
+    draft_date: str | None = Field(None, description="ドラフト日付")
+    copyright: str | None = Field(None, description="著作権情報")
+    contact: str | None = Field(None, description="連絡先")
+    notes: str | None = Field(None, description="メモ")
+    revision_text: str | None = Field(None, description="リビジョン情報")
     characters: list[CharacterResponse] = Field(
         default_factory=list, description="登場人物リスト"
     )
@@ -80,6 +85,11 @@ class ScriptSummary(BaseModel):
     is_public: bool = Field(default=False, description="全体公開フラグ")
     public_terms: str | None = Field(None, description="公開時の使用条件")
     public_contact: str | None = Field(None, description="公開時の連絡先")
+    draft_date: str | None = Field(None, description="ドラフト日付")
+    copyright: str | None = Field(None, description="著作権情報")
+    contact: str | None = Field(None, description="連絡先")
+    notes: str | None = Field(None, description="メモ")
+    revision_text: str | None = Field(None, description="リビジョン情報")
 
     model_config = {"from_attributes": True}
 

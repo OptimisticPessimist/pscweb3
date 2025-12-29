@@ -145,7 +145,12 @@ class Script(Base):
     public_contact: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 公開時の連絡先
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     revision: Mapped[int] = mapped_column(default=1)  # リビジョン番号
+    revision_text: Mapped[str | None] = mapped_column(String(200), nullable=True) # 脚本内のRevision
     author: Mapped[str | None] = mapped_column(String(100), nullable=True)  # 脚本の著者
+    draft_date: Mapped[str | None] = mapped_column(String(100), nullable=True) # ドラフト日付
+    copyright: Mapped[str | None] = mapped_column(String(200), nullable=True) # 著作権情報
+    contact: Mapped[str | None] = mapped_column(Text, nullable=True) # 連絡先
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True) # メモ
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")
