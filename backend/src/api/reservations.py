@@ -133,16 +133,29 @@ async def get_public_milestone(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid milestone ID format. Must be a valid UUID.")
     
-    milestone = await db.scalar(
-        select(Milestone)
+    # マイルストーンと予約数を同時に取得
+    from sqlalchemy import func
+    from src.models.reservation import Reservation
+    
+    stmt = (
+        select(Milestone, func.coalesce(func.sum(Reservation.count), 0).label("total_reserved"))
+        .outerjoin(Reservation, Milestone.id == Reservation.milestone_id)
         .options(selectinload(Milestone.project))
         .where(Milestone.id == id)
+        .group_by(Milestone.id)
     )
-    if not milestone:
+    
+    result = await db.execute(stmt)
+    row = result.first()
+    
+    if not row:
         raise HTTPException(status_code=404, detail="Milestone not found")
     
-    # Pydanticモデルのために辞書化して project_name を追加
+    milestone, total_reserved = row
+    
+    # Pydanticモデルのために辞書化して project_name と current_reservation_count を追加
     response = MilestoneResponse.model_validate(milestone)
+    response.current_reservation_count = total_reserved
     if milestone.project:
         response.project_name = milestone.project.name
         
