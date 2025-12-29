@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,6 +28,7 @@ from src.dependencies.auth import get_current_user_dep
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.fountain_parser import parse_fountain_and_create_models
 from src.services.scene_chart_generator import generate_scene_chart
+from src.services.pdf_generator import generate_script_pdf
 from src.services.discord import DiscordService, get_discord_service
 from src.dependencies.permissions import get_project_member_dep, get_script_member_dep
 
@@ -145,6 +146,31 @@ async def get_script(
 
     member, script = tuple_data
     return ScriptResponse.model_validate(script)
+
+
+@router.get("/{project_id}/{script_id}/pdf")
+async def download_script_pdf(
+    tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
+):
+    """脚本のPDFをダウンロード."""
+    # 権限チェックはDepends(get_script_member_dep)内で完了済み
+    member, script = tuple_data
+
+    # PDF生成
+    try:
+        pdf_bytes = generate_script_pdf(script.content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
+
+    # ファイル名生成（ASCII文字以外を含む可能性を考慮し、Headerで指定推奨だが今回はシンプルに）
+    # 必要であれば urllib.parse.quote でエンコードするなど検討
+    filename = f"{script.title}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 
 # ===========================
