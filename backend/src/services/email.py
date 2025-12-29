@@ -85,7 +85,7 @@ class EmailService:
 ■ 日時: {date_str}
 {location_info}■ 予約枚数: {count} 枚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+{description_info}
 受付にてお名前をお伝えください。
 皆様のご来場を心よりお待ちしております。
 
