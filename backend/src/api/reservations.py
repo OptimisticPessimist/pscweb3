@@ -78,7 +78,9 @@ async def create_reservation(
         date_str=date_str,
         count=reservation.count,
         project_name=project.name if project else "不明なプロジェクト",
-        reservation_id=str(db_reservation.id)
+        reservation_id=str(db_reservation.id),
+        location=milestone.location,  # 🆕 場所を追加
+        description=milestone.description  # 🆕 説明を追加
     )
 
     # Discord通知 (Webhook)

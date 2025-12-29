@@ -20,6 +20,11 @@ class EmailService:
             return False
 
         subject = f"【予約完了】{project_name} - {milestone_title} チケット予約のお知らせ"
+        
+        # 場所と説明の追加
+        location_info = f"■ 場所: {location}\n" if location else ""
+        description_info = f"\n{description}\n" if description else ""
+        
         content = f"""
 {name} 様
 
@@ -31,9 +36,9 @@ class EmailService:
 ■ 公演名: {project_name}
 ■ マイルストーン: {milestone_title}
 ■ 日時: {date_str}
-■ 枚数: {count} 枚
+{location_info}■ 枚数: {count} 枚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+{description_info}
 キャンセル等の際は、上記「予約ID」が必要となりますので大切に保管してください。
 
 当日は受付にてお名前をお伝えください。
