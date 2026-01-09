@@ -9,6 +9,6 @@ Supabaseから `public.reservations` テーブルにRow Level Security (RLS) が
 - Alembicマイグレーションスクリプトを作成して実行する。
 
 ## 完了条件
-- [ ] `reservations` テーブルの RLS が有効になっている。
-- [ ] `reservations` テーブルに "Enable all access" ポリシーが設定されている。
-- [ ] マイグレーションが正常に適用される。
+- [x] `reservations` テーブルの RLS が有効になっている。
+- [x] `reservations` テーブルに "Enable all access" ポリシーが設定されている。
+- [x] マイグレーションが正常に適用される。
