@@ -390,38 +390,34 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     script = fountain.psc_from_fountain(fountain_content)
     
     # --- Metadata Injection Logic (Refined) ---
-    extra_info_parts = []
+    metadata_parts = []
     
-    if "date" in metadata:
-        extra_info_parts.append(f"Date: {', '.join(metadata['date'])}")
-    if "draft date" in metadata:
-        extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
-    if "revision" in metadata:
-        extra_info_parts.append(f"Rev: {', '.join(metadata['revision'])}")
-    if "copyright" in metadata:
-        extra_info_parts.append(f"(c) {', '.join(metadata['copyright'])}")
-    if "contact" in metadata:
-        # Contact might be long, keep it separate or join?
-        # Let's join with space but maybe sanitize newlines
-        contact = " ".join(metadata['contact']).replace('\n', ' ')
-        extra_info_parts.append(f"Contact: {contact}")
-    if "notes" in metadata:
-        notes = " ".join(metadata['notes']).replace('\n', ' ')
-        extra_info_parts.append(f"Note: {notes}")
-        
     # Prepare Author
     authors = metadata.get("author", [])
-    author_str = ", ".join(authors) if authors else ""
-    
-    final_metadata_parts = []
-    if author_str:
-        final_metadata_parts.append(author_str)
-    
-    if extra_info_parts:
-        final_metadata_parts.extend(extra_info_parts)
-    
-    # HORIZONTAL LAYOUT: Join with wide spaces
-    final_metadata_str = "   ".join(final_metadata_parts)
+    if authors:
+        metadata_parts.append(f"Author: {', '.join(authors)}")
+
+    if "date" in metadata:
+        metadata_parts.append(f"Date: {', '.join(metadata['date'])}")
+    if "draft date" in metadata:
+        metadata_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
+    if "revision" in metadata:
+        metadata_parts.append(f"Rev: {', '.join(metadata['revision'])}")
+    if "copyright" in metadata:
+        metadata_parts.append(f"(c) {', '.join(metadata['copyright'])}")
+        
+    if "contact" in metadata:
+        # Keep newlines for contact
+        contact = "\n".join(metadata['contact'])
+        metadata_parts.append(f"Contact:\n{contact}")
+        
+    if "notes" in metadata:
+        # Keep newlines for notes
+        notes = "\n".join(metadata['notes'])
+        metadata_parts.append(f"Note:\n{notes}")
+
+    # VERTICAL LAYOUT: Join with newlines
+    final_metadata_str = "\n".join(metadata_parts)
     
     # Inject into Script Object
     if final_metadata_str:
