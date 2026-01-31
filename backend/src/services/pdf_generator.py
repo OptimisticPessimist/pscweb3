@@ -4,6 +4,7 @@ import os
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.lib.pagesizes import landscape, A4
 
 # フォント登録
 try:
@@ -125,7 +126,9 @@ def generate_script_pdf(fountain_content: str) -> bytes:
 
     # PDFストリームを生成
     # 縦書き・明朝体を使用
-    pdf_stream = pdf.psc_to_pdf(script, font_name=DEFAULT_FONT)
+    # 演劇台本の標準的な書式である「縦書き・横置き」にするため、用紙サイズを横向き(landscape)に設定
+    # 用紙サイズはA4とする
+    pdf_stream = pdf.psc_to_pdf(script, font_name=DEFAULT_FONT, size=landscape(A4))
     
     # バイト列として返す
     return pdf_stream.getvalue()
