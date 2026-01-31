@@ -287,6 +287,9 @@ def custom_psc_to_pdf(psc, size=None, margin=None, upper_space=None,
     # Pre-scan for Title/Author to ensure we handle the cover page break correctly
     # actually we can just monitor usage.
 
+    # Pre-scan for Title/Author to ensure we handle the cover page break correctly
+    # actually we can just monitor usage.
+
     for i, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
 
@@ -307,22 +310,19 @@ def custom_psc_to_pdf(psc, size=None, margin=None, upper_space=None,
             l_idx = pm.draw_title(l_idx, psc_line)
 
         elif line_type == PScLineType.AUTHOR:
-            l_idx = pm.draw_author(l_idx, psc_line)
+            # Change: Use draw_lines (via draw_charsheadline style or new method) 
+            # instead of draw_author/draw_line_bottom which truncates.
+            # We want to display full metadata even if it wraps.
+            # Let's reuse draw_charsheadline logic but with different indent?
+            # Or just use draw_lines with appropriate indent.
+            
+            # Use indent similar to charsheadline (8 chars) or title (7 chars)?
+            # Let's use 4 chars indent to center it relatively well under title
+            indent = pm.font_size * 4
+            l_idx = pm._draw_lines(l_idx, psc_line.text, indent=indent)
+            
             # Force page break after Author (End of Cover Page)
             l_idx = pm.force_page_break()
-            # Reset page num if we want body to start at 1? 
-            # Usually cover is not numbered or numbered i/ii. 
-            # Current logic just increments. Let's keep it simple or reset if requested.
-            # User didn't ask to reset, just "Cover on one page".
-            # Note: pm.page_num will increment.
-            
-            # Since we forced a page break, l_idx is 0. 
-            # But the next loop iteration might add an empty line due to "type change" check above.
-            # last_line_type will be AUTHOR. Next is likely H1 or EMPTY.
-            # If next is EMPTY, we draw empty line at top of new page?
-            # If next is H1 (Synopsis), we draw H1.
-            # The check `if last_line_type and ...` will trigger. `l_idx` becomes 1.
-            # This means the new page starts with 1 empty line. This is probably fine/good styling.
 
         elif line_type == PScLineType.CHARSHEADLINE:
             l_idx = pm.draw_charsheadline(l_idx, psc_line)
@@ -331,9 +331,14 @@ def custom_psc_to_pdf(psc, size=None, margin=None, upper_space=None,
             l_idx = pm.draw_character(l_idx, psc_line)
 
         elif line_type == PScLineType.H1:
-            h1_count += 1
-            h2_count = 0
-            l_idx = pm.draw_slugline(l_idx, psc_line, number=h1_count, border=True)
+            if in_synopsis:
+                # Do NOT increment h1_count for Synopsis
+                # Draw slugline without number
+                l_idx = pm.draw_slugline(l_idx, psc_line, number=None, border=True)
+            else:
+                h1_count += 1
+                h2_count = 0
+                l_idx = pm.draw_slugline(l_idx, psc_line, number=h1_count, border=True)
 
         elif line_type == PScLineType.H2:
             h2_count += 1
@@ -351,15 +356,6 @@ def custom_psc_to_pdf(psc, size=None, margin=None, upper_space=None,
 
         elif line_type == PScLineType.DIALOGUE:
             if in_synopsis:
-                 # Synopsis shouldn't have dialogue usually, but if it does, handle as text?
-                 # Or treat as normal dialogue? Let's treat as text if in synopsis to be safe?
-                 # Or just standard dialogue.
-                 # User said: "Synopsis text ... styled differently".
-                 # I'll assume synopsis text comes in as DIRECTION or just text.
-                 # If user writes:
-                 # # あらすじ
-                 # 昔々あるところに...
-                 # This is usually parsed as DIRECTION or Action in Fountain.
                  l_idx = pm.draw_synopsis_text(l_idx, psc_line.text) # Strip name if it was parsed as dialogue?
             else:
                 l_idx = pm.draw_dialogue(l_idx, psc_line)
@@ -396,29 +392,24 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     # --- Metadata Injection Logic (Refined) ---
     extra_info_parts = []
     
-    # Note: We do NOT include Synopsis here anymore as it is expected to be in the body (# あらすじ)
-    # But if user put it in metadata, we might want to append it to the body or ignore it.
-    # User said: "Synopsis is # 1 paragraph... use # あらすじ in body".
-    # So we should probably ignore metadata 'synopsis' for the Cover Page now.
-    
+    if "date" in metadata:
+        extra_info_parts.append(f"Date: {', '.join(metadata['date'])}")
     if "draft date" in metadata:
         extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
-    elif "date" in metadata:
-        extra_info_parts.append(f"Date: {', '.join(metadata['date'])}")
-        
-    if "contact" in metadata:
-        extra_info_parts.append(f"Contact:\n{'\n'.join(metadata['contact'])}")
-        
-    if "copyright" in metadata:
-        extra_info_parts.append(f"Copyright: {', '.join(metadata['copyright'])}")
-        
     if "revision" in metadata:
-        extra_info_parts.append(f"Revision: {', '.join(metadata['revision'])}")
-        
+        extra_info_parts.append(f"Rev: {', '.join(metadata['revision'])}")
+    if "copyright" in metadata:
+        extra_info_parts.append(f"(c) {', '.join(metadata['copyright'])}")
+    if "contact" in metadata:
+        # Contact might be long, keep it separate or join?
+        # Let's join with space but maybe sanitize newlines
+        contact = " ".join(metadata['contact']).replace('\n', ' ')
+        extra_info_parts.append(f"Contact: {contact}")
     if "notes" in metadata:
-        extra_info_parts.append(f"\nNotes:\n{'\n'.join(metadata['notes'])}")
-
-    # Prepare Author field content (Author + Other Metadata)
+        notes = " ".join(metadata['notes']).replace('\n', ' ')
+        extra_info_parts.append(f"Note: {notes}")
+        
+    # Prepare Author
     authors = metadata.get("author", [])
     author_str = ", ".join(authors) if authors else ""
     
@@ -429,7 +420,8 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     if extra_info_parts:
         final_metadata_parts.extend(extra_info_parts)
     
-    final_metadata_str = "\n".join(final_metadata_parts)
+    # HORIZONTAL LAYOUT: Join with wide spaces
+    final_metadata_str = "   ".join(final_metadata_parts)
     
     # Inject into Script Object
     if final_metadata_str:
