@@ -194,6 +194,7 @@ async def parse_fountain_and_create_models(
     current_act_number: int | None = None
     line_order = 0
     current_character: Character | None = None
+    collecting_description = False
 
     for element in f.elements:
         content_stripped = element.original_content.strip()
@@ -286,11 +287,19 @@ async def parse_fountain_and_create_models(
                 scene_number=scene_number,
                 act_number=current_act_number,
                 heading=heading_text,
+                description="" # Initialize description
             )
             db.add(current_scene)
             await db.flush()
+            
+            # Reset description collection state
+            collecting_description = True
+            current_character = None 
 
         elif element.element_type == "Character":
+            # 登場人物検出 -> 説明収集終了
+            collecting_description = False
+
             # セリフを言う登場人物
             char_name = content_stripped
             if char_name.startswith("@"):
@@ -310,6 +319,10 @@ async def parse_fountain_and_create_models(
 
             # Check for one-line dialogue: @Character Dialogue (must have at least one space)
             if stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
+                # ... One-line dialogue logic ...
+                # One-line dialogue also ends description collection
+                collecting_description = False
+
                 # Split by first whitespace (half or full width)
                 import re
                 parts = re.split(r'[ 　]', stripped_content, maxsplit=1) # Split by space or full-width space
@@ -337,7 +350,7 @@ async def parse_fountain_and_create_models(
                         )
                         db.add(line)
                 else:
-                    # Fallback
+                    # Fallback (should typically not happen given if check)
                      if current_scene:
                         line_order += 1
                         line = Line(
@@ -351,16 +364,27 @@ async def parse_fountain_and_create_models(
             else:
                 # Normal Action (Togaki)
                 if current_scene:
+                    # Capture description if we are still at the start of the scene
+                    if collecting_description:
+                         if current_scene.description:
+                             current_scene.description += "\n" + stripped_content
+                         else:
+                             current_scene.description = stripped_content
+                         # Update DB (or wait until flush?) - SQLAlchemy tracks changes to objects in session
+                    
                     line_order += 1
                     line = Line(
                         scene_id=current_scene.id,
                         character_id=None,
-                        content=content,
+                        content=content, # Use original content for line to preserve indent
                         order=line_order,
                     )
                     db.add(line)
 
         elif element.element_type == "Dialogue":
+            # Description collection ends
+            collecting_description = False
+
             # セリフ
             if current_scene and current_character:
                 line_order += 1
