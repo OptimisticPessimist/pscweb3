@@ -7,13 +7,15 @@
 
 ## Proposed Changes
 ### Backend
+### Backend
 #### [MODIFY] [pdf_generator.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/pdf_generator.py)
-- `pdf_generator.py`を修正
-    - メタデータから `synopsis` または `あらすじ` を取得する処理を追加
-    - メタデータの挿入先を `TITLE` 行から `AUTHOR` 行に変更する
-        - `TITLE` 行の書式（太文字・中央揃え等を想定）を維持するため
-        - `AUTHOR` 行が存在しない場合は新規作成して `TITLE` の後に挿入する
-    - メタデータの表示順序を調整（Author, Synopsis, Date... の順など）
+- `playscript` ライブラリの `PageMan` クラスと `psc_to_pdf` 関数をベースに、カスタマイズ版を実装する。
+- **表紙レイアウト変更**:
+    - タイトルと著者名（全メタデータ）を表示した後、強制的に改ページを入れる処理を追加。
+- **あらすじスタイル変更**:
+    - `# あらすじ` (H1) セクションを検出するロジックを追加。
+    - 「あらすじ」セクション内のト書き（DIRECTION）を、通常とは異なるスタイル（例：インデント変更、フォント変更など）で描画する `draw_synopsis_text` メソッドを追加して使用。
+    - あらすじのスタイリングは、他の章と区別が付くように調整（ユーザー要望）。
 
 ## Verification Plan
 ### Automated Tests

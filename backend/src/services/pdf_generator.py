@@ -1,82 +1,406 @@
-from playscript.conv import fountain, pdf
+
+from playscript.conv import fountain, pdf as psc_pdf
 import io
 import os
+from collections import namedtuple
+from reportlab.lib.pagesizes import landscape, A4, portrait, A5
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-from reportlab.lib.pagesizes import landscape, A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from playscript import PScLineType, PScLine
 
-# フォント登録
+# Font registration logic (kept from previous version)
 try:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     font_path = os.path.abspath(os.path.join(current_dir, "../assets/fonts/ShipporiMincho-Regular.ttf"))
-    print(f"DEBUG: Font path calculated as: {font_path}")
     
     if os.path.exists(font_path):
         try:
             pdfmetrics.registerFont(TTFont('ShipporiMincho', font_path))
-            print("DEBUG: Registered font 'ShipporiMincho'")
-            # FIXME: Using 'ShipporiMincho' causes KeyError in playscript/reportlab interaction.
-            # Reverting to default font 'HeiseiMin-W3' to ensure PDF generation works.
+            DEFAULT_FONT = 'HeiseiMin-W3' # Fallback for playscript internal compatibility if needed, but we control PageMan now
+            # For our CustomPageMan, we can use 'ShipporiMincho' if we want, 
+            # but to be safe and consistent with previous working state, let's keep 'HeiseiMin-W3' as default 
+            # or try to use ShipporiMincho if properly registered.
+            # Let's stick to HeiseiMin-W3 for now to avoid KeyError as noted in comments previously.
             DEFAULT_FONT = 'HeiseiMin-W3' 
-        except Exception as e:
-            print(f"DEBUG: Failed to register font: {e}")
-            # フォールバック用にCIDフォントを登録
-            try:
-                pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
-            except Exception as cid_e:
-                print(f"DEBUG: Failed to register CID font: {cid_e}")
-            DEFAULT_FONT = 'HeiseiMin-W3'
+        except Exception:
+             pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
+             DEFAULT_FONT = 'HeiseiMin-W3'
     else:
-        print(f"DEBUG: Font file not found at {font_path}")
-        # フォールバック用にCIDフォントを登録
-        try:
-            pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
-        except Exception as cid_e:
-            print(f"DEBUG: Failed to register CID font: {cid_e}")
-            
-        # Try to list directory to see where we are
-        assets_dir = os.path.join(current_dir, "../assets/fonts")
-        print(f"DEBUG: Contents of {os.path.abspath(assets_dir)}:")
-        try:
-            print(os.listdir(assets_dir))
-        except:
-            print("Could not list directory")
-            
-        DEFAULT_FONT = 'HeiseiMin-W3'
-except Exception as e:
-    print(f"DEBUG: Error in font setup: {e}")
-    try:
         pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
-    except:
-        pass
+        DEFAULT_FONT = 'HeiseiMin-W3'
+except Exception:
+    pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
     DEFAULT_FONT = 'HeiseiMin-W3'
 
-def generate_script_pdf(fountain_content: str) -> bytes:
-    """Fountain形式のテキストから縦書きPDFを生成する.
-    
-    Args:
-        fountain_content (str): Fountain形式の脚本テキスト
+_Size = namedtuple('Size', 'w h')
+
+class CustomPageMan:
+    """PDF ストリーム生成クラス (Customized for Synopsis and Cover Page)"""
+    def __init__(self, size, margin=None, upper_space=None,
+                 font_name='HeiseiMin-W3', num_font_name='Times-Roman',
+                 font_size=10.0, line_space=None, before_init_page=None):
         
-    Returns:
-        bytes: 生成されたPDFのバイナリデータ
-    """
-    # Playscriptライブラリを使用してFountainをパース
+        self.size = _Size(*size)
+        self.font_name = font_name
+        self.num_font_name = num_font_name
+        self.font_size = font_size
+        self.before_init_page = before_init_page
+
+        self.margin = _Size(*margin) if margin else _Size(2 * cm, 2 * cm)
+        self.upper_space = self.size.h / 4 if upper_space is None else upper_space
+        self.line_space = self.font_size * 0.95 if line_space is None else line_space
+
+        self.pdf = io.BytesIO()
+        self.canvas = canvas.Canvas(self.pdf, pagesize=self.size)
+        self._init_page()
+
+    def _get_line_x(self, l_idx):
+        x = self.size.w - self.margin.w - self.font_size / 2
+        x = x - l_idx * (self.font_size + self.line_space)
+        return x
+
+    def _get_line_y(self, indent):
+        y = self.size.h - self.margin.h - self.upper_space - indent
+        return y
+
+    def _max_line_count(self):
+        area_w = self.size.w - 2 * self.margin.w + self.line_space
+        count = area_w // (self.font_size + self.line_space)
+        return int(count)
+
+    def _init_page(self):
+        if self.before_init_page:
+            self.before_init_page(self)
+
+        x1 = self.margin.w - self.line_space
+        x2 = self.size.w - self.margin.w + self.line_space
+        y = self.size.h - self.margin.h - self.upper_space
+        self.canvas.setLineWidth(0.1)
+        self.canvas.line(x1, y, x2, y)
+
+        self.canvas.setFont(self.font_name, self.font_size)
+
+    def _commit_page(self):
+        self.canvas.showPage()
+    
+    def force_page_break(self):
+        self._commit_page()
+        self._init_page()
+        return 0 # new l_idx
+
+    def close(self):
+        self._commit_page()
+        self.canvas.save()
+        self.pdf.seek(0)
+
+    def _draw_line(self, l_idx, text, indent=None):
+        if indent is None:
+            indent = self.font_size
+
+        x = self._get_line_x(l_idx)
+        y = self._get_line_y(indent)
+
+        height = self.size.h - 2 * self.margin.h - self.upper_space - indent
+        max_len = int(height // self.font_size)
+
+        if len(text) > max_len and text[max_len] in '、。」':
+            max_len += 1
+            if len(text) > max_len and text[max_len] == '」':
+                max_len -= 2
+
+        self.canvas.drawString(x, y, text[:max_len])
+        return text[max_len:]
+
+    def _draw_lines(self, l_idx, lines, indent=None, first_indent=None):
+        if not first_indent:
+            first_indent = indent
+
+        texts = lines.splitlines()
+        first_line = True
+
+        for text in texts:
+            line = text
+            while len(line) > 0:
+                if l_idx >= self._max_line_count():
+                    self.force_page_break()
+                    l_idx = 0
+
+                line_indent = first_indent if first_line else indent
+                line = self._draw_line(l_idx, line, indent=line_indent)
+                first_line = False
+                l_idx += 1
+        return l_idx
+
+    def _draw_single_line(self, l_idx, line, indent=None):
+        if l_idx >= self._max_line_count():
+            self.force_page_break()
+            l_idx = 0
+        _ = self._draw_line(l_idx, line, indent=indent)
+        return l_idx + 1
+
+    def _draw_line_bottom(self, l_idx, line):
+        indent = self.font_size
+        height = self.size.h - 2 * self.margin.h - self.upper_space - indent
+        max_len = int(height // self.font_size)
+        line = line[:max_len]
+        indent += (max_len - len(line)) * self.font_size
+        l_idx = self._draw_single_line(l_idx, line, indent=indent)
+        return l_idx
+
+    def draw_title(self, l_idx, ttl_line):
+        indent = self.font_size * 7
+        l_idx = self._draw_lines(l_idx, ttl_line.text, indent=indent)
+        return l_idx
+
+    def draw_author(self, l_idx, athr_line):
+        self._draw_line_bottom(l_idx, athr_line.text)
+        return l_idx + 1
+
+    def draw_charsheadline(self, l_idx, chead_line):
+        indent = self.font_size * 8
+        l_idx = self._draw_single_line(l_idx, chead_line.text, indent=indent)
+        return l_idx
+
+    def draw_character(self, l_idx, char_line):
+        name = char_line.name
+        text = char_line.text if hasattr(char_line, 'text') else ''
+        if text:
+            if len(name) < 2: name += '　'
+            text = name + '　' + text
+        else:
+            text = name
+        first_indent = self.font_size * 7
+        indent = self.font_size * 10
+        l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
+        return l_idx
+
+    def draw_slugline(self, l_idx, hx_line, number=None, border=False):
+        l_idx = self._draw_single_line(l_idx, hx_line.text)
+        if border:
+            x = self._get_line_x(l_idx - 1)
+            x1 = x + self.font_size / 2 + self.line_space * 0.8
+            x2 = x - self.font_size / 2 - self.line_space * 0.8
+            y1 = self._get_line_y(-(self.font_size * 3))
+            y2 = self.margin.h - self.font_size
+            self.canvas.setLineWidth(0.1)
+            self.canvas.line(x1, y1, x1, y2)
+            self.canvas.line(x1, y1, x2, y1)
+            self.canvas.line(x2, y1, x2, y2)
+        if number is not None:
+            num_str = str(number)
+            w = self.canvas.stringWidth(num_str, self.num_font_name, self.font_size)
+            x = self._get_line_x(l_idx - 1) - w / 2
+            y = self._get_line_y(-self.font_size)
+            self.canvas.setFont(self.num_font_name, self.font_size)
+            self.canvas.drawString(x, y, num_str)
+            self.canvas.setFont(self.font_name, self.font_size)
+        return l_idx
+
+    def draw_direction(self, l_idx, drct_line):
+        indent = self.font_size * 7
+        l_idx = self._draw_lines(l_idx, drct_line.text, indent=indent)
+        return l_idx
+
+    def draw_synopsis_text(self, l_idx, text):
+        """Draw text specifically for synopsis body"""
+        # Synopsis style: 
+        # - Slightly more indented top or bottom? 
+        # - Or just block indent?
+        # Let's match typical Japanese novel text or just standard indentation but distinct.
+        # Standard direction is *7. User wants it styled differently from other chapters.
+        # Let's try indentation *2 (closer to top/character names) but not *7.
+        # Or maybe *4?
+        indent = self.font_size * 4 
+        l_idx = self._draw_lines(l_idx, text, indent=indent)
+        return l_idx
+
+    def draw_dialogue(self, l_idx, dlg_line):
+        name = dlg_line.name
+        text = dlg_line.text
+        if len(name) == 1: name = ' ' + name + ' '
+        elif len(name) == 2: name = name[0] + ' ' + name[1]
+        text = name + '「' + text + '」'
+        first_indent = self.font_size * 1
+        indent = self.font_size * 5
+        l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
+        return l_idx
+
+    def draw_endmark(self, l_idx, endmk_line):
+        self._draw_line_bottom(l_idx, endmk_line.text)
+        return l_idx + 1
+
+    def draw_comment(self, l_idx, cmmt_line):
+        indent = self.font_size * 7
+        l_idx = self._draw_lines(l_idx, cmmt_line.text, indent=indent)
+        return l_idx
+
+    def draw_empty(self, l_idx, empty_line):
+        l_idx = self._draw_single_line(l_idx, '')
+        return l_idx
+
+def _get_h2_letter(h2_count):
+    if h2_count < 1: return ''
+    h2_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    max_num = len(h2_letters)
+    q = (h2_count - 1) // max_num
+    s = (h2_count - 1) % max_num
+    return _get_h2_letter(q) + h2_letters[s]
+
+def custom_psc_to_pdf(psc, size=None, margin=None, upper_space=None,
+                      font_name='HeiseiMin-W3', num_font_name='Times-Roman',
+                      font_size=10.0, line_space=None, before_init_page=None,
+                      draw_page_num=True):
+    
+    def custom_init(pm):
+        if before_init_page: before_init_page(pm)
+        if draw_page_num:
+            if hasattr(pm, 'page_num'): pm.page_num += 1
+            else: pm.page_num = 1
+            s = f'- {pm.page_num} -'
+            f_name = pm.num_font_name
+            f_size = pm.font_size * 0.8
+            w = pm.canvas.stringWidth(s, f_name, f_size)
+            pm.canvas.setFont(f_name, f_size)
+            x = pm.size.w / 2 - w / 2
+            y = pm.margin.h / 2
+            pm.canvas.drawString(x, y, s)
+
+    pdfmetrics.registerFont(UnicodeCIDFont(font_name, isVertical=True))
+
+    if not size: size = portrait(A5)
+    if not margin: margin = (2.0 * cm, 2.0 * cm)
+    
+    pm = CustomPageMan(size, margin=margin, upper_space=upper_space,
+                 font_name=font_name, num_font_name=num_font_name,
+                 font_size=font_size, line_space=line_space,
+                 before_init_page=custom_init)
+
+    last_line_type = None
+    h1_count = h2_count = 0
+    l_idx = 0
+    
+    in_synopsis = False
+    
+    # Pre-scan for Title/Author to ensure we handle the cover page break correctly
+    # actually we can just monitor usage.
+
+    for i, psc_line in enumerate(psc.lines):
+        line_type = psc_line.type
+
+        # Check if we are entering Synopsis section
+        if line_type == PScLineType.H1:
+             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
+                 in_synopsis = True
+             else:
+                 in_synopsis = False
+        
+        # 行の種類が変わったら、1行空ける (standard logic)
+        # Exception: Don't space between Title and Author
+        if last_line_type and (last_line_type != line_type):
+            if not (last_line_type == PScLineType.TITLE and line_type == PScLineType.AUTHOR):
+                l_idx += 1
+
+        if line_type == PScLineType.TITLE:
+            l_idx = pm.draw_title(l_idx, psc_line)
+
+        elif line_type == PScLineType.AUTHOR:
+            l_idx = pm.draw_author(l_idx, psc_line)
+            # Force page break after Author (End of Cover Page)
+            l_idx = pm.force_page_break()
+            # Reset page num if we want body to start at 1? 
+            # Usually cover is not numbered or numbered i/ii. 
+            # Current logic just increments. Let's keep it simple or reset if requested.
+            # User didn't ask to reset, just "Cover on one page".
+            # Note: pm.page_num will increment.
+            
+            # Since we forced a page break, l_idx is 0. 
+            # But the next loop iteration might add an empty line due to "type change" check above.
+            # last_line_type will be AUTHOR. Next is likely H1 or EMPTY.
+            # If next is EMPTY, we draw empty line at top of new page?
+            # If next is H1 (Synopsis), we draw H1.
+            # The check `if last_line_type and ...` will trigger. `l_idx` becomes 1.
+            # This means the new page starts with 1 empty line. This is probably fine/good styling.
+
+        elif line_type == PScLineType.CHARSHEADLINE:
+            l_idx = pm.draw_charsheadline(l_idx, psc_line)
+
+        elif line_type == PScLineType.CHARACTER:
+            l_idx = pm.draw_character(l_idx, psc_line)
+
+        elif line_type == PScLineType.H1:
+            h1_count += 1
+            h2_count = 0
+            l_idx = pm.draw_slugline(l_idx, psc_line, number=h1_count, border=True)
+
+        elif line_type == PScLineType.H2:
+            h2_count += 1
+            number = str(h1_count) + _get_h2_letter(h2_count)
+            l_idx = pm.draw_slugline(l_idx, psc_line, number=number)
+
+        elif line_type == PScLineType.H3:
+            l_idx = pm.draw_slugline(l_idx, psc_line)
+
+        elif line_type == PScLineType.DIRECTION:
+            if in_synopsis:
+                l_idx = pm.draw_synopsis_text(l_idx, psc_line.text)
+            else:
+                l_idx = pm.draw_direction(l_idx, psc_line)
+
+        elif line_type == PScLineType.DIALOGUE:
+            if in_synopsis:
+                 # Synopsis shouldn't have dialogue usually, but if it does, handle as text?
+                 # Or treat as normal dialogue? Let's treat as text if in synopsis to be safe?
+                 # Or just standard dialogue.
+                 # User said: "Synopsis text ... styled differently".
+                 # I'll assume synopsis text comes in as DIRECTION or just text.
+                 # If user writes:
+                 # # あらすじ
+                 # 昔々あるところに...
+                 # This is usually parsed as DIRECTION or Action in Fountain.
+                 l_idx = pm.draw_synopsis_text(l_idx, psc_line.text) # Strip name if it was parsed as dialogue?
+            else:
+                l_idx = pm.draw_dialogue(l_idx, psc_line)
+
+        elif line_type == PScLineType.ENDMARK:
+            l_idx = pm.draw_endmark(l_idx, psc_line)
+
+        elif line_type == PScLineType.COMMENT:
+            l_idx = pm.draw_comment(l_idx, psc_line)
+
+        elif line_type == PScLineType.EMPTY:
+             # Empty line.
+             l_idx = pm.draw_empty(l_idx, psc_line)
+
+        else:
+             # Unknown, skip or error.
+             pass
+
+        last_line_type = line_type
+
+    pm.close()
+    return pm.pdf
+
+def generate_script_pdf(fountain_content: str) -> bytes:
+    """Fountain形式のテキストから縦書きPDFを生成する."""
     from fountain.fountain import Fountain
     
-    # メタデータを抽出してAuthorフィールドに追記するなどの処理を行う
-    # Playscriptは標準でTitle, Author以外の一部メタデータを無視するため
+    # Standard parsing
     f_parser = Fountain(fountain_content)
     metadata = f_parser.metadata
     
+    script = fountain.psc_from_fountain(fountain_content)
+    
+    # --- Metadata Injection Logic (Refined) ---
     extra_info_parts = []
     
+    # Note: We do NOT include Synopsis here anymore as it is expected to be in the body (# あらすじ)
+    # But if user put it in metadata, we might want to append it to the body or ignore it.
+    # User said: "Synopsis is # 1 paragraph... use # あらすじ in body".
+    # So we should probably ignore metadata 'synopsis' for the Cover Page now.
     
-    # Synopsis (あらすじ) handling
-    synopsis = metadata.get("synopsis", metadata.get("あらすじ", []))
-    if synopsis:
-        extra_info_parts.append(f"\n【あらすじ】\n{'\n'.join(synopsis)}")
-
     if "draft date" in metadata:
         extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
     elif "date" in metadata:
@@ -94,30 +418,22 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     if "notes" in metadata:
         extra_info_parts.append(f"\nNotes:\n{'\n'.join(metadata['notes'])}")
 
-    script = fountain.psc_from_fountain(fountain_content)
-    
-    # メタデータをAuthor行に集約する（Title行のスタイル維持のため）
-    # Author行がない場合はTitle行の後に作成して挿入する
-    
-    # まずAuthor情報を取得（Fountainパーサーが取得していない可能性があるためmetadataから再取得）
+    # Prepare Author field content (Author + Other Metadata)
     authors = metadata.get("author", [])
     author_str = ", ".join(authors) if authors else ""
     
-    # 表示用のメタデータ文字列を作成
-    # Authorが一番上に来るようにする
+    final_metadata_parts = []
     if author_str:
-        final_metadata_parts = [author_str]
-    else:
-        final_metadata_parts = []
-        
+        final_metadata_parts.append(author_str)
+    
     if extra_info_parts:
         final_metadata_parts.extend(extra_info_parts)
     
     final_metadata_str = "\n".join(final_metadata_parts)
-
+    
+    # Inject into Script Object
     if final_metadata_str:
         from playscript import PScLineType, PScLine
-        
         new_lines = []
         found_title = False
         author_injected = False
@@ -126,45 +442,28 @@ def generate_script_pdf(fountain_content: str) -> bytes:
             if line.type == PScLineType.TITLE:
                 found_title = True
                 new_lines.append(line)
-                # タイトル直後にAuthor行を挿入する場合（まだ挿入していなくて、かつこの次がAuthorでない場合）
-                # ただし、既存のAuthor行があるかどうかはこのループ内だけでは判断しにくいので
-                # タイトル行を見つけたらフラグを立てておき、既存Author行があれば置換、なければ挿入というロジックにする
-                
             elif line.type == PScLineType.AUTHOR:
-                # 既存のAuthor行を、生成したmetadata文字列に置き換える
                 line.text = final_metadata_str
                 new_lines.append(line)
                 author_injected = True
-            
             else:
-                # Title行の後、かつまだAuthor行に出会っていない（=最初のセリフやト書きなど）場合
-                # ここでAuthor行を挿入する
                 if found_title and not author_injected:
-                    # Author行を作成して挿入
                     author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
                     new_lines.append(author_line)
                     author_injected = True
-                
                 new_lines.append(line)
         
-        # 万が一TITLE行もAUTHOR行もなかった場合（レアケースだが）
         if not found_title and not author_injected:
-             # 先頭に挿入
              author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
              new_lines.insert(0, author_line)
-             
-        # TITLE行はあるがそれ以降何もない場合などでまだ挿入されていない場合
         if found_title and not author_injected:
              author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
              new_lines.append(author_line)
-
+             
         script.lines = new_lines
 
-    # PDFストリームを生成
-    # 縦書き・明朝体を使用
-    # 演劇台本の標準的な書式である「縦書き・横置き」にするため、用紙サイズを横向き(landscape)に設定
-    # 用紙サイズはA4とする
-    pdf_stream = pdf.psc_to_pdf(script, font_name=DEFAULT_FONT, size=landscape(A4))
+    # Use Custom Generator
+    # size=landscape(A4) is what we want
+    pdf_stream = custom_psc_to_pdf(script, font_name=DEFAULT_FONT, size=landscape(A4))
     
-    # バイト列として返す
     return pdf_stream.getvalue()
