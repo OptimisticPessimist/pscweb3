@@ -8,8 +8,12 @@
 ## Proposed Changes
 ### Backend
 #### [MODIFY] [pdf_generator.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/pdf_generator.py)
-- `reportlab` から `landscape`, `A4` をインポート
-- `psc_to_pdf` の呼び出し時に `size=landscape(A4)` を指定するように変更
+- `pdf_generator.py`を修正
+    - メタデータから `synopsis` または `あらすじ` を取得する処理を追加
+    - メタデータの挿入先を `TITLE` 行から `AUTHOR` 行に変更する
+        - `TITLE` 行の書式（太文字・中央揃え等を想定）を維持するため
+        - `AUTHOR` 行が存在しない場合は新規作成して `TITLE` の後に挿入する
+    - メタデータの表示順序を調整（Author, Synopsis, Date... の順など）
 
 ## Verification Plan
 ### Automated Tests

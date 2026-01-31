@@ -1,7 +1,7 @@
-# タスク: 演劇台本の書式変更（縦書き・横置き）
+# Task List
 
-- [x] 現状のPDF生成ロジックの調査
-- [x] PDF生成ロジックの修正（横置きA4に設定）
-- [x] 動作確認
-- [x] ドキュメント作成
-- [ ] コードレビュー
+- [/] Implement Synopsis parsing and PDF Title Page update <!-- id: 0 -->
+    - [x] Define format rules (Completed in chat) <!-- id: 1 -->
+    - [x] Update `backend/src/services/pdf_generator.py` to parse `Synopsis` / `あらすじ` <!-- id: 2 -->
+    - [x] Update `backend/src/services/pdf_generator.py` to inject metadata into `AUTHOR` field instead of `TITLE` field to preserve styling <!-- id: 3 -->
+    - [x] Verify PDF generation (Manual/Dry run) <!-- id: 4 -->

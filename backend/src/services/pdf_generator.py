@@ -72,6 +72,11 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     extra_info_parts = []
     
     
+    # Synopsis (あらすじ) handling
+    synopsis = metadata.get("synopsis", metadata.get("あらすじ", []))
+    if synopsis:
+        extra_info_parts.append(f"\n【あらすじ】\n{'\n'.join(synopsis)}")
+
     if "draft date" in metadata:
         extra_info_parts.append(f"Draft: {', '.join(metadata['draft date'])}")
     elif "date" in metadata:
@@ -89,40 +94,71 @@ def generate_script_pdf(fountain_content: str) -> bytes:
     if "notes" in metadata:
         extra_info_parts.append(f"\nNotes:\n{'\n'.join(metadata['notes'])}")
 
-    if "author" in metadata:
-        # User requested explicit "Author: ..." labeling
-        # adding it to the top of our metadata block
-        extra_info_parts.insert(0, f"Author: {', '.join(metadata['author'])}")
-
     script = fountain.psc_from_fountain(fountain_content)
     
-    if extra_info_parts:
-        extra_info_str = "\n".join(extra_info_parts)
-        # playscriptはscript.linesの内容を使用してPDFを生成するため、
-        # メタデータを表示するにはTITLE行のテキストを直接書き換える必要がある
-        # script.titleを変更しても反映されない
-        from playscript import PScLineType
+    # メタデータをAuthor行に集約する（Title行のスタイル維持のため）
+    # Author行がない場合はTitle行の後に作成して挿入する
+    
+    # まずAuthor情報を取得（Fountainパーサーが取得していない可能性があるためmetadataから再取得）
+    authors = metadata.get("author", [])
+    author_str = ", ".join(authors) if authors else ""
+    
+    # 表示用のメタデータ文字列を作成
+    # Authorが一番上に来るようにする
+    if author_str:
+        final_metadata_parts = [author_str]
+    else:
+        final_metadata_parts = []
         
-        # TITLE行を更新し、AUTHOR行は削除する（重複防止＆複数行表示対応のため）
+    if extra_info_parts:
+        final_metadata_parts.extend(extra_info_parts)
+    
+    final_metadata_str = "\n".join(final_metadata_parts)
+
+    if final_metadata_str:
+        from playscript import PScLineType, PScLine
+        
         new_lines = []
         found_title = False
+        author_injected = False
         
         for line in script.lines:
             if line.type == PScLineType.TITLE:
-                line.text += "\n\n" + extra_info_str
                 found_title = True
                 new_lines.append(line)
+                # タイトル直後にAuthor行を挿入する場合（まだ挿入していなくて、かつこの次がAuthorでない場合）
+                # ただし、既存のAuthor行があるかどうかはこのループ内だけでは判断しにくいので
+                # タイトル行を見つけたらフラグを立てておき、既存Author行があれば置換、なければ挿入というロジックにする
+                
             elif line.type == PScLineType.AUTHOR:
-                # 既にTitle行にAuthorを含めたので、元のAuthor行は除外する
-                continue
+                # 既存のAuthor行を、生成したmetadata文字列に置き換える
+                line.text = final_metadata_str
+                new_lines.append(line)
+                author_injected = True
+            
             else:
+                # Title行の後、かつまだAuthor行に出会っていない（=最初のセリフやト書きなど）場合
+                # ここでAuthor行を挿入する
+                if found_title and not author_injected:
+                    # Author行を作成して挿入
+                    author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+                    new_lines.append(author_line)
+                    author_injected = True
+                
                 new_lines.append(line)
         
+        # 万が一TITLE行もAUTHOR行もなかった場合（レアケースだが）
+        if not found_title and not author_injected:
+             # 先頭に挿入
+             author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+             new_lines.insert(0, author_line)
+             
+        # TITLE行はあるがそれ以降何もない場合などでまだ挿入されていない場合
+        if found_title and not author_injected:
+             author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+             new_lines.append(author_line)
+
         script.lines = new_lines
-        
-        # デバッグ用：script.titleも更新しておく
-        if hasattr(script, 'title'):
-             script.title += "\n\n" + extra_info_str
 
     # PDFストリームを生成
     # 縦書き・明朝体を使用
