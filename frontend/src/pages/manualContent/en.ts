@@ -146,6 +146,8 @@ Upload script files in Fountain format.
 > 1. **One-line Dialogue**: Start with \x60@\x60 (e.g., \x60@Character Dialogue\x60).
 > 2. **Forced Headings**: Start with \x60.\x60 (e.g., \x60.1 Act 1\x60, \x60.2 Scene 1\x60).
 > 3. **Indented Action**: Lines starting with a space are treated as Action with indentation preserved.
+> 4. **Excluding Synopsis**: Using keywords like "# Synopsis" or "## Synopsis" in the heading prevents that section from being counted as a scene number and excludes it from scene charts and rehearsal selection lists.
+
 
 ### 📝 Script Information
 You can set the following when uploading:

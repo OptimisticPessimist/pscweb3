@@ -4,4 +4,4 @@
 - [x] Identify where `Milestone` and `Schedule` dates are formatted for Discord <!-- id: 1 -->
 - [x] Create implementation plan to convert UTC to JST for Discord messages <!-- id: 2 -->
 - [x] Implement the timezone conversion fix <!-- id: 3 -->
-- [/] Verify the fix <!-- id: 4 -->
+- [x] Verify the fix <!-- id: 4 -->

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from src.services.fountain_parser import parse_fountain_and_create_models
-from src.db.models import TheaterProject, User, Script
+from src.db.models import TheaterProject, User, Script, Scene
 
 
 @pytest.mark.asyncio

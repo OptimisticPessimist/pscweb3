@@ -26,10 +26,25 @@ async def parse_fountain_and_create_models(
     processed_lines = []
     in_char_block = False
     is_following_char = False
+    in_metadata = True # State to check if we are in metadata section
     
     for line in lines:
         stripped = line.strip()
         
+        # Metadata section ends at first blank line
+        if in_metadata:
+            if not stripped:
+                in_metadata = False
+                processed_lines.append(line)
+                continue
+            # Logic: If it looks like a heading or @ character before a blank line,
+            # metadata also ends (fountain library behavior can be complex but blank line is safest).
+            # But the metadata section is at the VERY top.
+            # If we see something starting with # or @ early, we might assume header ended,
+            # but usually a blank line is mandatory.
+            processed_lines.append(line)
+            continue
+
         # Check for block start/end
         if stripped.startswith("#"):
             # Check if this header starts a character block
@@ -38,6 +53,7 @@ async def parse_fountain_and_create_models(
             else:
                 in_char_block = False
             processed_lines.append(line)
+            processed_lines.append("") # Ensure blank line after heading
             is_following_char = False
         elif in_char_block:
             # Inside character block, ensure strings are separated by blank lines if not empty
@@ -93,8 +109,6 @@ async def parse_fountain_and_create_models(
                      is_following_char = False
                      processed_lines.append(line)
             
-    fountain_content = "\n".join(processed_lines)
-    
     fountain_content = "\n".join(processed_lines)
     
     f = Fountain(fountain_content)
@@ -205,7 +219,7 @@ async def parse_fountain_and_create_models(
         
         # NOTE: 本来Fountainでは # はSection Heading (Act相当) だが、
         # ユーザーが "# シーン1" のように書くケース救済のため、キーワードが含まれる場合はシーンとして扱う
-        SCENE_KEYWORDS = ["Scene", "scene", "シーン", "씬", "场", "場"]
+        SCENE_KEYWORDS = ["Scene", "scene", "シーン", "씬", "场", "場", "あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
         has_scene_keyword = any(k in content_stripped for k in SCENE_KEYWORDS)
         
         is_section_act = (element.element_type == "Section Heading" and 
@@ -262,8 +276,19 @@ async def parse_fountain_and_create_models(
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
-            scene_number += 1
-            logger.info(f"Found Scene Heading #{scene_number}: {content_stripped}")
+            
+            # Check for Synopsis
+            SYNOPSIS_KEYWORDS = ["あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
+            is_synopsis = any(k in content_stripped for k in SYNOPSIS_KEYWORDS)
+            
+            if is_synopsis:
+                current_scene_number = 0
+                logger.info(f"Found Synopsis (Scene #0): {content_stripped}")
+            else:
+                scene_number += 1
+                current_scene_number = scene_number
+                logger.info(f"Found Scene Heading #{scene_number}: {content_stripped}")
+                
             line_order = 0
             
             heading_text = content_stripped
@@ -284,7 +309,7 @@ async def parse_fountain_and_create_models(
 
             current_scene = Scene(
                 script_id=script.id,
-                scene_number=scene_number,
+                scene_number=current_scene_number,
                 act_number=current_act_number,
                 heading=heading_text,
                 description="" # Initialize description

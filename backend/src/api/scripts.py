@@ -195,6 +195,7 @@ async def get_scenes(
     result = await db.execute(
         select(Scene)
         .where(Scene.script_id == script_id)
+        .where(Scene.scene_number > 0)
         .order_by(Scene.act_number, Scene.scene_number)
     )
     scenes = result.scalars().all()
