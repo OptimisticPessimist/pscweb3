@@ -96,7 +96,7 @@ class CustomPageMan:
         self.canvas.save()
         self.pdf.seek(0)
 
-    def _draw_line(self, l_idx, text, indent=None):
+    def _draw_line(self, l_idx, text, indent=None, is_bold=False):
         if indent is None:
             indent = self.font_size
 
@@ -111,10 +111,22 @@ class CustomPageMan:
             if len(text) > max_len and text[max_len] == '」':
                 max_len -= 2
 
+        if is_bold:
+            # Use low-level PDF operations for fake bold
+            # Text rendering mode 2 = Fill and Stroke
+            self.canvas.saveState()
+            self.canvas.setLineWidth(self.font_size * 0.03)
+            # Write raw PDF command for text rendering mode
+            self.canvas._code.append('2 Tr')  # Set text rendering mode to Fill+Stroke
+        
         self.canvas.drawString(x, y, text[:max_len])
+        
+        if is_bold:
+            self.canvas.restoreState()
+
         return text[max_len:]
 
-    def _draw_lines(self, l_idx, lines, indent=None, first_indent=None):
+    def _draw_lines(self, l_idx, lines, indent=None, first_indent=None, is_bold=False):
         if not first_indent:
             first_indent = indent
 
@@ -129,7 +141,7 @@ class CustomPageMan:
                     l_idx = 0
 
                 line_indent = first_indent if first_line else indent
-                line = self._draw_line(l_idx, line, indent=line_indent)
+                line = self._draw_line(l_idx, line, indent=line_indent, is_bold=is_bold)
                 first_line = False
                 l_idx += 1
         return l_idx
@@ -152,7 +164,7 @@ class CustomPageMan:
 
     def draw_title(self, l_idx, ttl_line):
         indent = self.font_size * 7
-        l_idx = self._draw_lines(l_idx, ttl_line.text, indent=indent)
+        l_idx = self._draw_lines(l_idx, ttl_line.text, indent=indent, is_bold=True)
         return l_idx
 
     def draw_author(self, l_idx, athr_line):
