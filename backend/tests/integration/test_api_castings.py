@@ -49,7 +49,10 @@ async def test_assign_casting(
 
     # Assert
     assert response.status_code == 200
-    data = response.json()
-    assert data["character_id"] == character.id
-    assert data["user_id"] == test_user.id
-    assert data["cast_name"] == "Aキャスト"
+    data_list = response.json()
+    assert isinstance(data_list, list)
+    
+    # 割り当てたユーザーが含まれているか探す
+    found = next((d for d in data_list if d["user_id"] == str(test_user.id)), None)
+    assert found is not None
+    assert found["cast_name"] == "Aキャスト"

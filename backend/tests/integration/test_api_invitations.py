@@ -20,12 +20,12 @@ async def test_create_invitation(
     response = await client.post(
         f"/api/projects/{test_project.id}/invitations",
         json={"expires_in_hours": 24, "max_uses": 5},
-        params={"token": token}
+        headers={"Authorization": f"Bearer {token}"}
     )
     
     assert response.status_code == 200
     data = response.json()
-    assert data["project_id"] == test_project.id
+    assert data["project_id"] == str(test_project.id)
     assert data["max_uses"] == 5
     assert "token" in data
 
@@ -93,7 +93,7 @@ async def test_accept_invitation(
     token = create_access_token({"sub": str(new_user.id)})
     response = await client.post(
         f"/api/invitations/{inv_token}/accept",
-        params={"token": token}
+        headers={"Authorization": f"Bearer {token}"}
     )
     
     assert response.status_code == 200

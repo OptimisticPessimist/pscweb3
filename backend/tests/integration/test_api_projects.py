@@ -18,7 +18,7 @@ async def test_create_project(
     response = await client.post(
         "/api/projects/",
         json={"name": "Test Project", "description": "Test Description"},
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -27,13 +27,14 @@ async def test_create_project(
     project_id = data["id"]
 
     # DB確認: プロジェクト
-    project = await db.get(TheaterProject, project_id)
+    from uuid import UUID
+    project = await db.get(TheaterProject, UUID(project_id))
     assert project is not None
 
     # DB確認: メンバー (オーナー)
     result = await db.execute(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
+            ProjectMember.project_id == UUID(project_id),
             ProjectMember.user_id == test_user.id,
         )
     )
@@ -60,14 +61,14 @@ async def test_list_projects(
 
     response = await client.get(
         "/api/projects/",
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
     )
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1
     # 作成したプロジェクトが含まれているか
     project_ids = [p["id"] for p in data]
-    assert project.id in project_ids
+    assert str(project.id) in project_ids
 
 
 @pytest.mark.asyncio
@@ -97,7 +98,7 @@ async def test_member_management(
     # --- A. メンバー一覧取得 ---
     response = await client.get(
         f"/api/projects/{project.id}/members",
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
     )
     assert response.status_code == 200
     members = response.json()
@@ -106,7 +107,7 @@ async def test_member_management(
     # --- B. ロール更新 (Viewer -> Editor) ---
     response = await client.put(
         f"/api/projects/{project.id}/members/{other_user.id}",
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
         json={"role": "editor"},
     )
     assert response.status_code == 200
@@ -120,7 +121,7 @@ async def test_member_management(
     # --- C. 権限チェック (自分自身を変更しようとする -> 400) ---
     response = await client.put(
         f"/api/projects/{project.id}/members/{test_user.id}",
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
         json={"role": "viewer"},
     )
     assert response.status_code == 400
@@ -128,7 +129,7 @@ async def test_member_management(
     # --- D. メンバー削除 ---
     response = await client.delete(
         f"/api/projects/{project.id}/members/{other_user.id}",
-        params={"token": test_user_token},
+        headers={"Authorization": f"Bearer {test_user_token}"},
     )
     assert response.status_code == 200
     

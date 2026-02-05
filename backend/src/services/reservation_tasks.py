@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import async_session_maker
 from src.db.models import Reservation, Milestone, TheaterProject

@@ -92,7 +92,7 @@ app.add_middleware(
 # ルーター登録
 app.include_router(auth.router, prefix="/auth", tags=["認証"])
 app.include_router(projects.router, prefix="/api/projects", tags=["プロジェクト"])
-app.include_router(invitations.router, prefix="/api/invitations", tags=["招待"])
+app.include_router(invitations.router, prefix="/api", tags=["招待"])
 app.include_router(attendance.router, prefix="/api/projects", tags=["出欠確認"])
 app.include_router(public.router, prefix="/api/public", tags=["公開API"])
 app.include_router(interactions.router, prefix="/api", tags=["Discord Interactions"])

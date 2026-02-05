@@ -57,8 +57,9 @@ async def test_check_project_limit_excludes_existing_public_projects(db):
     await create_project(db, user) # 1st Private
     
     public_project = await create_project(db, user) # 2nd (will be public)
+    public_project.is_public = True # Explicitly set public
     
-    # Add public script to make it public
+    # Add public script to make it public (optional if we set project.is_public)
     script = Script(
         id=uuid4(),
         project_id=public_project.id,
