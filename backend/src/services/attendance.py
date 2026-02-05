@@ -92,8 +92,10 @@ class AttendanceService:
 
         # メンション作成
         mentions = [f"<@{u.discord_id}>" for u in valid_users]
-        deadline_str = deadline.strftime('%Y-%m-%d %H:%M')
-        schedule_str = schedule_date.strftime('%Y-%m-%d %H:%M')
+        deadline_ts = int(deadline.replace(tzinfo=timezone.utc).timestamp())
+        schedule_ts = int(schedule_date.replace(tzinfo=timezone.utc).timestamp())
+        deadline_str = f"<t:{deadline_ts}:f>"
+        schedule_str = f"<t:{schedule_ts}:f>"
 
         message_content = (
             f"**【出欠確認】{title}**\n"

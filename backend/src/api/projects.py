@@ -623,9 +623,12 @@ async def create_milestone(
     # Discord通知 (Webhook)
     project = await db.get(TheaterProject, project_id)
     if project.discord_webhook_url:
-        date_str = milestone.start_date.strftime("%Y/%m/%d")
+        # Discord Timestamp format (Date only)
+        start_ts = int(milestone.start_date.replace(tzinfo=timezone.utc).timestamp())
+        date_str = f"<t:{start_ts}:d>"
         if milestone.end_date:
-            date_str += f" - {milestone.end_date.strftime('%Y/%m/%d')}"
+            end_ts = int(milestone.end_date.replace(tzinfo=timezone.utc).timestamp())
+            date_str += f" - <t:{end_ts}:d>"
         
         background_tasks.add_task(
             discord_service.send_notification,

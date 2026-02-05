@@ -63,8 +63,11 @@ async def create_reservation(
     # プロジェクト取得
     project = await db.scalar(select(TheaterProject).where(TheaterProject.id == milestone.project_id))
 
-    # メール送信 (Background)
-    # DBはNaive UTCで保存されているため、JSTに変換して表示
+    # Discord Timestamp for notifications
+    milestone_ts = int(milestone.start_date.replace(tzinfo=timezone.utc).timestamp())
+    discord_date_str = f"<t:{milestone_ts}:f>"
+    
+    # Mail still needs formatted string (keep JST as default for mail)
     jst = timezone(timedelta(hours=9))
     start_date_utc = milestone.start_date.replace(tzinfo=timezone.utc)
     start_date_jst = start_date_utc.astimezone(jst)
@@ -108,7 +111,7 @@ async def create_reservation(
                 pass
 
         notification_content = f"""🎫 **チケット予約完了**
-公演日時: {date_str}
+公演日時: {discord_date_str}
 お名前: {reservation.name}
 予約枚数: {reservation.count}枚
 扱い: {referral_name}
@@ -244,13 +247,17 @@ async def cancel_reservation(
             except:
                 pass
 
+        # Discord Timestamp for notifications
+        milestone_ts = int(start_date.replace(tzinfo=timezone.utc).timestamp())
+        discord_date_str = f"<t:{milestone_ts}:f>"
+
         # 日時JST変換
         jst = timezone(timedelta(hours=9))
         start_date_utc = start_date.replace(tzinfo=timezone.utc)
         date_str = start_date_utc.astimezone(jst).strftime("%Y/%m/%d %H:%M")
 
         notification_content = f"""🗑️ **チケット予約キャンセル**
-公演日時: {date_str}
+公演日時: {discord_date_str}
 お名前: {res_name}
 予約枚数: {res_count}枚
 扱い: {referral_name}
