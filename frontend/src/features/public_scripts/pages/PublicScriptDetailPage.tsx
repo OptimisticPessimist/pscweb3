@@ -60,7 +60,7 @@ export const PublicScriptDetailPage: React.FC = () => {
             </div>
 
             {/* Metadata Card */}
-            {(script.public_terms || script.public_contact) && (
+            {(script.public_terms || script.public_contact || script.notes) && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                     <div className="flex">
                         <div className="flex-shrink-0">
@@ -79,6 +79,11 @@ export const PublicScriptDetailPage: React.FC = () => {
                                 {script.public_contact && (
                                     <div>
                                         <span className="font-semibold">{t('publicScript.contact') || "Contact"}:</span> {script.public_contact}
+                                    </div>
+                                )}
+                                {script.notes && (
+                                    <div>
+                                        <span className="font-semibold">{t('script.notes') || "Notes"}:</span> {script.notes}
                                     </div>
                                 )}
                             </div>

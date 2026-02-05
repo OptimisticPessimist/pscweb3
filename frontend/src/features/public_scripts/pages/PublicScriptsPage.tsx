@@ -48,8 +48,13 @@ export const PublicScriptsPage: React.FC = () => {
                                     {script.author ? `by ${script.author}` : t('common.unknownAuthor')}
                                 </p>
                                 {script.public_terms && (
-                                    <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded truncate">
+                                    <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded truncate mb-2">
                                         {script.public_terms}
+                                    </div>
+                                )}
+                                {script.notes && (
+                                    <div className="text-xs text-gray-400 italic truncate">
+                                        {script.notes}
                                     </div>
                                 )}
                             </div>
