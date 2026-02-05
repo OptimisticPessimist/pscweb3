@@ -16,9 +16,9 @@ async def test_create_project(
 ):
     """プロジェクト作成テスト."""
     response = await client.post(
-        "/projects/",
+        "/api/projects/",
         json={"name": "Test Project", "description": "Test Description"},
-        params={"token": test_user_token},  # Depends(get_current_user_dep) uses query param 'token'
+        params={"token": test_user_token},
     )
     assert response.status_code == 200
     data = response.json()
@@ -59,7 +59,7 @@ async def test_list_projects(
     await db.commit()
 
     response = await client.get(
-        "/projects/",
+        "/api/projects/",
         params={"token": test_user_token},
     )
     assert response.status_code == 200
@@ -96,7 +96,7 @@ async def test_member_management(
     
     # --- A. メンバー一覧取得 ---
     response = await client.get(
-        f"/projects/{project.id}/members",
+        f"/api/projects/{project.id}/members",
         params={"token": test_user_token},
     )
     assert response.status_code == 200
@@ -105,7 +105,7 @@ async def test_member_management(
     
     # --- B. ロール更新 (Viewer -> Editor) ---
     response = await client.put(
-        f"/projects/{project.id}/members/{other_user.id}",
+        f"/api/projects/{project.id}/members/{other_user.id}",
         params={"token": test_user_token},
         json={"role": "editor"},
     )
@@ -119,7 +119,7 @@ async def test_member_management(
     
     # --- C. 権限チェック (自分自身を変更しようとする -> 400) ---
     response = await client.put(
-        f"/projects/{project.id}/members/{test_user.id}",
+        f"/api/projects/{project.id}/members/{test_user.id}",
         params={"token": test_user_token},
         json={"role": "viewer"},
     )
@@ -127,7 +127,7 @@ async def test_member_management(
     
     # --- D. メンバー削除 ---
     response = await client.delete(
-        f"/projects/{project.id}/members/{other_user.id}",
+        f"/api/projects/{project.id}/members/{other_user.id}",
         params={"token": test_user_token},
     )
     assert response.status_code == 200

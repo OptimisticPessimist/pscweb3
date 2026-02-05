@@ -42,8 +42,9 @@ async def test_assign_casting(
     
     # Act: キャスト割り当てAPI呼び出し
     response = await client.post(
-        f"/scripts/characters/{character.id}/casting?token={token}",
-        json={"user_id": test_user.id, "cast_name": "Aキャスト"},
+        f"/api/projects/{test_project.id}/characters/{character.id}/cast",
+        json={"user_id": str(test_user.id), "cast_name": "Aキャスト"},
+        headers={"Authorization": f"Bearer {token}"},
     )
 
     # Assert

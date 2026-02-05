@@ -50,10 +50,11 @@ async def parse_fountain_and_create_models(
             # Check if this header starts a character block
             if "登場人物" in stripped or "Characters" in stripped:
                 in_char_block = True
+                processed_lines.append(line)
+                processed_lines.append("") # Ensure blank line after character heading
             else:
                 in_char_block = False
-            processed_lines.append(line)
-            processed_lines.append("") # Ensure blank line after heading
+                processed_lines.append(line)
             is_following_char = False
         elif in_char_block:
             # Inside character block, ensure strings are separated by blank lines if not empty
@@ -358,8 +359,6 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Action":
             # ト書き (Action) または 一行セリフ (@Name Dialogue)
-            collecting_description = False
-            last_scene_was_section = False
             content = element.original_content.rstrip()  # Preserve leading whitespace for Togaki
             
             # Remove forced Action marker '!' if present (added by pre-processor)
@@ -367,6 +366,10 @@ async def parse_fountain_and_create_models(
                 content = content[1:]
 
             stripped_content = content.strip()
+            
+            if stripped_content:
+                collecting_description = False
+                last_scene_was_section = False
 
             # Check for one-line dialogue: @Character Dialogue (must have at least one space)
             if stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):

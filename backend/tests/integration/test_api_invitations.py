@@ -18,7 +18,7 @@ async def test_create_invitation(
     token = create_access_token({"sub": str(test_user.id)})
     
     response = await client.post(
-        f"/projects/{test_project.id}/invitations",
+        f"/api/projects/{test_project.id}/invitations",
         json={"expires_in_hours": 24, "max_uses": 5},
         params={"token": token}
     )
@@ -51,7 +51,7 @@ async def test_get_invitation(
     db.add(inv)
     await db.commit()
     
-    response = await client.get(f"/invitations/{inv_token}")
+    response = await client.get(f"/api/invitations/{inv_token}")
     
     assert response.status_code == 200
     data = response.json()
@@ -92,7 +92,7 @@ async def test_accept_invitation(
     # 実行
     token = create_access_token({"sub": str(new_user.id)})
     response = await client.post(
-        f"/invitations/{inv_token}/accept",
+        f"/api/invitations/{inv_token}/accept",
         params={"token": token}
     )
     

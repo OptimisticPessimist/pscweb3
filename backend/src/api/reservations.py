@@ -2,6 +2,7 @@ import csv
 import io
 from datetime import datetime, timezone, timedelta
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from fastapi.responses import StreamingResponse
@@ -44,7 +45,7 @@ async def create_reservation(
         if current_count + reservation.count > milestone.reservation_capacity:
             raise HTTPException(
                 status_code=400, 
-                detail=f"申し訳ございません。他の方の予約により残り{remaining}枚となっております。枚数を減らして再度お試しください。"
+                detail=f"Capacity exceeded. Only {remaining} tickets remaining."
             )
 
     # 予約作成
@@ -173,7 +174,7 @@ async def get_public_milestone(
 
 @router.get("/public/projects/{project_id}/members")
 async def get_project_members_public(
-    project_id: str,
+    project_id: UUID,
     role: str | None = Query(None, description="Filter by role (e.g. 'cast')"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -308,8 +309,8 @@ async def get_public_schedule(
 
 @router.get("/projects/{project_id}/reservations", response_model=list[ReservationResponse])
 async def get_reservations(
-    project_id: str,
-    milestone_id: str | None = None,
+    project_id: UUID,
+    milestone_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -370,7 +371,7 @@ async def get_reservations(
 
 @router.get("/milestones/{milestone_id}/reservations", response_model=list[ReservationResponse])
 async def get_milestone_reservations(
-    milestone_id: str,
+    milestone_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -425,7 +426,7 @@ async def get_milestone_reservations(
 
 @router.patch("/reservations/{reservation_id}/attendance", response_model=ReservationResponse)
 async def update_attendance(
-    reservation_id: str,
+    reservation_id: UUID,
     update_data: ReservationUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -459,8 +460,8 @@ async def update_attendance(
 
 @router.post("/projects/{project_id}/reservations/export")
 async def export_reservations(
-    project_id: str,
-    milestone_id: str | None = None,
+    project_id: UUID,
+    milestone_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
