@@ -2,9 +2,9 @@
 
 - [x] 現状のコード調査
 - [x] 実装計画の作成
-- [/] バックエンド修正 (不要であることを確認済み)
-- [ ] フロントエンド修正
-    - [ ] `PublicScriptDetailPage.tsx` の修正
-    - [ ] `PublicScriptsPage.tsx` の修正
-- [ ] 動作確認
-- [ ] マージと完了
+- [x] バックエンド修正 (不要であることを確認済み)
+- [x] フロントエンド修正
+    - [x] `PublicScriptDetailPage.tsx` の修正
+    - [x] `PublicScriptsPage.tsx` の修正
+- [x] 動作確認
+- [x] マージと完了
