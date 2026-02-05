@@ -50,10 +50,11 @@ async def parse_fountain_and_create_models(
             # Check if this header starts a character block
             if "登場人物" in stripped or "Characters" in stripped:
                 in_char_block = True
+                processed_lines.append(line)
+                processed_lines.append("") # Ensure blank line after character heading
             else:
                 in_char_block = False
-            processed_lines.append(line)
-            processed_lines.append("") # Ensure blank line after heading
+                processed_lines.append(line)
             is_following_char = False
         elif in_char_block:
             # Inside character block, ensure strings are separated by blank lines if not empty
@@ -209,6 +210,7 @@ async def parse_fountain_and_create_models(
     line_order = 0
     current_character: Character | None = None
     collecting_description = False
+    last_scene_was_section = False # 節（Section Heading）でシーンが作成されたかのフラグ
 
     for element in f.elements:
         content_stripped = element.original_content.strip()
@@ -280,7 +282,27 @@ async def parse_fountain_and_create_models(
             # Check for Synopsis
             SYNOPSIS_KEYWORDS = ["あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
             is_synopsis = any(k in content_stripped for k in SYNOPSIS_KEYWORDS)
-            
+
+            # 既存のSection Sceneのすぐ後にScene Headingが来た場合の結合処理
+            if is_valid_scene_heading and last_scene_was_section and current_scene and not is_synopsis:
+                heading_text = content_stripped
+                if heading_text.startswith("."):
+                    if heading_text.startswith(".2"):
+                        heading_text = heading_text[2:].strip()
+                    else:
+                        heading_text = heading_text.lstrip(".").strip()
+                
+                # 前のSection名と新しいScene Headingを結合
+                current_scene.heading = f"{current_scene.heading} ({heading_text})"
+                logger.info(f"Merged Scene Heading into previous Section: {current_scene.heading}")
+                
+                # シーン番号は増やさない
+                last_scene_was_section = False # 結合したのでリセット
+                line_order = 0
+                collecting_description = True
+                current_character = None
+                continue
+
             if is_synopsis:
                 current_scene_number = 0
                 logger.info(f"Found Synopsis (Scene #0): {content_stripped}")
@@ -320,10 +342,13 @@ async def parse_fountain_and_create_models(
             # Reset description collection state
             collecting_description = True
             current_character = None 
+            last_scene_was_section = is_section_scene
 
         elif element.element_type == "Character":
             # 登場人物検出 -> 説明収集終了
             collecting_description = False
+            last_scene_was_section = False
+
 
             # セリフを言う登場人物
             char_name = content_stripped
@@ -341,6 +366,10 @@ async def parse_fountain_and_create_models(
                 content = content[1:]
 
             stripped_content = content.strip()
+            
+            if stripped_content:
+                collecting_description = False
+                last_scene_was_section = False
 
             # Check for one-line dialogue: @Character Dialogue (must have at least one space)
             if stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
@@ -409,6 +438,7 @@ async def parse_fountain_and_create_models(
         elif element.element_type == "Dialogue":
             # Description collection ends
             collecting_description = False
+            last_scene_was_section = False
 
             # セリフ
             if current_scene and current_character:

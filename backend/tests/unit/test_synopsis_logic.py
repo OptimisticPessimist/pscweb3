@@ -58,12 +58,18 @@ Real Scene 2.
     # Sort scenes by scene_number
     scenes = sorted(script_loaded.scenes, key=lambda x: x.scene_number)
     
-    # We expect 3 scenes: Synopsis (0), Scene 1 (1), Scene 2 (2)
-    assert len(scenes) == 3
+    # We expect 2 scenes: Synopsis (0) and Merged Scene 1+2 (1)
+    # Because Scene 2 immediately follows Scene 1 (which was a Section Scene), it gets merged.
+    assert len(scenes) == 2
     
     # Check Synopsis
     assert scenes[0].scene_number == 0
     assert "あらすじ" in scenes[0].heading
+    
+    # Check Merged Scene
+    assert scenes[1].scene_number == 1
+    assert "シーン1" in scenes[1].heading
+    assert "シーン2" in scenes[1].heading
 
 @pytest.mark.asyncio
 async def test_parse_synopsis_i18n(

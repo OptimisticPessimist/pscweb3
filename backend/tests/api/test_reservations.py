@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
-import uuid
+from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from src.db.models import (
@@ -15,55 +15,72 @@ from src.services.email import email_service
 
 
 @pytest.fixture
-def project(db_session: Session) -> TheaterProject:
+async def project(db: AsyncSession) -> TheaterProject:
     project = TheaterProject(name="Test Project", is_public=True)
-    db_session.add(project)
-    db_session.commit()
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
     return project
 
 @pytest.fixture
-def milestone(db_session: Session, project: TheaterProject) -> Milestone:
+async def milestone(db: AsyncSession, project: TheaterProject) -> Milestone:
     ms = Milestone(
         project_id=project.id,
         title="Test Milestone",
         start_date=datetime.now() + timedelta(days=7),
         reservation_capacity=10  # 定員10名
     )
-    db_session.add(ms)
-    db_session.commit()
+    db.add(ms)
+    await db.commit()
+    await db.refresh(ms)
     return ms
 
 @pytest.fixture
-def project_member(db_session: Session, project: TheaterProject) -> User:
+async def project_member(db: AsyncSession, project: TheaterProject) -> User:
     user = User(discord_id="12345", discord_username="member", discord_avatar_hash="hash")
-    db_session.add(user)
-    db_session.commit()
+    db.add(user)
+    await db.flush()
     pm = ProjectMember(project_id=project.id, user_id=user.id, role="viewer")
-    db_session.add(pm)
-    db_session.commit()
+    db.add(pm)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 @pytest.fixture
-def cast_member(db_session: Session, project: TheaterProject) -> User:
-    user = User(discord_id="67890", discord_username="cast", screen_name="Actor A")
-    db_session.add(user)
+async def cast_member(db: AsyncSession, project: TheaterProject) -> User:
+    user_id = uuid4()
+    user = User(id=user_id, discord_id="67890", discord_username="cast", screen_name="Actor A")
+    db.add(user)
+    await db.flush()
     
-    script = Script(project_id=project.id, uploaded_by=user.id, title="Test Script", content="")
-    db_session.add(script)
+    script_id = uuid4()
+    script = Script(id=script_id, project_id=project.id, uploaded_by=user_id, title="Test Script", content="")
+    db.add(script)
+    await db.flush()
     
-    char = Character(script_id=script.id, name="Hero")
-    db_session.add(char)
-    db_session.commit()
+    char = Character(script_id=script_id, name="Hero")
+    db.add(char)
+    await db.flush()
+    
+    casting = CharacterCasting(character_id=char.id, user_id=user_id)
+    db.add(casting)
+    pm = ProjectMember(project_id=project.id, user_id=user_id, role="viewer")
+    db.add(pm)
+    await db.commit()
+    await db.refresh(user)
+    return user
     
     casting = CharacterCasting(character_id=char.id, user_id=user.id)
-    db_session.add(casting)
+    db.add(casting)
     pm = ProjectMember(project_id=project.id, user_id=user.id, role="viewer")
-    db_session.add(pm)
-    db_session.commit()
+    db.add(pm)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
-def test_create_reservation_success(client: TestClient, milestone: Milestone):
+@pytest.mark.asyncio
+async def test_create_reservation_success(client: AsyncClient, milestone: Milestone):
     """予約作成成功時テスト."""
     payload = {
         "milestone_id": str(milestone.id),
@@ -74,7 +91,7 @@ def test_create_reservation_success(client: TestClient, milestone: Milestone):
     
     # SendGridのモック
     with patch.object(email_service, "send_reservation_confirmation") as mock_send:
-        response = client.post("/api/public/reservations", json=payload)
+        response = await client.post("/api/public/reservations", json=payload)
     
     assert response.status_code == 200
     data = response.json()
@@ -82,15 +99,6 @@ def test_create_reservation_success(client: TestClient, milestone: Milestone):
     assert data["count"] == 2
     
     # BackgroundTasksの実行を確認
-    # TestClientはデフォルトでBackgroundTasksを実行しないため、明示的なチェックは難しいが
-    # patchしているメソッドが呼ばれたか確認したい場合、BackgroundTasksが同期的に実行される環境設定が必要。
-    # StarletteのTestClientは通常BackgroundTasksをコンテキスト終了後に実行する。
-    # ここではmock_sendが呼ばれたことを確認する。
-    # 注意: FastAPIのTestClient実装によるが、withブロックを抜けるときにリクエストが完了し、BackgroundTasksも処理されるはず。
-    
-    # 引数検証
-    # mock_sendはBackgroundTasksによって非同期に呼ばれるが、TestClientでは同期的振る舞いをする場合が多い。
-    # しかし確実にチェックするためには、mock_sendが呼ばれた後にアサートする。
     mock_send.assert_called()
     call_args = mock_send.call_args
     assert call_args is not None
@@ -98,17 +106,17 @@ def test_create_reservation_success(client: TestClient, milestone: Milestone):
     assert kwargs["to_email"] == "guest@example.com"
     assert kwargs["name"] == "Guest User"
     assert kwargs["project_name"] == "Test Project"
-    # 他の引数も必要ならチェック
 
 
-def test_create_reservation_capacity_error(client: TestClient, db_session: Session, milestone: Milestone):
+@pytest.mark.asyncio
+async def test_create_reservation_capacity_error(client: AsyncClient, db: AsyncSession, milestone: Milestone):
     """定員オーバーエラーテスト."""
     # 既に9名予約済み (定員10名)
     r1 = Reservation(
         milestone_id=milestone.id, name="Existing", email="e@e.com", count=9
     )
-    db_session.add(r1)
-    db_session.commit()
+    db.add(r1)
+    await db.commit()
     
     # 2名予約しようとするとオーバー (9+2 > 10)
     payload = {
@@ -117,140 +125,147 @@ def test_create_reservation_capacity_error(client: TestClient, db_session: Sessi
         "email": "late@example.com",
         "count": 2
     }
-    response = client.post("/api/public/reservations", json=payload)
+    response = await client.post("/api/public/reservations", json=payload)
     assert response.status_code == 400
-    assert "capacity exceeded" in response.json()["detail"]
+    assert "capacity exceeded" in response.json()["detail"].lower()
 
 
-def test_get_cast_members_public(client: TestClient, project: TheaterProject, cast_member: User, project_member: User):
+@pytest.mark.asyncio
+async def test_get_cast_members_public(client: AsyncClient, db: AsyncSession, project: TheaterProject, cast_member: User, project_member: User):
     """紹介者リスト(キャスト絞り込み)テスト."""
     # キャストのみ
-    response = client.get(f"/api/public/projects/{project.id}/members?role=cast")
+    response = await client.get(f"/api/public/projects/{project.id}/members?role=cast")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Actor A" # screen_name優先, ProjectMember.display_name設定なし
     
     # ProjectMemberのdisplay_nameを設定
-    cast_member_pm = db_session.scalar(select(ProjectMember).where(ProjectMember.user_id == cast_member.id))
+    stmt = select(ProjectMember).where(ProjectMember.user_id == cast_member.id)
+    result = await db.execute(stmt)
+    cast_member_pm = result.scalar_one()
     cast_member_pm.display_name = "Stage Name A"
-    db_session.commit()
+    await db.commit()
     
-    response = client.get(f"/api/public/projects/{project.id}/members?role=cast")
+    response = await client.get(f"/api/public/projects/{project.id}/members?role=cast")
     assert response.status_code == 200
     data = response.json()
     assert data[0]["name"] == "Stage Name A" # display_name優先
 
     # 全員
-    response = client.get(f"/api/public/projects/{project.id}/members")
+    response = await client.get(f"/api/public/projects/{project.id}/members")
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 2
 
 
-def test_admin_reservation_list(client: TestClient, db_session: Session, project: TheaterProject, milestone: Milestone, project_member: User):
+@pytest.mark.asyncio
+async def test_admin_reservation_list(client: AsyncClient, db: AsyncSession, project: TheaterProject, milestone: Milestone, project_member: User):
     """管理者予約一覧取得テスト."""
     # 予約作成
     r = Reservation(milestone_id=milestone.id, name="R1", email="r1@e.com", count=1)
-    db_session.add(r)
-    db_session.commit()
+    db.add(r)
+    await db.commit()
     
-    # ログイン
-    client.app.dependency_overrides = {} # user overrideが必要ならここで
-    # 今回はconftestのGlobal Overrideが効いている前提、もしくは特定のユーザーとしてリクエストを送る必要がある
-    # *注: ここでは簡易的に、認証なしで通るか、テスト用認証ロジックを使用する想定*
-    
-    # *しかし、auth dependencyがああるので、正規にモックする*
-    # *しかし、auth dependencyがああるので、正規にモックする*
     from src.dependencies.auth import get_current_user_dep
-    client.app.dependency_overrides[get_current_user_dep] = lambda: project_member
+    # Get the FastAPI app from the client (since it's an ASGITransport wrapped client)
+    from src.main import app
+    app.dependency_overrides[get_current_user_dep] = lambda: project_member
 
-    response = client.get(f"/api/projects/{project.id}/reservations")
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 1
-    assert data[0]["name"] == "R1"
-    
-    del client.app.dependency_overrides[get_current_user_dep]
+    try:
+        response = await client.get(f"/api/projects/{project.id}/reservations")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "R1"
+    finally:
+        app.dependency_overrides.pop(get_current_user_dep, None)
 
-def test_update_attendance(client: TestClient, db_session: Session, milestone: Milestone, project_member: User):
+@pytest.mark.asyncio
+async def test_update_attendance(client: AsyncClient, db: AsyncSession, milestone: Milestone, project_member: User):
     """出欠更新テスト."""
     r = Reservation(milestone_id=milestone.id, name="R2", email="r2@e.com", count=1, attended=False)
-    db_session.add(r)
-    db_session.commit()
-    
+    db.add(r)
+    await db.commit()
     
     from src.dependencies.auth import get_current_user_dep
-    client.app.dependency_overrides[get_current_user_dep] = lambda: project_member
+    from src.main import app
+    app.dependency_overrides[get_current_user_dep] = lambda: project_member
 
-    payload = {"attended": True, "name": "dummy", "email": "d@d.com", "count": 1, "milestone_id": str(milestone.id)} # schema validationのため全項目必要かも？ -> UpdateSchemaはattendedのみ
-    # ReservationUpdateスキーマ確認
-    # class ReservationUpdate(BaseModel):
-    #     attended: bool
-    
-    response = client.patch(f"/api/reservations/{r.id}/attendance", json={"attended": True})
-    assert response.status_code == 200
-    assert response.json()["attended"] is True
-    
-    del client.app.dependency_overrides[get_current_user_dep]
+    try:
+        response = await client.patch(f"/api/reservations/{r.id}/attendance", json={"attended": True})
+        assert response.status_code == 200
+        assert response.json()["attended"] is True
+    finally:
+        app.dependency_overrides.pop(get_current_user_dep, None)
 
-def test_export_csv(client: TestClient, db_session: Session, project: TheaterProject, milestone: Milestone, project_member: User):
+@pytest.mark.asyncio
+async def test_export_csv(client: AsyncClient, db: AsyncSession, project: TheaterProject, milestone: Milestone, project_member: User):
     """CSVエクスポートテスト."""
     r = Reservation(milestone_id=milestone.id, name="CSV User", email="csv@e.com", count=3)
-    db_session.add(r)
-    db_session.commit()
+    db.add(r)
+    await db.commit()
     
     from src.dependencies.auth import get_current_user_dep
-    client.app.dependency_overrides[get_current_user_dep] = lambda: project_member
+    from src.main import app
+    app.dependency_overrides[get_current_user_dep] = lambda: project_member
 
-    response = client.post(f"/api/projects/{project.id}/reservations/export")
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "text/csv"
-    assert "CSV User" in response.text
-    
-    del client.app.dependency_overrides[get_current_user_dep]
+    try:
+        response = await client.post(f"/api/projects/{project.id}/reservations/export")
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/csv")
+        assert "CSV User" in response.text
+    finally:
+        app.dependency_overrides.pop(get_current_user_dep, None)
 
 
-def test_cancel_reservation(client: TestClient, db_session: Session, milestone: Milestone):
+@pytest.mark.asyncio
+async def test_cancel_reservation(client: AsyncClient, db: AsyncSession, milestone: Milestone):
     """予約キャンセルテスト."""
     r = Reservation(milestone_id=milestone.id, name="Cancel User", email="cancel@e.com", count=1)
-    db_session.add(r)
-    db_session.commit()
+    db.add(r)
+    await db.commit()
     r_id = str(r.id)
+    
+    # Discord通知を飛ばすためにWebhook URLを設定
+    project = await db.get(TheaterProject, milestone.project_id)
+    project.discord_webhook_url = "http://fake-webhook"
+    await db.commit()
     
     # 成功
     payload = {"reservation_id": r_id, "email": "cancel@e.com"}
     
     # Discordのモック
     with patch("src.services.discord.DiscordService.send_notification") as mock_discord:
-        response = client.post("/api/public/reservations/cancel", json=payload)
+        response = await client.post("/api/public/reservations/cancel", json=payload)
     
     assert response.status_code == 204
     # DBから消えているか
-    assert db_session.get(Reservation, r_id) is None
+    assert await db.get(Reservation, r.id) is None
     mock_discord.assert_called() # 呼ばれていること
 
     # 失敗（存在しない）
-    response = client.post("/api/public/reservations/cancel", json=payload)
+    response = await client.post("/api/public/reservations/cancel", json=payload)
     assert response.status_code == 404
     
     # 失敗（メール不一致）
     # 再作成
     r2 = Reservation(milestone_id=milestone.id, name="User2", email="u2@e.com", count=1)
-    db_session.add(r2)
-    db_session.commit()
+    db.add(r2)
+    await db.commit()
     
     payload_mismatch = {"reservation_id": str(r2.id), "email": "wrong@e.com"}
-    response = client.post("/api/public/reservations/cancel", json=payload_mismatch)
+    response = await client.post("/api/public/reservations/cancel", json=payload_mismatch)
     assert response.status_code == 404
     
     
-def test_public_schedule(client: TestClient, db_session: Session, project: TheaterProject, milestone: Milestone):
+@pytest.mark.asyncio
+async def test_public_schedule(client: AsyncClient, db: AsyncSession, project: TheaterProject, milestone: Milestone):
     """公開スケジュール取得テスト."""
     milestone.start_date = datetime.now() + timedelta(days=1) # 未来
-    db_session.commit()
+    await db.commit()
     
-    response = client.get("/api/public/schedule")
+    response = await client.get("/api/public/schedule")
     assert response.status_code == 200
     data = response.json()
     
@@ -261,3 +276,4 @@ def test_public_schedule(client: TestClient, db_session: Session, project: Theat
     # プロジェクト名が含まれているか
     target = next(m for m in data if m["id"] == str(milestone.id))
     assert target["project_name"] == project.name
+

@@ -76,7 +76,7 @@ async def test_check_todays_events_basic(db: AsyncSession, project: TheaterProje
     with patch.object(email_service, "send_event_reminder") as mock_send:
         mock_send.return_value = True
         
-        stats = await check_todays_events()
+        stats = await check_todays_events(db=db)
         
         # 統計確認
         assert stats["checked_reservations"] >= 1

@@ -57,7 +57,7 @@ async def test_generate_scene_chart_single_scene(
     # Act: 香盤表を生成
     chart = await generate_scene_chart(script, db)
     await db.commit()
-    await db.refresh(chart)
+    await db.refresh(chart, ["mappings"])
 
     # Assert: 香盤表が正しく生成されている
     assert chart.id is not None
@@ -118,7 +118,7 @@ async def test_generate_scene_chart_multiple_scenes(
     # Act
     chart = await generate_scene_chart(script, db)
     await db.commit()
-    await db.refresh(chart)
+    await db.refresh(chart, ["mappings"])
 
     # Assert
     assert chart.id is not None
