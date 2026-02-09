@@ -3,17 +3,17 @@ import type { InvitationCreate, InvitationResponse, InvitationAcceptResponse } f
 
 export const invitationsApi = {
     async createInvitation(projectId: string, data: InvitationCreate): Promise<InvitationResponse> {
-        const response = await apiClient.post(`/invitations/projects/${projectId}/invitations`, data);
+        const response = await apiClient.post(`/projects/${projectId}/invitations`, data);
         return response.data;
     },
 
     async getInvitation(token: string): Promise<InvitationResponse> {
-        const response = await apiClient.get(`/invitations/invitations/${token}`);
+        const response = await apiClient.get(`/invitations/${token}`);
         return response.data;
     },
 
     async acceptInvitation(token: string): Promise<InvitationAcceptResponse> {
-        const response = await apiClient.post(`/invitations/invitations/${token}/accept`);
+        const response = await apiClient.post(`/invitations/${token}/accept`);
         return response.data;
     },
 };
