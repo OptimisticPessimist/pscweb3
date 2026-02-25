@@ -135,24 +135,26 @@ export const SchedulePollDetailPage: React.FC = () => {
 
                                 {rec.reason && (
                                     <div className="mb-3">
-                                        <div className="text-[10px] font-bold text-violet-500 uppercase tracking-tighter mb-0.5">Recommendation Reason</div>
+                                        <div className="text-[10px] font-bold text-violet-500 uppercase tracking-tighter mb-0.5">{t('schedulePoll.recommendationReason') || 'おすすめ理由'}</div>
                                         <div className="text-xs text-violet-900 bg-violet-50 px-2 py-1 rounded border border-violet-100 font-medium">
                                             {rec.reason}
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="mb-4">
-                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Possible Scenes</div>
-                                    <div className="space-y-1">
-                                        {rec.possible_scenes.map((ps: any) => (
-                                            <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
-                                                <span className="font-bold mr-1">#{ps.scene_number}</span>
-                                                <span className="truncate">{ps.scene_heading}</span>
-                                            </div>
-                                        ))}
+                                {rec.possible_scenes && rec.possible_scenes.length > 0 && (
+                                    <div className="mb-4">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">{t('schedulePoll.possibleScenes') || '稽古可能なシーン'}</div>
+                                        <div className="space-y-1">
+                                            {rec.possible_scenes.map((ps: any) => (
+                                                <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
+                                                    <span className="font-bold mr-1">#{ps.scene_number}</span>
+                                                    <span className="truncate">{ps.scene_heading}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 <button
                                     onClick={() => setSelectedCandidateForFinalize(rec.candidate_id)}
                                     className="w-full py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors flex items-center justify-center"

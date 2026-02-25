@@ -423,6 +423,8 @@
         "titleRequired": "タイトルを入力してください",
         "atLeastOneCandidate": "少なくとも1つの候補日を正しく入力してください",
         "submitCreate": "日程調整を作成・Discord送信",
-        "created": "日程調整を作成しました"
+        "created": "日程調整を作成しました",
+        "recommendationReason": "おすすめ理由",
+        "possibleScenes": "稽古可能なシーン"
     }
 }

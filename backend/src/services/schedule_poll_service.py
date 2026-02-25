@@ -213,8 +213,24 @@ class SchedulePollService:
         script_result = await self.db.execute(script_stmt)
         script = script_result.scalar_one_or_none()
         
+        # 脚本が設定されていない場合のフォールバック（全体出席数に基づく）
         if not script:
-            return []
+            recommendations = []
+            for candidate in poll.candidates:
+                ok_count = sum(1 for a in candidate.answers if a.status == "ok")
+                maybe_count = sum(1 for a in candidate.answers if a.status == "maybe")
+                score = ok_count * 10 + maybe_count * 5
+                
+                if score > 0 or not candidate.answers:
+                    recommendations.append({
+                        "candidate_id": candidate.id,
+                        "start_datetime": candidate.start_datetime,
+                        "end_datetime": candidate.end_datetime,
+                        "possible_scenes": [],
+                        "reason": f"出席可能者: {ok_count}名" if ok_count > 0 else "稽古可能なメンバーがいます"
+                    })
+            recommendations.sort(key=lambda x: (sum(1 for a in [c for c in poll.candidates if c.id == x["candidate_id"]][0].answers if a.status == "ok")), reverse=True)
+            return recommendations[:3]
         
         # シーンごとの必須ユーザーIDセットを作成
         mapping_stmt = select(SceneCharacterMapping).join(SceneCharacterMapping.scene).where(Scene.script_id == script.id)
@@ -247,18 +263,17 @@ class SchedulePollService:
         recommendations = []
         for candidate in poll.candidates:
             user_answers = {a.user_id: a.status for a in candidate.answers}
+            ok_count_total = sum(1 for a in candidate.answers if a.status == "ok")
+            maybe_count_total = sum(1 for a in candidate.answers if a.status == "maybe")
             
             candidate_possible_scenes = []
             for scene_id, required_user_ids in scene_required_users.items():
                 is_possible = True
-                missing_users = []
                 for rid in required_user_ids:
                     status = user_answers.get(rid, "pending")
                     if status == "ng":
                         is_possible = False
                         break
-                    if status == "pending":
-                        missing_users.append(rid)
                 
                 if is_possible and required_user_ids:
                     score = 0
@@ -280,42 +295,48 @@ class SchedulePollService:
                     
                     scene = scenes_map.get(scene_id)
                     if scene:
-                        # 理由の構築
-                        reason = []
+                        reason_parts = []
                         if ok_count == len(required_user_ids):
-                            reason.append("必須キャスト全員出席可能")
+                            reason_parts.append("必須キャスト全員出席可能")
                         elif ok_count > 0:
-                            reason.append(f"必須キャスト{ok_count}名出席可能")
+                            reason_parts.append(f"必須キャスト{ok_count}名出席可能")
                         
                         if priority_ok:
-                            reason.append("演出・制作メンバー出席可能")
+                            reason_parts.append("演出・制作メンバー出席可能")
                             
                         candidate_possible_scenes.append({
                             "scene_id": scene_id,
                             "scene_number": scene.scene_number,
                             "scene_heading": scene.heading,
                             "score": score,
-                            "reason": " / ".join(reason)
+                            "reason": " / ".join(reason_parts)
                         })
             
             candidate_possible_scenes.sort(key=lambda x: x["score"], reverse=True)
             
+            # 理由の決定
             if candidate_possible_scenes:
-                # 候補日全体としての理由（最もスコアの高いシーンに基づいた要約）
                 top_scene = candidate_possible_scenes[0]
                 summary_reason = top_scene["reason"] or "稽古可能なシーンあり"
-                
+            else:
+                summary_reason = f"出席可能者: {ok_count_total}名" if ok_count_total > 0 else "稽古可能なメンバーがいます"
+
+            # スコアの決定（シーンスコアがあればそれ、なければ全体出席数ベース）
+            total_score = candidate_possible_scenes[0]["score"] if candidate_possible_scenes else (ok_count_total * 5)
+
+            if total_score > 0 or not candidate.answers:
                 recommendations.append({
                     "candidate_id": candidate.id,
                     "start_datetime": candidate.start_datetime,
                     "end_datetime": candidate.end_datetime,
                     "possible_scenes": candidate_possible_scenes[:5],
-                    "reason": summary_reason
+                    "reason": summary_reason,
+                    "score": total_score
                 })
             
         # おすすめ度順にソート（上位3件）
-        recommendations.sort(key=lambda x: max([s["score"] for s in x["possible_scenes"]], default=0), reverse=True)
-        return recommendations
+        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        return recommendations[:3]
 
 
 def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:
