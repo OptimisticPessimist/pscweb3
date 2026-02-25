@@ -126,11 +126,32 @@ export const SchedulePollDetailPage: React.FC = () => {
                                 <div className="text-sm font-bold text-gray-900 mb-1">
                                     {new Date(rec.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
                                 </div>
-                                <div className="text-xs text-gray-500 mb-3 flex items-center">
+                                <div className="text-xs text-gray-500 mb-2 flex items-center">
                                     <Clock className="h-3 w-3 mr-1" />
                                     {new Date(rec.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                     {' - '}
                                     {new Date(rec.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+
+                                {rec.reason && (
+                                    <div className="mb-3">
+                                        <div className="text-[10px] font-bold text-violet-500 uppercase tracking-tighter mb-0.5">Recommendation Reason</div>
+                                        <div className="text-xs text-violet-900 bg-violet-50 px-2 py-1 rounded border border-violet-100 font-medium">
+                                            {rec.reason}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mb-4">
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Possible Scenes</div>
+                                    <div className="space-y-1">
+                                        {rec.possible_scenes.map((ps: any) => (
+                                            <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
+                                                <span className="font-bold mr-1">#{ps.scene_number}</span>
+                                                <span className="truncate">{ps.scene_heading}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedCandidateForFinalize(rec.candidate_id)}

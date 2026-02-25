@@ -239,43 +239,82 @@ class SchedulePollService:
         priority_result = await self.db.execute(priority_member_stmt)
         priority_user_ids = {m.user_id for m in priority_result.scalars().all()}
 
+        # シーン情報を取得
+        scene_stmt = select(Scene).where(Scene.script_id == script.id)
+        scene_result = await self.db.execute(scene_stmt)
+        scenes_map = {s.id: s for s in scene_result.scalars().all()}
+
         recommendations = []
         for candidate in poll.candidates:
             user_answers = {a.user_id: a.status for a in candidate.answers}
             
-            possible_scenes = []
+            candidate_possible_scenes = []
             for scene_id, required_user_ids in scene_required_users.items():
                 is_possible = True
+                missing_users = []
                 for rid in required_user_ids:
                     status = user_answers.get(rid, "pending")
                     if status == "ng":
                         is_possible = False
                         break
+                    if status == "pending":
+                        missing_users.append(rid)
                 
                 if is_possible and required_user_ids:
                     score = 0
+                    ok_count = 0
                     for rid in required_user_ids:
-                        if user_answers.get(rid) == "ok": score += 10
-                        elif user_answers.get(rid) == "maybe": score += 5
+                        if user_answers.get(rid) == "ok":
+                            score += 10
+                            ok_count += 1
+                        elif user_answers.get(rid) == "maybe":
+                            score += 5
                     
+                    priority_ok = False
                     for pid in priority_user_ids:
-                        if user_answers.get(pid) == "ok": score += 20
-                        elif user_answers.get(pid) == "maybe": score += 10
+                        if user_answers.get(pid) == "ok":
+                            score += 20
+                            priority_ok = True
+                        elif user_answers.get(pid) == "maybe":
+                            score += 10
                     
-                    possible_scenes.append({
-                        "scene_id": scene_id,
-                        "score": score
-                    })
+                    scene = scenes_map.get(scene_id)
+                    if scene:
+                        # 理由の構築
+                        reason = []
+                        if ok_count == len(required_user_ids):
+                            reason.append("必須キャスト全員出席可能")
+                        elif ok_count > 0:
+                            reason.append(f"必須キャスト{ok_count}名出席可能")
+                        
+                        if priority_ok:
+                            reason.append("演出・制作メンバー出席可能")
+                            
+                        candidate_possible_scenes.append({
+                            "scene_id": scene_id,
+                            "scene_number": scene.scene_number,
+                            "scene_heading": scene.heading,
+                            "score": score,
+                            "reason": " / ".join(reason)
+                        })
             
-            possible_scenes.sort(key=lambda x: x["score"], reverse=True)
+            candidate_possible_scenes.sort(key=lambda x: x["score"], reverse=True)
             
-            recommendations.append({
-                "candidate_id": candidate.id,
-                "start_datetime": candidate.start_datetime,
-                "end_datetime": candidate.end_datetime,
-                "possible_scenes": possible_scenes[:5]
-            })
+            if candidate_possible_scenes:
+                # 候補日全体としての理由（最もスコアの高いシーンに基づいた要約）
+                top_scene = candidate_possible_scenes[0]
+                summary_reason = top_scene["reason"] or "稽古可能なシーンあり"
+                
+                recommendations.append({
+                    "candidate_id": candidate.id,
+                    "start_datetime": candidate.start_datetime,
+                    "end_datetime": candidate.end_datetime,
+                    "possible_scenes": candidate_possible_scenes[:5],
+                    "reason": summary_reason
+                })
             
+        # おすすめ度順にソート（上位3件）
+        recommendations.sort(key=lambda x: max([s["score"] for s in x["possible_scenes"]], default=0), reverse=True)
         return recommendations
 
 

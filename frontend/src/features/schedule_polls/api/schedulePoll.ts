@@ -28,7 +28,10 @@ export interface SchedulePollResponse {
 
 export interface RecommendationScene {
     scene_id: string;
+    scene_number: number;
+    scene_heading: string;
     score: number;
+    reason: string;
 }
 
 export interface ScheduleRecommendation {
@@ -36,6 +39,7 @@ export interface ScheduleRecommendation {
     start_datetime: string;
     end_datetime: string;
     possible_scenes: RecommendationScene[];
+    reason: string;
 }
 
 export const schedulePollApi = {
