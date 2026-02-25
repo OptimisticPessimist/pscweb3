@@ -32,6 +32,9 @@ if TYPE_CHECKING:
         Milestone,
         AttendanceEvent,
         AttendanceTarget,
+        SchedulePoll,
+        SchedulePollCandidate,
+        SchedulePollAnswer,
     )
 
 
@@ -103,6 +106,9 @@ class TheaterProject(Base):
         back_populates="project", cascade="all, delete-orphan"
     )
     attendance_events: Mapped[list["AttendanceEvent"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan"
+    )
+    schedule_polls: Mapped[list["SchedulePoll"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
     
@@ -519,4 +525,67 @@ class AttendanceTarget(Base):
     # ユニーク制約
     __table_args__ = (
         UniqueConstraint("event_id", "user_id", name="uq_attendance_event_user"),
+    )
+
+
+class SchedulePoll(Base):
+    """日程調整."""
+
+    __tablename__ = "schedule_polls"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    message_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Message ID
+    channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
+    creator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # リレーション
+    project: Mapped["TheaterProject"] = relationship(back_populates="schedule_polls")
+    creator: Mapped["User"] = relationship()
+    candidates: Mapped[list["SchedulePollCandidate"]] = relationship(
+        back_populates="poll", cascade="all, delete-orphan", order_by="SchedulePollCandidate.start_datetime"
+    )
+
+
+class SchedulePollCandidate(Base):
+    """日程調整の候補日時."""
+
+    __tablename__ = "schedule_poll_candidates"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    poll_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_polls.id"))
+    start_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    end_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # リレーション
+    poll: Mapped["SchedulePoll"] = relationship(back_populates="candidates")
+    answers: Mapped[list["SchedulePollAnswer"]] = relationship(
+        back_populates="candidate", cascade="all, delete-orphan"
+    )
+
+
+class SchedulePollAnswer(Base):
+    """日程調整への回答."""
+
+    __tablename__ = "schedule_poll_answers"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    candidate_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_poll_candidates.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(20))  # "ok", "maybe", "ng"
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    # リレーション
+    candidate: Mapped["SchedulePollCandidate"] = relationship(back_populates="answers")
+    user: Mapped["User"] = relationship()
+
+    # ユニーク制約
+    __table_args__ = (
+        UniqueConstraint("candidate_id", "user_id", name="uq_poll_candidate_user"),
     )

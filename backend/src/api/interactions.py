@@ -102,11 +102,11 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
         return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
 
     custom_id = interaction.data.custom_id
-    # Format: attendance:{event_id}:{status}
-    parts = custom_id.split(":")
+    interaction_type = parts[0]
+    target_id_str = parts[1]
+    status = parts[2]
     
-    if len(parts) != 3 or parts[0] != "attendance":
-        # Unknown interaction
+    if interaction_type not in ["attendance", "poll_answer"]:
         return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
     
     event_id_str = parts[1]
@@ -147,13 +147,23 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
             }
         }
     
-    # Update Target
+    # Process by type
     from uuid import UUID
     try:
-        event_id = UUID(event_id_str)
+        target_id = UUID(target_id_str)
     except ValueError:
          return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
          
+    if interaction_type == "attendance":
+        return await handle_attendance_interaction(user, target_id, status, db)
+    elif interaction_type == "poll_answer":
+        return await handle_poll_interaction(user, target_id, status, db)
+
+    return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
+
+
+async def handle_attendance_interaction(user, event_id: UUID, status: str, db: AsyncSession):
+    """Handle attendance button clicks."""
     stmt = select(AttendanceTarget).where(
         AttendanceTarget.event_id == event_id,
         AttendanceTarget.user_id == user.id
@@ -162,8 +172,6 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
     target = result.scalar_one_or_none()
     
     if not target:
-        # Not a target? Maybe add them dynamically?
-        # For now, show error.
         return {
             "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
             "data": {
@@ -178,12 +186,46 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
     
     logger.info("Updated attendance status", user_id=user.id, event_id=event_id, status=status)
     
-    # Status Message
     status_text = "参加" if status == "ok" else "不参加" if status == "ng" else "保留"
     return {
         "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
         "data": {
             "content": f"✅ ステータスを「**{status_text}**」に更新しました。",
+            "flags": 64 # Ephemeral
+        }
+    }
+
+
+async def handle_poll_interaction(user, candidate_id: UUID, status: str, db: AsyncSession):
+    """Handle schedule poll button clicks."""
+    from src.db.models import SchedulePollAnswer
+    
+    stmt = select(SchedulePollAnswer).where(
+        SchedulePollAnswer.candidate_id == candidate_id,
+        SchedulePollAnswer.user_id == user.id
+    )
+    result = await db.execute(stmt)
+    answer = result.scalar_one_or_none()
+    
+    if answer:
+        answer.status = status
+    else:
+        answer = SchedulePollAnswer(
+            candidate_id=candidate_id,
+            user_id=user.id,
+            status=status
+        )
+        db.add(answer)
+    
+    await db.commit()
+    
+    logger.info("Updated poll answer", user_id=user.id, candidate_id=candidate_id, status=status)
+    
+    status_text = "〇" if status == "ok" else "△" if status == "maybe" else "×"
+    return {
+        "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
+        "data": {
+            "content": f"✅ 回答を「**{status_text}**」に更新しました。",
             "flags": 64 # Ephemeral
         }
     }

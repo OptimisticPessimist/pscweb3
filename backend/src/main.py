@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public, reservations
+from src.api import auth, characters, invitations, projects, rehearsals, scene_charts, scripts, users, attendance, interactions, dashboard, my_schedule, public, reservations, schedule_polls
 from src.config import settings
 from src.core.logger import configure_logger
 from src.middleware.request_logging import RequestLoggingMiddleware
@@ -107,6 +107,7 @@ app.include_router(dashboard.router, prefix="/api/projects", tags=["ダッシュ
 app.include_router(my_schedule.router, prefix="/api", tags=["マイスケジュール"])
 app.include_router(users.router, prefix="/api/users", tags=["ユーザー"])
 app.include_router(reservations.router, prefix="/api", tags=["予約"])
+app.include_router(schedule_polls.router, prefix="/api", tags=["日程調整"])
 
 
 @app.get("/")
