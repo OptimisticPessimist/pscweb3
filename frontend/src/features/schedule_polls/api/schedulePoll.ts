@@ -76,5 +76,10 @@ export const schedulePollApi = {
     createPoll: async (projectId: string, data: { title: string, description?: string, candidates: { start_datetime: string, end_datetime: string }[] }): Promise<SchedulePollResponse> => {
         const response = await apiClient.post<SchedulePollResponse>(`/projects/${projectId}/polls`, data);
         return response.data;
+    },
+
+    // 日程調整を削除
+    deletePoll: async (projectId: string, pollId: string): Promise<void> => {
+        await apiClient.delete(`/projects/${projectId}/polls/${pollId}`);
     }
 };

@@ -185,3 +185,28 @@ async def finalize_poll(
         )
 
     return {"status": "ok", "rehearsal_id": rehearsal.id}
+
+@router.delete("/projects/{project_id}/polls/{poll_id}")
+async def delete_poll(
+    project_id: UUID,
+    poll_id: UUID,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """日程調整を削除."""
+    # 権限チェック (Editor以上)
+    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    member = res.scalar_one_or_none()
+    if not member or member.role == "viewer":
+         raise HTTPException(status_code=403, detail="操作権限がありません")
+
+    # 日程調整を取得
+    poll = await db.get(SchedulePoll, poll_id)
+    if not poll or poll.project_id != project_id:
+        raise HTTPException(status_code=404, detail="日程調整が見つかりません")
+
+    await db.delete(poll)
+    await db.commit()
+
+    return {"status": "ok"}

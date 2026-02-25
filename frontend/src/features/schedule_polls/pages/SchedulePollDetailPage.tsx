@@ -11,7 +11,8 @@ import {
     Sparkles,
     Check,
     ArrowRight,
-    User
+    User,
+    Trash2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
@@ -56,6 +57,24 @@ export const SchedulePollDetailPage: React.FC = () => {
         },
     });
 
+    const deleteMutation = useMutation({
+        mutationFn: () => schedulePollApi.deletePoll(projectId!, pollId!),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedulePolls', projectId] });
+            toast.success(t('schedulePoll.deleted') || '日程調整を削除しました');
+            navigate(`/projects/${projectId}/polls`);
+        },
+        onError: () => {
+            toast.error(t('schedulePoll.deleteFailed') || '削除に失敗しました（権限が不足している可能性があります）');
+        }
+    });
+
+    const handleDelete = () => {
+        if (window.confirm(t('schedulePoll.confirmDelete') || 'この日程調整を削除してもよろしいですか？\n削除すると参加者の回答などもすべて消去され復元できません。')) {
+            deleteMutation.mutate();
+        }
+    };
+
     // 参加者のユニークリストを作成（グリッドの列用）
     const participants = useMemo(() => {
         if (!poll) return [];
@@ -95,7 +114,7 @@ export const SchedulePollDetailPage: React.FC = () => {
         <div className="p-6 space-y-8 animate-in fade-in duration-500">
             <PageHead title={poll.title} />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
                     <button
                         onClick={() => navigate(`/projects/${projectId}/polls`)}
@@ -108,6 +127,14 @@ export const SchedulePollDetailPage: React.FC = () => {
                         <p className="text-gray-500 mt-1">{poll.description}</p>
                     </div>
                 </div>
+                <button
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                    className="flex items-center space-x-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 border border-transparent hover:border-rose-100"
+                >
+                    <Trash2 className="h-5 w-5" />
+                    <span className="font-bold text-sm hidden sm:inline">{t('common.delete') || '削除'}</span>
+                </button>
             </div>
 
             {/* おすすめ日程セクション */}
