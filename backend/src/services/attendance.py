@@ -1,6 +1,6 @@
 """出席確認サービス."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 from typing import Optional
 

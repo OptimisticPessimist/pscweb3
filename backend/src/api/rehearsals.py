@@ -497,12 +497,12 @@ async def add_rehearsal(
             target_user_ids=attendance_targets
         )
 
-    # Re-fetch everything to be safe and consistent with update_rehearsal
      # Re-fetch rehearsal with full options to ensure relationships are loaded for response
     result = await db.execute(
         select(Rehearsal)
         .where(Rehearsal.id == rehearsal.id)
         .options(
+            selectinload(Rehearsal.scenes),
             selectinload(Rehearsal.participants).options(selectinload(RehearsalParticipant.user)),
             selectinload(Rehearsal.casts).options(
                 selectinload(RehearsalCast.character),
@@ -581,16 +581,45 @@ async def add_rehearsal(
     for c in rehearsal.casts:
         if c.user and c.user.discord_id:
             mention_ids.add(c.user.discord_id)
-    
+            
     if mention_ids:
         mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
         content += f"\n\n{mentions}"
-        
+
     if project.discord_webhook_url:
+        import uuid
+        now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        start_dt = rehearsal.date.astimezone(timezone.utc)
+        start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
+        end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
+        end_str = end_dt.strftime("%Y%m%dT%H%M%SZ")
+        
+        ics_content = (
+            "BEGIN:VCALENDAR\r\n"
+            "VERSION:2.0\r\n"
+            "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
+            "CALSCALE:GREGORIAN\r\n"
+            "BEGIN:VEVENT\r\n"
+            f"UID:{uuid.uuid4()}@pscweb3.local\r\n"
+            f"DTSTAMP:{now_str}\r\n"
+            f"DTSTART:{start_str}\r\n"
+            f"DTEND:{end_str}\r\n"
+            f"SUMMARY:📌 稽古 - {project.name}\r\n"
+            f"DESCRIPTION:{'シーン: ' + scene_text if scene_text else '稽古'}\\n場所: {rehearsal.location or '未定'}\r\n"
+            f"LOCATION:{rehearsal.location or '未定'}\r\n"
+            "END:VEVENT\r\n"
+            "END:VCALENDAR\r\n"
+        )
+        ics_file = {
+            "filename": "rehearsal.ics",
+            "content": ics_content.encode("utf-8")
+        }
+        
         background_tasks.add_task(
             discord_service.send_notification,
             content=content,
             webhook_url=project.discord_webhook_url,
+            file=ics_file,
         )
 
     return RehearsalResponse(
@@ -606,40 +635,7 @@ async def add_rehearsal(
         casts=casts_response
     )
 
-    # 出席確認作成（オプション）
-    # 出席確認作成（オプション）
-    if rehearsal_data.create_attendance_check:
-        # 期限設定（未指定なら稽古日の24時間前）
-        deadline = rehearsal_data.attendance_deadline
-        if not deadline:
-            deadline = rehearsal.date - timedelta(hours=24)
-        
-        # プロジェクト取得
-        if project and project.discord_channel_id:
-            # AttendanceServiceを使用
-            attendance_service = AttendanceService(db, discord_service)
-            title = f"稽古出席確認: {scene_heading or '稽古'}"
-            await attendance_service.create_attendance_event(
-                project=project,
-                title=title,
-                deadline=deadline,
-                schedule_date=rehearsal.date,
-                location=rehearsal.location,
-                description=None
-            )
-
-    return RehearsalResponse(
-        id=rehearsal.id,
-        schedule_id=rehearsal.schedule_id,
-        scene_id=rehearsal.scene_id,
-        scene_heading=scene_heading,
-        date=rehearsal.date,
-        duration_minutes=rehearsal.duration_minutes,
-        location=rehearsal.location,
-        notes=rehearsal.notes,
-        participants=participants_response,
-        casts=casts_response_list,
-    )
+    # [CLEANUP] Dead code removed here
 
 
 @router.put("/rehearsals/{rehearsal_id}", response_model=RehearsalResponse)
@@ -668,7 +664,11 @@ async def update_rehearsal(
         raise HTTPException(status_code=401, detail="認証が必要です")
 
     # 稽古取得
-    result = await db.execute(select(Rehearsal).where(Rehearsal.id == rehearsal_id))
+    result = await db.execute(
+        select(Rehearsal)
+        .where(Rehearsal.id == rehearsal_id)
+        .options(selectinload(Rehearsal.scenes))
+    )
     rehearsal = result.scalar_one_or_none()
     if rehearsal is None:
         raise HTTPException(status_code=404, detail="稽古が見つかりません")
@@ -745,6 +745,7 @@ async def update_rehearsal(
         select(Rehearsal)
         .where(Rehearsal.id == rehearsal_id)
         .options(
+            selectinload(Rehearsal.scenes),
             selectinload(Rehearsal.participants).options(selectinload(RehearsalParticipant.user)),
             selectinload(Rehearsal.casts).options(
                 selectinload(RehearsalCast.character),
