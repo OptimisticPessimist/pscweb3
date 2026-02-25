@@ -15,6 +15,7 @@ class SchedulePollAnswerResponse(SchedulePollAnswerBase):
     user_id: UUID
     display_name: str | None = None
     discord_username: str | None = None
+    role: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

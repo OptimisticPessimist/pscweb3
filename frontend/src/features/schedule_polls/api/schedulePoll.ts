@@ -5,6 +5,7 @@ export interface SchedulePollAnswerResponse {
     display_name: string | null;
     discord_username: string | null;
     status: 'ok' | 'maybe' | 'ng';
+    role?: string;
 }
 
 export interface SchedulePollCandidateResponse {

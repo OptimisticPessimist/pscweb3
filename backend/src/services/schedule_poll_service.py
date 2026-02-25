@@ -19,7 +19,8 @@ from src.db.models import (
     SceneCharacterMapping, 
     Scene,
     User,
-    Script
+    Script,
+    Character
 )
 from src.config import settings
 from src.services.discord import DiscordService
@@ -167,10 +168,26 @@ class SchedulePollService:
         if not poll:
             return None
             
-        # メンバーの表示名を取得
+        # メンバーの表示名と役職を取得
         member_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
         member_result = await self.db.execute(member_stmt)
-        name_map = {m.user_id: m.display_name for m in member_result.scalars().all()}
+        members = member_result.scalars().all()
+        name_map = {m.user_id: m.display_name for m in members}
+        staff_role_map = {m.user_id: m.default_staff_role for m in members}
+        
+        # 配役の取得（最新の脚本に基づく）
+        script_stmt = select(Script).where(Script.project_id == poll.project_id).order_by(Script.revision.desc()).limit(1)
+        script_result = await self.db.execute(script_stmt)
+        script = script_result.scalar_one_or_none()
+        
+        cast_map = {}
+        if script:
+            cast_stmt = select(CharacterCasting).join(CharacterCasting.character).where(Character.script_id == script.id).options(selectinload(CharacterCasting.character))
+            cast_result = await self.db.execute(cast_stmt)
+            for casting in cast_result.scalars().all():
+                if casting.user_id not in cast_map:
+                    cast_map[casting.user_id] = []
+                cast_map[casting.user_id].append(casting.character.name)
         
         # 回答情報を補完
         for candidate in poll.candidates:
@@ -178,6 +195,17 @@ class SchedulePollService:
                 # Pydanticが拾えるように属性をセット
                 answer.display_name = name_map.get(answer.user_id)
                 answer.discord_username = answer.user.discord_username if answer.user else None
+                
+                roles = []
+                staff_role = staff_role_map.get(answer.user_id)
+                if staff_role:
+                    roles.append(staff_role)
+                
+                casts = cast_map.get(answer.user_id)
+                if casts:
+                    roles.extend(casts)
+                    
+                answer.role = " / ".join(roles) if roles else None
         
         return poll
 

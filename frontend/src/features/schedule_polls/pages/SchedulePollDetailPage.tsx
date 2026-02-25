@@ -59,13 +59,14 @@ export const SchedulePollDetailPage: React.FC = () => {
     // 参加者のユニークリストを作成（グリッドの列用）
     const participants = useMemo(() => {
         if (!poll) return [];
-        const userMap = new Map<string, { id: string, name: string }>();
+        const userMap = new Map<string, { id: string, name: string, role?: string }>();
         poll.candidates.forEach(c => {
             c.answers.forEach(a => {
                 if (!userMap.has(a.user_id)) {
                     userMap.set(a.user_id, {
                         id: a.user_id,
-                        name: a.display_name || a.discord_username || 'Unknown'
+                        name: a.display_name || a.discord_username || 'Unknown',
+                        role: (a as any).role
                     });
                 }
             });
@@ -184,6 +185,11 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                 <User className="h-4 w-4 text-indigo-600" />
                                             </div>
                                             <span className="truncate max-w-[100px]">{p.name}</span>
+                                            {p.role && (
+                                                <span className="text-[10px] text-gray-400 mt-0.5 max-w-[100px] truncate block font-normal leading-tight">
+                                                    {p.role}
+                                                </span>
+                                            )}
                                         </div>
                                     </th>
                                 ))}
