@@ -10,6 +10,7 @@ import {
     Wrench,
     ClipboardCheck,
     Ticket,
+    Clock,
     X
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -49,6 +50,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { to: `/projects/${projectId}/staff`, icon: Wrench, label: t('nav.staff') },
         { to: `/projects/${projectId}/schedule`, icon: Calendar, label: t('nav.schedule') },
         { to: `/projects/${projectId}/attendance`, icon: ClipboardCheck, label: t('nav.attendance') },
+        { to: `/projects/${projectId}/polls`, icon: Clock, label: t('nav.schedulePoll') || "日程調整" },
         { to: `/projects/${projectId}/reservations`, icon: Ticket, label: t('nav.reservations', '予約管理') },
         { to: `/projects/${projectId}/settings`, icon: Settings, label: t('nav.settings') },
     ] : [];

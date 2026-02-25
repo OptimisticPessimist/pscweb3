@@ -9,6 +9,7 @@
         "staff": "スタッフ",
         "schedule": "スケジュール",
         "attendance": "出欠",
+        "schedulePoll": "日程調整",
         "settings": "設定",
         "manual": "マニュアル",
         "publicScripts": "公開脚本"
@@ -396,5 +397,32 @@
             "updateSuccess": "更新しました",
             "updateError": "更新に失敗しました"
         }
+    },
+    "schedulePoll": {
+        "listTitle": "日程調整一覧",
+        "listDescription": "プロジェクトメンバーと稽古日程を調整します。",
+        "createButton": "新しい日程調整",
+        "noPolls": "日程調整がありません",
+        "noPollsMessage": "新しい日程調整を作成して、Discordで共有しましょう。",
+        "candidatesCount": "件の候補日",
+        "answerSaved": "回答を保存しました",
+        "finalized": "稽古予定を作成しました",
+        "recommendations": "システムによるおすすめ日程",
+        "finalizeThis": "この日で確定する",
+        "dateColumn": "候補日時",
+        "myAnswer": "あなたの回答",
+        "finalizeTitle": "予定を確定する",
+        "finalizeConfirm": "この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。",
+        "createTitle": "新しい日程調整",
+        "titleLabel": "タイトル",
+        "titlePlaceholder": "例：10月後半の抜き稽古",
+        "descriptionLabel": "説明（任意）",
+        "descriptionPlaceholder": "回答期限や、調整の目的などを入力してください",
+        "candidatesLabel": "候補日時",
+        "addCandidate": "追加",
+        "titleRequired": "タイトルを入力してください",
+        "atLeastOneCandidate": "少なくとも1つの候補日を正しく入力してください",
+        "submitCreate": "日程調整を作成・Discord送信",
+        "created": "日程調整を作成しました"
     }
 }

@@ -36,6 +36,11 @@ const PublicSchedulePage = lazy(() => import('@/features/reservations/pages/Publ
 const PublicCalendarPage = lazy(() => import('@/features/reservations/pages/PublicCalendarPage').then(module => ({ default: module.PublicCalendarPage })));  // 🆕
 const ReservationCancelPage = lazy(() => import('@/features/reservations/pages/ReservationCancelPage').then(module => ({ default: module.ReservationCancelPage })));
 
+// Schedule Polls
+const SchedulePollListPage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollListPage').then(module => ({ default: module.SchedulePollListPage })));
+const SchedulePollCreatePage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollCreatePage').then(module => ({ default: module.SchedulePollCreatePage })));
+const SchedulePollDetailPage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollDetailPage').then(module => ({ default: module.SchedulePollDetailPage })));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -95,6 +100,9 @@ function App() {
                     <Route path="/projects/:projectId/staff" element={<StaffPage />} />
                     <Route path="/projects/:projectId/schedule" element={<SchedulePage />} />
                     <Route path="/projects/:projectId/attendance" element={<AttendancePage />} />
+                    <Route path="/projects/:projectId/polls" element={<SchedulePollListPage />} />
+                    <Route path="/projects/:projectId/polls/create" element={<SchedulePollCreatePage />} />
+                    <Route path="/projects/:projectId/polls/:pollId" element={<SchedulePollDetailPage />} />
                     <Route path="/projects/:projectId/reservations" element={<ReservationListPage />} />
                     <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
                   </Route>
