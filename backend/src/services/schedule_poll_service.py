@@ -86,10 +86,9 @@ class SchedulePollService:
             # 5日程以内の場合は行ごとのボタンを表示
             if len(candidates) <= 5:
                 for i, c in enumerate(candidates):
-                    # 日本時間に変換して表示 (UTC -> JST)
-                    jst = timezone(timedelta(hours=9))
-                    start_jst = c.start_datetime.astimezone(jst)
-                    start_str = start_jst.strftime("%m/%d %H:%M")
+                    # Discord動的タイムスタンプを使用して、表示側（Discord）のタイムゾーンに自動追従させる
+                    ts = int(c.start_datetime.timestamp())
+                    start_str = f"<t:{ts}:F>"
                     row = {
                         "type": 1,
                         "components": [
