@@ -1,6 +1,6 @@
 """日程調整サービス."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 from typing import Optional
 
@@ -86,8 +86,10 @@ class SchedulePollService:
             # 5日程以内の場合は行ごとのボタンを表示
             if len(candidates) <= 5:
                 for i, c in enumerate(candidates):
-                    # シンプルな日時フォーマット
-                    start_str = c.start_datetime.strftime("%m/%d %H:%M")
+                    # 日本時間に変換して表示 (UTC -> JST)
+                    jst = timezone(timedelta(hours=9))
+                    start_jst = c.start_datetime.astimezone(jst)
+                    start_str = start_jst.strftime("%m/%d %H:%M")
                     row = {
                         "type": 1,
                         "components": [
@@ -152,11 +154,33 @@ class SchedulePollService:
 
     async def get_poll_with_details(self, poll_id: uuid.UUID) -> Optional[SchedulePoll]:
         """詳細情報付きで日程調整を取得."""
-        stmt = select(SchedulePoll).where(SchedulePoll.id == poll_id).options(
-            selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers).selectinload(SchedulePollAnswer.user)
+        stmt = (
+            select(SchedulePoll)
+            .where(SchedulePoll.id == poll_id)
+            .options(
+                selectinload(SchedulePoll.candidates)
+                .selectinload(SchedulePollCandidate.answers)
+                .selectinload(SchedulePollAnswer.user)
+            )
         )
         result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+        poll = result.scalar_one_or_none()
+        if not poll:
+            return None
+            
+        # メンバーの表示名を取得
+        member_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
+        member_result = await self.db.execute(member_stmt)
+        name_map = {m.user_id: m.display_name for m in member_result.scalars().all()}
+        
+        # 回答情報を補完
+        for candidate in poll.candidates:
+            for answer in candidate.answers:
+                # Pydanticが拾えるように属性をセット
+                answer.display_name = name_map.get(answer.user_id)
+                answer.discord_username = answer.user.discord_username if answer.user else None
+        
+        return poll
 
     async def upsert_answer(self, candidate_id: uuid.UUID, user_id: uuid.UUID, status: str):
         """回答を登録/更新."""

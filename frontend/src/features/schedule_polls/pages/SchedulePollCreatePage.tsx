@@ -78,8 +78,9 @@ export const SchedulePollCreatePage: React.FC = () => {
         const formattedCandidates = candidates
             .filter(c => c.start_date && c.start_time && c.end_time)
             .map(c => ({
-                start_datetime: `${c.start_date}T${c.start_time}:00Z`, // Ideally handles timezone
-                end_datetime: `${c.start_date}T${c.end_time}:00Z`
+                // ブラウザのローカル時間としてパースしてからUTCに変換する
+                start_datetime: new Date(`${c.start_date}T${c.start_time}:00`).toISOString(),
+                end_datetime: new Date(`${c.start_date}T${c.end_time}:00`).toISOString()
             }));
 
         if (formattedCandidates.length === 0) {

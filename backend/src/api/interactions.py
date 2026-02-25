@@ -103,15 +103,16 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
         return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
 
     custom_id = interaction.data.custom_id
+    parts = custom_id.split(":")
+    if len(parts) < 3:
+        return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
+
     interaction_type = parts[0]
     target_id_str = parts[1]
     status = parts[2]
     
     if interaction_type not in ["attendance", "poll_answer"]:
         return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
-    
-    event_id_str = parts[1]
-    status = parts[2] # "ok", "ng", "pending"
     
     # Get Discord User ID
     discord_user_id = None
@@ -199,8 +200,35 @@ async def handle_attendance_interaction(user, event_id: UUID, status: str, db: A
 
 async def handle_poll_interaction(user, candidate_id: UUID, status: str, db: AsyncSession):
     """Handle schedule poll button clicks."""
-    from src.db.models import SchedulePollAnswer
+    from src.db.models import SchedulePollAnswer, SchedulePollCandidate, ProjectMember, SchedulePoll
+    from sqlalchemy.orm import selectinload
     
+    # 候補から日程調整とプロジェクトIDを取得
+    stmt = select(SchedulePollCandidate).where(SchedulePollCandidate.id == candidate_id).options(
+        selectinload(SchedulePollCandidate.poll)
+    )
+    res = await db.execute(stmt)
+    candidate = res.scalar_one_or_none()
+    
+    if not candidate:
+        return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
+        
+    # プロジェクトメンバーかチェック
+    member_stmt = select(ProjectMember).where(
+        ProjectMember.project_id == candidate.poll.project_id,
+        ProjectMember.user_id == user.id
+    )
+    member_res = await db.execute(member_stmt)
+    if not member_res.scalar_one_or_none():
+        return {
+            "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
+            "data": {
+                "content": "⚠️ あなたはこのプロジェクトのメンバーではないため、回答できません。",
+                "flags": 64 # Ephemeral
+            }
+        }
+    
+    # 回答を登録/更新
     stmt = select(SchedulePollAnswer).where(
         SchedulePollAnswer.candidate_id == candidate_id,
         SchedulePollAnswer.user_id == user.id
