@@ -1,6 +1,7 @@
 """Discord Interactions API endpoints."""
 
 from typing import Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from nacl.signing import VerifyKey
