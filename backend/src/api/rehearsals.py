@@ -806,7 +806,7 @@ async def update_rehearsal(
             # デフォルト配役の取得 (Missing characters only)
             unique_characters = {}
             for line in scene.lines:
-                if line.character_id not in unique_characters:
+                if line.character_id and line.character and line.character_id not in unique_characters:
                     unique_characters[line.character_id] = line.character
             
             for char_id, char in unique_characters.items():

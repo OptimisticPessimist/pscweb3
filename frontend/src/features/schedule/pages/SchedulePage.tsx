@@ -54,6 +54,10 @@ export const SchedulePage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
         },
+        onError: (error: Error) => {
+            console.error("Failed to create schedule:", error);
+            alert("スケジュールの作成に失敗しました。サーバーが動作しているか確認してください。(" + error.message + ")");
+        }
     });
 
     const events = [
