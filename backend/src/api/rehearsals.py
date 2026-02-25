@@ -840,9 +840,6 @@ async def update_rehearsal(
         for p in rehearsal.participants:
             if p.user and p.user.discord_id:
                 mention_ids.add(p.user.discord_id)
-        for c in casts_response_list:
-            #キャストはリレーションが取れてない場合があるので casts_response_list も使う
-            pass
         
         # rehearsal.casts に明示的キャストがある場合のメンション
         for rc in rehearsal.casts:
