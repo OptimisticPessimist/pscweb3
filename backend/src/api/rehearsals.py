@@ -642,8 +642,10 @@ async def add_rehearsal(
 async def update_rehearsal(
     rehearsal_id: UUID,
     rehearsal_data: RehearsalUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ) -> RehearsalResponse:
     """稽古を更新.
 
@@ -823,6 +825,39 @@ async def update_rehearsal(
                             user_name=cast_user_name,
                             display_name=display_name_map.get(casting.user_id)
                         ))
+
+    # Discord通知
+    project = await db.get(TheaterProject, schedule.project_id)
+    if project and project.discord_webhook_url:
+        rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
+        date_str = f"<t:{rehearsal_ts}:f>" # User local time
+        content = f"📝 **稽古スケジュールが更新されました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+        if scene_heading:
+            content += f"\nシーン: {scene_heading}"
+
+        # メンションの追加
+        mention_ids = set()
+        for p in rehearsal.participants:
+            if p.user and p.user.discord_id:
+                mention_ids.add(p.user.discord_id)
+        for c in casts_response_list:
+            #キャストはリレーションが取れてない場合があるので casts_response_list も使う
+            pass
+        
+        # rehearsal.casts に明示的キャストがある場合のメンション
+        for rc in rehearsal.casts:
+            if rc.user and rc.user.discord_id:
+                mention_ids.add(rc.user.discord_id)
+
+        if mention_ids:
+            mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
+            content += f"\n\n{mentions}"
+
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=content,
+            webhook_url=project.discord_webhook_url,
+        )
 
     return RehearsalResponse(
         id=rehearsal.id,

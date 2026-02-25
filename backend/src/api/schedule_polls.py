@@ -1,7 +1,7 @@
 """日程調整APIエンドポイント."""
 
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,8 @@ from src.dependencies.auth import get_current_user_dep
 from src.db.models import User, TheaterProject, ProjectMember, SchedulePoll, SchedulePollCandidate, Rehearsal, RehearsalScene, RehearsalSchedule, RehearsalCast, RehearsalParticipant, CharacterCasting
 from src.schemas.schedule_poll import SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, SchedulePollFinalize
 from src.services.schedule_poll_service import get_schedule_poll_service
-from src.services.discord import get_discord_service
+from src.services.discord import get_discord_service, DiscordService
+from datetime import timezone, timedelta
 
 router = APIRouter()
 
@@ -113,8 +114,10 @@ async def finalize_poll(
     project_id: UUID,
     poll_id: UUID,
     payload: SchedulePollFinalize,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
+    discord_service: DiscordService = Depends(get_discord_service),
 ):
     """日程調整結果を元に稽古予定を作成."""
     # 権限チェック
@@ -167,4 +170,18 @@ async def finalize_poll(
     #TODO: キャスト・参加者の自動登録ロジック (既存のadd_rehearsalを参考にするのが良いが、一旦シンプルに)
     
     await db.commit()
+
+    # Discord通知
+    project = await db.get(TheaterProject, project_id)
+    if project and project.discord_webhook_url:
+        rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
+        date_str = f"<t:{rehearsal_ts}:f>" # User local time
+        content = f"📅 **日程調整の結果、稽古が確定しました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+        
+        background_tasks.add_task(
+            discord_service.send_notification,
+            content=content,
+            webhook_url=project.discord_webhook_url,
+        )
+
     return {"status": "ok", "rehearsal_id": rehearsal.id}
