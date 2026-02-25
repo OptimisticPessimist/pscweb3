@@ -850,10 +850,39 @@ async def update_rehearsal(
             mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
             content += f"\n\n{mentions}"
 
+        import uuid
+        now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        start_dt = rehearsal.date.astimezone(timezone.utc)
+        start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
+        end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
+        end_str = end_dt.strftime("%Y%m%dT%H%M%SZ")
+        
+        ics_content = (
+            "BEGIN:VCALENDAR\r\n"
+            "VERSION:2.0\r\n"
+            "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
+            "CALSCALE:GREGORIAN\r\n"
+            "BEGIN:VEVENT\r\n"
+            f"UID:{uuid.uuid4()}@pscweb3.local\r\n"
+            f"DTSTAMP:{now_str}\r\n"
+            f"DTSTART:{start_str}\r\n"
+            f"DTEND:{end_str}\r\n"
+            f"SUMMARY:📌 稽古更新 - {project.name}\r\n"
+            f"DESCRIPTION:{'シーン: ' + scene_heading if scene_heading else '稽古'}\\n場所: {rehearsal.location or '未定'}\r\n"
+            f"LOCATION:{rehearsal.location or '未定'}\r\n"
+            "END:VEVENT\r\n"
+            "END:VCALENDAR\r\n"
+        )
+        ics_file = {
+            "filename": "rehearsal.ics",
+            "content": ics_content.encode("utf-8")
+        }
+
         background_tasks.add_task(
             discord_service.send_notification,
             content=content,
             webhook_url=project.discord_webhook_url,
+            file=ics_file,
         )
 
     return RehearsalResponse(
