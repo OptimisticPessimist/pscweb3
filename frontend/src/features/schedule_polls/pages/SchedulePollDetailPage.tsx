@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -15,7 +15,11 @@ import {
     Trash2,
     Calendar,
     LayoutGrid,
-    Shield
+    Shield,
+    Bell,
+    UserCheck,
+    UserMinus,
+    RefreshCw
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
@@ -77,6 +81,30 @@ export const SchedulePollDetailPage: React.FC = () => {
         },
         onError: () => {
             toast.error(t('schedulePoll.deleteFailed') || '削除に失敗しました（権限が不足している可能性があります）');
+        }
+    });
+
+    const [targetUserIds, setTargetUserIds] = useState<string[]>([]);
+
+    const { data: unansweredMembers, refetch: refetchUnanswered } = useQuery({
+        queryKey: ['schedulePollUnanswered', projectId, pollId],
+        queryFn: () => schedulePollApi.getUnansweredMembers(projectId!, pollId!),
+        enabled: !!projectId && !!pollId,
+    });
+
+    useEffect(() => {
+        if (unansweredMembers) {
+            setTargetUserIds(unansweredMembers.map(m => m.user_id));
+        }
+    }, [unansweredMembers]);
+
+    const remindMutation = useMutation({
+        mutationFn: () => schedulePollApi.remindUnansweredMembers(projectId!, pollId!, targetUserIds),
+        onSuccess: () => {
+            toast.success('リマインドを送信しました');
+        },
+        onError: () => {
+            toast.error('リマインドの送信に失敗しました');
         }
     });
 
@@ -336,6 +364,67 @@ export const SchedulePollDetailPage: React.FC = () => {
                             </table>
                         </div>
                     </div>
+
+                    {/* 未回答メンバーセクション */}
+                    {unansweredMembers && unansweredMembers.length > 0 && (
+                        <section className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center space-x-2">
+                                    <Bell className="h-5 w-5 text-amber-500" />
+                                    <h2 className="text-lg font-bold text-gray-900">{t('schedulePoll.unansweredReminder') || '未回答メンバーのリマインド'}</h2>
+                                </div>
+                                <button
+                                    onClick={() => refetchUnanswered()}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 group"
+                                    title={t('common.refresh') || '更新'}
+                                >
+                                    <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
+                                </button>
+                            </div>
+
+                            <p className="text-sm text-gray-500 mb-4">
+                                {t('schedulePoll.reminderDescription') || 'まだ日程調整に回答していないメンバーです。チェックを入れたメンバーにDiscordでメンションを飛ばして通知します。'}
+                            </p>
+
+                            <div className="flex flex-wrap gap-3 mb-8">
+                                {unansweredMembers.map(member => (
+                                    <button
+                                        key={member.user_id}
+                                        onClick={() => {
+                                            setTargetUserIds(prev =>
+                                                prev.includes(member.user_id)
+                                                    ? prev.filter(id => id !== member.user_id)
+                                                    : [...prev, member.user_id]
+                                            );
+                                        }}
+                                        className={`flex items-center space-x-3 px-4 py-2.5 rounded-2xl border transition-all duration-300 ${targetUserIds.includes(member.user_id)
+                                            ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-sm ring-2 ring-amber-500/10'
+                                            : 'bg-gray-50 border-gray-100 text-gray-400 grayscale'
+                                            }`}
+                                    >
+                                        <div className={`p-1.5 rounded-lg ${targetUserIds.includes(member.user_id) ? 'bg-amber-200 text-amber-700' : 'bg-gray-200 text-gray-400'}`}>
+                                            {targetUserIds.includes(member.user_id) ? <UserCheck className="h-4 w-4" /> : <UserMinus className="h-4 w-4" />}
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="text-sm font-bold leading-tight">{member.name}</div>
+                                            {member.role && <div className="text-[10px] uppercase font-bold tracking-wider opacity-60 leading-tight mt-0.5">{member.role}</div>}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => remindMutation.mutate()}
+                                    disabled={remindMutation.isPending || targetUserIds.length === 0}
+                                    className="flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-amber-200 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
+                                >
+                                    <Bell className="h-5 w-5" />
+                                    <span>{t('schedulePoll.sendReminderCount', { count: targetUserIds.length }) || `${targetUserIds.length}名にリマインドを送信`}</span>
+                                </button>
+                            </div>
+                        </section>
+                    )}
 
                     {/* 確定用モーダル（簡易版） */}
                     {selectedCandidateForFinalize && (

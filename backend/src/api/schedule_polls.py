@@ -8,7 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db import get_db
 from src.dependencies.auth import get_current_user_dep
 from src.db.models import User, TheaterProject, ProjectMember, SchedulePoll, SchedulePollCandidate, Rehearsal, RehearsalScene, RehearsalSchedule, RehearsalCast, RehearsalParticipant, CharacterCasting
-from src.schemas.schedule_poll import SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, SchedulePollFinalize, SchedulePollCalendarAnalysis
+from src.schemas.schedule_poll import (
+    SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, 
+    SchedulePollFinalize, SchedulePollCalendarAnalysis,
+    UnansweredMemberResponse, RemindUnansweredRequest
+)
 from src.services.schedule_poll_service import get_schedule_poll_service
 from src.services.discord import get_discord_service, DiscordService
 from datetime import datetime, timezone, timedelta
@@ -237,6 +241,47 @@ async def finalize_poll(
         )
 
     return {"status": "ok", "rehearsal_id": rehearsal.id}
+
+@router.get("/projects/{project_id}/polls/{poll_id}/unanswered", response_model=list[UnansweredMemberResponse])
+async def get_unanswered_members(
+    project_id: UUID,
+    poll_id: UUID,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """未回答メンバー一覧を取得."""
+    # 権限チェック
+    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    if not res.scalar_one_or_none():
+         raise HTTPException(status_code=403, detail="アクセス権限がありません")
+
+    poll_service = get_schedule_poll_service(db, None)
+    return await poll_service.get_unanswered_members(poll_id)
+
+@router.post("/projects/{project_id}/polls/{poll_id}/remind")
+async def remind_unanswered_members(
+    project_id: UUID,
+    poll_id: UUID,
+    payload: RemindUnansweredRequest,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+    discord_service = Depends(get_discord_service),
+):
+    """未回答メンバーにリマインドを送信."""
+    # 権限チェック
+    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    member = res.scalar_one_or_none()
+    if not member or member.role == "viewer":
+        raise HTTPException(status_code=403, detail="操作権限がありません")
+
+    from src.config import settings
+    base_url = settings.frontend_url or "https://pscweb3.azurewebsites.net"
+
+    poll_service = get_schedule_poll_service(db, discord_service)
+    await poll_service.send_reminder(poll_id, payload.target_user_ids, base_url)
+    return {"status": "ok"}
 
 @router.delete("/projects/{project_id}/polls/{poll_id}")
 async def delete_poll(

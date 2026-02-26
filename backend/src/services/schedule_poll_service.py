@@ -577,6 +577,89 @@ class SchedulePollService:
 
         return {"poll_id": poll_id, "all_scenes": all_scenes_info, "analyses": analyses}
 
+    async def get_unanswered_members(self, poll_id: uuid.UUID) -> list[dict]:
+        """未回答メンバーのリストを取得."""
+        stmt = (
+            select(SchedulePoll)
+            .where(SchedulePoll.id == poll_id)
+            .options(
+                selectinload(SchedulePoll.candidates)
+                .selectinload(SchedulePollCandidate.answers)
+            )
+        )
+        result = await self.db.execute(stmt)
+        poll = result.scalar_one_or_none()
+        if not poll:
+            return []
+
+        # 回答済みのユーザーIDを収集
+        answered_user_ids = set()
+        for candidate in poll.candidates:
+            for answer in candidate.answers:
+                answered_user_ids.add(answer.user_id)
+
+        # プロジェクトメンバー全員を取得
+        member_stmt = (
+            select(ProjectMember)
+            .where(ProjectMember.project_id == poll.project_id)
+            .options(selectinload(ProjectMember.user))
+        )
+        member_result = await self.db.execute(member_stmt)
+        members = member_result.scalars().all()
+
+        unanswered = []
+        for m in members:
+            if m.user_id not in answered_user_ids:
+                unanswered.append({
+                    "user_id": m.user_id,
+                    "name": m.display_name or (m.user.discord_username if m.user else "Unknown"),
+                    "role": m.default_staff_role,
+                    "discord_id": m.user.discord_id if m.user else None
+                })
+        
+        return unanswered
+
+    async def send_reminder(self, poll_id: uuid.UUID, target_user_ids: list[uuid.UUID], base_url: str):
+        """未回答メンバーにDiscordリマインドを送信."""
+        stmt = select(SchedulePoll).where(SchedulePoll.id == poll_id)
+        result = await self.db.execute(stmt)
+        poll = result.scalar_one_or_none()
+        if not poll:
+            return
+
+        project = await self.db.get(TheaterProject, poll.project_id)
+        if not project:
+            return
+
+        # ターゲットユーザーのDiscord IDを取得
+        user_stmt = select(User).where(User.id.in_(target_user_ids))
+        user_result = await self.db.execute(user_stmt)
+        users = user_result.scalars().all()
+        
+        mentions = [f"<@{u.discord_id}>" for u in users if u.discord_id]
+        if not mentions:
+            return
+
+        web_url = f"{base_url}/projects/{project.id}/polls/{poll_id}"
+        
+        content = (
+            f"🔔 **【日程調整リマインド】**\n"
+            f"「**{poll.title}**」の回答がまだの方がいらっしゃいます。お手数ですが回答をお願いします！\n\n"
+            f"{' '.join(mentions)}\n\n"
+            f"🌐 {web_url}"
+        )
+
+        if project.discord_webhook_url:
+            await self.discord_service.send_notification(
+                content=content,
+                webhook_url=project.discord_webhook_url
+            )
+        elif project.discord_channel_id:
+            await self.discord_service.send_channel_message(
+                channel_id=project.discord_channel_id,
+                content=content
+            )
+
 
 def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:
     return SchedulePollService(db, discord_service)

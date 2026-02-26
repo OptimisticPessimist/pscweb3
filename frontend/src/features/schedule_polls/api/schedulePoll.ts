@@ -86,6 +86,13 @@ export interface SchedulePollCalendarAnalysis {
     analyses: PollCandidateAnalysis[];
 }
 
+export interface UnansweredMember {
+    user_id: string;
+    name: string | null;
+    role: string | null;
+    discord_id: string | null;
+}
+
 export const schedulePollApi = {
     // 日程調整一覧を取得
     getPolls: async (projectId: string): Promise<SchedulePollResponse[]> => {
@@ -135,5 +142,16 @@ export const schedulePollApi = {
     // 日程調整を削除
     deletePoll: async (projectId: string, pollId: string): Promise<void> => {
         await apiClient.delete(`/projects/${projectId}/polls/${pollId}`);
+    },
+
+    // 未回答メンバーをを取得
+    getUnansweredMembers: async (projectId: string, pollId: string): Promise<UnansweredMember[]> => {
+        const response = await apiClient.get<UnansweredMember[]>(`/projects/${projectId}/polls/${pollId}/unanswered`);
+        return response.data;
+    },
+
+    // リマインドを送信
+    remindUnansweredMembers: async (projectId: string, pollId: string, targetUserIds: string[]): Promise<void> => {
+        await apiClient.post(`/projects/${projectId}/polls/${pollId}/remind`, { target_user_ids: targetUserIds });
     }
 };

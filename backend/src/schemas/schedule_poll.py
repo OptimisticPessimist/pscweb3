@@ -122,3 +122,16 @@ class SchedulePollCalendarAnalysis(BaseModel):
     poll_id: UUID
     all_scenes: list[PollSceneInfo] = []
     analyses: list[PollCandidateAnalysis]
+
+
+class UnansweredMemberResponse(BaseModel):
+    """未回答メンバーレスポンス."""
+    user_id: UUID
+    name: str | None = None
+    role: str | None = None
+    discord_id: str | None = None
+
+
+class RemindUnansweredRequest(BaseModel):
+    """未回答メンバーへのリマインドリクエスト."""
+    target_user_ids: list[UUID]
