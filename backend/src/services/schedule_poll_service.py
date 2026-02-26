@@ -566,8 +566,16 @@ class SchedulePollService:
                 "available_members": available_members,
                 "maybe_members": maybe_members,
             })
-            
-        return {"poll_id": poll_id, "analyses": analyses}
+        all_scenes_info = [
+            {
+                "scene_id": s.id,
+                "scene_number": s.scene_number,
+                "heading": s.heading
+            }
+            for s in scenes
+        ]
+
+        return {"poll_id": poll_id, "all_scenes": all_scenes_info, "analyses": analyses}
 
 
 def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:

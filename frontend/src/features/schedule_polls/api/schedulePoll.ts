@@ -74,8 +74,15 @@ export interface PollCandidateAnalysis {
     maybe_members: CalendarMemberInfo[];
 }
 
+export interface PollSceneInfo {
+    scene_id: string;
+    scene_number: number;
+    heading: string;
+}
+
 export interface SchedulePollCalendarAnalysis {
     poll_id: string;
+    all_scenes: PollSceneInfo[];
     analyses: PollCandidateAnalysis[];
 }
 

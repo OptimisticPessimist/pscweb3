@@ -108,7 +108,17 @@ class PollCandidateAnalysis(BaseModel):
     maybe_members: list[CalendarMemberInfo] = []
 
 
+class PollSceneInfo(BaseModel):
+    """シーンの基本情報."""
+    scene_id: UUID
+    scene_number: int
+    heading: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SchedulePollCalendarAnalysis(BaseModel):
     """日程調整全体のカレンダー用分析結果."""
     poll_id: UUID
+    all_scenes: list[PollSceneInfo] = []
     analyses: list[PollCandidateAnalysis]

@@ -1,28 +1,32 @@
-# 日程調整カレンダー シーン絞り込み機能 バグの修正
+# 日程調整カレンダー シーン絞り込み機能 バグ修正（選択肢が出ない問題の再修正）
 
 ## 課題
-- シーン絞り込みのドロップダウンリストに `schedulePoll.allScenes` しか出ない（選択肢が表示されない）。
-- ドロップダウンの右側の矢印（v）が二重に表示されている。
+- シーン絞り込みのドロップダウンリストに `schedulePoll.allScenes` しか出ない（シーンが一つも表示されない）。
 
 ## 原因分析
-- **選択肢が表示されない問題**: ドロップダウン（`<select>`）の見た目かイベントがCSSクラス（特に追加した `relative z-10`, `appearance-none`、あるいはTailwind formsプラグインの干渉）によって正しく動作していない、もしくは背面のレイヤーに隠れてしまっている可能性があります。また、`min-w-[240px]` や親の `overflow` の設定も影響している可能性があります。
-- **矢印が二重になる問題**: `<select>` 要素のデフォルトの矢印スタイルを消すために `appearance-none` を指定していますが、`@tailwindcss/forms` プラグインを使用している場合、`appearance-none` よりも forms プラグインのベーススタイル（独自の矢印SVGの背景画像設定など）が勝ってしまっているか、競合している可能性があります。`bg-none` などの追加指定が必要です。
+- 現在のフロントエンドでの「シーン一覧」の生成ロジックは、APIレスポンスの `analyses`（各候補日程の分析結果）内にある `possible_scenes` と `reach_scenes` をマージして一意のシーンリストを作成しています。
+- つまり、**どの候補日程においても「稽古可能」または「リーチ状態」にならないシーン（例えば役者が全く足りない等の理由で完全に不可能なシーン）は、プルダウンの選択肢に登場しません。**
+- すべての候補日で全くシーンが成立しない場合、選択肢は空になってしまいます。ユーザーは、すべてのシーンからフィルタリングして「どの候補日ならこのシーンが可能か」を確認したいはずなので、この挙動は不適切です。
 
 ## Proposed Changes
 
-### `frontend/src/features/schedule_polls/components/SchedulePollCalendar.tsx`
-カレンダーコンポーネントの該当箇所のCSSクラスおよび構成を以下のように修正します。
+### Backend
+1. **[MODIFY] `backend/src/schemas/schedule_poll.py`**(file:///f:/src/PythonProject/pscweb3-1/backend/src/schemas/schedule_poll.py)
+   - `SchedulePollCalendarAnalysis` スキーマに `all_scenes: list[PollSceneInfo] = []` を追加。
+   - 新規に `PollSceneInfo` スキーマを定義。
 
-#### [MODIFY] `SchedulePollCalendar.tsx`(file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/schedule_polls/components/SchedulePollCalendar.tsx)
-- `select` 要素からTailwind formsプラグインのデフォルト背景画像（矢印）を消去するため、`bg-none` などのユーティリティを追加。
-- ドロップダウンの選択肢がクリップされないように親要素の `z-index` 周囲のスタイルを見直し、必要以上に複雑な重なり順を避ける（`z-10` や `min-w-[240px]` など、前回追加したクラスが悪さをしている可能性が高いため、これらを整理する）。
-- `pointer-events-none` などの指定が誤って `select` 自身のクリックを阻害していないか（特に Safari などの Webkit での挙動）確認し、修正する。
-- 矢印が二重になるのを防ぐため、明示的に `bg-none` または `!appearance-none bg-transparent` のようにしてデフォルトの背景を取り除く。
+2. **[MODIFY] `backend/src/services/schedule_poll_service.py`**(file:///f:/src/PythonProject/pscweb3-1/backend/src/services/schedule_poll_service.py)
+   - `get_calendar_analysis` メソッドで、スクリプトに紐づくすべてのシーン情報（`id`, `scene_number`, `heading`）を `all_scenes` としてレスポンスに含めるように修正。
+
+### Frontend
+3. **[MODIFY] `frontend/src/features/schedule_polls/api/schedulePoll.ts`**(file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/schedule_polls/api/schedulePoll.ts)
+   - `SchedulePollCalendarAnalysis` インターフェースに `all_scenes: PollSceneInfo[]` を追加。
+   - `PollSceneInfo` インターフェースを追加。
+
+4. **[MODIFY] `frontend/src/features/schedule_polls/components/SchedulePollCalendar.tsx`**(file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/schedule_polls/components/SchedulePollCalendar.tsx)
+   - `useMemo` で作成している `scenes` 変数を、`analysis.all_scenes` があればそれを最優先で利用するように修正。
 
 ## Verification Plan
-
-### Manual Verification
-1. フロントエンドをローカルで立ち上げ、日程調整カレンダー画面を開く。
-2. シーン絞り込みのプルダウンをクリックし、すべてのシーンリストが表示されるか確認する。
-3. プルダウンの右側の矢印が1つだけ（独自に配置した `ChevronLeft` のみ）になっているか確認する。
-4. シーンを選択した際に、正しくフィルタリングが機能するか（前回の動作が維持されているか）確認する。
+1. バックエンドの `SchedulePollCalendarAnalysis` のスキーマ更新とサービスの実装を修正後、ローカルでフロントエンドを立ち上げる。
+2. どの候補日にも「可能」「リーチ」判定が出ていないシーンであっても、プルダウンリストに正しく表示されることを確認する。
+3. プルダウンのすべてのシーン名が正しく並んでいることを確認する。

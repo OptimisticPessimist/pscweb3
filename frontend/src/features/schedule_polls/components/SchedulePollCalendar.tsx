@@ -23,6 +23,16 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
 
     // Get unique scenes from analysis for filtering
     const scenes = useMemo(() => {
+        if (analysis.all_scenes && analysis.all_scenes.length > 0) {
+            // Use the comprehensive scene list provided by the backend (includes impossible scenes)
+            return [...analysis.all_scenes].sort((a, b) => a.scene_number - b.scene_number).map(s => ({
+                id: s.scene_id,
+                number: s.scene_number,
+                heading: s.heading
+            }));
+        }
+
+        // Fallback for older API responses
         const sceneMap = new Map<string, { id: string, number: number, heading: string }>();
         analysis.analyses.forEach(a => {
             [...a.possible_scenes, ...a.reach_scenes].forEach(s => {
