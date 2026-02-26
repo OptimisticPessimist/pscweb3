@@ -587,7 +587,6 @@ async def add_rehearsal(
         content += f"\n\n{mentions}"
 
     if project.discord_webhook_url:
-        import uuid
         now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(timezone.utc)
         start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
@@ -600,7 +599,7 @@ async def add_rehearsal(
             "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
             "CALSCALE:GREGORIAN\r\n"
             "BEGIN:VEVENT\r\n"
-            f"UID:{uuid.uuid4()}@pscweb3.local\r\n"
+            f"UID:{rehearsal.id}@pscweb3.local\r\n"
             f"DTSTAMP:{now_str}\r\n"
             f"DTSTART:{start_str}\r\n"
             f"DTEND:{end_str}\r\n"
@@ -850,7 +849,6 @@ async def update_rehearsal(
             mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
             content += f"\n\n{mentions}"
 
-        import uuid
         now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(timezone.utc)
         start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
@@ -863,7 +861,7 @@ async def update_rehearsal(
             "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
             "CALSCALE:GREGORIAN\r\n"
             "BEGIN:VEVENT\r\n"
-            f"UID:{uuid.uuid4()}@pscweb3.local\r\n"
+            f"UID:{rehearsal.id}@pscweb3.local\r\n"
             f"DTSTAMP:{now_str}\r\n"
             f"DTSTART:{start_str}\r\n"
             f"DTEND:{end_str}\r\n"
