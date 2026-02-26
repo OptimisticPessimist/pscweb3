@@ -24,6 +24,7 @@ export interface SchedulePollResponse {
     is_closed: boolean;
     created_at: string;
     creator_id: string;
+    required_roles: string | null;
     candidates: SchedulePollCandidateResponse[];
 }
 
@@ -43,6 +44,31 @@ export interface ScheduleRecommendation {
     reason: string;
 }
 
+export interface SceneAvailability {
+    scene_id: string;
+    scene_number: number;
+    heading: string;
+    is_possible: boolean;
+    is_reach: boolean;
+    missing_user_names: string[];
+    reason: string | null;
+}
+
+export interface PollCandidateAnalysis {
+    candidate_id: string;
+    start_datetime: string;
+    end_datetime: string;
+    possible_scenes: SceneAvailability[];
+    reach_scenes: SceneAvailability[];
+    available_users: string[];
+    maybe_users: string[];
+}
+
+export interface SchedulePollCalendarAnalysis {
+    poll_id: string;
+    analyses: PollCandidateAnalysis[];
+}
+
 export const schedulePollApi = {
     // 日程調整一覧を取得
     getPolls: async (projectId: string): Promise<SchedulePollResponse[]> => {
@@ -53,6 +79,12 @@ export const schedulePollApi = {
     // 日程調整詳細を取得
     getPoll: async (projectId: string, poll_id: string): Promise<SchedulePollResponse> => {
         const response = await apiClient.get<SchedulePollResponse>(`/projects/${projectId}/polls/${poll_id}`);
+        return response.data;
+    },
+
+    // カレンダー分析を取得
+    getCalendarAnalysis: async (projectId: string, poll_id: string): Promise<SchedulePollCalendarAnalysis> => {
+        const response = await apiClient.get<SchedulePollCalendarAnalysis>(`/projects/${projectId}/polls/${poll_id}/calendar-analysis`);
         return response.data;
     },
 
@@ -73,7 +105,12 @@ export const schedulePollApi = {
     },
 
     // 日程調整を作成
-    createPoll: async (projectId: string, data: { title: string, description?: string, candidates: { start_datetime: string, end_datetime: string }[] }): Promise<SchedulePollResponse> => {
+    createPoll: async (projectId: string, data: {
+        title: string,
+        description?: string,
+        required_roles?: string[],
+        candidates: { start_datetime: string, end_datetime: string }[]
+    }): Promise<SchedulePollResponse> => {
         const response = await apiClient.post<SchedulePollResponse>(`/projects/${projectId}/polls`, data);
         return response.data;
     },

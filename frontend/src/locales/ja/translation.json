@@ -425,6 +425,19 @@
         "submitCreate": "日程調整を作成・Discord送信",
         "created": "日程調整を作成しました",
         "recommendationReason": "おすすめ理由",
-        "possibleScenes": "稽古可能なシーン"
+        "possibleScenes": "稽古可能なシーン",
+        "gridView": "表形式",
+        "calendarView": "カレンダー形式",
+        "calendarHint": "候補日程をクリックして詳細と稽古可能シーンを確認できます",
+        "statusPossible": "稽古可能",
+        "statusReach": "あと1人で可能",
+        "statusNone": "予定なし",
+        "candidateDetails": "候補日程の詳細",
+        "availableMembers": "参加可能メンバー",
+        "noPossibleScenes": "稽古可能なシーンはありません",
+        "reachScenes": "あと1人で可能なシーン",
+        "noReachScenes": "リーチ状態のシーンはありません",
+        "requiredRolesLabel": "出席必須の役職（任意）",
+        "requiredRolesHint": "選択した役職のメンバーが全員 NG の日程は「稽古不可」として判定されます。"
     }
 }

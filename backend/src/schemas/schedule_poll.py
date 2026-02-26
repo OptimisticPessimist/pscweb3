@@ -44,6 +44,7 @@ class SchedulePollCreate(BaseModel):
     """日程調整作成."""
     title: str
     description: str | None = None
+    required_roles: list[str] | None = None
     candidates: list[SchedulePollCandidateCreate]
 
 
@@ -56,6 +57,7 @@ class SchedulePollResponse(BaseModel):
     is_closed: bool
     created_at: datetime
     creator_id: UUID
+    required_roles: str | None = None  # モデルではText(str)なので
     candidates: list[SchedulePollCandidateResponse]
 
     model_config = ConfigDict(from_attributes=True)

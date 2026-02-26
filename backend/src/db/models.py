@@ -541,6 +541,7 @@ class SchedulePoll(Base):
     channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
     creator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
+    required_roles: Mapped[str | None] = mapped_column(Text, nullable=True)  # "演出,制作"のようにカンマ区切りで保存
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション

@@ -43,7 +43,8 @@ async def create_poll(
         title=payload.title,
         description=payload.description,
         candidates_data=candidates_data,
-        creator_id=current_user.id
+        creator_id=current_user.id,
+        required_roles=payload.required_roles
     )
     return poll
 

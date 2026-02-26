@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
+import { projectsApi } from '@/features/projects/api/projects';
 import {
     Calendar,
     Clock,
     Plus,
     Trash2,
     ChevronLeft,
-    Send
+    Send,
+    Shield,
+    Users
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
@@ -28,12 +31,28 @@ export const SchedulePollCreatePage: React.FC = () => {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [requiredRoles, setRequiredRoles] = useState<string[]>([]);
     const [candidates, setCandidates] = useState<DateCandidate[]>([
         { start_date: '', start_time: '18:00', end_time: '21:00' }
     ]);
 
+    const { data: members } = useQuery({
+        queryKey: ['projectMembers', projectId],
+        queryFn: () => projectsApi.getProjectMembers(projectId!),
+        enabled: !!projectId
+    });
+
+    const roles = React.useMemo(() => {
+        if (!members) return [];
+        const uniqueRoles = new Set<string>();
+        members.forEach(m => {
+            if (m.default_staff_role) uniqueRoles.add(m.default_staff_role);
+        });
+        return Array.from(uniqueRoles).sort();
+    }, [members]);
+
     const createMutation = useMutation({
-        mutationFn: (data: { title: string, description?: string, candidates: { start_datetime: string, end_datetime: string }[] }) =>
+        mutationFn: (data: { title: string, description?: string, required_roles?: string[], candidates: { start_datetime: string, end_datetime: string }[] }) =>
             schedulePollApi.createPoll(projectId!, data),
         onSuccess: (newPoll) => {
             queryClient.invalidateQueries({ queryKey: ['schedulePolls', projectId] });
@@ -91,8 +110,17 @@ export const SchedulePollCreatePage: React.FC = () => {
         createMutation.mutate({
             title,
             description,
+            required_roles: requiredRoles,
             candidates: formattedCandidates
         });
+    };
+
+    const toggleRole = (role: string) => {
+        if (requiredRoles.includes(role)) {
+            setRequiredRoles(requiredRoles.filter(r => r !== role));
+        } else {
+            setRequiredRoles([...requiredRoles, role]);
+        }
     };
 
     return (
@@ -141,6 +169,34 @@ export const SchedulePollCreatePage: React.FC = () => {
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                         />
                     </div>
+
+                    {roles.length > 0 && (
+                        <div>
+                            <label className="flex items-center text-sm font-bold text-gray-700 mb-3">
+                                <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                                {t('schedulePoll.requiredRolesLabel') || '出席必須の役職（任意）'}
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {roles.map(role => (
+                                    <button
+                                        key={role}
+                                        type="button"
+                                        onClick={() => toggleRole(role)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${requiredRoles.includes(role)
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                            }`}
+                                    >
+                                        {role}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2 flex items-center">
+                                <Users className="h-3 w-3 mr-1" />
+                                {t('schedulePoll.requiredRolesHint') || '選択した役職のメンバーが全員 NG の日程は「稽古不可」として判定されます。'}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-8">

@@ -12,12 +12,16 @@ import {
     Check,
     ArrowRight,
     User,
-    Trash2
+    Trash2,
+    Calendar,
+    LayoutGrid,
+    Shield
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { SchedulePollCalendar } from '../components/SchedulePollCalendar';
 
 export const SchedulePollDetailPage: React.FC = () => {
     const { t } = useTranslation();
@@ -26,6 +30,7 @@ export const SchedulePollDetailPage: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [selectedCandidateForFinalize, setSelectedCandidateForFinalize] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
 
     const { data: poll, isLoading } = useQuery({
         queryKey: ['schedulePoll', projectId, pollId],
@@ -37,6 +42,12 @@ export const SchedulePollDetailPage: React.FC = () => {
         queryKey: ['schedulePollRecommendations', projectId, pollId],
         queryFn: () => schedulePollApi.getRecommendations(projectId!, pollId!),
         enabled: !!projectId && !!pollId,
+    });
+
+    const { data: analysis } = useQuery({
+        queryKey: ['schedulePollAnalysis', projectId, pollId],
+        queryFn: () => schedulePollApi.getCalendarAnalysis(projectId!, pollId!),
+        enabled: !!projectId && !!pollId && viewMode === 'calendar',
     });
 
     const answerMutation = useMutation({
@@ -125,6 +136,19 @@ export const SchedulePollDetailPage: React.FC = () => {
                     <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{poll.title}</h1>
                         <p className="text-gray-500 mt-1">{poll.description}</p>
+                        {poll.required_roles && (
+                            <div className="flex items-center space-x-2 mt-2">
+                                <Shield className="h-4 w-4 text-indigo-500" />
+                                <span className="text-xs font-bold text-gray-400">出席必須:</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {poll.required_roles.split(',').map(role => (
+                                        <span key={role} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold border border-indigo-100">
+                                            {role}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <button
@@ -137,200 +161,234 @@ export const SchedulePollDetailPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* おすすめ日程セクション */}
-            {recommendations && recommendations.length > 0 && (
-                <section className="bg-violet-50/50 border border-violet-100 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center space-x-2 mb-4">
-                        <Sparkles className="h-5 w-5 text-violet-600" />
-                        <h2 className="text-lg font-bold text-violet-900">{t('schedulePoll.recommendations') || 'システムによるおすすめ日程'}</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {recommendations.slice(0, 3).map((rec, idx) => (
-                            <div key={rec.candidate_id} className="bg-white border border-violet-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Sparkles className="h-12 w-12 text-violet-600" />
-                                </div>
-                                <div className="text-xs font-bold text-violet-600 mb-1 uppercase tracking-wider">Rank #{idx + 1}</div>
-                                <div className="text-sm font-bold text-gray-900 mb-1">
-                                    {new Date(rec.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
-                                </div>
-                                <div className="text-xs text-gray-500 mb-2 flex items-center">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    {new Date(rec.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                    {' - '}
-                                    {new Date(rec.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-
-                                {rec.reason && (
-                                    <div className="mb-3">
-                                        <div className="text-[10px] font-bold text-violet-500 uppercase tracking-tighter mb-0.5">{t('schedulePoll.recommendationReason') || 'おすすめ理由'}</div>
-                                        <div className="text-xs text-violet-900 bg-violet-50 px-2 py-1 rounded border border-violet-100 font-medium">
-                                            {rec.reason}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {rec.possible_scenes && rec.possible_scenes.length > 0 && (
-                                    <div className="mb-4">
-                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">{t('schedulePoll.possibleScenes') || '稽古可能なシーン'}</div>
-                                        <div className="space-y-1">
-                                            {rec.possible_scenes.map((ps: any) => (
-                                                <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
-                                                    <span className="font-bold mr-1">#{ps.scene_number}</span>
-                                                    <span className="truncate">{ps.scene_heading}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <button
-                                    onClick={() => setSelectedCandidateForFinalize(rec.candidate_id)}
-                                    className="w-full py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors flex items-center justify-center"
-                                >
-                                    {t('schedulePoll.finalizeThis') || 'この日で確定する'}
-                                    <ArrowRight className="h-3 w-3 ml-2" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* 回答グリッド */}
-            <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-6 py-5 text-sm font-bold text-gray-700 w-64 sticky left-0 bg-white z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
-                                    {t('schedulePoll.dateColumn') || '候補日時'}
-                                </th>
-                                {participants.map(p => (
-                                    <th key={p.id} className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[120px]">
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mb-1">
-                                                <User className="h-4 w-4 text-indigo-600" />
-                                            </div>
-                                            <span className="truncate max-w-[100px]">{p.name}</span>
-                                            {p.role && (
-                                                <span className="text-[10px] text-gray-400 mt-0.5 max-w-[100px] truncate block font-normal leading-tight">
-                                                    {p.role}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </th>
-                                ))}
-                                <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
-                                    {t('schedulePoll.myAnswer') || 'あなたの回答'}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {poll.candidates.map((candidate) => {
-                                const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
-                                return (
-                                    <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-5 sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
-                                            <div className="text-sm font-bold text-gray-900">
-                                                {new Date(candidate.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
-                                            </div>
-                                            <div className="text-xs text-gray-500 flex items-center mt-1">
-                                                <Clock className="h-3 w-3 mr-1" />
-                                                {new Date(candidate.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                                {' - '}
-                                                {new Date(candidate.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        </td>
-                                        {participants.map(p => {
-                                            const status = candidate.answers.find(a => a.user_id === p.id)?.status;
-                                            return (
-                                                <td key={p.id} className="px-6 py-5 text-center">
-                                                    <div className="flex justify-center">
-                                                        {getStatusIcon(status)}
-                                                    </div>
-                                                </td>
-                                            );
-                                        })}
-                                        <td className="px-6 py-5">
-                                            <div className="flex justify-center items-center space-x-2">
-                                                <button
-                                                    onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
-                                                    className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
-                                                >
-                                                    <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
-                                                </button>
-                                                <button
-                                                    onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
-                                                    className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
-                                                >
-                                                    <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
-                                                </button>
-                                                <button
-                                                    onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
-                                                    className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
-                                                >
-                                                    <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+            {/* 表示モード切替 */}
+            <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
+                <button
+                    onClick={() => setViewMode('grid')}
+                    className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <LayoutGrid className="h-4 w-4" />
+                    <span>{t('schedulePoll.gridView') || '表形式'}</span>
+                </button>
+                <button
+                    onClick={() => setViewMode('calendar')}
+                    className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Calendar className="h-4 w-4" />
+                    <span>{t('schedulePoll.calendarView') || 'カレンダー'}</span>
+                </button>
             </div>
 
-            {/* 確定用モーダル（簡易版） */}
-            {selectedCandidateForFinalize && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
-                    <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300">
-                        <div className="flex items-center space-x-3 mb-6">
-                            <div className="p-3 bg-violet-100 rounded-2xl">
-                                <Sparkles className="h-6 w-6 text-violet-600" />
+            {viewMode === 'calendar' ? (
+                !analysis ? (
+                    <div className="flex justify-center items-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mr-3"></div>
+                        <span className="text-gray-500 font-bold">分析データを読み込み中...</span>
+                    </div>
+                ) : (
+                    <SchedulePollCalendar
+                        analysis={analysis}
+                        onFinalize={(candidateId, sceneIds) => finalizeMutation.mutate({ candidateId, sceneIds })}
+                    />
+                )
+            ) : (
+                <>
+                    {/* おすすめ日程セクション */}
+                    {recommendations && recommendations.length > 0 && (
+                        <section className="bg-violet-50/50 border border-violet-100 rounded-2xl p-6 shadow-sm">
+                            <div className="flex items-center space-x-2 mb-4">
+                                <Sparkles className="h-5 w-5 text-violet-600" />
+                                <h2 className="text-lg font-bold text-violet-900">{t('schedulePoll.recommendations') || 'システムによるおすすめ日程'}</h2>
                             </div>
-                            <h2 className="text-xl font-bold text-gray-900">{t('schedulePoll.finalizeTitle') || '予定を確定する'}</h2>
-                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {recommendations.slice(0, 3).map((rec, idx) => (
+                                    <div key={rec.candidate_id} className="bg-white border border-violet-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <Sparkles className="h-12 w-12 text-violet-600" />
+                                        </div>
+                                        <div className="text-xs font-bold text-violet-600 mb-1 uppercase tracking-wider">Rank #{idx + 1}</div>
+                                        <div className="text-sm font-bold text-gray-900 mb-1">
+                                            {new Date(rec.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mb-2 flex items-center">
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            {new Date(rec.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                            {' - '}
+                                            {new Date(rec.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
 
-                        <div className="p-4 bg-gray-50 rounded-2xl mb-6">
-                            <div className="text-sm font-bold text-gray-900">
-                                {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleDateString(undefined, { month: 'long', day: 'numeric', weekday: 'long' })}
+                                        {rec.reason && (
+                                            <div className="mb-3">
+                                                <div className="text-[10px] font-bold text-violet-500 uppercase tracking-tighter mb-0.5">{t('schedulePoll.recommendationReason') || 'おすすめ理由'}</div>
+                                                <div className="text-xs text-violet-900 bg-violet-50 px-2 py-1 rounded border border-violet-100 font-medium">
+                                                    {rec.reason}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {rec.possible_scenes && rec.possible_scenes.length > 0 && (
+                                            <div className="mb-4">
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">{t('schedulePoll.possibleScenes') || '稽古可能なシーン'}</div>
+                                                <div className="space-y-1">
+                                                    {rec.possible_scenes.map((ps: any) => (
+                                                        <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
+                                                            <span className="font-bold mr-1">#{ps.scene_number}</span>
+                                                            <span className="truncate">{ps.scene_heading}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={() => setSelectedCandidateForFinalize(rec.candidate_id)}
+                                            className="w-full py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors flex items-center justify-center"
+                                        >
+                                            {t('schedulePoll.finalizeThis') || 'この日で確定する'}
+                                            <ArrowRight className="h-3 w-3 ml-2" />
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="text-sm text-gray-600 mt-1">
-                                {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                {' - '}
-                                {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.end_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
+                        </section>
+                    )}
 
-                        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                            {t('schedulePoll.finalizeConfirm') || 'この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。'}
-                        </p>
-
-                        <div className="flex space-x-3">
-                            <button
-                                onClick={() => setSelectedCandidateForFinalize(null)}
-                                className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
-                            >
-                                {t('common.cancel')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const rec = recommendations?.find(r => r.candidate_id === selectedCandidateForFinalize);
-                                    finalizeMutation.mutate({
-                                        candidateId: selectedCandidateForFinalize,
-                                        sceneIds: rec?.possible_scenes.map(s => s.scene_id) || []
-                                    });
-                                }}
-                                disabled={finalizeMutation.isPending}
-                                className="flex-1 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-200 flex items-center justify-center disabled:opacity-50"
-                            >
-                                {finalizeMutation.isPending ? '...' : (t('common.confirm') || '確定する')}
-                                <Check className="h-4 w-4 ml-2" />
-                            </button>
+                    {/* 回答グリッド */}
+                    <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50/50 border-b border-gray-100">
+                                        <th className="px-6 py-5 text-sm font-bold text-gray-700 w-64 sticky left-0 bg-white z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                                            {t('schedulePoll.dateColumn') || '候補日時'}
+                                        </th>
+                                        {participants.map(p => (
+                                            <th key={p.id} className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[120px]">
+                                                <div className="flex flex-col items-center">
+                                                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mb-1">
+                                                        <User className="h-4 w-4 text-indigo-600" />
+                                                    </div>
+                                                    <span className="truncate max-w-[100px]">{p.name}</span>
+                                                    {p.role && (
+                                                        <span className="text-[10px] text-gray-400 mt-0.5 max-w-[100px] truncate block font-normal leading-tight">
+                                                            {p.role}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </th>
+                                        ))}
+                                        <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
+                                            {t('schedulePoll.myAnswer') || 'あなたの回答'}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {poll.candidates.map((candidate) => {
+                                        const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
+                                        return (
+                                            <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors group">
+                                                <td className="px-6 py-5 sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                                                    <div className="text-sm font-bold text-gray-900">
+                                                        {new Date(candidate.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 flex items-center mt-1">
+                                                        <Clock className="h-3 w-3 mr-1" />
+                                                        {new Date(candidate.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                                        {' - '}
+                                                        {new Date(candidate.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </td>
+                                                {participants.map(p => {
+                                                    const status = candidate.answers.find(a => a.user_id === p.id)?.status;
+                                                    return (
+                                                        <td key={p.id} className="px-6 py-5 text-center">
+                                                            <div className="flex justify-center">
+                                                                {getStatusIcon(status)}
+                                                            </div>
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="px-6 py-5">
+                                                    <div className="flex justify-center items-center space-x-2">
+                                                        <button
+                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
+                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
+                                                        >
+                                                            <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
+                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
+                                                        >
+                                                            <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
+                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
+                                                        >
+                                                            <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
+
+                    {/* 確定用モーダル（簡易版） */}
+                    {selectedCandidateForFinalize && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+                            <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300">
+                                <div className="flex items-center space-x-3 mb-6">
+                                    <div className="p-3 bg-violet-100 rounded-2xl">
+                                        <Sparkles className="h-6 w-6 text-violet-600" />
+                                    </div>
+                                    <h2 className="text-xl font-bold text-gray-900">{t('schedulePoll.finalizeTitle') || '予定を確定する'}</h2>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-2xl mb-6">
+                                    <div className="text-sm font-bold text-gray-900">
+                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleDateString(undefined, { month: 'long', day: 'numeric', weekday: 'long' })}
+                                    </div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                        {' - '}
+                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.end_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                </div>
+
+                                <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                                    {t('schedulePoll.finalizeConfirm') || 'この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。'}
+                                </p>
+
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => setSelectedCandidateForFinalize(null)}
+                                        className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                                    >
+                                        {t('common.cancel')}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const rec = recommendations?.find(r => r.candidate_id === selectedCandidateForFinalize);
+                                            finalizeMutation.mutate({
+                                                candidateId: selectedCandidateForFinalize,
+                                                sceneIds: rec?.possible_scenes.map(s => s.scene_id) || []
+                                            });
+                                        }}
+                                        disabled={finalizeMutation.isPending}
+                                        className="flex-1 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-200 flex items-center justify-center disabled:opacity-50"
+                                    >
+                                        {finalizeMutation.isPending ? '...' : (t('common.confirm') || '確定する')}
+                                        <Check className="h-4 w-4 ml-2" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

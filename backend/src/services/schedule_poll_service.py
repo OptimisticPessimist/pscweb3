@@ -41,18 +41,23 @@ class SchedulePollService:
         title: str,
         description: Optional[str],
         candidates_data: list[dict],
-        creator_id: uuid.UUID
+        creator_id: uuid.UUID,
+        required_roles: list[str] | None = None
     ) -> SchedulePoll:
         """日程調整を作成し、Discordに送信."""
         poll_id = uuid.uuid4()
         
+        # 役職リストをカンマ区切り文字列に変換
+        required_roles_str = ",".join(required_roles) if required_roles else None
+
         poll = SchedulePoll(
             id=poll_id,
             project_id=project.id,
             title=title,
             description=description,
             creator_id=creator_id,
-            is_closed=False
+            is_closed=False,
+            required_roles=required_roles_str
         )
         self.db.add(poll)
         
@@ -275,13 +280,29 @@ class SchedulePollService:
             for casting in cast_result.scalars().all():
                 scene_required_users[m.scene_id].add(casting.user_id)
 
-        # 優先メンバー
-        priority_member_stmt = select(ProjectMember).where(
-            ProjectMember.project_id == poll.project_id,
-            ProjectMember.default_staff_role.in_(["演出", "演出助手", "制作"])
-        )
-        priority_result = await self.db.execute(priority_member_stmt)
-        priority_user_ids = {m.user_id for m in priority_result.scalars().all()}
+        # プロジェクトメンバー全員を取得して役職マップを作成
+        all_members_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
+        all_members = (await self.db.execute(all_members_stmt)).scalars().all()
+        role_users = {}
+        for m in all_members:
+            if m.default_staff_role:
+                if m.default_staff_role not in role_users:
+                    role_users[m.default_staff_role] = []
+                role_users[m.default_staff_role].append(m.user_id)
+
+        # 必須役職（あれば）
+        required_roles = []
+        if poll.required_roles:
+            required_roles = [r.strip() for r in poll.required_roles.split(",") if r.strip()]
+
+        # 優先メンバー（スコア計算用）
+        if required_roles:
+            priority_user_ids = set()
+            for role in required_roles:
+                priority_user_ids.update(role_users.get(role, []))
+        else:
+            # 従来通りのデフォルト優先メンバー
+            priority_user_ids = {m.user_id for m in all_members if m.default_staff_role in ["演出", "演出助手", "制作"]}
 
         # シーン情報を取得
         scene_stmt = select(Scene).where(Scene.script_id == script.id)
@@ -294,14 +315,24 @@ class SchedulePollService:
             ok_count_total = sum(1 for a in candidate.answers if a.status == "ok")
             maybe_count_total = sum(1 for a in candidate.answers if a.status == "maybe")
             
+            # 必須役職のNGチェック
+            missing_roles = []
+            for role in required_roles:
+                r_users = role_users.get(role, [])
+                if r_users and all(user_answers.get(uid) == "ng" for uid in r_users):
+                    missing_roles.append(role)
+
             candidate_possible_scenes = []
             for scene_id, required_user_ids in scene_required_users.items():
                 is_possible = True
-                for rid in required_user_ids:
-                    status = user_answers.get(rid, "pending")
-                    if status == "ng":
-                        is_possible = False
-                        break
+                if missing_roles:
+                    is_possible = False
+                else:
+                    for rid in required_user_ids:
+                        status = user_answers.get(rid, "pending")
+                        if status == "ng":
+                            is_possible = False
+                            break
                 
                 if is_possible and required_user_ids:
                     score = 0
@@ -347,10 +378,15 @@ class SchedulePollService:
                 top_scene = candidate_possible_scenes[0]
                 summary_reason = top_scene["reason"] or "稽古可能なシーンあり"
             else:
-                summary_reason = f"出席可能者: {ok_count_total}名" if ok_count_total > 0 else "稽古可能なメンバーがいます"
+                if missing_roles:
+                    summary_reason = f"不足役職: {', '.join(missing_roles)}"
+                else:
+                    summary_reason = f"出席可能者: {ok_count_total}名" if ok_count_total > 0 else "稽古可能なメンバーがいます"
 
             # スコアの決定（シーンスコアがあればそれ、なければ全体出席数ベース）
             total_score = candidate_possible_scenes[0]["score"] if candidate_possible_scenes else (ok_count_total * 5)
+            if missing_roles:
+                total_score = 0
 
             if total_score > 0 or not candidate.answers:
                 recommendations.append({
@@ -415,6 +451,19 @@ class SchedulePollService:
             char_users[c.character_id].append(c.user_id)
             char_name_map[c.character_id] = c.character.name
 
+        # 必須役職の抽出
+        required_roles = []
+        if poll.required_roles:
+            required_roles = [r.strip() for r in poll.required_roles.split(",") if r.strip()]
+
+        # 役職ごとのユーザーマップ
+        role_users = {} # {role: [user_id]}
+        for m in members:
+            if m.default_staff_role:
+                if m.default_staff_role not in role_users:
+                    role_users[m.default_staff_role] = []
+                role_users[m.default_staff_role].append(m.user_id)
+
         # 2. 各候補日程の分析
         analyses = []
         for candidate in poll.candidates:
@@ -422,6 +471,13 @@ class SchedulePollService:
             available_users = {a.user_id for a in candidate.answers if a.status in ["ok", "maybe"]}
             maybe_users = {a.user_id for a in candidate.answers if a.status == "maybe"}
             
+            # 必須役職のチェック
+            missing_roles = []
+            for role in required_roles:
+                r_users = role_users.get(role, [])
+                if not any(uid in available_users for uid in r_users):
+                    missing_roles.append(role)
+
             possible_scenes = []
             reach_scenes = []
             
@@ -439,7 +495,7 @@ class SchedulePollService:
                         char_name = char_name_map.get(char_id, "Unknown")
                         missing_chars.append((char_name, c_users))
                 
-                if not missing_chars:
+                if not missing_chars and not missing_roles:
                     # 稽古可能
                     possible_scenes.append({
                         "scene_id": scene.id,
@@ -448,7 +504,7 @@ class SchedulePollService:
                         "is_possible": True,
                         "reason": "全員揃っています"
                     })
-                elif len(missing_chars) == 1:
+                elif not missing_roles and len(missing_chars) == 1:
                     # リーチ状態（あと1役だけ足りない）
                     char_name, m_uids = missing_chars[0]
                     reach_scenes.append({
@@ -460,6 +516,10 @@ class SchedulePollService:
                         "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids],
                         "reason": f"不足: {char_name}"
                     })
+                elif missing_roles:
+                    # 必須役職が足りない場合、リーチ判定にも含めないか、理由に役職不足を書く
+                    # 今回は「役職不足」としてリーチには入れない（役者が揃っていても不可能なので）
+                    pass
             
             analyses.append({
                 "candidate_id": candidate.id,
