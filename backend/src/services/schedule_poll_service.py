@@ -465,11 +465,20 @@ class SchedulePollService:
 
         # 役職ごとのユーザーマップ
         role_users = {} # {role: [user_id]}
+        user_roles = {} # {user_id: str}
         for m in members:
+            roles = []
             if m.default_staff_role:
+                roles.append(m.default_staff_role)
                 if m.default_staff_role not in role_users:
                     role_users[m.default_staff_role] = []
                 role_users[m.default_staff_role].append(m.user_id)
+            user_roles[m.user_id] = roles
+
+        # 配役情報の追加
+        for c in castings:
+            if c.user_id in user_roles:
+                user_roles[c.user_id].append(c.character.name)
 
         # 2. 各候補日程の分析
         analyses = []
@@ -528,6 +537,22 @@ class SchedulePollService:
                     # 今回は「役職不足」としてリーチには入れない（役者が揃っていても不可能なので）
                     pass
             
+            # メンバー詳細情報の構築
+            available_members = []
+            maybe_members = []
+            for uid in available_users:
+                name = user_names.get(uid, "Unknown")
+                roles_list = user_roles.get(uid, [])
+                role_str = " / ".join(roles_list) if roles_list else None
+                member_info = {
+                    "user_id": uid,
+                    "name": name,
+                    "role": role_str
+                }
+                available_members.append(member_info)
+                if uid in maybe_users:
+                    maybe_members.append(member_info)
+
             analyses.append({
                 "candidate_id": candidate.id,
                 "start_datetime": candidate.start_datetime,
@@ -538,6 +563,8 @@ class SchedulePollService:
                 "maybe_users": list(maybe_users),
                 "available_user_names": [user_names.get(uid, "Unknown") for uid in available_users],
                 "maybe_user_names": [user_names.get(uid, "Unknown") for uid in maybe_users],
+                "available_members": available_members,
+                "maybe_members": maybe_members,
             })
             
         return {"poll_id": poll_id, "analyses": analyses}

@@ -176,25 +176,32 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
                                                                 <Users className="h-4 w-4 mr-2" />
                                                                 {t('schedulePoll.availableMembers') || '参加可能メンバー'}
-                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">{selectedAnalysis.available_user_names.length}名</span>
+                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">{selectedAnalysis.available_members.length}名</span>
                                                             </h3>
                                                             <div className="flex flex-wrap gap-2">
-                                                                {selectedAnalysis.available_user_names.map((name, i) => {
-                                                                    const isMaybe = selectedAnalysis.maybe_user_names.includes(name);
+                                                                {selectedAnalysis.available_members.map((member) => {
+                                                                    const isMaybe = selectedAnalysis.maybe_members.some(m => m.user_id === member.user_id);
                                                                     return (
-                                                                        <span
-                                                                            key={i}
-                                                                            className={`text-[11px] font-bold px-3 py-1 rounded-full shadow-sm border ${isMaybe
-                                                                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
-                                                                                    : 'bg-white text-gray-700 border-gray-100'
+                                                                        <div
+                                                                            key={member.user_id}
+                                                                            className={`text-[11px] font-bold px-3 py-1.5 rounded-2xl shadow-sm border flex flex-col ${isMaybe
+                                                                                ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                                                : 'bg-white text-gray-700 border-gray-100'
                                                                                 }`}
                                                                         >
-                                                                            {name}{isMaybe ? ' (△)' : ''}
-                                                                        </span>
+                                                                            <span className="flex items-center">
+                                                                                {member.name}{isMaybe ? ' (△)' : ''}
+                                                                            </span>
+                                                                            {member.role && (
+                                                                                <span className={`text-[9px] mt-0.5 font-medium border-t pt-0.5 ${isMaybe ? 'border-amber-200 text-amber-600/70' : 'border-gray-100 text-gray-400'}`}>
+                                                                                    {member.role}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     );
                                                                 })}
                                                             </div>
-                                                            {selectedAnalysis.available_user_names.length === 0 && (
+                                                            {selectedAnalysis.available_members.length === 0 && (
                                                                 <p className="text-xs text-gray-400 italic">参加可能なメンバーはいません</p>
                                                             )}
                                                         </div>

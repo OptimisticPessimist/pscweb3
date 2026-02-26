@@ -54,6 +54,12 @@ export interface SceneAvailability {
     reason: string | null;
 }
 
+export interface CalendarMemberInfo {
+    user_id: string;
+    name: string;
+    role: string | null;
+}
+
 export interface PollCandidateAnalysis {
     candidate_id: string;
     start_datetime: string;
@@ -64,6 +70,8 @@ export interface PollCandidateAnalysis {
     maybe_users: string[];
     available_user_names: string[];
     maybe_user_names: string[];
+    available_members: CalendarMemberInfo[];
+    maybe_members: CalendarMemberInfo[];
 }
 
 export interface SchedulePollCalendarAnalysis {

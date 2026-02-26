@@ -86,6 +86,13 @@ class SceneAvailability(BaseModel):
     reason: str | None = None
 
 
+class CalendarMemberInfo(BaseModel):
+    """カレンダー表示用のメンバー情報（名前+役職）."""
+    user_id: UUID
+    name: str
+    role: str | None = None
+
+
 class PollCandidateAnalysis(BaseModel):
     """候補日程の分析結果."""
     candidate_id: UUID
@@ -97,6 +104,8 @@ class PollCandidateAnalysis(BaseModel):
     maybe_users: list[UUID]      # Maybe のユーザーID（色分け用）
     available_user_names: list[str] = []
     maybe_user_names: list[str] = []
+    available_members: list[CalendarMemberInfo] = []
+    maybe_members: list[CalendarMemberInfo] = []
 
 
 class SchedulePollCalendarAnalysis(BaseModel):
