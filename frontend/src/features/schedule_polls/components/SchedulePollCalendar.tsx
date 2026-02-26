@@ -176,16 +176,27 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
                                                                 <Users className="h-4 w-4 mr-2" />
                                                                 {t('schedulePoll.availableMembers') || '参加可能メンバー'}
-                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">{selectedAnalysis.available_users.length}名</span>
+                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">{selectedAnalysis.available_user_names.length}名</span>
                                                             </h3>
-                                                            {/* We don't have user names in analysis, but available_users are IDs. 
-                                                                Ideally we should fetch names, or accept they aren't here yet. 
-                                                                For now, just showing count or placeholder. */}
-                                                            <p className="text-xs text-gray-500 italic">
-                                                                {selectedAnalysis.maybe_users.length > 0
-                                                                    ? `(内 ${selectedAnalysis.maybe_users.length}名が△回答)`
-                                                                    : "全員が〇回答です"}
-                                                            </p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {selectedAnalysis.available_user_names.map((name, i) => {
+                                                                    const isMaybe = selectedAnalysis.maybe_user_names.includes(name);
+                                                                    return (
+                                                                        <span
+                                                                            key={i}
+                                                                            className={`text-[11px] font-bold px-3 py-1 rounded-full shadow-sm border ${isMaybe
+                                                                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                                                    : 'bg-white text-gray-700 border-gray-100'
+                                                                                }`}
+                                                                        >
+                                                                            {name}{isMaybe ? ' (△)' : ''}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            {selectedAnalysis.available_user_names.length === 0 && (
+                                                                <p className="text-xs text-gray-400 italic">参加可能なメンバーはいません</p>
+                                                            )}
                                                         </div>
 
                                                         {/* Section: Possible Scenes */}

@@ -535,7 +535,9 @@ class SchedulePollService:
                 "possible_scenes": possible_scenes,
                 "reach_scenes": reach_scenes,
                 "available_users": list(available_users),
-                "maybe_users": list(maybe_users)
+                "maybe_users": list(maybe_users),
+                "available_user_names": [user_names.get(uid, "Unknown") for uid in available_users],
+                "maybe_user_names": [user_names.get(uid, "Unknown") for uid in maybe_users],
             })
             
         return {"poll_id": poll_id, "analyses": analyses}

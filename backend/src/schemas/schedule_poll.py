@@ -95,6 +95,8 @@ class PollCandidateAnalysis(BaseModel):
     reach_scenes: list[SceneAvailability]
     available_users: list[UUID]  # OK または Maybe のユーザーID
     maybe_users: list[UUID]      # Maybe のユーザーID（色分け用）
+    available_user_names: list[str] = []
+    maybe_user_names: list[str] = []
 
 
 class SchedulePollCalendarAnalysis(BaseModel):

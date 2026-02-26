@@ -62,6 +62,8 @@ export interface PollCandidateAnalysis {
     reach_scenes: SceneAvailability[];
     available_users: string[];
     maybe_users: string[];
+    available_user_names: string[];
+    maybe_user_names: string[];
 }
 
 export interface SchedulePollCalendarAnalysis {
