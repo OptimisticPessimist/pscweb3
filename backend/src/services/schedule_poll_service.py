@@ -90,18 +90,25 @@ class SchedulePollService:
             components = []
             
             # 5日程以内の場合は行ごとのボタンを表示
+            # 5日程以内の場合は詳細をメッセージに含める
             if len(candidates) <= 5:
+                message_content += "\n**【候補日時】**\n"
                 for i, c in enumerate(candidates):
-                    # Discord動的タイムスタンプを使用して、表示側（Discord）のタイムゾーンに自動追従させる
+                    # 内容には動的タイムスタンプを使用して、表示側のタイムゾーンに合わせる
                     ts = int(c.start_datetime.timestamp())
-                    start_str = f"<t:{ts}:F>"
+                    message_content += f"{i+1}. <t:{ts}:F>\n"
+                    
+                    # ボタンラベル用（JST固定）
+                    jst_time = c.start_datetime.astimezone(timezone(timedelta(hours=9)))
+                    start_str_label = jst_time.strftime("%m/%d(%a) %H:%M")
+                    
                     row = {
                         "type": 1,
                         "components": [
                             {
                                 "type": 2,
                                 "style": 2, # Secondary
-                                "label": f"{i+1}. {start_str}",
+                                "label": f"{i+1}. {start_str_label}",
                                 "custom_id": f"poll_noop:{c.id}",
                                 "disabled": True
                             },

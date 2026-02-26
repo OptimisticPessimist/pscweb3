@@ -14,7 +14,8 @@ from src.config import settings
 basedir = os.path.dirname(__file__)
 migration_files = [
     "migration_add_public_cols.sql",
-    "migration_add_project_is_public.sql"
+    "migration_add_project_is_public.sql",
+    "migration_add_poll_roles.sql"
 ]
 
 async def apply_migration():
