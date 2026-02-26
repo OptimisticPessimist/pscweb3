@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -19,29 +19,74 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
     const calendarRef = useRef<FullCalendar>(null);
     const [selectedAnalysis, setSelectedAnalysis] = useState<PollCandidateAnalysis | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+
+    // Get unique scenes from analysis for filtering
+    const scenes = useMemo(() => {
+        const sceneMap = new Map<string, { id: string, number: number, heading: string }>();
+        analysis.analyses.forEach(a => {
+            [...a.possible_scenes, ...a.reach_scenes].forEach(s => {
+                if (!sceneMap.has(s.scene_id)) {
+                    sceneMap.set(s.scene_id, { id: s.scene_id, number: s.scene_number, heading: s.heading });
+                }
+            });
+        });
+        return Array.from(sceneMap.values()).sort((a, b) => a.number - b.number);
+    }, [analysis]);
 
     // Convert analyses to FullCalendar events
     const events = analysis.analyses.map((a) => {
-        const hasPossible = a.possible_scenes.length > 0;
-        const hasReach = a.reach_scenes.length > 0;
+        let isFilteredMatch = true;
+        let filteredStatus: 'possible' | 'reach' | 'none' = 'none';
+
+        if (selectedSceneId) {
+            const possible = a.possible_scenes.find(s => s.scene_id === selectedSceneId);
+            const reach = a.reach_scenes.find(s => s.scene_id === selectedSceneId);
+            if (possible) {
+                filteredStatus = 'possible';
+            } else if (reach) {
+                filteredStatus = 'reach';
+            } else {
+                isFilteredMatch = false;
+            }
+        } else {
+            if (a.possible_scenes.length > 0) filteredStatus = 'possible';
+            else if (a.reach_scenes.length > 0) filteredStatus = 'reach';
+        }
 
         let color = '#94a3b8'; // slate-400 (default)
-        if (hasPossible) {
+        let opacity = 1;
+
+        if (filteredStatus === 'possible') {
             color = '#10b981'; // emerald-500
-        } else if (hasReach) {
+        } else if (filteredStatus === 'reach') {
             color = '#f59e0b'; // amber-500
+        }
+
+        if (!isFilteredMatch) {
+            color = '#e2e8f0'; // slate-200
+            opacity = 0.4;
+        }
+
+        let title = '';
+        if (selectedSceneId) {
+            if (filteredStatus === 'possible') title = '🟢 稽古可能';
+            else if (filteredStatus === 'reach') title = '🟡 リーチ';
+            else title = '⚪ 不可';
+        } else {
+            title = a.possible_scenes.length > 0
+                ? `🟢 ${a.possible_scenes.length} Scenes`
+                : (a.reach_scenes.length > 0 ? `🟡 ${a.reach_scenes.length} Reach` : '⚪ No matching scenes');
         }
 
         return {
             id: a.candidate_id,
-            title: hasPossible
-                ? `🟢 ${a.possible_scenes.length} Scenes`
-                : (hasReach ? `🟡 ${a.reach_scenes.length} Reach` : '⚪ No matching scenes'),
+            title,
             start: a.start_datetime,
             end: a.end_datetime,
             backgroundColor: color,
             borderColor: color,
-            extendedProps: a
+            extendedProps: { ...a, opacity }
         };
     });
 
@@ -53,7 +98,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
     return (
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                <div>
+                <div className="flex-1">
                     <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center">
                         <Clock className="h-6 w-6 mr-2 text-indigo-600" />
                         {t('schedulePoll.calendarView') || '日程調整カレンダー'}
@@ -62,18 +107,41 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                         {t('schedulePoll.calendarHint') || '候補日程をクリックして詳細と稽古可能シーンを確認できます'}
                     </p>
                 </div>
-                <div className="flex items-center space-x-4 text-xs font-bold uppercase tracking-widest">
-                    <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500 mr-2 shadow-sm shadow-emerald-200"></div>
-                        <span className="text-emerald-700">{t('schedulePoll.statusPossible') || '稽古可能'}</span>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    {/* Scene Filter Dropdown */}
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <Sparkles className="h-4 w-4 text-indigo-500" />
+                        </div>
+                        <select
+                            value={selectedSceneId || ''}
+                            onChange={(e) => setSelectedSceneId(e.target.value || null)}
+                            className="pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full appearance-none transition-all hover:bg-white hover:shadow-md cursor-pointer"
+                        >
+                            <option value="">{t('schedulePoll.allScenes') || '✨ すべてのシーンを表示'}</option>
+                            {scenes.map((scene: { id: string, number: number, heading: string }) => (
+                                <option key={scene.id} value={scene.id}>
+                                    #{scene.number} {scene.heading}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
                     </div>
-                    <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-amber-500 mr-2 shadow-sm shadow-amber-200"></div>
-                        <span className="text-amber-700">{t('schedulePoll.statusReach') || 'あと1人で可能'}</span>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="w-3 h-3 rounded-full bg-slate-400 mr-2"></div>
-                        <span className="text-slate-500">{t('schedulePoll.statusNone') || '予定なし'}</span>
+
+                    <div className="flex items-center space-x-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-l border-gray-100 pl-4">
+                        <div className="flex items-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5 shadow-sm shadow-emerald-200"></div>
+                            <span className="text-emerald-700">{t('schedulePoll.statusPossible') || '稽古可能'}</span>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5 shadow-sm shadow-amber-200"></div>
+                            <span className="text-amber-700">{t('schedulePoll.statusReach') || 'リーチ'}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,7 +167,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                     slotEventOverlap={false}
                     eventClassNames="cursor-pointer hover:scale-[1.02] transition-transform duration-200 shadow-sm rounded-lg"
                     eventContent={(eventInfo) => (
-                        <div className="p-1 px-2 h-full flex flex-col justify-center">
+                        <div className="p-1 px-2 h-full flex flex-col justify-center" style={{ opacity: eventInfo.event.extendedProps.opacity || 1 }}>
                             <div className="text-[10px] font-black leading-tight truncate">
                                 {eventInfo.event.title}
                             </div>
@@ -107,6 +175,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                     )}
                 />
             </div>
+
 
             {/* Side Panel (Slide-over) */}
             <Transition.Root show={isPanelOpen} as={Fragment}>
@@ -216,7 +285,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             {selectedAnalysis.possible_scenes.length > 0 ? (
                                                                 <div className="space-y-3">
                                                                     {selectedAnalysis.possible_scenes.map((scene) => (
-                                                                        <div key={scene.scene_id} className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between group hover:bg-emerald-50 transition-colors">
+                                                                        <div key={scene.scene_id} className={`bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between group hover:bg-emerald-50 transition-colors ${scene.scene_id === selectedSceneId ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`}>
                                                                             <div className="flex items-center space-x-3">
                                                                                 <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-emerald-100 flex items-center justify-center font-black text-emerald-600">
                                                                                     {scene.scene_number}
@@ -242,7 +311,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             {selectedAnalysis.reach_scenes.length > 0 ? (
                                                                 <div className="space-y-3">
                                                                     {selectedAnalysis.reach_scenes.map((scene) => (
-                                                                        <div key={scene.scene_id} className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 hover:bg-amber-50 transition-colors">
+                                                                        <div key={scene.scene_id} className={`bg-amber-50/50 border border-amber-100 rounded-2xl p-4 hover:bg-amber-50 transition-colors ${scene.scene_id === selectedSceneId ? 'ring-2 ring-amber-500 ring-offset-2' : ''}`}>
                                                                             <div className="flex items-center justify-between mb-2">
                                                                                 <div className="flex items-center space-x-3">
                                                                                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-amber-100 flex items-center justify-center font-black text-amber-600">

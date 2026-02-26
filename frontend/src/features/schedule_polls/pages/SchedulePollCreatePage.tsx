@@ -33,7 +33,7 @@ export const SchedulePollCreatePage: React.FC = () => {
     const [description, setDescription] = useState('');
     const [requiredRoles, setRequiredRoles] = useState<string[]>([]);
     const [candidates, setCandidates] = useState<DateCandidate[]>([
-        { start_date: '', start_time: '18:00', end_time: '21:00' }
+        { start_date: '', start_time: '22:00', end_time: '24:00' }
     ]);
 
     const { data: members } = useQuery({
@@ -69,8 +69,8 @@ export const SchedulePollCreatePage: React.FC = () => {
         const last = candidates[candidates.length - 1];
         setCandidates([...candidates, {
             start_date: last?.start_date || '',
-            start_time: last?.start_time || '18:00',
-            end_time: last?.end_time || '21:00'
+            start_time: last?.start_time || '22:00',
+            end_time: last?.end_time || '24:00'
         }]);
     };
 
@@ -183,8 +183,8 @@ export const SchedulePollCreatePage: React.FC = () => {
                                         type="button"
                                         onClick={() => toggleRole(role)}
                                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border ${requiredRoles.includes(role)
-                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100'
-                                                : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
                                             }`}
                                     >
                                         {role}
