@@ -366,6 +366,113 @@ class SchedulePollService:
         recommendations.sort(key=lambda x: x["score"], reverse=True)
         return recommendations[:3]
 
+    async def get_calendar_analysis(self, poll_id: uuid.UUID):
+        """カレンダー表示用の詳細分析（正引き・リーチ判定込）."""
+        poll = await self.get_poll_with_details(poll_id)
+        if not poll:
+            return None
+        
+        # 1. データの準備
+        script_stmt = select(Script).where(Script.project_id == poll.project_id).order_by(Script.revision.desc()).limit(1)
+        script = (await self.db.execute(script_stmt)).scalar_one_or_none()
+        if not script:
+            return {"poll_id": poll_id, "analyses": []}
+
+        # シーン一覧
+        scenes_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.scene_number)
+        scenes = (await self.db.execute(scenes_stmt)).scalars().all()
+
+        # シーンごとの必要キャラクター
+        mapping_stmt = select(SceneCharacterMapping).where(SceneCharacterMapping.chart_id.in_(
+            select(Script.id).where(Script.project_id == poll.project_id) # 香盤表はScriptに紐付いている前提
+        ))
+        # 実際には SceneCharacterMapping は scene_id に紐付いているのでそちらで。
+        mapping_stmt = select(SceneCharacterMapping).join(Scene).where(Scene.script_id == script.id)
+        mappings = (await self.db.execute(mapping_stmt)).scalars().all()
+        
+        scene_chars = {} # {scene_id: [character_id]}
+        for m in mappings:
+            if m.scene_id not in scene_chars:
+                scene_chars[m.scene_id] = []
+            scene_chars[m.scene_id].append(m.character_id)
+
+        # キャラクターごとのキャスト（ユーザーID）
+        casting_stmt = select(CharacterCasting).join(Character).where(Character.script_id == script.id).options(selectinload(CharacterCasting.character))
+        castings = (await self.db.execute(casting_stmt)).scalars().all()
+        
+        char_users = {} # {character_id: [user_id]}
+        user_names = {} # {user_id: name}
+        char_name_map = {} # {character_id: name}
+        
+        # ユーザー名取得用
+        all_member_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
+        members = (await self.db.execute(all_member_stmt)).scalars().all()
+        user_names = {m.user_id: (m.display_name or f"User {str(m.user_id)[:8]}") for m in members}
+
+        for c in castings:
+            if c.character_id not in char_users:
+                char_users[c.character_id] = []
+            char_users[c.character_id].append(c.user_id)
+            char_name_map[c.character_id] = c.character.name
+
+        # 2. 各候補日程の分析
+        analyses = []
+        for candidate in poll.candidates:
+            # OK/Maybe ユーザーの抽出
+            available_users = {a.user_id for a in candidate.answers if a.status in ["ok", "maybe"]}
+            maybe_users = {a.user_id for a in candidate.answers if a.status == "maybe"}
+            
+            possible_scenes = []
+            reach_scenes = []
+            
+            for scene in scenes:
+                req_chars = scene_chars.get(scene.id, [])
+                if not req_chars:
+                    continue
+                
+                missing_chars = [] # [(char_name, [missing_user_ids])]
+                
+                for char_id in req_chars:
+                    c_users = char_users.get(char_id, [])
+                    # ダブルキャスト対応：1人でも利用可能ならOK
+                    if not any(uid in available_users for uid in c_users):
+                        char_name = char_name_map.get(char_id, "Unknown")
+                        missing_chars.append((char_name, c_users))
+                
+                if not missing_chars:
+                    # 稽古可能
+                    possible_scenes.append({
+                        "scene_id": scene.id,
+                        "scene_number": scene.scene_number,
+                        "heading": scene.heading,
+                        "is_possible": True,
+                        "reason": "全員揃っています"
+                    })
+                elif len(missing_chars) == 1:
+                    # リーチ状態（あと1役だけ足りない）
+                    char_name, m_uids = missing_chars[0]
+                    reach_scenes.append({
+                        "scene_id": scene.id,
+                        "scene_number": scene.scene_number,
+                        "heading": scene.heading,
+                        "is_possible": False,
+                        "is_reach": True,
+                        "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids],
+                        "reason": f"不足: {char_name}"
+                    })
+            
+            analyses.append({
+                "candidate_id": candidate.id,
+                "start_datetime": candidate.start_datetime,
+                "end_datetime": candidate.end_datetime,
+                "possible_scenes": possible_scenes,
+                "reach_scenes": reach_scenes,
+                "available_users": list(available_users),
+                "maybe_users": list(maybe_users)
+            })
+            
+        return {"poll_id": poll_id, "analyses": analyses}
+
 
 def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:
     return SchedulePollService(db, discord_service)

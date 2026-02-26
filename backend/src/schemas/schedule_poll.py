@@ -66,7 +66,36 @@ class SchedulePollAnswerUpdate(SchedulePollAnswerBase):
     pass
 
 
+
 class SchedulePollFinalize(BaseModel):
     """日程調整確定（稽古予定作成）."""
     candidate_id: UUID
     scene_ids: list[UUID]
+
+
+class SceneAvailability(BaseModel):
+    """シーンの参加可否状況."""
+    scene_id: UUID
+    scene_number: int
+    heading: str
+    is_possible: bool  # 必須キャスト全員が OK または Maybe
+    is_reach: bool = False  # あと1人で可能
+    missing_user_names: list[str] = []
+    reason: str | None = None
+
+
+class PollCandidateAnalysis(BaseModel):
+    """候補日程の分析結果."""
+    candidate_id: UUID
+    start_datetime: datetime
+    end_datetime: datetime
+    possible_scenes: list[SceneAvailability]
+    reach_scenes: list[SceneAvailability]
+    available_users: list[UUID]  # OK または Maybe のユーザーID
+    maybe_users: list[UUID]      # Maybe のユーザーID（色分け用）
+
+
+class SchedulePollCalendarAnalysis(BaseModel):
+    """日程調整全体のカレンダー用分析結果."""
+    poll_id: UUID
+    analyses: list[PollCandidateAnalysis]
