@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { PollCandidateAnalysis, SchedulePollCalendarAnalysis } from '../api/schedulePoll';
 import { useTranslation } from 'react-i18next';
-import { Clock, Users, Sparkles, CheckCircle2, AlertCircle, X, ArrowRight } from 'lucide-react';
+import { Clock, Users, Sparkles, CheckCircle2, AlertCircle, X, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
@@ -110,14 +110,14 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     {/* Scene Filter Dropdown */}
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <div className="relative z-10 min-w-[240px]">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-20">
                             <Sparkles className="h-4 w-4 text-indigo-500" />
                         </div>
                         <select
                             value={selectedSceneId || ''}
                             onChange={(e) => setSelectedSceneId(e.target.value || null)}
-                            className="pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full appearance-none transition-all hover:bg-white hover:shadow-md cursor-pointer"
+                            className="pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full appearance-none transition-all hover:bg-white hover:shadow-md cursor-pointer relative z-10"
                         >
                             <option value="">{t('schedulePoll.allScenes') || '✨ すべてのシーンを表示'}</option>
                             {scenes.map((scene: { id: string, number: number, heading: string }) => (
@@ -126,10 +126,8 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                 </option>
                             ))}
                         </select>
-                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none z-20">
+                            <ChevronLeft className="h-4 w-4 text-gray-400 -rotate-90" />
                         </div>
                     </div>
 

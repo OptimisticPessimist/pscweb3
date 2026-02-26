@@ -33,7 +33,7 @@ export const SchedulePollCreatePage: React.FC = () => {
     const [description, setDescription] = useState('');
     const [requiredRoles, setRequiredRoles] = useState<string[]>([]);
     const [candidates, setCandidates] = useState<DateCandidate[]>([
-        { start_date: '', start_time: '22:00', end_time: '24:00' }
+        { start_date: '', start_time: '22:00', end_time: '23:59' }
     ]);
 
     const { data: members } = useQuery({
@@ -70,7 +70,7 @@ export const SchedulePollCreatePage: React.FC = () => {
         setCandidates([...candidates, {
             start_date: last?.start_date || '',
             start_time: last?.start_time || '22:00',
-            end_time: last?.end_time || '24:00'
+            end_time: last?.end_time || '23:59'
         }]);
     };
 
