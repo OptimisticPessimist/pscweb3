@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db import get_db
 from src.dependencies.auth import get_current_user_dep
 from src.db.models import User, TheaterProject, ProjectMember, SchedulePoll, SchedulePollCandidate, Rehearsal, RehearsalScene, RehearsalSchedule, RehearsalCast, RehearsalParticipant, CharacterCasting
-from src.schemas.schedule_poll import SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, SchedulePollFinalize
+from src.schemas.schedule_poll import SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, SchedulePollFinalize, SchedulePollCalendarAnalysis
 from src.services.schedule_poll_service import get_schedule_poll_service
 from src.services.discord import get_discord_service, DiscordService
 from datetime import datetime, timezone, timedelta
@@ -96,6 +96,29 @@ async def get_poll_recommendations(
     """おすすめの日程とシーンを取得."""
     poll_service = get_schedule_poll_service(db, None)
     return await poll_service.get_recommendations(poll_id)
+
+@router.get("/projects/{project_id}/polls/{poll_id}/calendar-analysis", response_model=SchedulePollCalendarAnalysis)
+async def get_poll_calendar_analysis(
+    poll_id: UUID,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """カレンダー表示用の詳細分析（正引き・リーチ判定込）を取得."""
+    poll_service = get_schedule_poll_service(db, None)
+    
+    # 権限チェックは get_poll_with_details 等の中で行われるか、個別に必要なら追加
+    # ここでは既存の get_poll と同様のチェックを行う
+    poll = await poll_service.get_poll_with_details(poll_id)
+    if not poll:
+        raise HTTPException(status_code=404, detail="日程調整が見つかりません")
+    
+    stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    if not res.scalar_one_or_none():
+         raise HTTPException(status_code=403, detail="アクセス権限がありません")
+
+    result = await poll_service.get_calendar_analysis(poll_id)
+    return result
 
 @router.post("/projects/{project_id}/polls/{poll_id}/candidates/{candidate_id}/answer")
 async def answer_poll(
