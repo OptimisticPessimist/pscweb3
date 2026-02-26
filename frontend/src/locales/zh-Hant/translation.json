@@ -383,6 +383,11 @@
         "unansweredReminder": "向未回覆成員發送提醒",
         "reminderDescription": "這些成員尚未對日程投票做出回應。被選中的成員將在 Discord 上收到提及通知。",
         "sendReminderCount": "向 {{count}} 名成員發送提醒",
-        "allScenes": "所有場景"
+        "allScenes": "所有場景",
+        "attendanceTargetLabel": "考勤確認對象",
+        "targetVotersOnly": "僅回答者",
+        "targetVotersOnlyDesc": "回答OK或Maybe的成員",
+        "targetEveryone": "所有人",
+        "targetEveryoneDesc": "所有專案成員"
     }
 }

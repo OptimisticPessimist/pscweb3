@@ -408,6 +408,11 @@
         "unansweredReminder": "Send Reminder to Unanswered Members",
         "reminderDescription": "These members have not yet responded to the schedule poll. Checked members will receive a mention notification on Discord.",
         "sendReminderCount": "Send reminder to {{count}} member(s)",
-        "allScenes": "All Scenes"
+        "allScenes": "All Scenes",
+        "attendanceTargetLabel": "Target for Attendance Confirmation",
+        "targetVotersOnly": "Voters Only",
+        "targetVotersOnlyDesc": "Members who answered OK or Maybe",
+        "targetEveryone": "Everyone",
+        "targetEveryoneDesc": "All project members"
     }
 }

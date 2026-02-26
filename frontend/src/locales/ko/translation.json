@@ -383,6 +383,11 @@
         "unansweredReminder": "미응답자에게 알림 보내기",
         "reminderDescription": "이 멤버들은 아직 일정 조율에 응답하지 않았습니다. 체크된 멤버는 Discord에서 멘션 알림을 받게 됩니다.",
         "sendReminderCount": "{{count}}명에게 알림 보내기",
-        "allScenes": "모든 장면"
+        "allScenes": "모든 장면",
+        "attendanceTargetLabel": "출석 확인 대상자",
+        "targetVotersOnly": "응답자만",
+        "targetVotersOnlyDesc": "OK 또는 Maybe로 응답한 멤버",
+        "targetEveryone": "전체",
+        "targetEveryoneDesc": "프로젝트 멤버 전체"
     }
 }

@@ -11,7 +11,7 @@ import { Fragment } from 'react';
 
 interface SchedulePollCalendarProps {
     analysis: SchedulePollCalendarAnalysis;
-    onFinalize: (candidateId: string, sceneIds: string[]) => void;
+    onFinalize: (candidateId: string, sceneIds: string[], attendanceTarget: 'voters_only' | 'everyone') => void;
 }
 
 export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ analysis, onFinalize }) => {
@@ -20,6 +20,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
     const [selectedAnalysis, setSelectedAnalysis] = useState<PollCandidateAnalysis | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+    const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
 
     // Get unique scenes from analysis for filtering
     const scenes = useMemo(() => {
@@ -346,13 +347,49 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             )}
                                                         </div>
 
-                                                        {/* Finalize Button */}
+                                                        {/* Section: Finalize options */}
                                                         <div className="pt-4 border-t border-gray-100">
+                                                            <div className="space-y-3 mb-6">
+                                                                <label className="text-sm font-bold text-gray-700">{t('schedulePoll.attendanceTargetLabel') || '出欠確認の対象者'}</label>
+                                                                <div className="flex flex-col space-y-3">
+                                                                    <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${attendanceTarget === 'voters_only' ? 'border-violet-500 bg-violet-50/50 shadow-sm ring-1 ring-violet-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                                        <div className="flex items-center space-x-2 mb-1">
+                                                                            <input
+                                                                                type="radio"
+                                                                                name="cal_attendance_target"
+                                                                                value="voters_only"
+                                                                                checked={attendanceTarget === 'voters_only'}
+                                                                                onChange={() => setAttendanceTarget('voters_only')}
+                                                                                className="text-violet-600 focus:ring-violet-500"
+                                                                            />
+                                                                            <span className="text-sm font-bold text-gray-900">{t('schedulePoll.targetVotersOnly') || '回答者のみ'}</span>
+                                                                        </div>
+                                                                        <span className="text-xs text-gray-500 ml-6">{t('schedulePoll.targetVotersOnlyDesc') || 'OKまたはMaybeと回答したメンバー'}</span>
+                                                                    </label>
+                                                                    <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${attendanceTarget === 'everyone' ? 'border-violet-500 bg-violet-50/50 shadow-sm ring-1 ring-violet-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                                        <div className="flex items-center space-x-2 mb-1">
+                                                                            <input
+                                                                                type="radio"
+                                                                                name="cal_attendance_target"
+                                                                                value="everyone"
+                                                                                checked={attendanceTarget === 'everyone'}
+                                                                                onChange={() => setAttendanceTarget('everyone')}
+                                                                                className="text-violet-600 focus:ring-violet-500"
+                                                                            />
+                                                                            <span className="text-sm font-bold text-gray-900">{t('schedulePoll.targetEveryone') || '全員'}</span>
+                                                                        </div>
+                                                                        <span className="text-xs text-gray-500 ml-6">{t('schedulePoll.targetEveryoneDesc') || 'プロジェクトメンバー全員'}</span>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Finalize Button */}
                                                             <button
                                                                 onClick={() => {
                                                                     onFinalize(
                                                                         selectedAnalysis.candidate_id,
-                                                                        selectedAnalysis.possible_scenes.map(s => s.scene_id)
+                                                                        selectedAnalysis.possible_scenes.map(s => s.scene_id),
+                                                                        attendanceTarget
                                                                     );
                                                                     setIsPanelOpen(false);
                                                                 }}

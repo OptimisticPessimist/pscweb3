@@ -383,6 +383,11 @@
         "unansweredReminder": "向未回复成员发送提醒",
         "reminderDescription": "这些成员尚未对日程投票做出回应。被选中的成员将在 Discord 上收到提及通知。",
         "sendReminderCount": "向 {{count}} 名成员发送提醒",
-        "allScenes": "所有场景"
+        "allScenes": "所有场景",
+        "attendanceTargetLabel": "考勤确认对象",
+        "targetVotersOnly": "仅回答者",
+        "targetVotersOnlyDesc": "回答OK或Maybe的成员",
+        "targetEveryone": "所有人",
+        "targetEveryoneDesc": "所有项目成员"
     }
 }

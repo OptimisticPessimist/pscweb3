@@ -442,6 +442,11 @@
         "unansweredReminder": "未回答者へのリマインド送信",
         "reminderDescription": "まだ日程調整に回答していないメンバーです。チェックを入れたメンバーにDiscordでメンションを飛ばして通知します。",
         "sendReminderCount": "{{count}}名にリマインドを送信",
-        "allScenes": "すべてのシーン"
+        "allScenes": "すべてのシーン",
+        "attendanceTargetLabel": "出欠確認の対象者",
+        "targetVotersOnly": "回答者のみ",
+        "targetVotersOnlyDesc": "OKまたはMaybeと回答したメンバー",
+        "targetEveryone": "全員",
+        "targetEveryoneDesc": "プロジェクトメンバー全員"
     }
 }

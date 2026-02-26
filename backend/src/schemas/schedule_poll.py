@@ -73,6 +73,7 @@ class SchedulePollFinalize(BaseModel):
     """日程調整確定（稽古予定作成）."""
     candidate_id: UUID
     scene_ids: list[UUID]
+    attendance_target: str = "voters_only"  # "voters_only" or "everyone"
 
 
 class SceneAvailability(BaseModel):

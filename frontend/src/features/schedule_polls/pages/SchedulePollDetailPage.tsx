@@ -35,6 +35,7 @@ export const SchedulePollDetailPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [selectedCandidateForFinalize, setSelectedCandidateForFinalize] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
+    const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
 
     const { data: poll, isLoading } = useQuery({
         queryKey: ['schedulePoll', projectId, pollId],
@@ -64,8 +65,8 @@ export const SchedulePollDetailPage: React.FC = () => {
     });
 
     const finalizeMutation = useMutation({
-        mutationFn: ({ candidateId, sceneIds }: { candidateId: string, sceneIds: string[] }) =>
-            schedulePollApi.finalizePoll(projectId!, pollId!, candidateId, sceneIds),
+        mutationFn: ({ candidateId, sceneIds, attendanceTarget }: { candidateId: string, sceneIds: string[], attendanceTarget?: 'voters_only' | 'everyone' }) =>
+            schedulePollApi.finalizePoll(projectId!, pollId!, candidateId, sceneIds, attendanceTarget),
         onSuccess: () => {
             toast.success(t('schedulePoll.finalized') || '稽古予定を作成しました');
             navigate(`/projects/${projectId}/schedule`);
@@ -430,53 +431,91 @@ export const SchedulePollDetailPage: React.FC = () => {
                     {selectedCandidateForFinalize && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
                             <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300">
-                                <div className="flex items-center space-x-3 mb-6">
-                                    <div className="p-3 bg-violet-100 rounded-2xl">
-                                        <Sparkles className="h-6 w-6 text-violet-600" />
+                                <div className="flex flex-col space-y-6">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                        <div className="p-3 bg-violet-100 rounded-2xl">
+                                            <Sparkles className="h-6 w-6 text-violet-600" />
+                                        </div>
+                                        <h2 className="text-xl font-bold text-gray-900">{t('schedulePoll.finalizeTitle') || '予定を確定する'}</h2>
                                     </div>
-                                    <h2 className="text-xl font-bold text-gray-900">{t('schedulePoll.finalizeTitle') || '予定を確定する'}</h2>
-                                </div>
 
-                                <div className="p-4 bg-gray-50 rounded-2xl mb-6">
-                                    <div className="text-sm font-bold text-gray-900">
-                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleDateString(undefined, { month: 'long', day: 'numeric', weekday: 'long' })}
+                                    <div className="p-4 bg-gray-50 rounded-2xl">
+                                        <div className="text-sm font-bold text-gray-900">
+                                            {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleDateString(undefined, { month: 'long', day: 'numeric', weekday: 'long' })}
+                                        </div>
+                                        <div className="text-sm text-gray-600 mt-1">
+                                            {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                            {' - '}
+                                            {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.end_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
                                     </div>
-                                    <div className="text-sm text-gray-600 mt-1">
-                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                                        {' - '}
-                                        {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.end_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-bold text-gray-700">{t('schedulePoll.attendanceTargetLabel') || '出欠確認の対象者'}</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${attendanceTarget === 'voters_only' ? 'border-violet-500 bg-violet-50/50 shadow-sm ring-1 ring-violet-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="attendance_target"
+                                                        value="voters_only"
+                                                        checked={attendanceTarget === 'voters_only'}
+                                                        onChange={() => setAttendanceTarget('voters_only')}
+                                                        className="text-violet-600 focus:ring-violet-500"
+                                                    />
+                                                    <span className="text-sm font-bold text-gray-900">{t('schedulePoll.targetVotersOnly') || '回答者のみ'}</span>
+                                                </div>
+                                                <span className="text-xs text-gray-500 ml-6">{t('schedulePoll.targetVotersOnlyDesc') || 'OKまたはMaybeと回答したメンバー'}</span>
+                                            </label>
+                                            <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${attendanceTarget === 'everyone' ? 'border-violet-500 bg-violet-50/50 shadow-sm ring-1 ring-violet-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <input
+                                                        type="radio"
+                                                        name="attendance_target"
+                                                        value="everyone"
+                                                        checked={attendanceTarget === 'everyone'}
+                                                        onChange={() => setAttendanceTarget('everyone')}
+                                                        className="text-violet-600 focus:ring-violet-500"
+                                                    />
+                                                    <span className="text-sm font-bold text-gray-900">{t('schedulePoll.targetEveryone') || '全員'}</span>
+                                                </div>
+                                                <span className="text-xs text-gray-500 ml-6">{t('schedulePoll.targetEveryoneDesc') || 'プロジェクトメンバー全員'}</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-                                    {t('schedulePoll.finalizeConfirm') || 'この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。'}
-                                </p>
+                                    <p className="text-sm text-gray-500 leading-relaxed">
+                                        {t('schedulePoll.finalizeConfirm') || 'この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。'}
+                                    </p>
 
-                                <div className="flex space-x-3">
-                                    <button
-                                        onClick={() => setSelectedCandidateForFinalize(null)}
-                                        className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
-                                    >
-                                        {t('common.cancel')}
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            const rec = recommendations?.find(r => r.candidate_id === selectedCandidateForFinalize);
-                                            finalizeMutation.mutate({
-                                                candidateId: selectedCandidateForFinalize,
-                                                sceneIds: rec?.possible_scenes.map(s => s.scene_id) || []
-                                            });
-                                        }}
-                                        disabled={finalizeMutation.isPending}
-                                        className="flex-1 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-200 flex items-center justify-center disabled:opacity-50"
-                                    >
-                                        {finalizeMutation.isPending ? '...' : (t('common.confirm') || '確定する')}
-                                        <Check className="h-4 w-4 ml-2" />
-                                    </button>
+                                    <div className="flex space-x-3 pt-2">
+                                        <button
+                                            onClick={() => setSelectedCandidateForFinalize(null)}
+                                            className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                                        >
+                                            {t('common.cancel')}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const rec = recommendations?.find(r => r.candidate_id === selectedCandidateForFinalize);
+                                                finalizeMutation.mutate({
+                                                    candidateId: selectedCandidateForFinalize,
+                                                    sceneIds: rec?.possible_scenes.map(s => s.scene_id) || [],
+                                                    attendanceTarget: attendanceTarget
+                                                });
+                                            }}
+                                            disabled={finalizeMutation.isPending}
+                                            className="flex-1 py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors shadow-lg shadow-violet-200 flex items-center justify-center disabled:opacity-50"
+                                        >
+                                            {finalizeMutation.isPending ? '...' : (t('common.confirm') || '確定する')}
+                                            <Check className="h-4 w-4 ml-2" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
+
                 </>
             )}
         </div>

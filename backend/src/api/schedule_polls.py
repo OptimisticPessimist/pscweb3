@@ -15,6 +15,7 @@ from src.schemas.schedule_poll import (
 )
 from src.services.schedule_poll_service import get_schedule_poll_service
 from src.services.discord import get_discord_service, DiscordService
+from src.services.attendance import AttendanceService
 from datetime import datetime, timezone, timedelta
 
 router = APIRouter()
@@ -158,8 +159,15 @@ async def finalize_poll(
     candidate_id = payload.candidate_id
     scene_ids = payload.scene_ids
 
-    # 候補日を取得
-    candidate = await db.get(SchedulePollCandidate, candidate_id)
+    # 候補日を取得 (回答も含めて取得)
+    candidate_stmt = (
+        select(SchedulePollCandidate)
+        .where(SchedulePollCandidate.id == candidate_id)
+        .options(selectinload(SchedulePollCandidate.answers))
+    )
+    candidate_result = await db.execute(candidate_stmt)
+    candidate = candidate_result.scalar_one_or_none()
+    
     if not candidate or candidate.poll_id != poll_id:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
@@ -195,12 +203,41 @@ async def finalize_poll(
     for sid in scene_ids:
         db.add(RehearsalScene(rehearsal_id=rehearsal.id, scene_id=sid))
     
-    #TODO: キャスト・参加者の自動登録ロジック (既存のadd_rehearsalを参考にするのが良いが、一旦シンプルに)
-    
+    # 参加者・キャストの自動登録ロジック (既存のadd_rehearsal互換のため最低限保持)
     await db.commit()
+    
+    project = await db.get(TheaterProject, project_id)
+
+    # 対象ユーザー（候補日程でOK/Maybeと回答したメンバー、または全員など）
+    attendance_targets = None # 全員対象
+    if payload.attendance_target == "voters_only":
+        # 候補にOK/Maybeで回答したユーザーのIDを抽出
+        answered_users = [a.user_id for a in candidate.answers if a.status in ("ok", "maybe")]
+        if answered_users:
+            attendance_targets = answered_users
+        else:
+             # OK/Maybeの人がいなければ空リストか、あるいはフォールバックで全員？
+             # ここは誰も行けない予定を確定したという意味になるので、あえて誰も呼ばない（空リストはcreate_attendance側でどうなるか）
+             # create_attendance_event は target_user_ids=None で全員になる。
+             # [] を渡すと誰も呼ばないが、Discordユーザー0人扱いでスキップされるかもしれない
+             attendance_targets = [] 
+
+    # 出欠確認イベントの作成
+    if attendance_targets is None or attendance_targets:
+        attendance_service = AttendanceService(db, discord_service)
+        deadline = rehearsal.date - timedelta(hours=24)
+        
+        await attendance_service.create_attendance_event(
+            project=project,
+            title=f"稽古: {rehearsal.date.astimezone().strftime('%m/%d %H:%M')}",
+            deadline=deadline,
+            schedule_date=rehearsal.date,
+            location=rehearsal.location,
+            description=rehearsal.notes,
+            target_user_ids=attendance_targets
+        )
 
     # Discord通知
-    project = await db.get(TheaterProject, project_id)
     if project and project.discord_webhook_url:
         rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
         date_str = f"<t:{rehearsal_ts}:f>" # User local time
