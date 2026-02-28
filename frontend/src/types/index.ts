@@ -5,6 +5,7 @@ export interface User {
     screen_name?: string | null;
     discord_avatar_url?: string | null;
     has_premium_password?: boolean;
+    premium_tier?: string | null;
     created_at: string;
 }
 

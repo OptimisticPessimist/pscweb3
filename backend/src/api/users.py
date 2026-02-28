@@ -22,6 +22,7 @@ from src.db.models import (
 )
 from src.schemas.auth import UserResponse, UserUpdate
 from src.schemas.schedule import UserScheduleResponse, ScheduleItem
+from src.services.premium_config import PremiumConfigService
 
 router = APIRouter()
 
@@ -52,8 +53,11 @@ async def get_current_user_info(
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    # プレミアムランクの判定
+    tier = await PremiumConfigService.get_tier_by_password(user.premium_password)
+
     # UserResponse.from_user() を使用してDiscordアバター画像URLを含める
-    return UserResponse.from_user(user)
+    return UserResponse.from_user(user, premium_tier=tier)
 
 
 @router.patch("/me", response_model=UserResponse)
@@ -84,11 +88,16 @@ async def patch_current_user_info(
     # 更新
     if user_update.premium_password is not None:
         user.premium_password = user_update.premium_password
+    if user_update.screen_name is not None:
+        user.screen_name = user_update.screen_name
 
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse.from_user(user)
+    # 更新後のランク判定
+    tier = await PremiumConfigService.get_tier_by_password(user.premium_password)
+
+    return UserResponse.from_user(user, premium_tier=tier)
 
 
 @router.get("/me/schedule", response_model=UserScheduleResponse)

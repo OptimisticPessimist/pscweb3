@@ -5,11 +5,13 @@ export interface User {
     screen_name?: string | null;
     discord_avatar_url?: string | null;
     has_premium_password?: boolean;
+    premium_tier?: string | null;
     created_at: string;
 }
 
 export interface UserUpdate {
     premium_password?: string;
+    screen_name?: string;
 }
 
 export interface LoginResponse {

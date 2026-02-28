@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client';
-import type { User } from '../types';
+import type { User, UserUpdate } from '../types';
 
 export const authApi = {
     // バックエンドの /auth/login はリダイレクト用なので、フロントエンドからは直接リンクとして使用する
@@ -10,7 +10,7 @@ export const authApi = {
         return response.data;
     },
 
-    updateMe: async (data: { premium_password?: string }): Promise<User> => {
+    updateMe: async (data: UserUpdate): Promise<User> => {
         const response = await apiClient.patch<User>('/users/me', data);
         return response.data;
     },
