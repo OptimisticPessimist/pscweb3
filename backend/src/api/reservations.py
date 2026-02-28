@@ -183,11 +183,16 @@ async def get_project_members_public(
 
     if role == "cast":
         # キャストとして配役されているユーザーのみ
-        stmt = stmt.join(CharacterCasting, CharacterCasting.user_id == User.id)
+        # 注意: CharacterCasting -> Character -> Script と辿って project_id を確認する
+        from src.db.models import Character, Script
+        stmt = (
+            stmt.join(CharacterCasting, CharacterCasting.user_id == User.id)
+            .join(Character, Character.id == CharacterCasting.character_id)
+            .join(Script, Script.id == Character.script_id)
+            .where(Script.project_id == project_id)
+        )
 
-    # 重複排除のためにdistinctを使用する場合、組み合わせに注意が必要だが、
-    # 1ユーザー1メンバーレコードなので基本User単位でユニークになるはず。
-    # ただしCharacterCastingで複数役の場合重複する可能性があるためdistinctする。
+    # 重複排除のためにdistinctを使用
     result = await db.execute(stmt.distinct())
     rows = result.all()
     
