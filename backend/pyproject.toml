@@ -26,6 +26,7 @@ dependencies = [
     "requests>=2.32.5",
     "pynacl>=1.6.1",
     "sendgrid>=6.12.5",
+    "azure-storage-blob>=12.24.1",
 ]
 
 [project.optional-dependencies]
