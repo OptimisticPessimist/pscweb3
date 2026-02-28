@@ -1,0 +1,6 @@
+- [ ] 調査結果と修正方針のユーザー確認
+- [ ] バックエンド実装
+  - [ ] `backend/src/api/reservations.py` の `get_project_members_public` を修正し、`Character` と `Script` をJOINしてプロジェクトで絞り込む
+- [ ] テスト・動作確認
+  - [ ] pytestの実行
+  - [ ] サーバー起動およびAPIのローカル確認
