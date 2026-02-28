@@ -13,7 +13,7 @@ async def create_user(db, username="test_user"):
     return user
 
 async def create_project(db, owner, name="Test Project"):
-    project = TheaterProject(name=name)
+    project = TheaterProject(name=name, created_by_id=owner.id)
     db.add(project)
     await db.flush()
     member = ProjectMember(project_id=project.id, user_id=owner.id, role="owner")
@@ -25,38 +25,34 @@ async def create_project(db, owner, name="Test Project"):
 @pytest.mark.asyncio
 async def test_check_project_limit_allows_under_limit(db):
     user = await create_user(db)
-    await create_project(db, user) # 1st project (Private)
     
-    # Check limit for new private project -> Total 2 -> OK
+    # Check limit for new private project -> Total 1 -> OK
     await check_project_limit(user.id, db, new_project_is_public=False)
 
 @pytest.mark.asyncio
 async def test_check_project_limit_allows_public_project(db):
     user = await create_user(db)
     await create_project(db, user) # 1st
-    await create_project(db, user) # 2nd
     
-    # Check limit for new PUBLIC project -> Total private 2, public 1 -> OK
+    # Check limit for new PUBLIC project -> Total private 1, public 1 -> OK
     await check_project_limit(user.id, db, new_project_is_public=True)
 
 @pytest.mark.asyncio
 async def test_check_project_limit_blocks_over_limit_private(db):
     user = await create_user(db)
     await create_project(db, user) # 1st
-    await create_project(db, user) # 2nd
     
-    # Check limit for new private project -> Total 3 -> Error
+    # Check limit for new private project -> Total 2 -> Error
     with pytest.raises(HTTPException) as excinfo:
         await check_project_limit(user.id, db, new_project_is_public=False)
     assert excinfo.value.status_code == 400
-    assert "作成上限" in excinfo.value.detail
+    assert "作成枠" in excinfo.value.detail
 
 @pytest.mark.asyncio
 async def test_check_project_limit_excludes_existing_public_projects(db):
     user = await create_user(db)
-    await create_project(db, user) # 1st Private
     
-    public_project = await create_project(db, user) # 2nd (will be public)
+    public_project = await create_project(db, user) # 1st (will be public)
     public_project.is_public = True # Explicitly set public
     
     # Add public script to make it public (optional if we set project.is_public)
@@ -72,14 +68,14 @@ async def test_check_project_limit_excludes_existing_public_projects(db):
     await db.commit()
     await db.refresh(public_project) # Ensure relationship is loaded if needed, though check_project_limit queries it fresh
     
-    # Current private count = 1. New private project -> Total 2 -> OK
+    # Current private count = 0. New private project -> Total 1 -> OK
     await check_project_limit(user.id, db, new_project_is_public=False)
     
-    # Add another private project to reach limit
-    await create_project(db, user) # 3rd project (Private)
-    # Total projects: 3. Private: 2 (1st and 3rd). Public: 1 (2nd).
+    # Add a private project to reach limit
+    await create_project(db, user) # 2nd project (Private)
+    # Total projects: 2. Private: 1 (2nd). Public: 1 (1st).
     
-    # now private count = 2. New private project should fail
+    # now private count = 1. New private project should fail
     with pytest.raises(HTTPException):
         await check_project_limit(user.id, db, new_project_is_public=False)
 
@@ -87,9 +83,8 @@ async def test_check_project_limit_excludes_existing_public_projects(db):
 async def test_check_project_limit_loophole_prevention(db):
     user = await create_user(db)
     await create_project(db, user) # 1st Private
-    await create_project(db, user) # 2nd Private
     
-    p_public = await create_project(db, user) # 3rd (Public)
+    p_public = await create_project(db, user) # 2nd (Public)
     script = Script(
         id=uuid4(),
         project_id=p_public.id,

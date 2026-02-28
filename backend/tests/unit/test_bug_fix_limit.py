@@ -13,7 +13,7 @@ async def create_user(db, username="test_limit_user"):
     return user
 
 async def create_private_project(db, owner):
-    project = TheaterProject(name="Private Project", is_public=False)
+    project = TheaterProject(name="Private Project", is_public=False, created_by_id=owner.id)
     db.add(project)
     await db.flush()
     member = ProjectMember(project_id=project.id, user_id=owner.id, role="owner")
@@ -24,7 +24,7 @@ async def create_private_project(db, owner):
 
 async def create_public_script(db, uploader):
     # Public project for the script
-    project = TheaterProject(name="Source Public Project", is_public=True)
+    project = TheaterProject(name="Source Public Project", is_public=True, created_by_id=uploader.id)
     db.add(project)
     await db.flush()
     
@@ -52,8 +52,7 @@ async def test_import_script_respects_private_limit(db):
     # 1. Setup User
     user = await create_user(db)
     
-    # 2. Create 2 Private Projects (Limit Reached)
-    await create_private_project(db, user)
+    # 2. Create 1 Private Project (Limit Reached with limit=1)
     await create_private_project(db, user)
     
     # 3. Create a Public Script to import from
@@ -85,4 +84,4 @@ async def test_import_script_respects_private_limit(db):
         )
     
     assert excinfo.value.status_code == 400
-    assert "作成上限" in excinfo.value.detail
+    assert "作成枠" in excinfo.value.detail
