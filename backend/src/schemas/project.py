@@ -34,6 +34,7 @@ class ProjectResponse(BaseModel):
     discord_script_webhook_url: str | None = None
     discord_channel_id: str | None = None
     is_public: bool = False
+    is_restricted: bool = False  # 上限超過による制限モードフラグ
     created_at: datetime
 
     model_config = {"from_attributes": True}

@@ -4,7 +4,12 @@ export interface User {
     discord_username: string;
     screen_name?: string | null;
     discord_avatar_url?: string | null;
+    has_premium_password?: boolean;
     created_at: string;
+}
+
+export interface UserUpdate {
+    premium_password?: string;
 }
 
 export interface LoginResponse {

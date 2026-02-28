@@ -387,7 +387,18 @@
         "attendanceTargetLabel": "考勤确认对象",
         "targetVotersOnly": "仅回答者",
         "targetVotersOnlyDesc": "回答OK或Maybe的成员",
-        "targetEveryone": "所有人",
+        "targetEveryone": "全员",
         "targetEveryoneDesc": "所有项目成员"
+    },
+    "userSettings": {
+        "title": "用户设置",
+        "premiumPassword": "高级密码",
+        "premiumPasswordDescription": "输入每月更换的密码以增加私有项目的创建上限。",
+        "currentPasswordStatus": "当前状态",
+        "passwordActive": "高级密码已激活",
+        "passwordInactive": "未设置密码或密码无效",
+        "save": "保存设置",
+        "updateSuccess": "用户设置已成功更新。",
+        "updateError": "更新设置失败。"
     }
 }

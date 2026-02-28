@@ -9,6 +9,7 @@ from src.db import get_db
 from src.db.models import ProjectMember, User, Script, Scene, Line, Character
 from sqlalchemy.orm import selectinload
 from src.dependencies.auth import get_current_user_dep
+from src.services.project_limit import is_project_restricted
 
 
 async def get_project_member_dep(
@@ -75,11 +76,20 @@ async def get_project_owner_dep(
 
 
 async def get_project_editor_dep(
-    member: ProjectMember = Depends(get_project_member_dep)
+    member: ProjectMember = Depends(get_project_member_dep),
+    db: AsyncSession = Depends(get_db),
 ) -> ProjectMember:
     """編集者以上（オーナーまたはエディター）権限チェック用依存関係."""
     if member.role not in ["owner", "editor"]:
         raise HTTPException(status_code=403, detail="編集権限が必要です")
+    
+    # プロジェクト制限チェック
+    if await is_project_restricted(member.project_id, db):
+        raise HTTPException(
+            status_code=403, 
+            detail="このプロジェクトは作成上限数を超えているため、制限モード（閲覧のみ）になっています。機能を利用するにはパスワードを更新するか、プロジェクトを整理してください。"
+        )
+        
     return member
 
 

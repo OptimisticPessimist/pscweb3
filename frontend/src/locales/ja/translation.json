@@ -115,6 +115,7 @@
         "create": "作成",
         "deleting": "削除中...",
         "failedToDeleteProject": "プロジェクトの削除に失敗しました",
+        "failedToCreateProject": "プロジェクトの作成に失敗しました",
         "projectLimit": "作成できるプロジェクトは2つまでです",
         "isPublic": "公開プロジェクトにする",
         "importedFromPublicScript": "公開脚本からインポート",
@@ -136,6 +137,8 @@
         "returnToDashboard": "ダッシュボードに戻る",
         "created": "作成日",
         "role": "役割",
+        "restricted": "制限モード",
+        "restrictedDescription": "このプロジェクトは作成上限を超えているため、制限モード（閲覧のみ）になっています。設定からプレミアムパスワードを登録して解除してください。",
         "noDescription": "説明がありません。",
         "nextRehearsal": "次回稽古",
         "nextMilestone": "次のマイルストーン",
@@ -448,5 +451,16 @@
         "targetVotersOnlyDesc": "OKまたはMaybeと回答したメンバー",
         "targetEveryone": "全員",
         "targetEveryoneDesc": "プロジェクトメンバー全員"
+    },
+    "userSettings": {
+        "title": "ユーザー設定",
+        "premiumPassword": "プレミアムパスワード",
+        "premiumPasswordDescription": "月替わりのパスワードを入力すると、非公開プロジェクトの作成上限を増やすことができます。",
+        "currentPasswordStatus": "現在のステータス",
+        "passwordActive": "プレミアムパスワードが有効です",
+        "passwordInactive": "パスワード未設定、または無効です",
+        "save": "設定を保存",
+        "updateSuccess": "ユーザー設定を更新しました。",
+        "updateError": "設定の更新に失敗しました"
     }
 }

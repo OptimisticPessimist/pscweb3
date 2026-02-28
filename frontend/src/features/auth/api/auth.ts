@@ -10,6 +10,11 @@ export const authApi = {
         return response.data;
     },
 
+    updateMe: async (data: { premium_password?: string }): Promise<User> => {
+        const response = await apiClient.patch<User>('/users/me', data);
+        return response.data;
+    },
+
     // 仮にバックエンドにログアウトAPIがあれば呼ぶが、JWTなので基本はフロント側での破棄のみ
     // logout: async () => { ... }
 };

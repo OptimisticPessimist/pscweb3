@@ -40,6 +40,7 @@ const ReservationCancelPage = lazy(() => import('@/features/reservations/pages/R
 const SchedulePollListPage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollListPage').then(module => ({ default: module.SchedulePollListPage })));
 const SchedulePollCreatePage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollCreatePage').then(module => ({ default: module.SchedulePollCreatePage })));
 const SchedulePollDetailPage = lazy(() => import('@/features/schedule_polls/pages/SchedulePollDetailPage').then(module => ({ default: module.SchedulePollDetailPage })));
+const UserSettingsPage = lazy(() => import('@/pages/auth/UserSettingsPage').then(module => ({ default: module.UserSettingsPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +106,7 @@ function App() {
                     <Route path="/projects/:projectId/polls/:pollId" element={<SchedulePollDetailPage />} />
                     <Route path="/projects/:projectId/reservations" element={<ReservationListPage />} />
                     <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
+                    <Route path="/settings" element={<UserSettingsPage />} />
                   </Route>
                 </Route>
 

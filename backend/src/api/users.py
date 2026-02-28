@@ -10,8 +10,17 @@ from sqlalchemy.orm import selectinload
 
 from src.auth.jwt import get_current_user
 from src.db import get_db
-from src.db.models import Rehearsal, RehearsalParticipant, RehearsalCast, Milestone, ProjectMember, TheaterProject, RehearsalSchedule
-from src.schemas.auth import UserResponse
+from src.db.models import (
+    Rehearsal,
+    RehearsalParticipant,
+    RehearsalCast,
+    Milestone,
+    ProjectMember,
+    TheaterProject,
+    RehearsalSchedule,
+    User,
+)
+from src.schemas.auth import UserResponse, UserUpdate
 from src.schemas.schedule import UserScheduleResponse, ScheduleItem
 
 router = APIRouter()
@@ -44,6 +53,41 @@ async def get_current_user_info(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     # UserResponse.from_user() を使用してDiscordアバター画像URLを含める
+    return UserResponse.from_user(user)
+
+
+@router.patch("/me", response_model=UserResponse)
+async def patch_current_user_info(
+    user_update: UserUpdate,
+    authorization: str = Header(..., description="Bearer <token>"),
+    db: AsyncSession = Depends(get_db)
+) -> UserResponse:
+    """現在のユーザー情報を更新.
+
+    Args:
+        user_update: 更新データ
+        authorization: Authorization header (Bearer <token>)
+        db: データベースセッション
+
+    Returns:
+        UserResponse: 更新後のユーザー情報
+    """
+    if not authorization.startswith("Bearer "):
+         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+    
+    token = authorization.split(" ")[1]
+    
+    user = await get_current_user(token, db)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    # 更新
+    if user_update.premium_password is not None:
+        user.premium_password = user_update.premium_password
+
+    await db.commit()
+    await db.refresh(user)
+
     return UserResponse.from_user(user)
 
 

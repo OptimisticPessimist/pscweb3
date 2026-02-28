@@ -387,7 +387,18 @@
         "attendanceTargetLabel": "출석 확인 대상자",
         "targetVotersOnly": "응답자만",
         "targetVotersOnlyDesc": "OK 또는 Maybe로 응답한 멤버",
-        "targetEveryone": "전체",
-        "targetEveryoneDesc": "프로젝트 멤버 전체"
+        "targetEveryone": "모든 멤버",
+        "targetEveryoneDesc": "모든 프로젝트 멤버"
+    },
+    "userSettings": {
+        "title": "사용자 설정",
+        "premiumPassword": "프리미엄 비밀번호",
+        "premiumPasswordDescription": "매월 변경되는 비밀번호를 입력하면 비공개 프로젝트 생성 한도를 늘릴 수 있습니다.",
+        "currentPasswordStatus": "현재 상태",
+        "passwordActive": "프리미엄 비밀번호가 활성화되었습니다",
+        "passwordInactive": "비밀번호가 설정되지 않았거나 유효하지 않습니다",
+        "save": "설정 저장",
+        "updateSuccess": "사용자 설정이 업데이트되었습니다.",
+        "updateError": "설정 업데이트에 실패했습니다"
     }
 }

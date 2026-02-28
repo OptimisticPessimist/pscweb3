@@ -12,6 +12,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (token: string) => void;
     logout: () => void;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,6 +57,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         queryClient.clear();
     };
 
+    const refreshUser = async () => {
+        await queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -64,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 isAuthenticated: !!user,
                 login,
                 logout,
+                refreshUser,
             }}
         >
             {children}

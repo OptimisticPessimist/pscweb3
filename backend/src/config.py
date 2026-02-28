@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     # データベース
     database_url: str = "sqlite+aiosqlite:///test.db"
 
+    # Azure Storage
+    azure_storage_connection_string: str | None = None
+    premium_config_container: str = "config"
+    premium_config_blob_name: str = "premium_settings.json"
+
     # Discord OAuth
     discord_client_id: str = "test_client_id"
     discord_client_secret: str = "test_client_secret"
@@ -32,6 +37,16 @@ class Settings(BaseSettings):
 
     # 環境
     environment: str = "development"
+
+    # プロジェクト作成制限
+    default_project_limit: int = 1
+    premium_project_limit_tier1: int = 3
+    premium_project_limit_tier2: int = 5
+    premium_project_limit_test: int = 99
+
+    premium_password_tier1: str | None = None
+    premium_password_tier2: str | None = None
+    premium_password_test: str | None = "test-premium-pass-2026"
 
 
 settings = Settings()

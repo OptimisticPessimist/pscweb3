@@ -387,7 +387,18 @@
         "attendanceTargetLabel": "考勤確認對象",
         "targetVotersOnly": "僅回答者",
         "targetVotersOnlyDesc": "回答OK或Maybe的成員",
-        "targetEveryone": "所有人",
+        "targetEveryone": "全員",
         "targetEveryoneDesc": "所有專案成員"
+    },
+    "userSettings": {
+        "title": "使用者設定",
+        "premiumPassword": "高級密碼",
+        "premiumPasswordDescription": "輸入每月更換的密碼以增加私有專案的建立上限。",
+        "currentPasswordStatus": "目前狀態",
+        "passwordActive": "高級密碼已激活",
+        "passwordInactive": "未設定密碼或密碼無效",
+        "save": "儲存設定",
+        "updateSuccess": "使用者設定已成功更新。",
+        "updateError": "更新設定失敗。"
     }
 }

@@ -49,18 +49,35 @@ export const ProjectSettingsPage: React.FC = () => {
     if (isLoading || !project) return <div>{t('common.loading')}</div>;
 
     const isOwner = project.role === 'owner';
+    const isRestricted = project.is_restricted === true;
 
-    const canManageMilestones = isOwner || project.role === 'editor';
+    const canManageMilestones = (isOwner || project.role === 'editor') && !isRestricted;
+    const canUpdateProject = isOwner && !isRestricted;
 
     return (
         <div className="space-y-6">
             <ProjectDetailsHeader project={project} />
 
+            {isRestricted && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
+                    <div className="flex">
+                        <div className="ml-3">
+                            <h3 className="text-sm font-bold text-red-800">
+                                {t('project.restricted')}
+                            </h3>
+                            <div className="mt-2 text-sm text-red-700">
+                                <p>{t('project.restrictedDescription')}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-white shadow sm:rounded-lg mb-6">
                 <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">{t('project.settings.general')}</h3>
                     <div className="mt-5 max-w-xl">
-                        {isOwner ? (
+                        {canUpdateProject ? (
                             <ProjectUpdateForm project={project} projectId={projectId!} queryClient={queryClient} />
                         ) : (
                             <div className="space-y-4">
@@ -237,7 +254,7 @@ export const ProjectSettingsPage: React.FC = () => {
             </div>
 
             {
-                isOwner && (
+                isOwner && !isRestricted && (
                     <InvitationPanel projectId={projectId!} />
                 )
             }

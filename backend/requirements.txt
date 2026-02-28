@@ -61,3 +61,4 @@ uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'c
 watchfiles==1.1.1
 websockets==15.0.1
 werkzeug==3.1.4
+azure-storage-blob==12.24.1

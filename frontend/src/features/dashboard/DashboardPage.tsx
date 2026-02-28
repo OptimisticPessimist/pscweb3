@@ -58,9 +58,11 @@ export const DashboardPage = () => {
             // Clear location state
             navigate(location.pathname, { replace: true, state: {} });
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error("onError fired:", error);
-            setCreateError(error instanceof Error ? error.message : t('dashboard.failedToDeleteProject'));
+            const detail = error.response?.data?.detail;
+            const message = typeof detail === 'string' ? detail : (error.message || t('dashboard.failedToCreateProject') || 'Failed to create project');
+            setCreateError(message);
         }
     });
 
@@ -188,6 +190,11 @@ export const DashboardPage = () => {
                                         {project.is_public && (
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                 {t('common.public') || 'Public'}
+                                            </span>
+                                        )}
+                                        {project.is_restricted && (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                {t('project.restricted') || '制限モード'}
                                             </span>
                                         )}
                                     </div>

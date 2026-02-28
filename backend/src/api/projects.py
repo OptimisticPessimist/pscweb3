@@ -22,6 +22,7 @@ from src.schemas.project import (
 )
 from src.services.discord import DiscordService, get_discord_service
 from src.services.attendance import AttendanceService
+from src.services.project_limit import is_project_restricted, get_user_restricted_project_ids
 
 logger = get_logger(__name__)
 
@@ -69,6 +70,7 @@ async def create_project(
         name=project_data.name,
         description=project_data.description,
         is_public=project_data.is_public,
+        created_by_id=current_user.id,
     )
     db.add(project)
     await db.flush()
@@ -137,15 +139,7 @@ async def create_project(
         webhook_url=project.discord_webhook_url, # 現状はNoneだが将来的に設定可能
     )
 
-    return ProjectResponse(
-        id=project.id,
-        name=project.name,
-        description=project.description,
-        discord_webhook_url=project.discord_webhook_url,
-        discord_script_webhook_url=project.discord_script_webhook_url,
-        created_at=project.created_at,
-        role="owner"
-    )
+    return await _build_project_response(project, "owner", db)
 
 
 @router.get("/", response_model=list[ProjectResponse])
@@ -174,16 +168,31 @@ async def list_projects(
         .join(ProjectMember)
         .where(ProjectMember.user_id == current_user.id)
     )
+    projects_with_roles = result.all()
+    
+    # 全プロジェクトの制限状態を一括計算（作成者ごとにキャッシュ）
+    user_restricted_cache = {} # user_id -> set(restricted_project_ids)
     
     projects_response = []
-    for project, role in result.all():
+    for project, role in projects_with_roles:
+        if project.is_public:
+            is_restricted = False
+        elif not project.created_by_id:
+            is_restricted = False
+        else:
+            if project.created_by_id not in user_restricted_cache:
+                user_restricted_cache[project.created_by_id] = await get_user_restricted_project_ids(project.created_by_id, db)
+            is_restricted = project.id in user_restricted_cache[project.created_by_id]
+
         projects_response.append(ProjectResponse(
             id=project.id,
             name=project.name,
             description=project.description,
             discord_webhook_url=project.discord_webhook_url,
             discord_script_webhook_url=project.discord_script_webhook_url,
+            discord_channel_id=project.discord_channel_id,
             is_public=project.is_public,
+            is_restricted=is_restricted,
             created_at=project.created_at,
             role=role
         ))
@@ -191,8 +200,9 @@ async def list_projects(
     return projects_response
 
 
-def _build_project_response(project: TheaterProject, role: str) -> ProjectResponse:
+async def _build_project_response(project: TheaterProject, role: str, db: AsyncSession) -> ProjectResponse:
     """プロジェクトレスポンスを構築するヘルパー関数."""
+    is_restricted = await is_project_restricted(project.id, db)
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -201,6 +211,7 @@ def _build_project_response(project: TheaterProject, role: str) -> ProjectRespon
         discord_script_webhook_url=project.discord_script_webhook_url,
         discord_channel_id=project.discord_channel_id,
         is_public=project.is_public,
+        is_restricted=is_restricted,
         created_at=project.created_at,
         role=role
     )
@@ -226,7 +237,7 @@ async def get_project(
     if not project:
         raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
     
-    return _build_project_response(project, current_member.role)
+    return await _build_project_response(project, current_member.role, db)
 
 
 @router.put("/{project_id}", response_model=ProjectResponse)
@@ -284,7 +295,7 @@ async def update_project(
     await db.commit()
     await db.refresh(project)
 
-    return _build_project_response(project, current_member.role)
+    return await _build_project_response(project, current_member.role, db)
 
 
 
@@ -371,7 +382,7 @@ async def update_member_role(
     
     if target_member is None:
         raise HTTPException(status_code=404, detail="メンバーが見つかりません")
-        
+    
     # 更新
     old_role = target_member.role
     target_member.role = role_update.role
@@ -824,6 +835,7 @@ async def import_script(
         name=new_project_name,
         description=f"Imported from script: {source_script.title}",
         is_public=False, # 帰属保護のため非公開として作成
+        created_by_id=current_user.id,
     )
     db.add(new_project)
     await db.flush()

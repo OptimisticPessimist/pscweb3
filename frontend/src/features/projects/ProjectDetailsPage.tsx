@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from './api/projects';
 import { scriptsApi } from '../scripts/api/scripts';
 import { dashboardApi } from '../dashboard/api/dashboard';
-import { AlertCircle, Calendar, Clock, MapPin } from 'lucide-react';
+import { AlertCircle, Calendar, Clock, MapPin, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const ProjectDetailsPage = () => {
@@ -59,6 +59,16 @@ export const ProjectDetailsPage = () => {
             icon: AlertCircle,
             message: t('project.pendingAttendance', { count: dashboard.pending_attendance_count }),
             link: `/projects/${projectId}/attendance`,
+        });
+    }
+
+    // 作成上限による制限
+    if (project.is_restricted) {
+        alerts.push({
+            type: 'error',
+            icon: ShieldAlert,
+            message: t('project.restrictedDescription') || "このプロジェクトは作成上限を超えているため、制限モード（閲覧のみ）になっています。設定からプレミアムパスワードを登録して解除してください。",
+            link: `/settings`,
         });
     }
 

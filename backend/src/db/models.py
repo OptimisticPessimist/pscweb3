@@ -48,6 +48,7 @@ class User(Base):
     discord_username: Mapped[str] = mapped_column(String(100))
     screen_name: Mapped[str | None] = mapped_column(String(100), nullable=True)  # ユーザー設定のスクリーンネーム
     discord_avatar_hash: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Discordアバターハッシュ
+    premium_password: Mapped[str | None] = mapped_column(String(100), nullable=True)  # プレミアム機能用パスワード
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション
@@ -85,8 +86,11 @@ class TheaterProject(Base):
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    # 作成者（枠の消費主）
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # リレーション
+    created_by: Mapped["User | None"] = relationship()
     members: Mapped[list["ProjectMember"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )

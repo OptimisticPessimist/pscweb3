@@ -39,6 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { to: '/', icon: LayoutGrid, label: t('nav.dashboard') },
         { to: '/my-schedule', icon: Calendar, label: t('nav.mySchedule') },
         { to: '/public-scripts', icon: FileText, label: t('nav.publicScripts') || "Public Scripts" },
+        { to: '/settings', icon: Settings, label: t('userSettings.title') },
     ];
 
     // プロジェクト内メニュー

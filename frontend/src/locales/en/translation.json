@@ -125,9 +125,11 @@
         "enterProjectName": "Enter project name",
         "notFound": "Project not found",
         "returnToDashboard": "Return to Dashboard",
-        "created": "Created",
+        "created": "Created At",
         "role": "Role",
-        "noDescription": "No description provided.",
+        "restricted": "Restricted Mode",
+        "restrictedDescription": "This project has exceeded the creation limit and is in restricted mode (read-only). Please enter a premium password in settings to unlock.",
+        "noDescription": "No description available.",
         "nextRehearsal": "Next Rehearsal",
         "nextMilestone": "Next Milestone",
         "currentScript": "Current Script",
@@ -414,5 +416,16 @@
         "targetVotersOnlyDesc": "Members who answered OK or Maybe",
         "targetEveryone": "Everyone",
         "targetEveryoneDesc": "All project members"
+    },
+    "userSettings": {
+        "title": "User Settings",
+        "premiumPassword": "Premium Password",
+        "premiumPasswordDescription": "Enter the monthly password to increase your limit for private projects.",
+        "currentPasswordStatus": "Current Status",
+        "passwordActive": "Premium password is active",
+        "passwordInactive": "No password set or invalid",
+        "save": "Save Settings",
+        "updateSuccess": "User settings updated successfully.",
+        "updateError": "Failed to update settings."
     }
 }

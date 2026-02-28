@@ -1,10 +1,11 @@
 export interface User {
     id: string;
-    email: string;
-    name: string;
     discord_id: string;
-    avatar_url?: string;
-    discord_username?: string; // Added for consistency
+    discord_username: string;
+    screen_name?: string | null;
+    discord_avatar_url?: string | null;
+    has_premium_password?: boolean;
+    created_at: string;
 }
 
 export interface Project {
@@ -17,6 +18,7 @@ export interface Project {
     discord_script_webhook_url: string | null;
     discord_channel_id: string | null;
     is_public?: boolean;
+    is_restricted?: boolean; // 新規追加: 送信上限等による制限
     role: 'owner' | 'editor' | 'viewer';
 }
 

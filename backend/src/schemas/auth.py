@@ -12,6 +12,7 @@ class UserResponse(BaseModel):
     discord_username: str = Field(..., description="Discord ユーザー名")
     screen_name: str | None = Field(None, description="スクリーンネーム")
     discord_avatar_url: str | None = Field(None, description="Discordアバター画像URL")
+    has_premium_password: bool = Field(False, description="プレミアムパスワード設定済みフラグ")
 
     model_config = {"from_attributes": True}
 
@@ -23,8 +24,15 @@ class UserResponse(BaseModel):
             discord_id=user.discord_id,
             discord_username=user.discord_username,
             screen_name=user.screen_name,
-            discord_avatar_url=user.discord_avatar_url
+            discord_avatar_url=user.discord_avatar_url,
+            has_premium_password=bool(user.premium_password)
         )
+
+
+class UserUpdate(BaseModel):
+    """ユーザー情報更新リクエスト."""
+
+    premium_password: str | None = Field(None, description="プレミアム機能用パスワード")
 
 
 class TokenResponse(BaseModel):
