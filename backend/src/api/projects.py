@@ -420,6 +420,7 @@ async def update_member_role(
     
     # Discord通知
     # Project取得 (webhook_urlのため)
+    project = await db.get(TheaterProject, project_id)
     background_tasks.add_task(
         discord_service.send_notification,
         content=f"👮 **メンバー権限が変更されました**\nプロジェクト: {project.name}\nメンバー: {user.display_name}\n変更: {old_role} -> {role_update.role}",
