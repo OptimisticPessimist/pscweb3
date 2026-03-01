@@ -169,7 +169,11 @@
                 "save": "設定を保存",
                 "saving": "保存中...",
                 "botInviteDescription": "Botをサーバーに招待して、出欠確認などの機能を利用可能にします。",
-                "inviteBot": "Botを招待する"
+                "inviteBot": "Botを招待する",
+                "attendanceReminderHours": "リマインド（稽古のN時間前）",
+                "attendanceReminderHoursHelper": "稽古時間の何時間前に出欠の自動リマインダーを送信するかを指定します。",
+                "attendanceDeadlineReminderHours": "リマインド（回答締切のN時間前）",
+                "attendanceDeadlineReminderHoursHelper": "出欠の回答締切の何時間前に自動リマインダーを送信するかを指定します。"
             },
             "memberTable": {
                 "user": "ユーザー",

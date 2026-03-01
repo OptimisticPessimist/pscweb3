@@ -153,7 +153,11 @@
                 "save": "儲存設定",
                 "saving": "儲存中...",
                 "botInviteDescription": "邀請 Bot 加入伺服器以啟用考勤確認等功能。",
-                "inviteBot": "邀請 Bot"
+                "inviteBot": "邀請 Bot",
+                "attendanceReminderHours": "リマインド（稽古のN時間前）",
+                "attendanceReminderHoursHelper": "稽古時間の何時間前に出欠の自動リマインダーを送信するかを指定します。",
+                "attendanceDeadlineReminderHours": "リマインド（回答締切のN時間前）",
+                "attendanceDeadlineReminderHoursHelper": "出欠の回答締切の何時間前に自動リマインダーを送信するかを指定します。"
             },
             "memberTable": {
                 "user": "使用者",

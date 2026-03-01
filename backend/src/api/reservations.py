@@ -106,7 +106,7 @@ async def create_reservation(
                  if ref_user:
                      # ProjectMemberも見てdisplay_nameがあればそれを使う
                      ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == reservation.referral_user_id, ProjectMember.project_id == project.id))
-                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.screen_name or ref_user.discord_username or "不明"
+                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
             except Exception as e:
                 # 失敗しても通知は送る
                 pass
@@ -203,7 +203,7 @@ async def get_project_members_public(
             continue
         seen_ids.add(user.id)
         
-        name = member.display_name or user.screen_name or user.discord_username
+        name = member.display_name or user.display_name
         response.append({"id": user.id, "name": name})
 
     return response
@@ -249,7 +249,7 @@ async def cancel_reservation(
                  ref_user = await db.scalar(select(User).where(User.id == res_ref_id))
                  if ref_user:
                      ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == res_ref_id, ProjectMember.project_id == project.id))
-                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.screen_name or ref_user.discord_username or "不明"
+                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
             except:
                 pass
 
@@ -366,7 +366,7 @@ async def get_reservations(
             if pm and pm.display_name:
                 referral_name = pm.display_name
             else:
-                referral_name = r.referral_user.screen_name or r.referral_user.discord_username
+                referral_name = r.referral_user.display_name
         
         res_dict["referral_name"] = referral_name
         results.append(res_dict)
@@ -410,7 +410,7 @@ async def get_milestone_reservations(
                         ProjectMember.project_id == milestone.project_id
                     )
                 )
-                referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.screen_name or ref_user.discord_username or "不明"
+                referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
         
         response_list.append(
             ReservationResponse(
@@ -523,7 +523,7 @@ async def export_reservations(
             if pm and pm.display_name:
                 referral = pm.display_name
             else:
-                referral = r.referral_user.screen_name or r.referral_user.discord_username
+                referral = r.referral_user.display_name
 
         date_str = r.milestone.start_date.strftime("%Y/%m/%d %H:%M")
         created_str = r.created_at.strftime("%Y/%m/%d %H:%M:%S")

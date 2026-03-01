@@ -63,7 +63,7 @@ async def create_invitation(
         token=invitation.token,
         project_id=project.id,
         project_name=project.name,
-        created_by=current_user.discord_username,
+        created_by=current_user.display_name,
         expires_at=invitation.expires_at,
         max_uses=invitation.max_uses,
         used_count=invitation.used_count
@@ -96,7 +96,7 @@ async def get_invitation(
         token=invitation.token,
         project_id=invitation.project.id,
         project_name=invitation.project.name,
-        created_by=invitation.creator.discord_username,
+        created_by=invitation.creator.display_name,
         expires_at=invitation.expires_at,
         max_uses=invitation.max_uses,
         used_count=invitation.used_count
@@ -161,7 +161,7 @@ async def accept_invitation(
     # Discord通知
     background_tasks.add_task(
         discord_service.send_notification,
-        content=f"👋 **新しいメンバーが参加しました**\nプロジェクト: {project.name}\nユーザー: {current_user.discord_username}",
+        content=f"👋 **新しいメンバーが参加しました**\nプロジェクト: {project.name}\nユーザー: {current_user.display_name}",
         webhook_url=project.discord_webhook_url,
     )
     

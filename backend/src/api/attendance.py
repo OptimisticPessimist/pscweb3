@@ -76,7 +76,7 @@ async def get_attendance_event(
             AttendanceTargetResponse(
                 user_id=target.user_id,
                 display_name=display_name_map.get(target.user_id),
-                discord_username=target.user.discord_username,
+                discord_username=target.user.display_name,
                 status=target.status
             )
         )

@@ -23,7 +23,7 @@ class UserResponse(BaseModel):
         return cls(
             id=user.id,
             discord_id=user.discord_id,
-            discord_username=user.discord_username,
+            discord_username=user.display_name,
             screen_name=user.screen_name,
             discord_avatar_url=user.discord_avatar_url,
             has_premium_password=bool(user.premium_password),

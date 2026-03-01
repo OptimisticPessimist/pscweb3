@@ -29,7 +29,7 @@ async def send_script_notification(
         f"プロジェクト: {project.name}\n"
         f"タイトル: {script.title}\n"
         f"著者: {script.author if script.author else '不明'}\n"
-        f"ユーザー: {current_user.discord_username}\n"
+        f"ユーザー: {current_user.display_name}\n"
         f"@here"
     )
     

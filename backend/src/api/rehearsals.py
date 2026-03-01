@@ -262,7 +262,7 @@ async def get_rehearsal_schedule(
                 participants.append(
                     RehearsalParticipantResponse(
                         user_id=participant_user.id,
-                        user_name=participant_user.discord_username,
+                        user_name=participant_user.display_name,
                         display_name=display_name_map.get(participant_user.id),
                         staff_role=p.staff_role,
                     )
@@ -280,7 +280,7 @@ async def get_rehearsal_schedule(
                     character_id=rc.character_id,
                     character_name=rc.character.name,
                     user_id=rc.user_id,
-                    user_name=rc_user.discord_username,
+                    user_name=rc_user.display_name,
                     display_name=display_name_map.get(rc.user_id)
                 ))
 
@@ -304,7 +304,7 @@ async def get_rehearsal_schedule(
                                     character_id=char.id,
                                     character_name=char.name,
                                     user_id=casting.user_id,
-                                    user_name=cast_user.discord_username,
+                                    user_name=cast_user.display_name,
                                     display_name=display_name_map.get(casting.user_id)
                                 ))
 
@@ -532,7 +532,7 @@ async def add_rehearsal(
     for p in rehearsal.participants:
         user_name = "Unknown"
         if p.user:
-            user_name = p.user.discord_username
+            user_name = p.user.display_name
         
         participants_response.append(
             RehearsalParticipantResponse(
@@ -547,7 +547,7 @@ async def add_rehearsal(
     for c in rehearsal.casts:
         user_name = "Unknown"
         if c.user:
-            user_name = c.user.discord_username
+            user_name = c.user.display_name
 
         casts_response.append(
             RehearsalCastResponse(
@@ -776,7 +776,7 @@ async def update_rehearsal(
     for rc in rehearsal.casts:
         user_name = "Unknown"
         if rc.user:
-            user_name = rc.user.discord_username
+            user_name = rc.user.display_name
 
         casts_response_list.append(RehearsalCastResponse(
             character_id=rc.character_id,
@@ -815,7 +815,7 @@ async def update_rehearsal(
                     for casting in char.castings:
                         cast_user_name = "Unknown"
                         if casting.user:
-                            cast_user_name = casting.user.discord_username
+                            cast_user_name = casting.user.display_name
                         
                         casts_response_list.append(RehearsalCastResponse(
                             character_id=char.id,
@@ -895,7 +895,7 @@ async def update_rehearsal(
         participants=[
             RehearsalParticipantResponse(
                 user_id=p.user_id,
-                user_name=p.user.discord_username if p.user else "Unknown",
+                user_name=p.user.display_name if p.user else "Unknown",
                 display_name=display_name_map.get(p.user_id),
                 staff_role=p.staff_role
             ) for p in rehearsal.participants

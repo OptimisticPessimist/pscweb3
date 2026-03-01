@@ -65,6 +65,11 @@ class User(Base):
     # checking ProjectInvitation down below, it has creator relationship.
 
     @property
+    def display_name(self) -> str:
+        """表示用名を取得（スクリーンネーム優先、なければDiscordユーザー名）."""
+        return self.screen_name or self.discord_username
+
+    @property
     def discord_avatar_url(self) -> str | None:
         """DiscordアバターURLを生成."""
         if self.discord_avatar_hash:
@@ -84,6 +89,8 @@ class TheaterProject(Base):
     discord_script_webhook_url: Mapped[str | None] = mapped_column(String(200), nullable=True)  # 脚本通知用Webhook
     discord_channel_id: Mapped[str | None] = mapped_column(String(50), nullable=True)  # Discord Channel ID
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
+    attendance_reminder_1_hours: Mapped[int] = mapped_column(default=48) # 出欠リマインド1回目（稽古時間前）
+    attendance_reminder_2_hours: Mapped[int] = mapped_column(default=24) # 出欠リマインド2回目（稽古時間前）
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     # 作成者（枠の消費主）
@@ -502,7 +509,8 @@ class AttendanceEvent(Base):
     schedule_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 稽古日時
     deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # 回答期限
     completed: Mapped[bool] = mapped_column(default=False)  # 完了フラグ
-    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # リマインダー送信日時
+    reminder_1_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 1回目のリマインダー送信日時
+    reminder_2_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 2回目のリマインダー送信日時
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション

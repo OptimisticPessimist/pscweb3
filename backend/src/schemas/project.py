@@ -10,6 +10,8 @@ class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="プロジェクト名")
     description: str | None = Field(None, description="説明")
     is_public: bool = Field(False, description="公開プロジェクトかどうか")
+    attendance_reminder_1_hours: int = Field(48, description="出欠リマインド1回目（稽古時間前）")
+    attendance_reminder_2_hours: int = Field(24, description="出欠リマインド2回目（稽古時間前）")
     source_public_script_id: UUID | None = Field(None, description="コピー元の公開脚本ID")
 
 
@@ -21,6 +23,8 @@ class ProjectUpdate(BaseModel):
     discord_webhook_url: str | None = Field(None, description="Discord Webhook URL")
     discord_script_webhook_url: str | None = Field(None, description="脚通知用 Webhook URL")
     discord_channel_id: str | None = Field(None, description="Discord Channel ID")
+    attendance_reminder_1_hours: int | None = Field(None, description="出欠リマインド1回目（稽古時間前）")
+    attendance_reminder_2_hours: int | None = Field(None, description="出欠リマインド2回目（稽古時間前）")
 
 
 class ProjectResponse(BaseModel):
@@ -34,6 +38,8 @@ class ProjectResponse(BaseModel):
     discord_script_webhook_url: str | None = None
     discord_channel_id: str | None = None
     is_public: bool = False
+    attendance_reminder_1_hours: int = 48
+    attendance_reminder_2_hours: int = 24
     is_restricted: bool = False  # 上限超過による制限モードフラグ
     created_at: datetime
 

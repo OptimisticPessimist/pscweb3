@@ -71,6 +71,8 @@ async def create_project(
         name=project_data.name,
         description=project_data.description,
         is_public=project_data.is_public,
+        attendance_reminder_1_hours=project_data.attendance_reminder_1_hours,
+        attendance_reminder_2_hours=project_data.attendance_reminder_2_hours,
         created_by_id=current_user.id,
     )
     db.add(project)
@@ -136,7 +138,7 @@ async def create_project(
     # Discord通知
     background_tasks.add_task(
         discord_service.send_notification,
-        content=f"🎉 **新しいプロジェクトが作成されました**\nプロジェクト: {project.name}\n作成者: {current_user.discord_username}",
+        content=f"🎉 **新しいプロジェクトが作成されました**\nプロジェクト: {project.name}\n作成者: {current_user.display_name}",
         webhook_url=project.discord_webhook_url, # 現状はNoneだが将来的に設定可能
     )
 
@@ -193,6 +195,8 @@ async def list_projects(
             discord_script_webhook_url=project.discord_script_webhook_url,
             discord_channel_id=project.discord_channel_id,
             is_public=project.is_public,
+            attendance_reminder_1_hours=project.attendance_reminder_1_hours,
+            attendance_reminder_2_hours=project.attendance_reminder_2_hours,
             is_restricted=is_restricted,
             created_at=project.created_at,
             role=role
@@ -212,6 +216,8 @@ async def _build_project_response(project: TheaterProject, role: str, db: AsyncS
         discord_script_webhook_url=project.discord_script_webhook_url,
         discord_channel_id=project.discord_channel_id,
         is_public=project.is_public,
+        attendance_reminder_1_hours=project.attendance_reminder_1_hours,
+        attendance_reminder_2_hours=project.attendance_reminder_2_hours,
         is_restricted=is_restricted,
         created_at=project.created_at,
         role=role
@@ -283,6 +289,10 @@ async def update_project(
             project.discord_channel_id = None
         else:
             project.discord_channel_id = project_update.discord_channel_id
+    if project_update.attendance_reminder_1_hours is not None:
+        project.attendance_reminder_1_hours = project_update.attendance_reminder_1_hours
+    if project_update.attendance_reminder_2_hours is not None:
+        project.attendance_reminder_2_hours = project_update.attendance_reminder_2_hours
 
     # 監査ログ
     audit = AuditLog(
@@ -330,7 +340,7 @@ async def list_project_members(
     for pm, user in members:
         response.append(ProjectMemberResponse(
             user_id=user.id,
-            discord_username=user.discord_username,
+            discord_username=user.display_name,
             role=pm.role,
             default_staff_role=pm.default_staff_role,
             display_name=pm.display_name,
@@ -401,7 +411,7 @@ async def update_member_role(
         event="member.update_role",
         user_id=owner_member.user_id,
         project_id=project_id,
-        details=f"User {user.discord_username} role changed from {old_role} to {role_update.role}. Staff role: {role_update.default_staff_role}. Display name: {role_update.display_name}",
+        details=f"User {user.display_name} role changed from {old_role} to {role_update.role}. Staff role: {role_update.default_staff_role}. Display name: {role_update.display_name}",
     )
     db.add(audit)
     
@@ -410,16 +420,15 @@ async def update_member_role(
     
     # Discord通知
     # Project取得 (webhook_urlのため)
-    project = await db.get(TheaterProject, project_id)
     background_tasks.add_task(
         discord_service.send_notification,
-        content=f"👮 **メンバー権限が変更されました**\nプロジェクト: {project.name}\nメンバー: {user.discord_username}\n変更: {old_role} -> {role_update.role}",
+        content=f"👮 **メンバー権限が変更されました**\nプロジェクト: {project.name}\nメンバー: {user.display_name}\n変更: {old_role} -> {role_update.role}",
         webhook_url=project.discord_webhook_url,
     )
     
     return ProjectMemberResponse(
         user_id=user.id,
-        discord_username=user.discord_username,
+        discord_username=user.display_name,
         role=target_member.role,
         default_staff_role=target_member.default_staff_role,
         display_name=target_member.display_name,
@@ -481,10 +490,10 @@ async def remove_member(
     
     # ユーザー名取得（通知用）
     user_name = "Unknown"
-    result = await db.execute(select(User.discord_username).where(User.id == user_id))
-    user_name_res = result.scalar_one_or_none()
-    if user_name_res:
-        user_name = user_name_res
+    result = await db.execute(select(User).where(User.id == user_id))
+    user_res = result.scalar_one_or_none()
+    if user_res:
+        user_name = user_res.display_name
 
     # 削除
     await db.delete(target_member)
@@ -540,7 +549,7 @@ async def delete_project(
     # Discord通知のための情報を保存
     project_name = project.name
     webhook_url = project.discord_webhook_url
-    owner_username = current_member.user.discord_username
+    owner_username = current_member.user.display_name
 
     # 削除 (cascadeにより関連データも削除されるはず)
     await db.delete(project)
@@ -953,7 +962,7 @@ async def import_script(
     # Discord通知（必要であれば）
     background_tasks.add_task(
         discord_service.send_notification,
-        content=f"📥 **脚本がインポートされました**\n新プロジェクト: {new_project.name}\nユーザー: {current_user.discord_username}\n元脚本: {source_script.title}",
+        content=f"📥 **脚本がインポートされました**\n新プロジェクト: {new_project.name}\nユーザー: {current_user.display_name}\n元脚本: {source_script.title}",
         webhook_url=new_project.discord_webhook_url, # 現在はNone
     )
 

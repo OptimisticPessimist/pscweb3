@@ -206,7 +206,7 @@ class SchedulePollService:
             for answer in candidate.answers:
                 # Pydanticが拾えるように属性をセット
                 answer.display_name = name_map.get(answer.user_id)
-                answer.discord_username = answer.user.discord_username if answer.user else None
+                answer.discord_username = answer.user.display_name if answer.user else None
                 
                 roles = []
                 staff_role = staff_role_map.get(answer.user_id)
@@ -612,7 +612,7 @@ class SchedulePollService:
             if m.user_id not in answered_user_ids:
                 unanswered.append({
                     "user_id": m.user_id,
-                    "name": m.display_name or (m.user.discord_username if m.user else "Unknown"),
+                    "name": m.display_name or (m.user.display_name if m.user else "Unknown"),
                     "role": m.default_staff_role,
                     "discord_id": m.user.discord_id if m.user else None
                 })

@@ -72,7 +72,7 @@ async def list_project_characters(
         for cast in char.castings:
             castings.append(CastingUser(
                 user_id=cast.user.id,
-                discord_username=cast.user.discord_username,
+                discord_username=cast.user.display_name,
                 display_name=display_name_map.get(cast.user.id),
                 cast_name=cast.cast_name
             ))
@@ -149,7 +149,7 @@ async def add_casting(
     if existing:
         raise HTTPException(status_code=400, detail="このユーザーは既にこのキャラクターに配役されています")
         
-    target_username = target_user.discord_username
+    target_username = target_user.display_name
     
     # 追加
     new_casting = CharacterCasting(
@@ -164,7 +164,7 @@ async def add_casting(
         event="casting.add",
         user_id=editor_member.user_id,
         project_id=project_id,
-        details=f"Assigned {target_user.discord_username} to {character.name}",
+        details=f"Assigned {target_user.display_name} to {character.name}",
     )
     db.add(audit)
     
@@ -192,7 +192,7 @@ async def add_casting(
     return [
         CastingUser(
             user_id=c.user.id,
-            discord_username=c.user.discord_username,
+            discord_username=c.user.display_name,
             cast_name=c.cast_name
         ) for c in character.castings
     ]
@@ -245,10 +245,10 @@ async def remove_casting(
         
     # ユーザー名取得（通知用）
     user_name = "Unknown"
-    user_res = await db.execute(select(User.discord_username).where(User.id == user_id))
-    u = user_res.scalar_one_or_none()
-    if u:
-        user_name = u
+    result = await db.execute(select(User).where(User.id == user_id))
+    user_res = result.scalar_one_or_none()
+    if user_res:
+        user_name = user_res.display_name
         
     # 削除
     await db.delete(casting)
@@ -285,7 +285,7 @@ async def remove_casting(
     return [
         CastingUser(
             user_id=c.user.id,
-            discord_username=c.user.discord_username,
+            discord_username=c.user.display_name,
             cast_name=c.cast_name
         ) for c in character.castings
     ]

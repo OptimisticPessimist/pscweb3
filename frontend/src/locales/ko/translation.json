@@ -153,7 +153,11 @@
                 "botInviteDescription": "Bot을 서버에 초대하여 출석 확인과 같은 기능을 활성화하세요.",
                 "inviteBot": "Bot 초대",
                 "save": "설정 저장",
-                "saving": "저장 중..."
+                "saving": "저장 중...",
+                "attendanceReminderHours": "리마인드 (연습 N시간 전)",
+                "attendanceReminderHoursHelper": "연습 시작 몇 시간 전에 자동 출석 리마인더를 보낼지 지정합니다.",
+                "attendanceDeadlineReminderHours": "리마인드 (마감 N시간 전)",
+                "attendanceDeadlineReminderHoursHelper": "응답 마감 몇 시간 전에 자동 리마인더를 보낼지 지정합니다."
             },
             "memberTable": {
                 "user": "사용자",
