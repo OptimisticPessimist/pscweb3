@@ -242,7 +242,14 @@
         "copyright": "Copyright",
         "contact": "Contact",
         "notes": "Notes",
-        "revision": "Revision"
+        "revision": "Revision",
+        "pdfOptions": "PDF Options",
+        "pdfOrientation": "Paper Orientation",
+        "pdfLandscape": "Landscape",
+        "pdfPortrait": "Portrait",
+        "pdfWritingDirection": "Writing Direction",
+        "pdfVertical": "Vertical",
+        "pdfHorizontal": "Horizontal"
     },
     "sceneChart": {
         "title": "Scene Chart",

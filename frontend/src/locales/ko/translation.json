@@ -216,7 +216,14 @@
             "contactPlaceholder": "예: email@example.com",
             "authorLabel": "작가",
             "authorPlaceholder": "예: 윌리엄 셰익스피어"
-        }
+        },
+        "pdfOptions": "PDF 설정",
+        "pdfOrientation": "용지 방향",
+        "pdfLandscape": "가로",
+        "pdfPortrait": "세로",
+        "pdfWritingDirection": "글쓰기 방향",
+        "pdfVertical": "세로쓰기",
+        "pdfHorizontal": "가로쓰기"
     },
     "sceneChart": {
         "title": "장면표",

@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
@@ -9,6 +10,10 @@ export const ScriptListPage: React.FC = () => {
     const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
+
+    const [pdfOptionsTarget, setPdfOptionsTarget] = useState<{ scriptId: string; title: string } | null>(null);
+    const [pdfOrientation, setPdfOrientation] = useState<string>('landscape');
+    const [pdfWritingDirection, setPdfWritingDirection] = useState<string>('vertical');
 
     const { data: scripts, isLoading } = useQuery({
         queryKey: ['scripts', projectId],
@@ -28,7 +33,10 @@ export const ScriptListPage: React.FC = () => {
 
     const handleDownloadPdf = async (scriptId: string, title: string) => {
         try {
-            const blob = await scriptsApi.downloadScriptPdf(projectId!, scriptId);
+            const blob = await scriptsApi.downloadScriptPdf(projectId!, scriptId, {
+                orientation: pdfOrientation,
+                writingDirection: pdfWritingDirection,
+            });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -41,6 +49,7 @@ export const ScriptListPage: React.FC = () => {
             console.error('Failed to download PDF', error);
             alert('Failed to download PDF');
         }
+        setPdfOptionsTarget(null);
     };
 
     if (isLoading) return <div>Loading scripts...</div>;
@@ -99,7 +108,7 @@ export const ScriptListPage: React.FC = () => {
                                         <Eye className="h-5 w-5" />
                                     </Link>
                                     <button
-                                        onClick={() => handleDownloadPdf(script.id, script.title)}
+                                        onClick={() => setPdfOptionsTarget({ scriptId: script.id, title: script.title })}
                                         className="text-gray-400 hover:text-gray-500"
                                         title="Download PDF"
                                     >
@@ -122,6 +131,55 @@ export const ScriptListPage: React.FC = () => {
                     ))}
                 </ul>
             </div>
+
+            {/* PDF Options Modal */}
+            {pdfOptionsTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-80 space-y-4">
+                        <h3 className="text-lg font-medium text-gray-900">{t('script.pdfOptions')}</h3>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {t('script.pdfOrientation')}
+                            </label>
+                            <select
+                                value={pdfOrientation}
+                                onChange={(e) => setPdfOrientation(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            >
+                                <option value="landscape">{t('script.pdfLandscape')}</option>
+                                <option value="portrait">{t('script.pdfPortrait')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {t('script.pdfWritingDirection')}
+                            </label>
+                            <select
+                                value={pdfWritingDirection}
+                                onChange={(e) => setPdfWritingDirection(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            >
+                                <option value="vertical">{t('script.pdfVertical')}</option>
+                                <option value="horizontal">{t('script.pdfHorizontal')}</option>
+                            </select>
+                        </div>
+                        <div className="flex justify-end space-x-2 pt-2">
+                            <button
+                                onClick={() => setPdfOptionsTarget(null)}
+                                className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={() => handleDownloadPdf(pdfOptionsTarget.scriptId, pdfOptionsTarget.title)}
+                                className="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                            >
+                                {t('script.downloadPdf')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

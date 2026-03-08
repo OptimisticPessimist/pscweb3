@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const ScriptDetailPage: React.FC = () => {
@@ -15,10 +15,17 @@ export const ScriptDetailPage: React.FC = () => {
         enabled: !!scriptId,
     });
 
+    const [pdfOrientation, setPdfOrientation] = useState<string>('landscape');
+    const [pdfWritingDirection, setPdfWritingDirection] = useState<string>('vertical');
+    const [showPdfOptions, setShowPdfOptions] = useState(false);
+
     const handleDownloadPdf = async () => {
         if (!script) return;
         try {
-            const blob = await scriptsApi.downloadScriptPdf(projectId!, scriptId!);
+            const blob = await scriptsApi.downloadScriptPdf(projectId!, scriptId!, {
+                orientation: pdfOrientation,
+                writingDirection: pdfWritingDirection,
+            });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -59,7 +66,46 @@ export const ScriptDetailPage: React.FC = () => {
                         </h2>
                     </div>
                 </div>
-                <div className="mt-4 flex md:mt-0 md:ml-4">
+                <div className="mt-4 flex md:mt-0 md:ml-4 items-center space-x-2">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowPdfOptions(!showPdfOptions)}
+                            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                            {t('script.pdfOptions')}
+                        </button>
+                        {showPdfOptions && (
+                            <div className="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-4 space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                        {t('script.pdfOrientation')}
+                                    </label>
+                                    <select
+                                        value={pdfOrientation}
+                                        onChange={(e) => setPdfOrientation(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="landscape">{t('script.pdfLandscape')}</option>
+                                        <option value="portrait">{t('script.pdfPortrait')}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                                        {t('script.pdfWritingDirection')}
+                                    </label>
+                                    <select
+                                        value={pdfWritingDirection}
+                                        onChange={(e) => setPdfWritingDirection(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                    >
+                                        <option value="vertical">{t('script.pdfVertical')}</option>
+                                        <option value="horizontal">{t('script.pdfHorizontal')}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <button
                         onClick={handleDownloadPdf}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

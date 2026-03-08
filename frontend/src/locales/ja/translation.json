@@ -278,7 +278,14 @@
         "copyright": "著作権",
         "contact": "連絡先",
         "notes": "メモ",
-        "revision": "リビジョン"
+        "revision": "リビジョン",
+        "pdfOptions": "PDF設定",
+        "pdfOrientation": "用紙の向き",
+        "pdfLandscape": "横置き",
+        "pdfPortrait": "縦置き",
+        "pdfWritingDirection": "文字方向",
+        "pdfVertical": "縦書き",
+        "pdfHorizontal": "横書き"
     },
     "sceneChart": {
         "title": "香盤表",

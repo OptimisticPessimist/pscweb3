@@ -153,14 +153,26 @@ async def get_script(
 @router.get("/{project_id}/{script_id}/pdf")
 async def download_script_pdf(
     tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
+    orientation: str = Query("landscape", description="Paper orientation: landscape or portrait"),
+    writing_direction: str = Query("vertical", description="Writing direction: vertical or horizontal"),
 ):
     """脚本のPDFをダウンロード."""
     # 権限チェックはDepends(get_script_member_dep)内で完了済み
     member, script = tuple_data
 
+    # パラメータバリデーション
+    if orientation not in ("landscape", "portrait"):
+        orientation = "landscape"
+    if writing_direction not in ("vertical", "horizontal"):
+        writing_direction = "vertical"
+
     # PDF生成
     try:
-        pdf_bytes = generate_script_pdf(script.content)
+        pdf_bytes = generate_script_pdf(
+            script.content,
+            orientation=orientation,
+            writing_direction=writing_direction,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 

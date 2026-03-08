@@ -29,8 +29,16 @@ export const scriptsApi = {
         await apiClient.delete(`/scripts/${projectId}/${scriptId}`);
     },
 
-    downloadScriptPdf: async (projectId: string, scriptId: string): Promise<Blob> => {
-        const response = await apiClient.get(`/scripts/${projectId}/${scriptId}/pdf`, {
+    downloadScriptPdf: async (
+        projectId: string,
+        scriptId: string,
+        options?: { orientation?: string; writingDirection?: string }
+    ): Promise<Blob> => {
+        const params = new URLSearchParams();
+        if (options?.orientation) params.append('orientation', options.orientation);
+        if (options?.writingDirection) params.append('writing_direction', options.writingDirection);
+        const query = params.toString() ? `?${params.toString()}` : '';
+        const response = await apiClient.get(`/scripts/${projectId}/${scriptId}/pdf${query}`, {
             responseType: 'blob',
         });
         return response.data;

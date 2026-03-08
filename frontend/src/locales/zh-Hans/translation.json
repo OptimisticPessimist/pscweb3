@@ -216,7 +216,14 @@
             "contactPlaceholder": "例如：email@example.com",
             "authorLabel": "作者",
             "authorPlaceholder": "例: 威廉·莎士比亚"
-        }
+        },
+        "pdfOptions": "PDF 设置",
+        "pdfOrientation": "纸张方向",
+        "pdfLandscape": "横向",
+        "pdfPortrait": "纵向",
+        "pdfWritingDirection": "文字方向",
+        "pdfVertical": "竖排",
+        "pdfHorizontal": "横排"
     },
     "sceneChart": {
         "title": "场景表",
