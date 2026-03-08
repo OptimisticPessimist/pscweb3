@@ -35,6 +35,8 @@ export const SchedulePollCreatePage: React.FC = () => {
     const [candidates, setCandidates] = useState<DateCandidate[]>([
         { start_date: '', start_time: '22:00', end_time: '23:59' }
     ]);
+    const [deadlineDate, setDeadlineDate] = useState('');
+    const [deadlineTime, setDeadlineTime] = useState('18:00');
 
     const { data: members } = useQuery({
         queryKey: ['projectMembers', projectId],
@@ -52,7 +54,7 @@ export const SchedulePollCreatePage: React.FC = () => {
     }, [members]);
 
     const createMutation = useMutation({
-        mutationFn: (data: { title: string, description?: string, required_roles?: string[], candidates: { start_datetime: string, end_datetime: string }[] }) =>
+        mutationFn: (data: { title: string, description?: string, required_roles?: string[], deadline?: string, candidates: { start_datetime: string, end_datetime: string }[] }) =>
             schedulePollApi.createPoll(projectId!, data),
         onSuccess: (newPoll) => {
             queryClient.invalidateQueries({ queryKey: ['schedulePolls', projectId] });
@@ -107,10 +109,15 @@ export const SchedulePollCreatePage: React.FC = () => {
             return;
         }
 
+        const deadline = deadlineDate && deadlineTime
+            ? new Date(`${deadlineDate}T${deadlineTime}:00`).toISOString()
+            : undefined;
+
         createMutation.mutate({
             title,
             description,
             required_roles: requiredRoles,
+            deadline,
             candidates: formattedCandidates
         });
     };
@@ -197,6 +204,35 @@ export const SchedulePollCreatePage: React.FC = () => {
                             </p>
                         </div>
                     )}
+
+                    <div className="pt-4 border-t border-gray-50">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                            {t('schedulePoll.deadlineLabel') || '回答期限（任意）'}
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="date"
+                                    value={deadlineDate}
+                                    onChange={(e) => setDeadlineDate(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="time"
+                                    value={deadlineTime}
+                                    onChange={(e) => setDeadlineTime(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                            {t('schedulePoll.deadlineHint') || '設定した時刻に未回答者へ自動でリマインドを送信します。'}
+                        </p>
+                    </div>
                 </div>
 
                 <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-8">

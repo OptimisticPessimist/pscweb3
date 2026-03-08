@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
+import { projectsApi } from '@/features/projects/api/projects';
 import {
     Clock,
     CheckCircle2,
@@ -99,6 +100,17 @@ export const SchedulePollDetailPage: React.FC = () => {
         }
     }, [unansweredMembers]);
 
+    const stopReminderMutation = useMutation({
+        mutationFn: () => schedulePollApi.stopAutoReminder(projectId!, pollId!),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedulePoll', projectId, pollId] });
+            toast.success(t('schedulePoll.autoReminderStopped') || '自動リマインドを停止しました');
+        },
+        onError: () => {
+            toast.error(t('schedulePoll.stopReminderError') || '停止に失敗しました');
+        }
+    });
+
     const remindMutation = useMutation({
         mutationFn: () => schedulePollApi.remindUnansweredMembers(projectId!, pollId!, targetUserIds),
         onSuccess: () => {
@@ -108,6 +120,18 @@ export const SchedulePollDetailPage: React.FC = () => {
             toast.error('リマインドの送信に失敗しました');
         }
     });
+
+    const { data: members } = useQuery({
+        queryKey: ['projectMembers', projectId],
+        queryFn: () => projectsApi.getProjectMembers(projectId!),
+        enabled: !!projectId
+    });
+
+    const isEditorOrOwner = useMemo(() => {
+        if (!members || !user) return false;
+        const member = members.find(m => m.user_id === user.id);
+        return member && (member.role === 'owner' || member.role === 'editor');
+    }, [members, user]);
 
     const handleDelete = () => {
         if (window.confirm(t('schedulePoll.confirmDelete') || 'この日程調整を削除してもよろしいですか？\n削除すると参加者の回答などもすべて消去され復元できません。')) {
@@ -165,6 +189,21 @@ export const SchedulePollDetailPage: React.FC = () => {
                     <div>
                         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{poll.title}</h1>
                         <p className="text-gray-500 mt-1">{poll.description}</p>
+                        {poll.deadline && (
+                            <div className="flex items-center space-x-2 mt-2 text-rose-600">
+                                <Clock className="h-4 w-4" />
+                                <span className="text-xs font-bold">
+                                    {t('schedulePoll.deadlineLabel') || '回答期限'}:
+                                    {new Date(poll.deadline).toLocaleString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        weekday: 'short',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
+                        )}
                         {poll.required_roles && (
                             <div className="flex items-center space-x-2 mt-2">
                                 <Shield className="h-4 w-4 text-indigo-500" />
@@ -376,13 +415,34 @@ export const SchedulePollDetailPage: React.FC = () => {
                                         {t('schedulePoll.unansweredReminder') || '未回答メンバーのリマインド'} ({unansweredMembers.length}名)
                                     </h2>
                                 </div>
-                                <button
-                                    onClick={() => refetchUnanswered()}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 group"
-                                    title={t('common.refresh') || '更新'}
-                                >
-                                    <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
-                                </button>
+                                <div className="flex items-center space-x-2">
+                                    {isEditorOrOwner && !poll.auto_reminder_stopped && poll.deadline && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(t('schedulePoll.confirmStopReminder') || '以前に設定された回答期限による自動リマインド送信を停止しますか？')) {
+                                                    stopReminderMutation.mutate();
+                                                }
+                                            }}
+                                            disabled={stopReminderMutation.isPending}
+                                            className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 px-3 py-2 rounded-lg transition-colors flex items-center"
+                                        >
+                                            <Bell className="h-3 w-3 mr-1" />
+                                            {stopReminderMutation.isPending ? '...' : (t('schedulePoll.stopAutoReminder') || '自動リマインド停止')}
+                                        </button>
+                                    )}
+                                    {poll.auto_reminder_stopped && (
+                                        <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-2 rounded-lg flex items-center border border-gray-100 italic">
+                                            {t('schedulePoll.autoReminderIsStopped') || '自動リマインド停止済み'}
+                                        </span>
+                                    )}
+                                    <button
+                                        onClick={() => refetchUnanswered()}
+                                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 group"
+                                        title={t('common.refresh') || '更新'}
+                                    >
+                                        <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
+                                    </button>
+                                </div>
                             </div>
 
                             <p className="text-sm text-gray-500 mb-4">

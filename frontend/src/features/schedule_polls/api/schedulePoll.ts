@@ -25,6 +25,8 @@ export interface SchedulePollResponse {
     created_at: string;
     creator_id: string;
     required_roles: string | null;
+    deadline?: string;
+    auto_reminder_stopped: boolean;
     candidates: SchedulePollCandidateResponse[];
 }
 
@@ -133,10 +135,16 @@ export const schedulePollApi = {
         title: string,
         description?: string,
         required_roles?: string[],
+        deadline?: string,
         candidates: { start_datetime: string, end_datetime: string }[]
     }): Promise<SchedulePollResponse> => {
         const response = await apiClient.post<SchedulePollResponse>(`/projects/${projectId}/polls`, data);
         return response.data;
+    },
+
+    // 自動リマインドを停止
+    stopAutoReminder: async (projectId: string, pollId: string): Promise<void> => {
+        await apiClient.post(`/projects/${projectId}/polls/${pollId}/stop-reminder`);
     },
 
     // 日程調整を削除
