@@ -107,6 +107,7 @@ def _build_scene_chart_response(chart: SceneChart) -> SceneChartResponse:
             CharacterInScene(
                 id=mapping.character.id,
                 name=mapping.character.name,
+                order=mapping.character.order,
             )
         )
 

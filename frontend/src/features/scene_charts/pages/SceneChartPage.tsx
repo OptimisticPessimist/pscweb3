@@ -86,10 +86,12 @@ export const SceneChartPage = () => {
                                 {/* Let's gather all unique chars from the scenes in the chart to build columns dynamically. */}
                                 {(() => {
                                     // Extract unique characters from all scenes for headers
-                                    const allCharMap = new Map<string, string>();
+                                    const allCharMap = new Map<string, { id: string, name: string, order: number }>();
                                     chart.scenes.forEach(scene => {
                                         scene.characters.forEach(char => {
-                                            allCharMap.set(char.id, char.name);
+                                            if (!allCharMap.has(char.id)) {
+                                                allCharMap.set(char.id, { id: char.id, name: char.name, order: char.order });
+                                            }
                                         });
                                     });
                                     // Or utilize script's character list if we fetched script details? 
@@ -100,7 +102,7 @@ export const SceneChartPage = () => {
                                     // Ideally we should use script.characters for columns.
                                     // But we don't have full script data here, only summary.
                                     // Let's use the chart's aggregated character set for now.
-                                    const uniqueChars = Array.from(allCharMap.entries()).map(([id, name]) => ({ id, name }));
+                                    const uniqueChars = Array.from(allCharMap.values()).sort((a, b) => a.order - b.order);
 
                                     // Sort characters? Maybe by name?
                                     // Ideally specific order.
@@ -127,11 +129,15 @@ export const SceneChartPage = () => {
                                         {scene.scene_heading}
                                     </td>
                                     {(() => {
-                                        const allCharMap = new Map<string, string>();
+                                        const allCharMap = new Map<string, { id: string, name: string, order: number }>();
                                         chart.scenes.forEach(s => {
-                                            s.characters.forEach(c => allCharMap.set(c.id, c.name));
+                                            s.characters.forEach(c => {
+                                                if (!allCharMap.has(c.id)) {
+                                                    allCharMap.set(c.id, { id: c.id, name: c.name, order: c.order });
+                                                }
+                                            });
                                         });
-                                        const uniqueChars = Array.from(allCharMap.entries()).map(([id, name]) => ({ id, name }));
+                                        const uniqueChars = Array.from(allCharMap.values()).sort((a, b) => a.order - b.order);
 
                                         return uniqueChars.map(char => {
                                             const isAppearing = scene.characters.some(c => c.id === char.id);

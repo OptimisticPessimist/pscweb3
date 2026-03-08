@@ -148,22 +148,10 @@ async def parse_fountain_and_create_models(
 
     # 登場人物を抽出してマップを作成
     
-    # 標準のCharacter要素とカスタムセクション「登場人物」の両方から抽出
     character_map: dict[str, Character] = {}
+    current_order_index = 1
     
-    # 1. まず標準的なCharacter要素から基本リストを作成
-    for element in f.elements:
-        if element.element_type == "Character":
-            char_name = element.original_content.strip()
-            if char_name.startswith("@"):
-                char_name = char_name[1:]
-            
-            if char_name and char_name not in character_map:
-                character = Character(script_id=script.id, name=char_name)
-                db.add(character)
-                character_map[char_name] = character
-
-    # 2. カスタムセクション「# 登場人物」または「# Character」を探して詳細情報を付与
+    # 1. カスタムセクション「# 登場人物」または「# Character」を探して明示的な順序と詳細情報を抽出
     in_character_section = False
     
     for element in f.elements:
@@ -171,7 +159,6 @@ async def parse_fountain_and_create_models(
         
         # セクション見出しの検出
         if element.element_type == "Section Heading":
-            # "登場人物" または "Character" を含む見出し（レベル問わず）
             if "登場人物" in content or "Character" in content:
                 in_character_section = True
                 logger.info("Found Character Definition Section")
@@ -181,25 +168,67 @@ async def parse_fountain_and_create_models(
         # セクション内の要素を解析
         elif in_character_section and element.element_type in ["Action", "Character", "Dialogue"]:
             # Action要素内の各行を処理（Fountainパーサーが複数行を1つのActionとしてまとめる場合があるため）
+            # ! で始まる場合は除去する (前処理で追加された場合)
+            if content.startswith("!"):
+                content = content[1:]
+
             lines = content.splitlines()
             for line in lines:
                 line = line.strip()
-                # "Name: Description" 形式を探す (コロン区切り)
+                if not line:
+                    continue
+                
+                # "Name: Description" 形式を探す (コロン区切り)。なければ名前のみ
                 if ":" in line:
                     parts = line.split(":", 1)
                     name_part = parts[0].strip()
                     desc_part = parts[1].strip()
-                    
-                    # 既存キャラクターがあれば更新、なければ新規作成
-                    if name_part:
-                        if name_part in character_map:
-                            character = character_map[name_part]
-                            character.description = desc_part
-                        else:
-                            character = Character(script_id=script.id, name=name_part, description=desc_part)
-                            db.add(character)
-                            character_map[name_part] = character
-                        logger.info(f"Updated description for {name_part}")
+                else:
+                    name_part = line.strip()
+                    desc_part = ""
+                
+                if name_part.startswith("@"):
+                    name_part = name_part[1:].strip()
+                
+                # 既存キャラクターがなければ新規作成
+                if name_part and name_part not in character_map:
+                    character = Character(
+                        script_id=script.id,
+                        name=name_part,
+                        description=desc_part,
+                        order=current_order_index
+                    )
+                    db.add(character)
+                    character_map[name_part] = character
+                    current_order_index += 1
+                    logger.info(f"Added character from section: {name_part} (order: {current_order_index-1})")
+
+    # 2. 本文からその他のキャラクターを登場順に抽出
+    in_character_section = False
+    
+    for element in f.elements:
+        content = element.original_content.strip()
+        
+        if element.element_type == "Section Heading":
+            if "登場人物" in content or "Character" in content:
+                in_character_section = True
+            else:
+                in_character_section = False
+                
+        elif not in_character_section and element.element_type == "Character":
+            char_name = content
+            if char_name.startswith("@"):
+                char_name = char_name[1:]
+            
+            if char_name and char_name not in character_map:
+                character = Character(
+                    script_id=script.id,
+                    name=char_name,
+                    order=current_order_index
+                )
+                db.add(character)
+                character_map[char_name] = character
+                current_order_index += 1
 
     await db.flush()  # Characterのidを取得
 
@@ -394,9 +423,14 @@ async def parse_fountain_and_create_models(
                     
                     # Get or create character
                     if char_name_raw not in character_map:
-                        new_char = Character(script_id=script.id, name=char_name_raw)
+                        new_char = Character(
+                            script_id=script.id,
+                            name=char_name_raw,
+                            order=current_order_index
+                        )
                         db.add(new_char)
                         character_map[char_name_raw] = new_char
+                        current_order_index += 1
                         await db.flush()
                     
                     char_obj = character_map[char_name_raw]

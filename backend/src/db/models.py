@@ -213,6 +213,7 @@ class Character(Base):
     script_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scripts.id"))
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    order: Mapped[int] = mapped_column(default=0, server_default="0")
 
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="characters")

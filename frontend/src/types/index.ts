@@ -58,6 +58,7 @@ export interface Script extends ScriptSummary {
 export interface CharacterInScene {
     id: string;
     name: string;
+    order: number;
 }
 
 export interface SceneInChart {

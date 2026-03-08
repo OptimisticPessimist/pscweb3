@@ -11,6 +11,7 @@ class CharacterInScene(BaseModel):
 
     id: UUID = Field(..., description="登場人物ID")
     name: str = Field(..., description="登場人物名")
+    order: int = Field(0, description="表示順")
 
     model_config = {"from_attributes": True}
 
