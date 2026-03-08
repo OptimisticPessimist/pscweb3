@@ -422,3 +422,54 @@ Action.
     assert loaded_script.revision_text == "2.0 Blue Revised"
 
 
+@pytest.mark.asyncio
+async def test_parse_fountain_with_character_section_scene_numbering(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """登場人物やCharacterを含む見出しがシーンとしてカウントされないことをテストする."""
+    # Arrange
+    fountain_content = """Title: Scene Number Test
+
+# 登場人物
+
+TARO: 主人公。
+
+# 第1幕
+
+## 第1場
+
+TARO
+Hello!
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Scene Number Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    from sqlalchemy import select
+    from src.db.models import Scene
+    
+    result = await db.execute(
+        select(Scene).where(Scene.script_id == script.id).order_by(Scene.scene_number)
+    )
+    scenes = result.scalars().all()
+    
+    # "登場人物"ブロックは無視され、"第1場"が最初のシーンになるべき
+    assert len(scenes) == 1
+    assert scenes[0].scene_number == 1
+    assert scenes[0].heading == "第1場"
+    assert scenes[0].act_number == 1

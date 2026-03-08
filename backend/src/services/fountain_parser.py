@@ -224,6 +224,9 @@ async def parse_fountain_and_create_models(
         SCENE_KEYWORDS = ["Scene", "scene", "シーン", "씬", "场", "場", "あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
         has_scene_keyword = any(k in content_stripped for k in SCENE_KEYWORDS)
         
+        if "登場人物" in content_stripped or "Character" in content_stripped:
+            has_scene_keyword = False
+        
         is_section_act = (element.element_type == "Section Heading" and 
                           content_stripped.startswith("#") and 
                           not content_stripped.startswith("##") and
@@ -275,6 +278,10 @@ async def parse_fountain_and_create_models(
         is_section_scene = (element.element_type == "Section Heading" and 
                             (content_stripped.startswith("##") or
                              (content_stripped.startswith("#") and has_scene_keyword)))
+                             
+        if "登場人物" in content_stripped or "Character" in content_stripped:
+            is_valid_scene_heading = False
+            is_section_scene = False
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
