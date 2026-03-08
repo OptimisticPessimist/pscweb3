@@ -417,5 +417,23 @@
         "save": "儲存設定",
         "updateSuccess": "使用者設定已成功更新。",
         "updateError": "更新設定失敗。"
+    },
+    "manual": {
+        "title": "使用者手冊",
+        "selectRole": "請選擇您的角色",
+        "roles": {
+            "producer": "製作",
+            "director": "導演",
+            "playwright": "編劇",
+            "adSm": "導演助理 / 舞台監督",
+            "cast": "演員",
+            "techStaff": "技術人員"
+        },
+        "recommendedPermission": "推薦權限",
+        "permissions": {
+            "owner": "擁有者",
+            "editor": "編輯者",
+            "viewer": "檢視者"
+        }
     }
 }

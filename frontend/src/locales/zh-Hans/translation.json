@@ -417,5 +417,23 @@
         "save": "保存设置",
         "updateSuccess": "用户设置已成功更新。",
         "updateError": "更新设置失败。"
+    },
+    "manual": {
+        "title": "用户手册",
+        "selectRole": "请选择您的角色",
+        "roles": {
+            "producer": "制作",
+            "director": "导演",
+            "playwright": "编剧",
+            "adSm": "导演助理 / 舞台监督",
+            "cast": "演员",
+            "techStaff": "技术人员"
+        },
+        "recommendedPermission": "推荐权限",
+        "permissions": {
+            "owner": "所有者",
+            "editor": "编辑者",
+            "viewer": "查看者"
+        }
     }
 }

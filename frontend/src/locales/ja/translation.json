@@ -479,5 +479,23 @@
         "save": "設定を保存",
         "updateSuccess": "ユーザー設定を更新しました。",
         "updateError": "設定の更新に失敗しました"
+    },
+    "manual": {
+        "title": "利用マニュアル",
+        "selectRole": "あなたの役職を選んでください",
+        "roles": {
+            "producer": "制作",
+            "director": "演出",
+            "playwright": "脚本",
+            "adSm": "演出助手・舞台監督",
+            "cast": "役者",
+            "techStaff": "テクニカルスタッフ"
+        },
+        "recommendedPermission": "推奨権限",
+        "permissions": {
+            "owner": "管理者",
+            "editor": "編集者",
+            "viewer": "閲覧者"
+        }
     }
 }

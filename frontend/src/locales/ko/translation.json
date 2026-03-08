@@ -417,5 +417,23 @@
         "save": "설정 저장",
         "updateSuccess": "사용자 설정이 업데이트되었습니다.",
         "updateError": "설정 업데이트에 실패했습니다"
+    },
+    "manual": {
+        "title": "사용자 매뉴얼",
+        "selectRole": "역할을 선택해 주세요",
+        "roles": {
+            "producer": "제작",
+            "director": "연출",
+            "playwright": "작가",
+            "adSm": "연출보조/무대감독",
+            "cast": "배우",
+            "techStaff": "기술 스태프"
+        },
+        "recommendedPermission": "권장 권한",
+        "permissions": {
+            "owner": "소유자",
+            "editor": "편집자",
+            "viewer": "뷰어"
+        }
     }
 }

@@ -444,5 +444,23 @@
         "save": "Save Settings",
         "updateSuccess": "User settings updated successfully.",
         "updateError": "Failed to update settings."
+    },
+    "manual": {
+        "title": "User Manual",
+        "selectRole": "Please select your role",
+        "roles": {
+            "producer": "Producer",
+            "director": "Director",
+            "playwright": "Playwright",
+            "adSm": "AD / Stage Manager",
+            "cast": "Cast (Actor)",
+            "techStaff": "Technical Staff"
+        },
+        "recommendedPermission": "Recommended Permission",
+        "permissions": {
+            "owner": "Owner",
+            "editor": "Editor",
+            "viewer": "Viewer"
+        }
     }
 }
