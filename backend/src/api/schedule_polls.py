@@ -49,7 +49,8 @@ async def create_poll(
         description=payload.description,
         candidates_data=candidates_data,
         creator_id=current_user.id,
-        required_roles=payload.required_roles
+        required_roles=payload.required_roles,
+        deadline=payload.deadline
     )
     return poll
 
@@ -318,6 +319,28 @@ async def remind_unanswered_members(
 
     poll_service = get_schedule_poll_service(db, discord_service)
     await poll_service.send_reminder(poll_id, payload.target_user_ids, base_url)
+    return {"status": "ok"}
+
+@router.post("/projects/{project_id}/polls/{poll_id}/stop-reminder")
+async def stop_poll_reminder(
+    project_id: UUID,
+    poll_id: UUID,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """自動リマインドを停止."""
+    # 権限チェック (Editor以上)
+    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    member = res.scalar_one_or_none()
+    if not member or member.role == "viewer":
+         raise HTTPException(status_code=403, detail="操作権限がありません")
+
+    poll_service = get_schedule_poll_service(db, None)
+    success = await poll_service.stop_auto_reminder(poll_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="日程調整が見つかりません")
+    
     return {"status": "ok"}
 
 @router.delete("/projects/{project_id}/polls/{poll_id}")

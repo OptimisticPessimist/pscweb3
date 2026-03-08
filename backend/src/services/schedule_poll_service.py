@@ -42,7 +42,8 @@ class SchedulePollService:
         description: Optional[str],
         candidates_data: list[dict],
         creator_id: uuid.UUID,
-        required_roles: list[str] | None = None
+        required_roles: list[str] | None = None,
+        deadline: datetime | None = None
     ) -> SchedulePoll:
         """日程調整を作成し、Discordに送信."""
         poll_id = uuid.uuid4()
@@ -57,7 +58,8 @@ class SchedulePollService:
             description=description,
             creator_id=creator_id,
             is_closed=False,
-            required_roles=required_roles_str
+            required_roles=required_roles_str,
+            deadline=deadline
         )
         self.db.add(poll)
         
@@ -659,6 +661,56 @@ class SchedulePollService:
                 channel_id=project.discord_channel_id,
                 content=content
             )
+
+    async def stop_auto_reminder(self, poll_id: uuid.UUID) -> bool:
+        """自動リマインドを停止する."""
+        poll = await self.db.get(SchedulePoll, poll_id)
+        if not poll:
+            return False
+        
+        poll.auto_reminder_stopped = True
+        await self.db.commit()
+        return True
+
+    async def check_poll_deadlines(self, base_url: str) -> dict[str, int]:
+        """期限が過ぎた日程調整の自動リマインドをチェックして送信."""
+        stats = {"checked_polls": 0, "reminders_sent": 0, "errors": 0}
+        now = datetime.now(timezone.utc)
+
+        # 期限が過ぎており、未リマインドかつ停止されていない、未完了のPollを取得
+        stmt = (
+            select(SchedulePoll)
+            .where(
+                SchedulePoll.deadline.is_not(None),
+                SchedulePoll.deadline <= now,
+                SchedulePoll.reminder_sent_at.is_(None),
+                SchedulePoll.auto_reminder_stopped == False,
+                SchedulePoll.is_closed == False
+            )
+            .options(selectinload(SchedulePoll.project))
+        )
+        
+        result = await self.db.execute(stmt)
+        polls = result.scalars().all()
+        stats["checked_polls"] = len(polls)
+
+        for poll in polls:
+            try:
+                # 未回答メンバーを取得
+                unanswered = await self.get_unanswered_members(poll.id)
+                if unanswered:
+                    target_user_ids = [u["user_id"] for u in unanswered]
+                    await self.send_reminder(poll.id, target_user_ids, base_url)
+                    stats["reminders_sent"] += 1
+                
+                # 送信済みとしてマーク（未回答者がいない場合も、今後送らないようにマーク）
+                poll.reminder_sent_at = now
+            except Exception as e:
+                logger.error(f"Error sending auto reminder for poll {poll.id}: {e}", poll_id=poll.id)
+                stats["errors"] += 1
+        
+        await self.db.commit()
+        return stats
 
 
 def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:

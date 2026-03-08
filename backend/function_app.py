@@ -68,6 +68,35 @@ async def schedule_attendance_reminder(timer: func.TimerRequest) -> None:
     logging.info('Attendance Reminder Timer finished.')
 
 
+@app.schedule(schedule="0 */30 * * * *", arg_name="timer", run_on_startup=False,
+              use_monitor=False) 
+async def schedule_poll_reminder(timer: func.TimerRequest) -> None:
+    """30分ごとに日程調整の自動リマインダーをチェック."""
+    if timer.past_due:
+        logging.info('The timer is past due!')
+
+    logging.info('Schedule Poll Reminder Timer triggered.')
+    
+    try:
+        from src.db import async_session_maker
+        from src.services.schedule_poll_service import get_schedule_poll_service
+        from src.services.discord import get_discord_service
+        from src.config import settings
+        
+        async with async_session_maker() as db:
+            discord_service = get_discord_service()
+            poll_service = get_schedule_poll_service(db, discord_service)
+            
+            base_url = settings.frontend_url or "https://pscweb3.azurewebsites.net"
+            result = await poll_service.check_poll_deadlines(base_url)
+            logging.info(f'Schedule Poll Reminder Check completed: {result}')
+            
+    except Exception as e:
+        logging.error(f'Error in Schedule Poll Reminder Timer: {e}', exc_info=True)
+    
+    logging.info('Schedule Poll Reminder Timer finished.')
+
+
 @app.timer_trigger(schedule="0 0 9 * * *", arg_name="timer", run_on_startup=False)
 async def send_event_reminders_timer(timer: func.TimerRequest) -> None:
     """毎日朝9時(UTC)に実行 - イベントリマインダー送信.

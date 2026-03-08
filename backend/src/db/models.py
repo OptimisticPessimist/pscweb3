@@ -554,6 +554,9 @@ class SchedulePoll(Base):
     creator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
     required_roles: Mapped[str | None] = mapped_column(Text, nullable=True)  # "演出,制作"のようにカンマ区切りで保存
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 回答期限
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)  # 自動リマインド送信日時
+    auto_reminder_stopped: Mapped[bool] = mapped_column(Boolean, default=False) # 自動リマインド停止フラグ
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # リレーション

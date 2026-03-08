@@ -45,6 +45,7 @@ class SchedulePollCreate(BaseModel):
     title: str
     description: str | None = None
     required_roles: list[str] | None = None
+    deadline: datetime | None = None
     candidates: list[SchedulePollCandidateCreate]
 
 
@@ -58,6 +59,8 @@ class SchedulePollResponse(BaseModel):
     created_at: datetime
     creator_id: UUID
     required_roles: str | None = None  # モデルではText(str)なので
+    deadline: datetime | None = None
+    auto_reminder_stopped: bool = False
     candidates: list[SchedulePollCandidateResponse]
 
     model_config = ConfigDict(from_attributes=True)
