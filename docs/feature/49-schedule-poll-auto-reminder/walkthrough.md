@@ -13,7 +13,7 @@
 
 ### 2. バックエンドロジックの実装
 - `SchedulePollService` に以下のメソッドを追加・更新しました。
-  - `create_poll`: 作成時に `deadline` を受け取るように拡張。
+  - `create_poll`: 作成時に `deadline` を受け取るように拡張。また、Discord通知の冒頭にメンションを追加して対象者に通知されるようにしました（プロジェクト全メンバーを対象）。
   - `check_poll_deadlines`: 30分ごとに実行され、期限を過ぎてリマインド未送信の投票を探して Discord 通知を送るロジック。
   - `stop_auto_reminder`: 自動リマインドを停止するフラグをセットするロジック。
 - FastAPI 共通 API に `/stop-reminder` エンドポイントを追加し、権限チェック（Editor以上）を実装しました。

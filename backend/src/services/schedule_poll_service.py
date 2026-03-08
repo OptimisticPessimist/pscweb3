@@ -80,10 +80,25 @@ class SchedulePollService:
         if project.discord_channel_id:
             logger.info("Sending schedule poll to Discord", project_id=project.id, channel_id=project.discord_channel_id)
             
+            # メンバー属性（Discord ID）を取得するためにクエリ
+            stmt = select(ProjectMember).where(ProjectMember.project_id == project.id).options(selectinload(ProjectMember.user))
+            result = await self.db.execute(stmt)
+            all_members = result.scalars().all()
+
+            # メンション対象の抽出（全メンバー）
+            mentions = []
+            for m in all_members:
+                if m.user.discord_id:
+                    mentions.append(f"<@{m.user.discord_id}>")
+            
+            mention_str = " ".join(mentions) if mentions else ""
+
             # メッセージ構築
-            message_content = (
-                f"**【日程調整】{title}**\n"
-            )
+            message_content = ""
+            if mention_str:
+                message_content += f"{mention_str}\n\n"
+            
+            message_content += f"**【日程調整】{title}**\n"
             if description:
                 message_content += f"{description}\n"
             

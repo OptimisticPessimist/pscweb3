@@ -26,6 +26,12 @@
 - コマンド権限（オーナー、編集者）を持つユーザーに対し、未回答メンバーのリマインドセクションに「自動リマインドを停止する」ボタンを表示し、APIを呼び出してDBフラグを更新＆UIへ反映させます。
 - `frontend/src/locales/` 配下の各多言語ファイルに、`deadline` (回答期限)、`deadlineHint`、`stopAutoReminder`等のキーを追加します。
 
+### Discord 通知の強化
+
+#### [MODIFY] [schedule_poll_service.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/schedule_poll_service.py)
+- `create_poll` メソッドにおいて、Discord通知メッセージにメンションを追加。
+- メンション対象はプロジェクトの全メンバーとする（通知洩れを防ぐため）。
+
 ## Verification Plan
 ### Automated Tests
 - バックエンドのサービスで自動リマインダー送信・停止ロジックの単体テストを拡張（余裕があれば）。
