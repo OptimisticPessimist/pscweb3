@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, UserCircle2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -64,7 +65,7 @@ export function ManualPage() {
             prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-rose-600 before:content-none after:content-none
             prose-hr:my-16 prose-hr:border-gray-200
         ">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                 {content}
             </ReactMarkdown>
         </div>

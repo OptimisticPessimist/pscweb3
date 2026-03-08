@@ -10,11 +10,8 @@ This section provides detailed explanations of each feature of the system.
 A "Project" is the unit for a single production or shooting.
 
 - **Owner**: The user who creates a project is automatically the Owner and can change all settings.
-- **Invitation**: Share the invitation link generated in Settings via Discord or Messenger. Users who log in via the link are automatically added as members.
-- **Permissions**:
-  - **Owner**: Full access.
-  - **Editor**: Can create schedules and update scripts.
-  - **Viewer**: Can read scripts and respond to attendance.
+- **Invitation**: Share the invitation link generated in Settings via **Discord** or other platforms.
+- **Permissions**: Three levels: "Owner", "Editor", and "Viewer".
 
 <a id="feature-script"></a>
 ### 📝 Scripts & Fountain Format
@@ -46,11 +43,16 @@ Create practice or shooting dates.
 - **Scene Linking**: Selecting scenes for practice automatically lists required members as "Participants" based on the scene chart and casting.
 
 <a id="feature-attendance"></a>
-### ✅ Attendance & Reminders
+### ✅ Attendance & Discord Integration
 Manage member responses for each event.
 
-- **Discord integration**: Sends messages with buttons to Discord channels for one-tap responses.
-- **Auto-notifications**: You can configure automated reminders for unanswered members or upcoming rehearsals.
+- **Discord Bot Setup**:
+  - Invite the bot to your server via the "Invite Discord Bot" button in project settings.
+  - The bot handles automated attendance messages with buttons and reminders.
+- **Channel ID Configuration**:
+  - Enable "Developer Mode" in Discord Settings -> Advanced.
+  - Right-click the destination channel, select "Copy Channel ID", and paste it into the project settings.
+- **Automatic Reminders**: Schedule automated reminders for members who haven't responded or for upcoming rehearsals.
 
 <a id="feature-poll"></a>
 ### 🗳 Schedule Polls
