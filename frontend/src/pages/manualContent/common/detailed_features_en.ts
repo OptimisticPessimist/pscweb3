@@ -15,32 +15,34 @@ A "Project" is the unit for a single production or shooting.
 
 <a id="feature-script"></a>
 ### 📝 Scripts & Fountain Format
-The system uses the **Fountain format** for script management.
+The system uses the **Fountain format (Japanese Extended)** for script management.
 
 - **Upload**: Upload files with the \x60.fountain\x60 extension.
 - **Automation**: Characters and scene headings are automatically extracted and reflected in scene charts and scheduling.
-- **Native Support**: Handles Japanese/Chinese vertical layouts and unique character line formats.
+- **Vertical Layout**: Read scripts in a beautiful vertical layout on mobile or desktop.
+- 📖 **[Fountain JA Writing Manual](/manual/fountain)**
 
 <a id="feature-scene-chart"></a>
 ### 📊 Scene Chart
 A list of "who appears in which scene" based on the script.
 
 - **Auto-Generation**: Created automatically upon script upload.
-- **Manual Edit**: You can manually adjust who appears in which scene via the "Scene Chart" tab in the script details page.
+- **Manual Edit**: Adjust who appears in which scene via the "Scene Chart" tab.
 - **Integration**: Used for "Automatic Participant Selection" when creating schedules.
+- **Synopsis excluded**: Synopsis (Scene #0) is not shown. Scenes start from #1.
 
 <a id="feature-casting"></a>
 ### 🎭 Casting
 The task of linking "script characters" to "actual users (actors)".
 
 - **Role**: Assign actors to each character.
-- **Benefit**: Allows actors to use "My Schedule" to filter only the practices/shoots they are involved in.
+- **Benefit**: Allows actors to use "My Schedule" to filter only their rehearsals.
 
 <a id="feature-schedule"></a>
 ### 🗓 Schedule Management
 Create practice or shooting dates.
 
-- **Scene Linking**: Selecting scenes for practice automatically lists required members as "Participants" based on the scene chart and casting.
+- **Scene Linking**: Selecting scenes for practice automatically lists required members based on the scene chart and casting.
 
 <a id="feature-attendance"></a>
 ### ✅ Attendance & Discord Integration
@@ -52,14 +54,14 @@ Manage member responses for each event.
 - **Channel ID Configuration**:
   - Enable "Developer Mode" in Discord Settings -> Advanced.
   - Right-click the destination channel, select "Copy Channel ID", and paste it into the project settings.
-- **Automatic Reminders**: Schedule automated reminders for members who haven't responded or for upcoming rehearsals.
+- **Automatic Reminders**: Schedule automated reminders for unanswered members or upcoming rehearsals.
 
 <a id="feature-poll"></a>
 ### 🗳 Schedule Polls
 A feature to facilitate consensus on practice dates.
 
 - **Options**: Present multiple dates for members to answer with Yes/Maybe/No.
-- **Best Dates**: The system tells you which day works best for everyone or key cast members.
+- **Best Dates**: The system calculates and suggests the best dates for key cast members.
 
 ---
 [⬆️ Back to Role Guide](#manual-top)

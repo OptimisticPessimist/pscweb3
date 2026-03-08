@@ -29,6 +29,7 @@ const MySchedulePage = lazy(() => import('@/features/schedule/MySchedulePage').t
 const PublicScriptsPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptsPage').then(module => ({ default: module.PublicScriptsPage })));
 const PublicScriptDetailPage = lazy(() => import('@/features/public_scripts/pages/PublicScriptDetailPage').then(module => ({ default: module.PublicScriptDetailPage })));
 const ManualPage = lazy(() => import('@/pages/ManualPage').then(module => ({ default: module.ManualPage })));
+const FountainManualPage = lazy(() => import('@/pages/FountainManualPage').then(module => ({ default: module.FountainManualPage })));
 const TicketReservationPage = lazy(() => import('@/features/reservations/pages/TicketReservationPage').then(module => ({ default: module.TicketReservationPage })));
 const ReservationCompletedPage = lazy(() => import('@/features/reservations/pages/ReservationCompletedPage').then(module => ({ default: module.ReservationCompletedPage })));
 const ReservationListPage = lazy(() => import('@/features/reservations/pages/ReservationListPage').then(module => ({ default: module.ReservationListPage })));
@@ -71,6 +72,7 @@ function App() {
                   <Route path="/public-scripts" element={<PublicScriptsPage />} />
                   <Route path="/public-scripts/:scriptId" element={<PublicScriptDetailPage />} />
                   <Route path="/manual" element={<ManualPage />} />
+                  <Route path="/manual/fountain" element={<FountainManualPage />} />
                   {/* Reservation Public Pages - might want to exclude AppLayout for immersion or keep it? 
                     User requirement: "Ticket Reservation System". Usually standalone or branded. 
                     Let's put it outside AppLayout or create a specific lightweight layout.
