@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     default_project_limit: int = 1
     premium_project_limit_tier1: int = 3
     premium_project_limit_tier2: int = 5
-    premium_project_limit_test: int = 99
+    premium_project_limit_test: int = 999
 
     premium_password_tier1: str | None = None
     premium_password_tier2: str | None = None
-    premium_password_test: str | None = "test-premium-pass-2026"
+    premium_password_test: str | None = "test_only_password"
 
 
 settings = Settings()
