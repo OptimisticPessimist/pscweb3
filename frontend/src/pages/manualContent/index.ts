@@ -6,6 +6,9 @@ import { commonZhHant } from './common/zh-Hant';
 
 import { detailedFeaturesJa } from './common/detailed_features_ja';
 import { detailedFeaturesEn } from './common/detailed_features_en';
+import { detailedFeaturesKo } from './common/detailed_features_ko';
+import { detailedFeaturesZhHans } from './common/detailed_features_zh-Hans';
+import { detailedFeaturesZhHant } from './common/detailed_features_zh-Hant';
 
 import { producerJa } from './roles/producer/ja';
 import { producerEn } from './roles/producer/en';
@@ -74,7 +77,9 @@ const roleContentMap: Record<ManualRole, Record<string, string>> = {
 const detailedContentMap: Record<string, string> = {
     ja: detailedFeaturesJa,
     en: detailedFeaturesEn,
-    // Add other languages as they are implemented
+    ko: detailedFeaturesKo,
+    'zh-Hans': detailedFeaturesZhHans,
+    'zh-Hant': detailedFeaturesZhHant,
 };
 
 export function getDetailedFeatures(lang: string): string {

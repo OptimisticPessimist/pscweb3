@@ -1,6 +1,6 @@
 export const producerEn = `
 ## 🎪 Manual for Producers
-**Main roles:** Project setup, member management, PR and ticketing
+**Main roles:** Project setup, member management, schedule management, PR and ticketing
 
 It is recommended that production staff have "Owner" permissions.
 
@@ -15,11 +15,12 @@ Basic settings for creating and operating new projects.
 
 ---
 
-### 🔔 Notifications & External Tools
-Set up notification tools to streamline production activities.
+### 🗓 Schedule & Attendance
+Manage general operations to keep rehearsals running efficiently.
 
-- **[🔗 Discord Notifications](#feature-attendance)**: Invite the bot to automate things like attendance checks for rehearsals.
-- **[🔗 Set Milestones](#feature-project)**: Set dates for performances and major deadlines.
+- **[🔗 Manage Schedules](#feature-schedule)**: Create rehearsals for specific dates.
+- **[🔗 Schedule Polls](#feature-poll)**: Check everyone's availability and determine the best dates.
+- **[🔗 Attendance Status](#feature-attendance)**: Monitor attendance for each rehearsal and prompt those who haven't responded.
 
 ---
 

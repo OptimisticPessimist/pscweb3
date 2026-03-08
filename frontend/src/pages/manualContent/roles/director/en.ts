@@ -1,6 +1,6 @@
 export const directorEn = `
 ## 🎬 Manual for Directors
-**Main roles:** Casting, scene charts, rehearsals
+**Main roles:** Casting, scene charts, reflecting artistic intent
 
 It is recommended that directors have "Owner" or "Editor" permissions.
 
@@ -14,10 +14,9 @@ Defining the core characters and cast for the production.
 
 ---
 
-### 🗓 Planning Rehearsals
-Plan efficient rehearsal schedules and manage progress.
+### 🗓 Artistic Collaboration
+Use various features to enhance the quality of the work.
 
-- **[🔗 Manage Rehearsals](#feature-schedule)**: Create rehearsals for specific scenes.
-- **[🔗 Schedule Polls](#feature-poll)**: Check everyone's availability and let the system suggest the best dates.
-- **[🔗 Attendance Status](#feature-attendance)**: Monitor attendance for each rehearsal to plan your day.
+- **[🔗 Share Latest Script](#feature-script)**: Ensure all members have access to the most up-to-date script.
+- **[🔗 Monitor Progress](#feature-schedule)**: Confirm the schedules created by producers or assistant directors and plan the specific menus for each rehearsal.
 `;
