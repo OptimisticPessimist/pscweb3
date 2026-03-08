@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import { PageHead } from '@/components/PageHead';
 
@@ -17,9 +18,19 @@ export const DashboardPage = () => {
         queryFn: dashboardApi.getProjects,
     });
 
-    // 公開プロジェクトは制限（2つまで）のカウントに含めない
+    const { user } = useAuth(); // AuthContext から user を取得
+
+    // 公開プロジェクトは制限のカウントに含めない
     const ownedProjectCount = projects?.filter(p => p.role === 'owner' && !p.is_public).length || 0;
-    const isProjectLimitReached = ownedProjectCount >= 2;
+
+    const getProjectLimit = () => {
+        if (user?.premium_tier === 'test') return 999;
+        if (user?.premium_tier === 'tier2') return 5;
+        if (user?.premium_tier === 'tier1') return 3;
+        return 1; // デフォルト (従来の仕様に合わせておく、あるいは 2 のままにするか)
+    };
+
+    const isProjectLimitReached = ownedProjectCount >= getProjectLimit();
     const projectLimitMessage = isProjectLimitReached ? t('dashboard.projectLimit') : undefined;
 
     const [createError, setCreateError] = useState<string | null>(null);
