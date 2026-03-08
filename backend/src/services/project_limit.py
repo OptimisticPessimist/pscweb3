@@ -9,13 +9,21 @@ from src.services.premium_config import PremiumConfigService
 async def get_user_project_limit(user: User) -> int:
     """ユーザーの現在のプロジェクト作成上限数を取得する."""
     if user.premium_password:
+        user_pw = user.premium_password.strip()
         # ティアごとのパスワードと上限をチェック
         for tier in ["test", "tier2", "tier1"]:
             pw, limit = await PremiumConfigService.get_limit_and_password(tier)
-            if pw and user.premium_password == pw:
-                return limit
+            if pw and user_pw == str(pw).strip():
+                try:
+                    return int(limit)
+                except (TypeError, ValueError):
+                    pass # フォールバックへ
     
-    return await PremiumConfigService.get_default_limit()
+    default_limit = await PremiumConfigService.get_default_limit()
+    try:
+        return int(default_limit)
+    except (TypeError, ValueError):
+        return 1
 
 async def get_user_restricted_project_ids(user_id: UUID, db: AsyncSession) -> set[UUID]:
     """ユーザーが『枠主（作成者）』である非公開プロジェクトの中で、制限されているIDセットを取得する."""

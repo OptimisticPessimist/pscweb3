@@ -48,7 +48,15 @@ class PremiumConfigService:
             if blob_client.exists():
                 download_stream = blob_client.download_blob()
                 content = download_stream.readall()
-                cls._config = json.loads(content)
+                loaded_config = json.loads(content)
+                
+                # デフォルト設定とマージして、新しく追加された階層（testなど）が欠落しないようにする
+                default_config = cls._get_default_config()
+                for k, v in default_config.items():
+                    if k not in loaded_config:
+                        loaded_config[k] = v
+                
+                cls._config = loaded_config
                 logger.info("Premium settings loaded from Blob Storage.")
                 
                 # 月替わりチェックと自動更新
@@ -146,8 +154,11 @@ class PremiumConfigService:
         if not password:
             return None
             
+        password_to_check = password.strip()
         config = await cls.get_config()
         for tier_name, tier_data in config.items():
-            if isinstance(tier_data, dict) and tier_data.get("password") == password:
-                return tier_name
+            if isinstance(tier_data, dict):
+                pw = tier_data.get("password")
+                if pw and password_to_check == str(pw).strip():
+                    return tier_name
         return None
