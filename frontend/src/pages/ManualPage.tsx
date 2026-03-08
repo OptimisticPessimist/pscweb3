@@ -49,13 +49,13 @@ export function ManualPage() {
     const renderMarkdown = (content: string) => (
         <div className="prose prose-gray max-w-none
             prose-headings:font-bold
-            prose-h1:text-4xl prose-h1:mb-8 prose-h1:pb-4 prose-h1:border-b
-            prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-8
-            prose-h3:text-2xl prose-h3:mt-12 prose-h3:mb-6
-            prose-h4:text-xl prose-h4:mt-10 prose-h4:mb-4
-            prose-p:my-5 prose-p:leading-relaxed prose-p:text-gray-700
-            prose-ul:my-5 prose-ul:pl-8 prose-ul:list-disc
-            prose-ol:my-5 prose-ol:pl-8 prose-ol:list-decimal
+            prose-h1:text-4xl prose-h1:mb-10 prose-h1:pb-5 prose-h1:border-b
+            prose-h2:text-3xl prose-h2:mt-24 prose-h2:mb-10
+            prose-h3:text-2xl prose-h3:mt-20 prose-h3:mb-8
+            prose-h4:text-xl prose-h4:mt-12 prose-h4:mb-5
+            prose-p:my-6 prose-p:leading-relaxed prose-p:text-gray-700
+            prose-ul:my-6 prose-ul:pl-8 prose-ul:list-disc
+            prose-ol:my-6 prose-ol:pl-8 prose-ol:list-decimal
             prose-li:my-2
             prose-table:my-6
             prose-th:bg-gray-100 prose-th:p-3 prose-th:border
