@@ -16,6 +16,8 @@ export const ScriptUploadPage: React.FC = () => {
     const [isPublic, setIsPublic] = useState(false);
     const [publicTerms, setPublicTerms] = useState('');
     const [publicContact, setPublicContact] = useState('');
+    const [pdfOrientation, setPdfOrientation] = useState('landscape');
+    const [pdfWritingDirection, setPdfWritingDirection] = useState('vertical');
     const [isLoading, setIsLoading] = useState(true);
 
     // Fetch existing script data on mount
@@ -35,6 +37,12 @@ export const ScriptUploadPage: React.FC = () => {
                     }
                     if (existingScript.public_contact) {
                         setPublicContact(existingScript.public_contact);
+                    }
+                    if (existingScript.pdf_orientation) {
+                        setPdfOrientation(existingScript.pdf_orientation);
+                    }
+                    if (existingScript.pdf_writing_direction) {
+                        setPdfWritingDirection(existingScript.pdf_writing_direction);
                     }
                     // Optional: pre-fill title/author if we wanted to allow editing without file drop
                     // But for re-upload, maybe better to let file metadata take precedence OR keep existing title?
@@ -126,6 +134,8 @@ export const ScriptUploadPage: React.FC = () => {
             if (publicTerms) formData.append('public_terms', publicTerms);
             if (publicContact) formData.append('public_contact', publicContact);
         }
+        formData.append('pdf_orientation', pdfOrientation);
+        formData.append('pdf_writing_direction', pdfWritingDirection);
 
         uploadMutation.mutate(formData);
     };
@@ -277,6 +287,38 @@ export const ScriptUploadPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    <div className="bg-gray-50 p-4 rounded-md space-y-4">
+                        <h3 className="text-md font-medium text-gray-900">{t('script.pdfOptions') || 'PDF Layout Options'}</h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {t('script.pdfOrientation')}
+                                </label>
+                                <select
+                                    value={pdfOrientation}
+                                    onChange={(e) => setPdfOrientation(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="landscape">{t('script.pdfLandscape')}</option>
+                                    <option value="portrait">{t('script.pdfPortrait')}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {t('script.pdfWritingDirection')}
+                                </label>
+                                <select
+                                    value={pdfWritingDirection}
+                                    onChange={(e) => setPdfWritingDirection(e.target.value)}
+                                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                >
+                                    <option value="vertical">{t('script.pdfVertical')}</option>
+                                    <option value="horizontal">{t('script.pdfHorizontal')}</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex justify-end space-x-3">

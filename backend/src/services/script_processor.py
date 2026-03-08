@@ -86,6 +86,8 @@ async def get_or_create_script(
     db: AsyncSession,
     public_terms: str | None = None,
     public_contact: str | None = None,
+    pdf_orientation: str = "landscape",
+    pdf_writing_direction: str = "vertical",
 ) -> tuple[Script, bool]:
     """既存スクリプトを取得、または新規作成.
     
@@ -128,6 +130,8 @@ async def get_or_create_script(
         script.is_public = is_public
         script.public_terms = public_terms
         script.public_contact = public_contact
+        script.pdf_orientation = pdf_orientation
+        script.pdf_writing_direction = pdf_writing_direction
         script.revision += 1
     else:
         # 新規作成
@@ -140,6 +144,8 @@ async def get_or_create_script(
             is_public=is_public,
             public_terms=public_terms,
             public_contact=public_contact,
+            pdf_orientation=pdf_orientation,
+            pdf_writing_direction=pdf_writing_direction,
         )
         db.add(script)
         await db.flush()
@@ -287,6 +293,8 @@ async def process_script_upload(
     db: AsyncSession,
     public_terms: str | None = None,
     public_contact: str | None = None,
+    pdf_orientation: str = "landscape",
+    pdf_writing_direction: str = "vertical",
 ) -> tuple[Script, bool]:
     """スクリプトアップロード処理のメインロジック.
     
@@ -320,7 +328,8 @@ async def process_script_upload(
     # スクリプトの取得または作成
     script, is_update = await get_or_create_script(
         project_id, user_id, title, author, fountain_text, is_public, db,
-        public_terms=public_terms, public_contact=public_contact
+        public_terms=public_terms, public_contact=public_contact,
+        pdf_orientation=pdf_orientation, pdf_writing_direction=pdf_writing_direction
     )
     
     # 更新の場合は関連データを削除

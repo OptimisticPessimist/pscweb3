@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
@@ -18,6 +18,13 @@ export const ScriptDetailPage: React.FC = () => {
     const [pdfOrientation, setPdfOrientation] = useState<string>('landscape');
     const [pdfWritingDirection, setPdfWritingDirection] = useState<string>('vertical');
     const [showPdfOptions, setShowPdfOptions] = useState(false);
+
+    useEffect(() => {
+        if (script) {
+            setPdfOrientation(script.pdf_orientation || 'landscape');
+            setPdfWritingDirection(script.pdf_writing_direction || 'vertical');
+        }
+    }, [script]);
 
     const handleDownloadPdf = async () => {
         if (!script) return;

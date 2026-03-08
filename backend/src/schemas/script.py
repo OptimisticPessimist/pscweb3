@@ -65,6 +65,8 @@ class ScriptResponse(BaseModel):
     contact: str | None = Field(None, description="連絡先")
     notes: str | None = Field(None, description="メモ")
     revision_text: str | None = Field(None, description="リビジョン情報")
+    pdf_orientation: str = Field(default="landscape", description="PDF用紙の向き")
+    pdf_writing_direction: str = Field(default="vertical", description="PDF文字方向")
     characters: list[CharacterResponse] = Field(
         default_factory=list, description="登場人物リスト"
     )
@@ -90,6 +92,8 @@ class ScriptSummary(BaseModel):
     contact: str | None = Field(None, description="連絡先")
     notes: str | None = Field(None, description="メモ")
     revision_text: str | None = Field(None, description="リビジョン情報")
+    pdf_orientation: str = Field(default="landscape", description="PDF用紙の向き")
+    pdf_writing_direction: str = Field(default="vertical", description="PDF文字方向")
 
     model_config = {"from_attributes": True}
 

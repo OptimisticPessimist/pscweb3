@@ -108,7 +108,11 @@ export const ScriptListPage: React.FC = () => {
                                         <Eye className="h-5 w-5" />
                                     </Link>
                                     <button
-                                        onClick={() => setPdfOptionsTarget({ scriptId: script.id, title: script.title })}
+                                        onClick={() => {
+                                            setPdfOptionsTarget({ scriptId: script.id, title: script.title });
+                                            setPdfOrientation(script.pdf_orientation || 'landscape');
+                                            setPdfWritingDirection(script.pdf_writing_direction || 'vertical');
+                                        }}
                                         className="text-gray-400 hover:text-gray-500"
                                         title="Download PDF"
                                     >

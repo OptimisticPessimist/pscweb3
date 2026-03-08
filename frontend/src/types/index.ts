@@ -40,6 +40,8 @@ export interface ScriptSummary {
     contact?: string | null;
     notes?: string | null;
     revision_text?: string | null;
+    pdf_orientation?: string;
+    pdf_writing_direction?: string;
 }
 
 export interface Script extends ScriptSummary {

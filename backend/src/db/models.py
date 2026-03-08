@@ -168,6 +168,8 @@ class Script(Base):
     copyright: Mapped[str | None] = mapped_column(String(200), nullable=True) # 著作権情報
     contact: Mapped[str | None] = mapped_column(Text, nullable=True) # 連絡先
     notes: Mapped[str | None] = mapped_column(Text, nullable=True) # メモ
+    pdf_orientation: Mapped[str] = mapped_column(String(20), default="landscape")  # landscape or portrait
+    pdf_writing_direction: Mapped[str] = mapped_column(String(20), default="vertical")  # vertical or horizontal
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")

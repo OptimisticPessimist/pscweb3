@@ -79,6 +79,8 @@ async def upload_script(
     is_public: bool = Form(False),
     public_terms: str | None = Form(None),
     public_contact: str | None = Form(None),
+    pdf_orientation: str = Form("landscape"),
+    pdf_writing_direction: str = Form("vertical"),
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
@@ -118,7 +120,8 @@ async def upload_script(
     try:
         script, is_update = await process_script_upload(
             project_id, current_user.id, title, author, fountain_text, is_public, db,
-            public_terms=public_terms, public_contact=public_contact
+            public_terms=public_terms, public_contact=public_contact,
+            pdf_orientation=pdf_orientation, pdf_writing_direction=pdf_writing_direction
         )
     except Exception as e:
         import traceback
@@ -153,16 +156,21 @@ async def get_script(
 @router.get("/{project_id}/{script_id}/pdf")
 async def download_script_pdf(
     tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
-    orientation: str = Query("landscape", description="Paper orientation: landscape or portrait"),
-    writing_direction: str = Query("vertical", description="Writing direction: vertical or horizontal"),
+    orientation: str | None = Query(None, description="Paper orientation: landscape or portrait"),
+    writing_direction: str | None = Query(None, description="Writing direction: vertical or horizontal"),
 ):
     """脚本のPDFをダウンロード."""
     # 権限チェックはDepends(get_script_member_dep)内で完了済み
     member, script = tuple_data
 
-    # パラメータバリデーション
+    # パラメータバリデーション（指定がない場合はScriptの保存設定を使用）
+    if not orientation:
+        orientation = script.pdf_orientation or "landscape"
     if orientation not in ("landscape", "portrait"):
         orientation = "landscape"
+    
+    if not writing_direction:
+        writing_direction = script.pdf_writing_direction or "vertical"
     if writing_direction not in ("vertical", "horizontal"):
         writing_direction = "vertical"
 
