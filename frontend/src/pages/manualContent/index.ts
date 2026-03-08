@@ -4,6 +4,9 @@ import { commonKo } from './common/ko';
 import { commonZhHans } from './common/zh-Hans';
 import { commonZhHant } from './common/zh-Hant';
 
+import { detailedFeaturesJa } from './common/detailed_features_ja';
+import { detailedFeaturesEn } from './common/detailed_features_en';
+
 import { producerJa } from './roles/producer/ja';
 import { producerEn } from './roles/producer/en';
 import { producerKo } from './roles/producer/ko';
@@ -66,6 +69,17 @@ const roleContentMap: Record<ManualRole, Record<string, string>> = {
     cast: { ja: castJa, en: castEn, ko: castKo, 'zh-Hans': castZhHans, 'zh-Hant': castZhHant },
     'tech-staff': { ja: techStaffJa, en: techStaffEn, ko: techStaffKo, 'zh-Hans': techStaffZhHans, 'zh-Hant': techStaffZhHant },
 };
+
+// Detailed Features Content Map
+const detailedContentMap: Record<string, string> = {
+    ja: detailedFeaturesJa,
+    en: detailedFeaturesEn,
+    // Add other languages as they are implemented
+};
+
+export function getDetailedFeatures(lang: string): string {
+    return detailedContentMap[lang] || detailedContentMap['en'] || detailedFeaturesJa;
+}
 
 export function getCommonContent(lang: string): string {
     return commonContentMap[lang] || commonContentMap['en'] || commonJa;

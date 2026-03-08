@@ -1,25 +1,22 @@
 export const adSmEn = `
-## 🎭 For AD / Stage Managers
-**Main Roles:** Creating schedules, sending attendance reminders, and administrative tasks.
+## 🎭 Manual for Assistant Directors & Stage Managers (AD/SM)
+**Main roles:** Creating schedules, prompting for attendance, and administration
 
-AD and SM staff are recommended to have "Editor" permissions.
+It is recommended that AD/SM staff have "Editor" permissions.
 
-### 🗓 Creating & Editing Schedules
-Create specific rehearsal or shooting dates.
+---
 
-1. Select **"Schedule"** from the menu and click **"Create New"**.
-2. Enter date, location, and target scenes.
-3. **Tip**: Selecting a scene automatically lists participants based on the scene chart.
+### 🗓 Rigorous Scheduling & Attendance
+Manage general operations to keep rehearsals running efficiently.
 
-### 📊 Updating Scene Charts
-Keep scene characters up to date based on the director's instructions.
+- **[🔗 Precise Scheduling](#feature-schedule)**: Enter date, location, and specific scenes. Participants will be automatically extracted.
+- **[🔗 Prompt Attendance](#feature-attendance)**: Send reminders via Discord to members who haven't responded by the deadline.
 
-### 👥 Staff Management
-Set staff roles to clarify responsibilities within the project.
+---
 
-### 📢 Sending Attendance Reminders
-Send Discord reminders to members who haven't responded.
+### 📊 Keeping Content Current
+Maintain accurate information in the system based on director's requests.
 
-1. Choose the target event from the **"Attendance"** list.
-2. Click **"Send Reminder"** to notify non-respondents via Discord mention.
+- **[🔗 Update Scene Chart](#feature-scene-chart)**: Ensure scenes and characters are always up to date.
+- **[🔗 Manage Staff Roles](#feature-project)**: Define roles clearly so everyone knows their responsibilities.
 `;

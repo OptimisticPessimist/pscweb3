@@ -1,21 +1,22 @@
 export const techStaffEn = `
-## 🔊💡 For Tech Staff
-**Main Roles:** Tracking schedules and reading scripts.
+## 🔊💡 Manual for Technical Staff
+**Main roles:** Rehearsal schedules, familiarizing with scripts
 
-"Viewer" permission is sufficient for sound, lighting, and art staff.
+Staff such as sound, lighting, and art typically only need "Viewer" permissions.
 
-### 📅 Checking Schedules
-Track technical rehearsals and overall rehearsal schedules via the calendar.
+---
 
-### ✅ Responding to Attendance
-Respond to attendance for the dates you are required.
+### 📅 Schedule & Attendance
+Confirm logistics for rehearsals and shows.
 
-### 📖 Reading Scripts
-Review the latest scripts to understand timing and artistic intentions.
+- **[🔗 Confirm Schedule](#feature-schedule)**: Check rehearsal schedules for tech and overall production.
+- **[🔗 Confirm Attendance](#feature-attendance)**: Respond to attendance for the rehearsals you need to be at.
 
-### 📊 Viewing Scene Charts
-Understand characters and flow for each scene to assist in planning.
+---
 
-### 🗳 Responding to Polls
-Respond to schedule polls for staff meetings and other events.
+### 📖 Preparing Your Plan
+Familiarize yourself with the script.
+
+- **[🔗 Read Script](#feature-script)**: Access the latest script and check cues and directing intent.
+- **[🔗 View Scene Chart](#feature-scene-chart)**: Confirm characters and flow of each scene to help with your planning.
 `;

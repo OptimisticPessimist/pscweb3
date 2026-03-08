@@ -1,27 +1,24 @@
 export const castEn = `
-## 🎤 For Cast (Actors)
-**Main Roles:** Responding to attendance, checking schedules, and reading scripts.
+## 🎤 Manual for Actors (Cast)
+**Main roles:** Responding to attendance, checking schedules, and reading scripts
 
-"Viewer" permission is sufficient for cast members.
+Actors typically only need "Viewer" permissions.
 
-### ✅ Responding to Attendance
-Respond to attendance for rehearsals or shoots.
+---
 
-- **Via Discord**: Simply click the button in the notification.
-- **Via System**: Respond through the **"Attendance"** menu.
+### ✅ Daily Tasks
+Respond to and keep up with communications from production and directing.
 
-### 📅 Checking Schedules
-View all dates and details in the calendar.
+- **[🔗 Confirm Attendance](#feature-attendance)**: Respond to whether you're attending rehearsals or shoots.
+- **[🔗 Check Schedule](#feature-schedule)**: Confirm all dates and details via the calendar.
+- **[🔗 Filter Your Scenes](#feature-casting)**: View only the rehearsal/shooting schedules relevant to your role.
 
-### 📆 My Schedule
-View only the rehearsals or shoots you are specifically cast in.
+---
 
-### 📖 Reading Scripts
-Access the latest scripts from your phone or PC (Vertical layout supported).
+### 📖 Preparing for Rehearsals
+Keep necessary project information accessible.
 
-### 📊 Viewing Scene Charts
-Check which scenes you appear in.
-
-### 🗳 Responding to Polls
-Respond to schedule polls sent by production or directing staff.
+- **[🔗 Read Latest Script](#feature-script)**: Access the latest script on mobile or PC.
+- **[🔗 View Scene Chart](#feature-scene-chart)**: Confirm which scenes you are assigned to.
+- **[🔗 Answer Polls](#feature-poll)**: Respond to schedule polling set by production.
 `;
