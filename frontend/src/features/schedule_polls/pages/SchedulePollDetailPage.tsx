@@ -372,7 +372,9 @@ export const SchedulePollDetailPage: React.FC = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center space-x-2">
                                     <Bell className="h-5 w-5 text-amber-500" />
-                                    <h2 className="text-lg font-bold text-gray-900">{t('schedulePoll.unansweredReminder') || '未回答メンバーのリマインド'}</h2>
+                                    <h2 className="text-lg font-bold text-gray-900">
+                                        {t('schedulePoll.unansweredReminder') || '未回答メンバーのリマインド'} ({unansweredMembers.length}名)
+                                    </h2>
                                 </div>
                                 <button
                                     onClick={() => refetchUnanswered()}

@@ -311,7 +311,7 @@
             },
             "submit": "예약하기",
             "submitting": "제출 중...",
-            "sheets": "{{count}}매"
+            "sheets": "{count}매"
         },
         "completed": {
             "title": "예약 완료",
@@ -334,11 +334,11 @@
         },
         "milestone": {
             "notFound": "마일스톤을 찾을 수 없습니다",
-            "totalReservations": "총 예약: {{count}}명 / {{items}}건",
+            "totalReservations": "총 예약: {count}명 / {items}건",
             "backToProject": "← 프로젝트로 돌아가기",
             "reservationList": "예약자 목록",
-            "referralBy": "추천인: {{name}}",
-            "reservedAt": "예약: {{date}}",
+            "referralBy": "추천인: {name}",
+            "reservedAt": "예약: {date}",
             "updateSuccess": "업데이트되었습니다",
             "updateError": "업데이트 실패"
         }
@@ -349,7 +349,7 @@
         "createButton": "새 일정 조율",
         "noPolls": "일정 조율이 없습니다",
         "noPollsMessage": "새 일정 조율을 생성하고 Discord에 공유하세요.",
-        "candidatesCount": "{{count}}개의 후보 날짜",
+        "candidatesCount": "{count}개의 후보 날짜",
         "answerSaved": "답변이 저장되었습니다",
         "finalized": "리허설 일정이 생성되었습니다",
         "recommendations": "시스템 추천 일정",
@@ -386,7 +386,7 @@
         "requiredRolesHint": "선택한 역할을 가진 모든 멤버가 NG로 응답한 날짜는 '연습 불가'로 평가됩니다.",
         "unansweredReminder": "미응답자에게 알림 보내기",
         "reminderDescription": "이 멤버들은 아직 일정 조율에 응답하지 않았습니다. 체크된 멤버는 Discord에서 멘션 알림을 받게 됩니다.",
-        "sendReminderCount": "{{count}}명에게 알림 보내기",
+        "sendReminderCount": "{count}명에게 알림 보내기",
         "allScenes": "모든 장면",
         "attendanceTargetLabel": "출석 확인 대상자",
         "targetVotersOnly": "응답자만",

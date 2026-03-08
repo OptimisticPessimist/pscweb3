@@ -396,11 +396,11 @@
         },
         "milestone": {
             "notFound": "マイルストーンが見つかりません",
-            "totalReservations": "合計予約: {{count}}名 / {{items}}件",
+            "totalReservations": "合計予約: {count}名 / {items}件",
             "backToProject": "← プロジェクトへ戻る",
             "reservationList": "予約者一覧",
-            "referralBy": "紹介者: {{name}}",
-            "reservedAt": "予約: {{date}}",
+            "referralBy": "紹介者: {name}",
+            "reservedAt": "予約: {date}",
             "updateSuccess": "更新しました",
             "updateError": "更新に失敗しました"
         }
@@ -448,7 +448,7 @@
         "requiredRolesHint": "選択した役職のメンバーが全員 NG の日程は「稽古不可」として判定されます。",
         "unansweredReminder": "未回答者へのリマインド送信",
         "reminderDescription": "まだ日程調整に回答していないメンバーです。チェックを入れたメンバーにDiscordでメンションを飛ばして通知します。",
-        "sendReminderCount": "{{count}}名にリマインドを送信",
+        "sendReminderCount": "{count}名にリマインドを送信",
         "allScenes": "すべてのシーン",
         "attendanceTargetLabel": "出欠確認の対象者",
         "targetVotersOnly": "回答者のみ",

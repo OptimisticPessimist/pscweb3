@@ -311,7 +311,7 @@
             },
             "submit": "预约",
             "submitting": "提交中...",
-            "sheets": "{{count}}张"
+            "sheets": "{count}张"
         },
         "completed": {
             "title": "预约完成",
@@ -334,11 +334,11 @@
         },
         "milestone": {
             "notFound": "未找到里程碑",
-            "totalReservations": "总预约: {{count}}人 / {{items}}条",
+            "totalReservations": "总预约: {count}人 / {items}条",
             "backToProject": "← 返回项目",
             "reservationList": "预约列表",
-            "referralBy": "推荐人: {{name}}",
-            "reservedAt": "预约: {{date}}",
+            "referralBy": "推荐人: {name}",
+            "reservedAt": "预约: {date}",
             "updateSuccess": "更新成功",
             "updateError": "更新失败"
         }
@@ -349,7 +349,7 @@
         "createButton": "新建日程投票",
         "noPolls": "没有日程投票",
         "noPollsMessage": "创建一个新的日程投票并分享在 Discord 上。",
-        "candidatesCount": "{{count}} 个候选日期",
+        "candidatesCount": "{count} 个候选日期",
         "answerSaved": "回答已保存",
         "finalized": "已创建排练日程",
         "recommendations": "系统推荐",
@@ -386,7 +386,7 @@
         "requiredRolesHint": "若选择了必须出席职位，所有该职位成员均回答“不可出席（NG）”时，该日期将判定为“不可排练”。",
         "unansweredReminder": "向未回复成员发送提醒",
         "reminderDescription": "这些成员尚未对日程投票做出回应。被选中的成员将在 Discord 上收到提及通知。",
-        "sendReminderCount": "向 {{count}} 名成员发送提醒",
+        "sendReminderCount": "向 {count} 名成员发送提醒",
         "allScenes": "所有场景",
         "attendanceTargetLabel": "考勤确认对象",
         "targetVotersOnly": "仅回答者",

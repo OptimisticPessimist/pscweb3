@@ -311,7 +311,7 @@
             },
             "submit": "預約",
             "submitting": "提交中...",
-            "sheets": "{{count}}張"
+            "sheets": "{count}張"
         },
         "completed": {
             "title": "預約完成",
@@ -334,11 +334,11 @@
         },
         "milestone": {
             "notFound": "未找到里程碑",
-            "totalReservations": "總預約: {{count}}人 / {{items}}條",
-            "backToProject": "← 返回專案",
-            "reservationList": "預約列表",
-            "referralBy": "推薦人: {{name}}",
-            "reservedAt": "預約: {{date}}",
+            "totalReservations": "總預約: {count}人 / {items}條",
+            "backToProject": "← 返回項目",
+            "reservationList": "預約者列表",
+            "referralBy": "推薦人: {name}",
+            "reservedAt": "預約: {date}",
             "updateSuccess": "更新成功",
             "updateError": "更新失敗"
         }
@@ -349,7 +349,7 @@
         "createButton": "新建日程投票",
         "noPolls": "沒有日程投票",
         "noPollsMessage": "建立一個新的日程投票並分享在 Discord 上。",
-        "candidatesCount": "{{count}} 個候選日期",
+        "candidatesCount": "{count} 個候選日期",
         "answerSaved": "回答已儲存",
         "finalized": "已建立排練日程",
         "recommendations": "系統推薦",
@@ -386,7 +386,7 @@
         "requiredRolesHint": "若選擇了必須出席職位，所有該職位成員均回答「不可出席（NG）」時，該日期將判定為「不可排練」。",
         "unansweredReminder": "向未回覆成員發送提醒",
         "reminderDescription": "這些成員尚未對日程投票做出回應。被選中的成員將在 Discord 上收到提及通知。",
-        "sendReminderCount": "向 {{count}} 名成員發送提醒",
+        "sendReminderCount": "向 {count} 名成員發送提醒",
         "allScenes": "所有場景",
         "attendanceTargetLabel": "考勤確認對象",
         "targetVotersOnly": "僅回答者",

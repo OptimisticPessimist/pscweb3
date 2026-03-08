@@ -342,7 +342,7 @@
             },
             "submit": "Reserve",
             "submitting": "Submitting...",
-            "sheets": "{{count}} tickets"
+            "sheets": "{count} tickets"
         },
         "completed": {
             "title": "Reservation Complete",
@@ -365,7 +365,7 @@
         },
         "milestone": {
             "notFound": "Milestone not found",
-            "totalReservations": "Total: {{count}} people / {{items}} reservations",
+            "totalReservations": "Total: {count} people / {items} reservations",
             "backToProject": "← Back to Project",
             "reservationList": "Reservation List"
         }
@@ -376,7 +376,7 @@
         "createButton": "New Schedule Poll",
         "noPolls": "No schedule polls",
         "noPollsMessage": "Create a new schedule poll and share it on Discord.",
-        "candidatesCount": "{{count}} candidates",
+        "candidatesCount": "{count} candidates",
         "answerSaved": "Answer saved",
         "finalized": "Rehearsal schedule created",
         "recommendations": "System Recommendations",
@@ -413,7 +413,7 @@
         "requiredRolesHint": "The date will be marked as 'Impossible' if all members of the selected roles are NG.",
         "unansweredReminder": "Send Reminder to Unanswered Members",
         "reminderDescription": "These members have not yet responded to the schedule poll. Checked members will receive a mention notification on Discord.",
-        "sendReminderCount": "Send reminder to {{count}} member(s)",
+        "sendReminderCount": "Send reminder to {count} member(s)",
         "allScenes": "All Scenes",
         "attendanceTargetLabel": "Target for Attendance Confirmation",
         "targetVotersOnly": "Voters Only",
