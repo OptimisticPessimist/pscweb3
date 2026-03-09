@@ -141,6 +141,9 @@ async def _fetch_discord_token_windows(code: str) -> dict:
 async def _fetch_discord_token_standard(code: str) -> dict:
     """標準環境用: httpxを使ってDiscord認証を行う."""
     import httpx
+    import asyncio
+    from src.core.logger import get_logger
+    logger = get_logger(__name__)
     
     token_endpoint = "https://discord.com/api/v10/oauth2/token"
     data = {
@@ -152,23 +155,53 @@ async def _fetch_discord_token_standard(code: str) -> dict:
     }
     
     async with httpx.AsyncClient() as client:
-        # 1. トークン交換
-        resp = await client.post(token_endpoint, data=data)
-        resp.raise_for_status()
-        token_data = resp.json()
+        # 1. トークン交換 (リトライ付き)
+        max_retries = 3
+        token_data = None
+        for i in range(max_retries + 1):
+            resp = await client.post(token_endpoint, data=data)
+            if resp.status_code == 429:
+                retry_after = float(resp.headers.get("Retry-After", 2 ** (i+1)))
+                logger.warning(f"Discord Token API Rate Limited (429). Retrying in {retry_after}s...", 
+                             headers=dict(resp.headers), body=resp.text)
+                await asyncio.sleep(retry_after)
+                continue
+            
+            if resp.status_code >= 400:
+                logger.error(f"Discord Token API Error: {resp.status_code}", body=resp.text)
+            
+            resp.raise_for_status()
+            token_data = resp.json()
+            break
+            
+        if not token_data:
+             raise HTTPException(status_code=500, detail="Discordトークンの取得に失敗しました")
+             
         access_token = token_data.get("access_token")
         
-        # 2. ユーザー情報取得
-        user_resp = await client.get(
-            "https://discord.com/api/v10/users/@me",
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
-        user_resp.raise_for_status()
-        discord_user_data = user_resp.json()
+        # 2. ユーザー情報取得 (リトライ付き)
+        discord_user_data = None
+        for i in range(max_retries + 1):
+            user_resp = await client.get(
+                "https://discord.com/api/v10/users/@me",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if user_resp.status_code == 429:
+                retry_after = float(user_resp.headers.get("Retry-After", 2 ** (i+1)))
+                logger.warning(f"Discord User Info API Rate Limited (429). Retrying in {retry_after}s...", 
+                             headers=dict(user_resp.headers), body=user_resp.text)
+                await asyncio.sleep(retry_after)
+                continue
+            
+            if user_resp.status_code >= 400:
+                logger.error(f"Discord User Info API Error: {user_resp.status_code}", body=user_resp.text)
+
+            user_resp.raise_for_status()
+            discord_user_data = user_resp.json()
+            break
 
     return {
         "token": token_data,
         "user": discord_user_data
     }
-
 
