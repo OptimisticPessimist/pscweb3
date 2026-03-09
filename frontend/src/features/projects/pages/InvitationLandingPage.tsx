@@ -29,9 +29,13 @@ export const InvitationLandingPage: React.FC = () => {
         }
     });
 
-    // Handle login redirection if needed
+    // 直接Discord認証へリダイレクト（LoginPageを経由しない）
     const handleLogin = () => {
-        navigate('/login', { state: { from: location } });
+        // 現在の招待ページのパスをlocalStorageに保存
+        localStorage.setItem('postLoginRedirect', location.pathname);
+        // バックエンドのDiscord認証エンドポイントへ直接リダイレクト
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        window.location.href = `${apiUrl}/auth/login`;
     };
 
     if (isLoading) {

@@ -18,9 +18,10 @@ export const LoginPage = () => {
 
     const handleLogin = () => {
         // リダイレクト元があれば保存
-        const from = location.state?.from?.pathname + (location.state?.from?.search || '');
-        if (from && from !== '/' && from !== '/login') {
-            localStorage.setItem('postLoginRedirect', from);
+        const pathname = location.state?.from?.pathname;
+        if (pathname && pathname !== '/' && pathname !== '/login') {
+            const search = location.state?.from?.search || '';
+            localStorage.setItem('postLoginRedirect', pathname + search);
         }
 
         // バックエンドのDiscord認証エンドポイントへリダイレクト

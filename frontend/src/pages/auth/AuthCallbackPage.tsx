@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -7,14 +7,24 @@ export const AuthCallbackPage = () => {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
+    const hasLoggedIn = useRef(false);
 
+    // ステップ1: トークンを保存する（一度だけ）
     useEffect(() => {
         const token = searchParams.get('token');
-        if (token) {
-            login(token); // AuthContextにトークンを保存
+        if (token && !hasLoggedIn.current) {
+            hasLoggedIn.current = true;
+            login(token);
+        } else if (!token) {
+            console.error('No token found in callback URL');
+            navigate('/login', { replace: true });
+        }
+    }, [searchParams, login, navigate]);
 
-            // 元いたページがあればそこへ、なければダッシュボードへ
+    // ステップ2: ユーザー情報が取得されたらリダイレクト
+    useEffect(() => {
+        if (isAuthenticated && hasLoggedIn.current) {
             const redirectUrl = localStorage.getItem('postLoginRedirect');
             if (redirectUrl) {
                 localStorage.removeItem('postLoginRedirect');
@@ -22,12 +32,8 @@ export const AuthCallbackPage = () => {
             } else {
                 navigate('/dashboard', { replace: true });
             }
-        } else {
-            // トークンがない場合はエラー扱い(ログイン画面へ戻す)
-            console.error('No token found in callback URL');
-            navigate('/login', { replace: true });
         }
-    }, [searchParams, login, navigate]);
+    }, [isAuthenticated, navigate]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
