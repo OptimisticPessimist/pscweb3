@@ -1,19 +1,35 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
+import { projectsApi } from '@/features/projects/api/projects';
 import { Calendar, Clock, Plus, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useMemo } from 'react';
 
 export const SchedulePollListPage: React.FC = () => {
     const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
+    const { user } = useAuth();
 
     const { data: polls, isLoading } = useQuery({
         queryKey: ['schedulePolls', projectId],
         queryFn: () => schedulePollApi.getPolls(projectId!),
         enabled: !!projectId,
     });
+
+    const { data: members } = useQuery({
+        queryKey: ['projectMembers', projectId],
+        queryFn: () => projectsApi.getProjectMembers(projectId!),
+        enabled: !!projectId,
+    });
+
+    const isViewer = useMemo(() => {
+        if (!members || !user) return true;
+        const member = members.find(m => m.user_id === user.id);
+        return !member || member.role === 'viewer';
+    }, [members, user]);
 
     if (isLoading) {
         return (
@@ -32,13 +48,15 @@ export const SchedulePollListPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-gray-900">{t('schedulePoll.listTitle') || '日程調整一覧'}</h1>
                     <p className="text-sm text-gray-600">{t('schedulePoll.listDescription') || 'プロジェクトメンバーと稽古日程を調整します。'}</p>
                 </div>
-                <Link
-                    to={`/projects/${projectId}/polls/create`}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
-                >
-                    <Plus className="h-5 w-5 mr-2" />
-                    {t('schedulePoll.createButton') || '新しい日程調整'}
-                </Link>
+                {!isViewer && (
+                    <Link
+                        to={`/projects/${projectId}/polls/create`}
+                        className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="h-5 w-5 mr-2" />
+                        {t('schedulePoll.createButton') || '新しい日程調整'}
+                    </Link>
+                )}
             </div>
 
             <div className="bg-white shadow rounded-lg overflow-hidden">
