@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.models import ProjectInvitation, TheaterProject, User, ProjectMember
 from src.auth.jwt import create_access_token
