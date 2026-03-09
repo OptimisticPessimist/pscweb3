@@ -16,4 +16,9 @@ export const invitationsApi = {
         const response = await apiClient.post(`/invitations/${token}/accept`);
         return response.data;
     },
+
+    async getProjectInvitations(projectId: string): Promise<InvitationResponse[]> {
+        const response = await apiClient.get(`/projects/${projectId}/invitations`);
+        return response.data;
+    },
 };

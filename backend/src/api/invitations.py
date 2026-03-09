@@ -16,6 +16,62 @@ router = APIRouter()
 
 from uuid import UUID
 
+@router.get("/projects/{project_id}/invitations", response_model=list[InvitationResponse])
+async def list_project_invitations(
+    project_id: UUID,
+    current_user: User | None = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """プロジェクトの有効な招待リンク一覧を取得する（管理者のみ）。"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    # 権限チェック
+    query_member = select(ProjectMember).where(
+        ProjectMember.project_id == project_id,
+        ProjectMember.user_id == current_user.id
+    )
+    result_member = await db.execute(query_member)
+    member = result_member.scalar_one_or_none()
+    
+    if not member or member.role not in ["owner", "admin"]:
+        raise HTTPException(status_code=403, detail="権限がありません")
+
+    now = datetime.now(timezone.utc)
+    
+    # 有効な招待状のみ取得
+    # 1. 期限切れでない
+    # 2. 使用回数が上限に達していない
+    query = select(ProjectInvitation).options(
+        selectinload(ProjectInvitation.project),
+        selectinload(ProjectInvitation.creator)
+    ).where(
+        ProjectInvitation.project_id == project_id,
+        ProjectInvitation.expires_at > now
+    )
+    
+    result = await db.execute(query)
+    invitations = result.scalars().all()
+    
+    # 使用回数上限のフィルタリング
+    active_invitations = [
+        inv for inv in invitations 
+        if inv.max_uses is None or inv.used_count < inv.max_uses
+    ]
+    
+    return [
+        InvitationResponse(
+            token=inv.token,
+            project_id=inv.project.id,
+            project_name=inv.project.name,
+            created_by=inv.creator.display_name,
+            expires_at=inv.expires_at,
+            max_uses=inv.max_uses,
+            used_count=inv.used_count
+        ) for inv in active_invitations
+    ]
+
+
 @router.post("/projects/{project_id}/invitations", response_model=InvitationResponse)
 async def create_invitation(
     project_id: UUID,

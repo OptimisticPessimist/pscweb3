@@ -107,3 +107,48 @@ async def test_accept_invitation(
     # used_countが増えているか
     await db.refresh(inv)
     assert inv.used_count == 1
+
+
+@pytest.mark.asyncio
+async def test_list_project_invitations(
+    client: AsyncClient,
+    db: AsyncSession,
+    test_user: User,
+    test_project: TheaterProject
+) -> None:
+    """招待一覧取得テスト."""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    
+    # 1. 有効な招待
+    inv1 = ProjectInvitation(
+        project_id=test_project.id, created_by=test_user.id,
+        token="valid_token", expires_at=now + timedelta(hours=24),
+        max_uses=None, used_count=0
+    )
+    # 2. 期限切れ
+    inv2 = ProjectInvitation(
+        project_id=test_project.id, created_by=test_user.id,
+        token="expired_token", expires_at=now - timedelta(hours=1),
+        max_uses=None, used_count=0
+    )
+    # 3. 使用回数上限
+    inv3 = ProjectInvitation(
+        project_id=test_project.id, created_by=test_user.id,
+        token="max_uses_token", expires_at=now + timedelta(hours=24),
+        max_uses=1, used_count=1
+    )
+    
+    db.add_all([inv1, inv2, inv3])
+    await db.commit()
+    
+    token = create_access_token({"sub": str(test_user.id)})
+    response = await client.get(
+        f"/api/projects/{test_project.id}/invitations",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["token"] == "valid_token"

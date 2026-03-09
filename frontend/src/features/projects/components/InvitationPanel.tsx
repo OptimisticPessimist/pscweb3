@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { invitationsApi } from '../api/invitations';
-import type { InvitationResponse } from '@/types';
 
 interface InvitationPanelProps {
     projectId: string;
@@ -10,19 +9,25 @@ interface InvitationPanelProps {
 
 export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) => {
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
     const [expiresInHours, setExpiresInHours] = useState<number>(24 * 7); // Default 1 week
-    const [maxUses, setMaxUses] = useState<string>(''); // Empty for unlimited, parse to number or null
-    const [invitation, setInvitation] = useState<InvitationResponse | null>(null);
-    const [copied, setCopied] = useState(false);
+    const [maxUses, setMaxUses] = useState<string>(''); // Empty for unlimited
+    const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+    // 有効な招待リンク一覧を取得
+    const { data: invitations, isLoading } = useQuery({
+        queryKey: ['projects', projectId, 'invitations'],
+        queryFn: () => invitationsApi.getProjectInvitations(projectId),
+    });
 
     const createMutation = useMutation({
         mutationFn: () => invitationsApi.createInvitation(projectId, {
             expires_in_hours: expiresInHours,
             max_uses: maxUses ? parseInt(maxUses) : null,
         }),
-        onSuccess: (data) => {
-            setInvitation(data);
-            setCopied(false);
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'invitations'] });
+            setMaxUses('');
         },
         onError: (error: Error) => {
             console.error('Failed to create invitation:', error);
@@ -30,14 +35,11 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
         }
     });
 
-    const inviteUrl = invitation ? `${window.location.origin}/invitations/${invitation.token}` : '';
-
-    const handleCopy = () => {
-        if (inviteUrl) {
-            navigator.clipboard.writeText(inviteUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
+    const handleCopy = (token: string) => {
+        const url = `${window.location.origin}/invitations/${token}`;
+        navigator.clipboard.writeText(url);
+        setCopiedToken(token);
+        setTimeout(() => setCopiedToken(null), 2000);
     };
 
     return (
@@ -47,6 +49,7 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
                 <div className="mt-2 max-w-xl text-sm text-gray-500">
                     <p>{t('invitation.panel.description')}</p>
                 </div>
+
                 <form className="mt-5 space-y-4" onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }}>
                     <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                         <div className="sm:col-span-3">
@@ -87,41 +90,56 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
                     </button>
                 </form>
 
-                {invitation && (
-                    <div className="mt-6 rounded-md bg-gray-50 p-4 border border-gray-200">
-                        <div className="flex justify-between items-center">
-                            <div className="flex-1 mr-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('invitation.panel.generatedLink')}</label>
-                                <div className="flex rounded-md shadow-sm">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={inviteUrl}
-                                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 bg-white"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleCopy}
-                                        className={`-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md 
-                                            test-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500
-                                            ${copied ? 'text-green-600' : 'text-gray-700'}`}
-                                    >
-                                        {copied ? t('invitation.panel.copied') : t('invitation.panel.copy')}
-                                    </button>
+                {isLoading ? (
+                    <p className="mt-6 text-sm text-gray-500">{t('common.loading')}</p>
+                ) : invitations && invitations.length > 0 ? (
+                    <div className="mt-8">
+                        <h4 className="text-sm font-medium text-gray-900 mb-4">有効な招待リンク</h4>
+                        <div className="flex flex-col">
+                            <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                                    <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.panel.generatedLink')}</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.expiresAt')}</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.uses')}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {invitations.map((inv) => (
+                                                    <tr key={inv.token}>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                            <div className="flex items-center space-x-2">
+                                                                <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                                                    ...{inv.token.slice(-8)}
+                                                                </code>
+                                                                <button
+                                                                    onClick={() => handleCopy(inv.token)}
+                                                                    className={`text-xs font-medium ${copiedToken === inv.token ? 'text-green-600' : 'text-indigo-600 hover:text-indigo-900'}`}
+                                                                >
+                                                                    {copiedToken === inv.token ? t('invitation.panel.copied') : t('invitation.panel.copy')}
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {new Date(inv.expires_at).toLocaleString()}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            {inv.max_uses ? `${inv.used_count} / ${inv.max_uses}` : t('invitation.panel.form.maxUsesPlaceholder')}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <p className="mt-2 text-xs text-gray-500">
-                                    {t('invitation.expiresAt')}: {new Date(invitation.expires_at).toLocaleString()}
-                                </p>
-                                {invitation.max_uses && (
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        {t('invitation.uses')}: {invitation.used_count} / {invitation.max_uses}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>
-                )}
+                ) : null}
             </div>
-        </div >
+        </div>
     );
 };
