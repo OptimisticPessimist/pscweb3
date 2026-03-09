@@ -226,3 +226,44 @@ async def accept_invitation(
         project_name=project.name,
         message="プロジェクトに参加しました"
     )
+
+@router.delete("/invitations/{token}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_invitation(
+    token: str,
+    current_user: User | None = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """招待リンクを削除する（本人または管理者のみ）。"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="認証が必要です")
+
+    query = select(ProjectInvitation).where(ProjectInvitation.token == token)
+    result = await db.execute(query)
+    invitation = result.scalar_one_or_none()
+    
+    if not invitation:
+        raise HTTPException(status_code=404, detail="招待リンクが見つかりません")
+    
+    # 権限チェック
+    # 1. 作成者本人か
+    is_creator = invitation.created_by == current_user.id
+    
+    # 2. プロジェクトの管理者か
+    is_admin = False
+    if not is_creator:
+        query_member = select(ProjectMember).where(
+            ProjectMember.project_id == invitation.project_id,
+            ProjectMember.user_id == current_user.id
+        )
+        result_member = await db.execute(query_member)
+        member = result_member.scalar_one_or_none()
+        if member and member.role in ["owner", "admin"]:
+            is_admin = True
+    
+    if not is_creator and not is_admin:
+        raise HTTPException(status_code=403, detail="権限がありません")
+    
+    await db.delete(invitation)
+    await db.commit()
+    
+    return None

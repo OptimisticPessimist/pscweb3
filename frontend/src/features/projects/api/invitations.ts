@@ -21,4 +21,8 @@ export const invitationsApi = {
         const response = await apiClient.get(`/projects/${projectId}/invitations`);
         return response.data;
     },
+
+    async deleteInvitation(token: string): Promise<void> {
+        await apiClient.delete(`/invitations/${token}`);
+    },
 };

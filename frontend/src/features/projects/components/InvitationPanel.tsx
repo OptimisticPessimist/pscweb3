@@ -42,6 +42,23 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
         setTimeout(() => setCopiedToken(null), 2000);
     };
 
+    const deleteMutation = useMutation({
+        mutationFn: (token: string) => invitationsApi.deleteInvitation(token),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'invitations'] });
+        },
+        onError: (error: Error) => {
+            console.error('Failed to delete invitation:', error);
+            alert(t('common.error'));
+        }
+    });
+
+    const handleDelete = (token: string) => {
+        if (window.confirm(t('common.delete') + '?')) {
+            deleteMutation.mutate(token);
+        }
+    };
+
     return (
         <div className="bg-white shadow sm:rounded-lg mt-6">
             <div className="px-4 py-5 sm:p-6">
@@ -105,6 +122,7 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.panel.generatedLink')}</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.expiresAt')}</th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('invitation.uses')}</th>
+                                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
@@ -128,6 +146,15 @@ export const InvitationPanel: React.FC<InvitationPanelProps> = ({ projectId }) =
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                             {inv.max_uses ? `${inv.used_count} / ${inv.max_uses}` : t('invitation.panel.form.maxUsesPlaceholder')}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                            <button
+                                                                onClick={() => handleDelete(inv.token)}
+                                                                disabled={deleteMutation.isPending}
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                {t('common.delete')}
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}

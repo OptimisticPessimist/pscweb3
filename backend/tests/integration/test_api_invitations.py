@@ -152,3 +152,65 @@ async def test_list_project_invitations(
     data = response.json()
     assert len(data) == 1
     assert data[0]["token"] == "valid_token"
+
+
+@pytest.mark.asyncio
+async def test_delete_invitation(
+    client: AsyncClient,
+    db: AsyncSession,
+    test_user: User,
+    test_project: TheaterProject
+) -> None:
+    """招待削除テスト."""
+    from datetime import datetime, timedelta, timezone
+    inv_token = "token_to_delete"
+    inv = ProjectInvitation(
+        project_id=test_project.id,
+        created_by=test_user.id,
+        token=inv_token,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        max_uses=None,
+        used_count=0
+    )
+    db.add(inv)
+    await db.commit()
+
+    token = create_access_token({"sub": str(test_user.id)})
+    
+    # 削除実行
+    response = await client.delete(
+        f"/api/invitations/{inv_token}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 204
+    
+    # 削除されているか確認
+    query = select(ProjectInvitation).where(ProjectInvitation.token == inv_token)
+    result = await db.execute(query)
+    assert result.scalar_one_or_none() is None
+
+    # 権限なしテスト
+    # 別ユーザー作成
+    other_user = User(discord_id="other", discord_username="other")
+    db.add(other_user)
+    await db.commit()
+    await db.refresh(other_user)
+    
+    # 新しい招待
+    inv2 = ProjectInvitation(
+        project_id=test_project.id,
+        created_by=test_user.id,
+        token="token_not_yours",
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        max_uses=None,
+        used_count=0
+    )
+    db.add(inv2)
+    await db.commit()
+    
+    other_token = create_access_token({"sub": str(other_user.id)})
+    response = await client.delete(
+        "/api/invitations/token_not_yours",
+        headers={"Authorization": f"Bearer {other_token}"}
+    )
+    assert response.status_code == 403
