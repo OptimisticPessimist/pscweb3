@@ -129,12 +129,20 @@ async def get_poll_calendar_analysis(
 
 @router.post("/projects/{project_id}/polls/{poll_id}/candidates/{candidate_id}/answer")
 async def answer_poll(
+    project_id: UUID,
     candidate_id: UUID,
     payload: SchedulePollAnswerUpdate,
     current_user: User = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
 ):
     """日程調整に回答."""
+    # 権限チェック (viewer は回答不可)
+    stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
+    res = await db.execute(stmt)
+    member = res.scalar_one_or_none()
+    if not member or member.role == "viewer":
+        raise HTTPException(status_code=403, detail="閲覧者は日程調整に回答できません")
+
     poll_service = get_schedule_poll_service(db, None)
     await poll_service.upsert_answer(candidate_id, current_user.id, payload.status)
     return {"status": "ok"}

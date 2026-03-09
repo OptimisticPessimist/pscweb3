@@ -1,15 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
+import { projectsApi } from '@/features/projects/api/projects';
 import { FileText, Download, Trash2, Plus, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export const ScriptListPage: React.FC = () => {
     const { t } = useTranslation();
     const { projectId } = useParams<{ projectId: string }>();
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     const [pdfOptionsTarget, setPdfOptionsTarget] = useState<{ scriptId: string; title: string } | null>(null);
     const [pdfOrientation, setPdfOrientation] = useState<string>('landscape');
@@ -20,6 +23,18 @@ export const ScriptListPage: React.FC = () => {
         queryFn: () => scriptsApi.getScripts(projectId!),
         enabled: !!projectId,
     });
+
+    const { data: members } = useQuery({
+        queryKey: ['projectMembers', projectId],
+        queryFn: () => projectsApi.getProjectMembers(projectId!),
+        enabled: !!projectId,
+    });
+
+    const isViewer = useMemo(() => {
+        if (!members || !user) return true;
+        const member = members.find(m => m.user_id === user.id);
+        return !member || member.role === 'viewer';
+    }, [members, user]);
 
     const deleteMutation = useMutation({
         mutationFn: (scriptId: string) => scriptsApi.deleteScript(projectId!, scriptId),
@@ -63,15 +78,17 @@ export const ScriptListPage: React.FC = () => {
                         {t('script.manageScripts')}
                     </p>
                 </div>
-                <div className="mt-4 sm:mt-0">
-                    <Link
-                        to={`/projects/${projectId}/scripts/upload`}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                        {t('script.upload')}
-                    </Link>
-                </div>
+                {!isViewer && (
+                    <div className="mt-4 sm:mt-0">
+                        <Link
+                            to={`/projects/${projectId}/scripts/upload`}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                            <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                            {t('script.upload')}
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -118,17 +135,19 @@ export const ScriptListPage: React.FC = () => {
                                     >
                                         <Download className="h-5 w-5" />
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm('Are you sure you want to delete this script?')) {
-                                                deleteMutation.mutate(script.id);
-                                            }
-                                        }}
-                                        className="text-red-400 hover:text-red-500"
-                                        title="Delete Script"
-                                    >
-                                        <Trash2 className="h-5 w-5" />
-                                    </button>
+                                    {!isViewer && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm('Are you sure you want to delete this script?')) {
+                                                    deleteMutation.mutate(script.id);
+                                                }
+                                            }}
+                                            className="text-red-400 hover:text-red-500"
+                                            title="Delete Script"
+                                        >
+                                            <Trash2 className="h-5 w-5" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </li>

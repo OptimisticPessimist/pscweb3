@@ -219,14 +219,16 @@ export const SchedulePollDetailPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <button
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                    className="flex items-center space-x-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 border border-transparent hover:border-rose-100"
-                >
-                    <Trash2 className="h-5 w-5" />
-                    <span className="font-bold text-sm hidden sm:inline">{t('common.delete') || '削除'}</span>
-                </button>
+                {isEditorOrOwner && (
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleteMutation.isPending}
+                        className="flex items-center space-x-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 border border-transparent hover:border-rose-100"
+                    >
+                        <Trash2 className="h-5 w-5" />
+                        <span className="font-bold text-sm hidden sm:inline">{t('common.delete') || '削除'}</span>
+                    </button>
+                )}
             </div>
 
             {/* 表示モード切替 */}
@@ -344,9 +346,11 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                 </div>
                                             </th>
                                         ))}
-                                        <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
-                                            {t('schedulePoll.myAnswer') || 'あなたの回答'}
-                                        </th>
+                                        {isEditorOrOwner && (
+                                            <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
+                                                {t('schedulePoll.myAnswer') || 'あなたの回答'}
+                                            </th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -375,28 +379,30 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="px-6 py-5">
-                                                    <div className="flex justify-center items-center space-x-2">
-                                                        <button
-                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
-                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
-                                                        >
-                                                            <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
-                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
-                                                        >
-                                                            <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
-                                                            className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
-                                                        >
-                                                            <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                                {isEditorOrOwner && (
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex justify-center items-center space-x-2">
+                                                            <button
+                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
+                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
+                                                            >
+                                                                <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
+                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
+                                                            >
+                                                                <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
+                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
+                                                            >
+                                                                <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })}
