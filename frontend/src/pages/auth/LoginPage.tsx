@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export const LoginPage = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation();
 
     // 既にログイン済みならダッシュボードへ
@@ -16,6 +17,12 @@ export const LoginPage = () => {
     }, [isAuthenticated, navigate]);
 
     const handleLogin = () => {
+        // リダイレクト元があれば保存
+        const from = location.state?.from?.pathname + (location.state?.from?.search || '');
+        if (from && from !== '/' && from !== '/login') {
+            localStorage.setItem('postLoginRedirect', from);
+        }
+
         // バックエンドのDiscord認証エンドポイントへリダイレクト
         // VITE_API_URLは http://localhost:8000 など
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';

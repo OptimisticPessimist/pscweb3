@@ -13,7 +13,15 @@ export const AuthCallbackPage = () => {
         const token = searchParams.get('token');
         if (token) {
             login(token); // AuthContextにトークンを保存
-            navigate('/dashboard', { replace: true });
+
+            // 元いたページがあればそこへ、なければダッシュボードへ
+            const redirectUrl = localStorage.getItem('postLoginRedirect');
+            if (redirectUrl) {
+                localStorage.removeItem('postLoginRedirect');
+                navigate(redirectUrl, { replace: true });
+            } else {
+                navigate('/dashboard', { replace: true });
+            }
         } else {
             // トークンがない場合はエラー扱い(ログイン画面へ戻す)
             console.error('No token found in callback URL');
