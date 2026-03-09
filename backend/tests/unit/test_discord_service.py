@@ -20,14 +20,16 @@ async def test_send_notification_success(discord_service: DiscordService):
     webhook_url = "https://discord.com/api/webhooks/test/test"
     content = "Test notification"
 
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-        mock_post.return_value = Response(204)
+    with patch("httpx.AsyncClient.request", new_callable=AsyncMock) as mock_request:
+        import httpx
+        mock_request.return_value = Response(204, request=httpx.Request("POST", webhook_url))
         
         await discord_service.send_notification(content, webhook_url=webhook_url)
         
-        mock_post.assert_called_once()
-        args, kwargs = mock_post.call_args
-        assert args[0] == webhook_url
+        mock_request.assert_called_once()
+        args, kwargs = mock_request.call_args
+        assert args[0] == "POST"
+        assert args[1] == webhook_url
         assert kwargs["json"] == {"content": content}
 
 
@@ -36,15 +38,15 @@ async def test_send_notification_no_url(discord_service: DiscordService):
     """URLがない場合は送信されないこと."""
     discord_service.default_webhook_url = None
     
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+    with patch("httpx.AsyncClient.request", new_callable=AsyncMock) as mock_request:
         await discord_service.send_notification("Test")
-        mock_post.assert_not_called()
+        mock_request.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_send_notification_invalid_url(discord_service: DiscordService):
     """不正なURLの場合は送信されないこと."""
     
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+    with patch("httpx.AsyncClient.request", new_callable=AsyncMock) as mock_request:
         await discord_service.send_notification("Test", webhook_url="http://example.com/invalid")
-        mock_post.assert_not_called()
+        mock_request.assert_not_called()
