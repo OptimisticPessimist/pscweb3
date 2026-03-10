@@ -309,7 +309,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                     {rec.possible_scenes.map((ps: any) => (
                                                         <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
                                                             <span className="font-bold mr-1">#{formatSceneNumber(ps.act_number, ps.scene_number)}</span>
-                                                            <span className="truncate">{ps.scene_heading}</span>
+                                                            <span className="truncate">{ps.heading}</span>
                                                         </div>
                                                     ))}
                                                 </div>
