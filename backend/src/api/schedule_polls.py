@@ -140,8 +140,8 @@ async def answer_poll(
     stmt = select(ProjectMember).where(ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id)
     res = await db.execute(stmt)
     member = res.scalar_one_or_none()
-    if not member or member.role == "viewer":
-        raise HTTPException(status_code=403, detail="閲覧者は日程調整に回答できません")
+    if not member:
+        raise HTTPException(status_code=403, detail="プロジェクトメンバーではありません")
 
     poll_service = get_schedule_poll_service(db, None)
     await poll_service.upsert_answer(candidate_id, current_user.id, payload.status)

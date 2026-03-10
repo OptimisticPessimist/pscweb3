@@ -133,6 +133,11 @@ export const SchedulePollDetailPage: React.FC = () => {
         return member && (member.role === 'owner' || member.role === 'editor');
     }, [members, user]);
 
+    const isMember = useMemo(() => {
+        if (!members || !user) return false;
+        return members.some(m => m.user_id === user.id);
+    }, [members, user]);
+
     const handleDelete = () => {
         if (window.confirm(t('schedulePoll.confirmDelete') || 'この日程調整を削除してもよろしいですか？\n削除すると参加者の回答などもすべて消去され復元できません。')) {
             deleteMutation.mutate();
@@ -346,7 +351,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                 </div>
                                             </th>
                                         ))}
-                                        {isEditorOrOwner && (
+                                        {isMember && (
                                             <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
                                                 {t('schedulePoll.myAnswer') || 'あなたの回答'}
                                             </th>
@@ -379,7 +384,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                         </td>
                                                     );
                                                 })}
-                                                {isEditorOrOwner && (
+                                                {isMember && (
                                                     <td className="px-6 py-5">
                                                         <div className="flex justify-center items-center space-x-2">
                                                             <button
