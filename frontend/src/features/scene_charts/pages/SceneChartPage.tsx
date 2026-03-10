@@ -119,7 +119,7 @@ export const SceneChartPage = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {chart.scenes.map((scene) => (
-                                <tr key={scene.scene_number} className="hover:bg-gray-50">
+                                <tr key={scene.scene_id} className="hover:bg-gray-50">
                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-0 bg-white group-hover:bg-gray-50 font-bold border-r border-gray-100">
                                         {scene.act_number ? `#${scene.act_number}` : '-'}
                                     </td>

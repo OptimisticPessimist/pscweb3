@@ -62,7 +62,8 @@ export interface CharacterInScene {
 }
 
 export interface SceneInChart {
-    act_number?: number | null;
+    scene_id: string;
+    act_number: number | null | undefined;
     scene_number: number;
     scene_heading: string;
     characters: CharacterInScene[];

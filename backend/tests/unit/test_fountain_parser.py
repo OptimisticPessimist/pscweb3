@@ -538,3 +538,64 @@ Content 2.1
     assert scenes[2].act_number == 2
     assert scenes[2].scene_number == 1  # リセットされていること
     assert "Scene 2.1" in scenes[2].heading
+
+
+@pytest.mark.asyncio
+async def test_parse_fountain_synopsis_does_not_collect_characters(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """あらすじ（Synopsis）が後の登場人物セクションを収集しないことをテストする."""
+    # Arrange
+    fountain_content = """Title: Synopsis Test
+
+# あらすじ
+
+This is the true synopsis.
+
+# 登場人物
+TARO: The Hero.
+HANAKO: The Heroine.
+
+INT. ROOM - DAY
+Scene content.
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Synopsis Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    from sqlalchemy import select
+    from src.db.models import Scene, Character
+    
+    # あらすじシーンを取得
+    result = await db.execute(
+        select(Scene).where(Scene.script_id == script.id, Scene.scene_number == 0)
+    )
+    synopsis_scene = result.scalar_one_or_none()
+    
+    assert synopsis_scene is not None
+    assert synopsis_scene.description.strip() == "This is the true synopsis."
+    # 後のキャラクター定義が含まれていないこと
+    assert "TARO" not in synopsis_scene.description
+    assert "HANAKO" not in synopsis_scene.description
+
+    # キャラクターが正しく作成されていること（パース自体は継続していることの確認）
+    result = await db.execute(
+        select(Character).where(Character.script_id == script.id)
+    )
+    characters = result.scalars().all()
+    assert len(characters) >= 2
