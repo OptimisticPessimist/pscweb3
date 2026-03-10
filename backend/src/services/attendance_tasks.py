@@ -110,7 +110,7 @@ async def _send_reminder(event: AttendanceEvent, pending_targets: list[Attendanc
         return False
 
     deadline_ts = int(event.deadline.replace(tzinfo=timezone.utc).timestamp())
-    deadline_str = f"<t:{deadline_ts}:f> (<t:{deadline_ts}:R>)"
+    deadline_str = f"<t:{deadline_ts}:f>"
     
     schedule_str = "未定"
     if event.schedule_date:

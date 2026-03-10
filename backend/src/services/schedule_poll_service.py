@@ -102,6 +102,10 @@ class SchedulePollService:
             if description:
                 message_content += f"{description}\n"
             
+            if deadline:
+                deadline_ts = int(deadline.timestamp())
+                message_content += f"\n**回答期限:** <t:{deadline_ts}:f>\n"
+            
             message_content += "\n（※以下のボタンから回答するか、Webフォームを開いて回答してください）\n"
             
             components = []
@@ -662,6 +666,13 @@ class SchedulePollService:
         content = (
             f"🔔 **【日程調整リマインド】**\n"
             f"「**{poll.title}**」の回答がまだの方がいらっしゃいます。お手数ですが回答をお願いします！\n\n"
+        )
+        
+        if poll.deadline:
+            deadline_ts = int(poll.deadline.timestamp())
+            content += f"**回答期限:** <t:{deadline_ts}:f>\n\n"
+            
+        content += (
             f"{' '.join(mentions)}\n\n"
             f"🌐 {web_url}"
         )
