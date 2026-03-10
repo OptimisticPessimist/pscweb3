@@ -1,24 +1,17 @@
-"""Fountain脚本パーサーサービス."""
-
+import logging
+import re
 from fountain.fountain import Fountain
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Line, Scene, Script
 
 
+logger = logging.getLogger("uvicorn")
+
+
 async def parse_fountain_and_create_models(
     script: Script, fountain_content: str, db: AsyncSession
 ) -> None:
-    """Fountain脚本をパースしてDBモデルを作成.
-
-    Args:
-        script: Scriptモデルインスタンス
-        fountain_content: Fountain形式の脚本内容
-        db: データベースセッション
-    """
-    # Fountainパース
-    import logging
-    logger = logging.getLogger("uvicorn")
     fountain_content = fountain_content.strip() # Fix for fountain library bug with empty lines in header
 
     # Pre-process: Inject blank lines in Character blocks to ensure proper parsing
@@ -393,28 +386,33 @@ async def parse_fountain_and_create_models(
             current_character = character_map.get(char_name)
 
 
-        elif element.element_type == "Action":
-            # ト書き (Action) または 一行セリフ (@Name Dialogue)
-            content = element.original_content.rstrip()  # Preserve leading whitespace for Togaki
+        elif element.element_type in ["Action", "Synopsis", "Parenthetical", "Transition", "Centered Text"]:
+            # ト書き、あらすじ、括弧書き、移行、中央揃え
+            content = element.original_content.rstrip()
             
-            # Remove forced Action marker '!' if present (added by pre-processor)
-            if content.startswith("!"):
-                content = content[1:]
+            # マーカーの除去
+            marker_removed_content = content
+            if element.element_type == "Action" and marker_removed_content.startswith("!"):
+                marker_removed_content = marker_removed_content[1:]
+            elif element.element_type == "Synopsis" and marker_removed_content.startswith("="):
+                marker_removed_content = marker_removed_content[1:].lstrip()
+            elif element.element_type == "Centered Text":
+                if marker_removed_content.startswith(">") and marker_removed_content.endswith("<"):
+                    marker_removed_content = marker_removed_content[1:-1].strip()
+                elif marker_removed_content.startswith(">"):
+                    marker_removed_content = marker_removed_content[1:].strip()
 
-            stripped_content = content.strip()
+            stripped_content = marker_removed_content.strip()
             
-            if stripped_content:
+            if not stripped_content:
+                continue
+
+            # 一行セリフの判定 (@Name Dialogue) - Action の場合のみ
+            if element.element_type == "Action" and stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
                 collecting_description = False
                 last_scene_was_section = False
 
-            # Check for one-line dialogue: @Character Dialogue (must have at least one space)
-            if stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
-                # ... One-line dialogue logic ...
-                # One-line dialogue also ends description collection
-                collecting_description = False
-
                 # Split by first whitespace (half or full width)
-                import re
                 parts = re.split(r'[ 　]', stripped_content, maxsplit=1) # Split by space or full-width space
                 
                 if len(parts) >= 2:
@@ -445,36 +443,45 @@ async def parse_fountain_and_create_models(
                         )
                         db.add(line)
                 else:
-                    # Fallback (should typically not happen given if check)
+                    # Fallback
                      if current_scene:
                         line_order += 1
                         line = Line(
                             scene_id=current_scene.id,
                             character_id=None,
-                            content=content,
+                            content=marker_removed_content,
                             order=line_order,
                         )
                         db.add(line)
 
             else:
-                # Normal Action (Togaki)
+                # 通常のト書き、あらすじ、またはその他の要素
                 if current_scene:
-                    # Capture description if we are still at the start of the scene
-                    if collecting_description:
+                    # シーン冒頭のあらすじやト書きを詳細記述として収集
+                    if collecting_description and element.element_type in ["Action", "Synopsis"]:
                          if current_scene.description:
                              current_scene.description += "\n" + stripped_content
                          else:
                              current_scene.description = stripped_content
-                         # Update DB (or wait until flush?) - SQLAlchemy tracks changes to objects in session
-                    
+                    else:
+                         # 最初のト書きセクション以外、または非Action/Synopsis要素が来たら収集終了
+                         collecting_description = False
+
                     line_order += 1
+                    # 括弧書きの場合は、直前のキャラクターに紐付ける
+                    line_character_id = None
+                    if element.element_type == "Parenthetical" and current_character:
+                        line_character_id = current_character.id
+
                     line = Line(
                         scene_id=current_scene.id,
-                        character_id=None,
-                        content=content, # Use original content for line to preserve indent
+                        character_id=line_character_id,
+                        content=marker_removed_content,
                         order=line_order,
                     )
                     db.add(line)
+                
+                last_scene_was_section = False
 
         elif element.element_type == "Dialogue":
             # Description collection ends
