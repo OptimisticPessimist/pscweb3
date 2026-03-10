@@ -263,25 +263,26 @@ async def parse_fountain_and_create_models(
             is_dot_act = False
                       
         if is_section_act or is_dot_act:
-             # Level 1 Heading detected (Act)
-             heading_content = content_stripped
-             
-             # "登場人物" や "Character" は幕としてカウントしない
-             if "登場人物" in heading_content or "Character" in heading_content:
-                 pass
-             else:
-                 # 幕番号作成
-                 if current_act_number is None:
-                     current_act_number = 1
-                 else:
-                     current_act_number += 1
-                 logger.info(f"Found Act #{current_act_number}: {heading_content}")
-                 
-             # .1 の場合はSceneとして処理しないようにcontinueする
-             # ただし、Section Headingの場合はcontinueしなくても下のis_scene_heading等で弾かれる(Section Headingだから)
-             # is_dot_actの場合はScene Headingなので、ここでcontinueしないと下でSceneとして作られてしまう
-             if is_dot_act:
-                 continue
+            # Level 1 Heading detected (Act)
+            heading_content = content_stripped
+            
+            # "登場人物" や "Character" は幕としてカウントしない
+            if "登場人物" in heading_content or "Character" in heading_content:
+                pass
+            else:
+                # 幕番号作成
+                if current_act_number is None:
+                    current_act_number = 1
+                else:
+                    current_act_number += 1
+                scene_number = 0  # 幕が変わったらシーン番号をリセット
+                logger.info(f"Found Act #{current_act_number}: {heading_content}")
+                
+            # .1 の場合はSceneとして処理しないようにcontinueする
+            # ただし、Section Headingの場合はcontinueしなくても下のis_scene_heading等で弾かれる(Section Headingだから)
+            # is_dot_actの場合はScene Headingなので、ここでcontinueしないと下でSceneとして作られてしまう
+            if is_dot_act:
+                continue
 
         # Scene検出
         # 1. Standard Scene Heading (INT./EXT. etc or Forced . but NOT .1)

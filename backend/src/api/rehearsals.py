@@ -252,7 +252,8 @@ async def get_rehearsal_schedule(
             )
             scene = result.scalar_one_or_none()
             if scene:
-                scene_heading = scene.heading
+                act_scene = f"{scene.act_number}-{scene.scene_number}" if scene.act_number else str(scene.scene_number)
+                scene_heading = f"#{act_scene} {scene.heading}"
 
         # 参加者
         participants = []
@@ -456,6 +457,29 @@ async def add_rehearsal(
     # Commit changes
     await db.commit()
 
+    # Re-fetch rehearsal with full options for response and notifications
+    result = await db.execute(
+        select(Rehearsal)
+        .where(Rehearsal.id == rehearsal.id)
+        .options(
+            selectinload(Rehearsal.scenes),
+            selectinload(Rehearsal.participants).options(selectinload(RehearsalParticipant.user)),
+            selectinload(Rehearsal.casts).options(
+                selectinload(RehearsalCast.character),
+                selectinload(RehearsalCast.user)
+            )
+        )
+    )
+    rehearsal = result.scalar_one()
+
+    # シーン情報 & キャスト構成
+    scene_headings = []
+    for s in rehearsal.scenes:
+        act_scene = f"{s.act_number}-{s.scene_number}" if s.act_number else str(s.scene_number)
+        scene_headings.append(f"#{act_scene} {s.heading}")
+    scene_text = ", ".join(scene_headings) if scene_headings else None
+
+
     # Attendance Check
     if rehearsal_data.create_attendance_check:
         # 期限設定（未指定なら稽古日の24時間前）
@@ -489,7 +513,7 @@ async def add_rehearsal(
 
         await attendance_service.create_attendance_event(
             project=project,
-            title=f"稽古: {rehearsal_data.date.strftime('%m/%d %H:%M')}",
+            title=f"稽古: {rehearsal_data.date.strftime('%m/%d %H:%M')}" + (f" ({scene_text})" if scene_text else ""),
             deadline=deadline,
             schedule_date=schedule_date,
             location=rehearsal_data.location,
@@ -497,20 +521,6 @@ async def add_rehearsal(
             target_user_ids=attendance_targets
         )
 
-     # Re-fetch rehearsal with full options to ensure relationships are loaded for response
-    result = await db.execute(
-        select(Rehearsal)
-        .where(Rehearsal.id == rehearsal.id)
-        .options(
-            selectinload(Rehearsal.scenes),
-            selectinload(Rehearsal.participants).options(selectinload(RehearsalParticipant.user)),
-            selectinload(Rehearsal.casts).options(
-                selectinload(RehearsalCast.character),
-                selectinload(RehearsalCast.user)
-            )
-        )
-    )
-    rehearsal = result.scalar_one()
 
     # Display Name Map for manual response construction (if needed)
     # But response model uses relations?
@@ -561,8 +571,6 @@ async def add_rehearsal(
 
     # Webhook通知（既存機能の維持）
     project = await db.get(TheaterProject, schedule.project_id)
-    scene_headings = [s.heading for s in rehearsal.scenes]
-    scene_text = ", ".join(scene_headings) if scene_headings else None
     
     # Timestamp conversion (ensure it's treated as UTC before getting timestamp)
     rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
@@ -757,7 +765,10 @@ async def update_rehearsal(
     rehearsal = result.scalar_one()
 
     # シーン情報 & キャスト構成
-    scene_headings = [s.heading for s in rehearsal.scenes]
+    scene_headings = []
+    for s in rehearsal.scenes:
+        act_scene = f"{s.act_number}-{s.scene_number}" if s.act_number else str(s.scene_number)
+        scene_headings.append(f"#{act_scene} {s.heading}")
     scene_heading = ", ".join(scene_headings) if scene_headings else None
     
     casts_response_list = []
@@ -802,7 +813,8 @@ async def update_rehearsal(
         )
         scene = result.scalar_one_or_none()
         if scene:
-            scene_heading = scene.heading
+            act_scene = f"{scene.act_number}-{scene.scene_number}" if scene.act_number else str(scene.scene_number)
+            scene_heading = f"#{act_scene} {scene.heading}"
             
             # デフォルト配役の取得 (Missing characters only)
             unique_characters = {}

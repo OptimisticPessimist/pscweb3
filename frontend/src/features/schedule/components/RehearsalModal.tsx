@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rehearsalsApi } from '../api/rehearsals';
 import { scriptsApi } from '@/features/scripts/api/scripts';
 import { projectsApi } from '@/features/projects/api/projects';
+import { formatSceneNumber } from '@/utils/sceneFormatter';
 import type { Rehearsal, RehearsalCreate, RehearsalUpdate, RehearsalParticipantCreate, RehearsalCastCreate } from '@/types';
 import { RehearsalParticipants } from './RehearsalParticipants';
 
@@ -416,7 +417,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                                     className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
                                                 />
                                                 <label htmlFor={`scene-${scene.id}`} className="ml-2 text-sm text-gray-900 cursor-pointer">
-                                                    S{scene.scene_number} {scene.heading}
+                                                    S{formatSceneNumber(scene.act_number, scene.scene_number)} {scene.heading}
                                                 </label>
                                             </div>
                                         ))}

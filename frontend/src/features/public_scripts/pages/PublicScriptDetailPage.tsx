@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { publicScriptsApi } from '../api/publicScripts';
 import { ArrowLeft, Info, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { formatSceneNumber } from '@/utils/sceneFormatter';
 
 export const PublicScriptDetailPage: React.FC = () => {
     const { t, i18n } = useTranslation();
@@ -107,7 +108,7 @@ export const PublicScriptDetailPage: React.FC = () => {
                             {script.scenes.map((scene) => (
                                 <div key={scene.id} className="space-y-2">
                                     <h4 className="font-bold text-gray-800 uppercase">
-                                        {scene.scene_number}. {scene.heading}
+                                        {formatSceneNumber(scene.act_number, scene.scene_number)}. {scene.heading}
                                     </h4>
                                     {scene.description && (
                                         <p className="text-gray-600 italic whitespace-pre-wrap">{scene.description}</p>

@@ -393,6 +393,7 @@ class SchedulePollService:
                             
                         candidate_possible_scenes.append({
                             "scene_id": scene_id,
+                            "act_number": scene.act_number,
                             "scene_number": scene.scene_number,
                             "scene_heading": scene.heading,
                             "score": score,
@@ -536,6 +537,7 @@ class SchedulePollService:
                     # 稽古可能
                     possible_scenes.append({
                         "scene_id": scene.id,
+                        "act_number": scene.act_number,
                         "scene_number": scene.scene_number,
                         "heading": scene.heading,
                         "is_possible": True,
@@ -546,6 +548,7 @@ class SchedulePollService:
                     char_name, m_uids = missing_chars[0]
                     reach_scenes.append({
                         "scene_id": scene.id,
+                        "act_number": scene.act_number,
                         "scene_number": scene.scene_number,
                         "heading": scene.heading,
                         "is_possible": False,
@@ -590,6 +593,7 @@ class SchedulePollService:
         all_scenes_info = [
             {
                 "scene_id": s.id,
+                "act_number": s.act_number,
                 "scene_number": s.scene_number,
                 "heading": s.heading
             }

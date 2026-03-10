@@ -231,6 +231,15 @@ async def finalize_poll(
              # [] を渡すと誰も呼ばないが、Discordユーザー0人扱いでスキップされるかもしれない
              attendance_targets = [] 
 
+    # シーン情報取得
+    scenes_db = await db.execute(select(Scene).where(Scene.id.in_(scene_ids)))
+    scenes = scenes_db.scalars().all()
+    scene_headings = []
+    for s in scenes:
+        act_scene = f"{s.act_number}-{s.scene_number}" if s.act_number else str(s.scene_number)
+        scene_headings.append(f"#{act_scene} {s.heading}")
+    scene_text = ", ".join(scene_headings) if scene_headings else None
+
     # 出欠確認イベントの作成
     if attendance_targets is None or attendance_targets:
         attendance_service = AttendanceService(db, discord_service)
@@ -238,7 +247,7 @@ async def finalize_poll(
         
         await attendance_service.create_attendance_event(
             project=project,
-            title=f"稽古: {rehearsal.date.astimezone().strftime('%m/%d %H:%M')}",
+            title=f"稽古: {rehearsal.date.astimezone().strftime('%m/%d %H:%M')}" + (f" ({scene_text})" if scene_text else ""),
             deadline=deadline,
             schedule_date=rehearsal.date,
             location=rehearsal.location,
@@ -251,6 +260,8 @@ async def finalize_poll(
         rehearsal_ts = int(rehearsal.date.replace(tzinfo=timezone.utc).timestamp())
         date_str = f"<t:{rehearsal_ts}:f>" # User local time
         content = f"📅 **日程調整の結果、稽古が確定しました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+        if scene_text:
+            content += f"\nシーン: {scene_text}"
         
         now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(timezone.utc)
@@ -269,7 +280,7 @@ async def finalize_poll(
             f"DTSTART:{start_str}\r\n"
             f"DTEND:{end_str}\r\n"
             f"SUMMARY:📌 稽古確定 - {project.name}\r\n"
-            f"DESCRIPTION:日程調整により稽古が確定しました。\\n場所: {rehearsal.location or '未定'}\r\n"
+            f"DESCRIPTION:日程調整により稽古が確定しました。\\n{'シーン: ' + scene_text if scene_text else ''}\\n場所: {rehearsal.location or '未定'}\r\n"
             f"LOCATION:{rehearsal.location or '未定'}\r\n"
             "END:VEVENT\r\n"
             "END:VCALENDAR\r\n"

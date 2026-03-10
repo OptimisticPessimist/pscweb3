@@ -82,6 +82,7 @@ class SchedulePollFinalize(BaseModel):
 class SceneAvailability(BaseModel):
     """シーンの参加可否状況."""
     scene_id: UUID
+    act_number: int | None = None
     scene_number: int
     heading: str
     is_possible: bool  # 必須キャスト全員が OK または Maybe
@@ -115,6 +116,7 @@ class PollCandidateAnalysis(BaseModel):
 class PollSceneInfo(BaseModel):
     """シーンの基本情報."""
     scene_id: UUID
+    act_number: int | None = None
     scene_number: int
     heading: str
 

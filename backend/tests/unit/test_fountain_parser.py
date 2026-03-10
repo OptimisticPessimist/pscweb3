@@ -473,3 +473,68 @@ Hello!
     assert scenes[0].scene_number == 1
     assert scenes[0].heading == "第1場"
     assert scenes[0].act_number == 1
+
+
+@pytest.mark.asyncio
+async def test_parse_fountain_with_multiple_acts_resets_scene_number(
+    db: AsyncSession, test_project: TheaterProject, test_user: User
+) -> None:
+    """複数のActが含まれる場合にシーン番号がリセットされることをテストする."""
+    # Arrange
+    fountain_content = """Title: Multi Act Test
+
+# Act 1
+
+## Scene 1.1
+Content 1.1
+
+## Scene 1.2
+Content 1.2
+
+# Act 2
+
+## Scene 2.1
+Content 2.1
+"""
+    
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Multi Act Test",
+        content=fountain_content,
+    )
+    db.add(script)
+    await db.flush()
+    
+    # Act
+    await parse_fountain_and_create_models(
+        script=script,
+        fountain_content=fountain_content,
+        db=db
+    )
+    await db.commit()
+    
+    # Assert
+    from sqlalchemy import select
+    from src.db.models import Scene
+    
+    result = await db.execute(
+        select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
+    )
+    scenes = result.scalars().all()
+    
+    assert len(scenes) == 3
+    
+    # Act 1
+    assert scenes[0].act_number == 1
+    assert scenes[0].scene_number == 1
+    assert "Scene 1.1" in scenes[0].heading
+    
+    assert scenes[1].act_number == 1
+    assert scenes[1].scene_number == 2
+    assert "Scene 1.2" in scenes[1].heading
+    
+    # Act 2
+    assert scenes[2].act_number == 2
+    assert scenes[2].scene_number == 1  # リセットされていること
+    assert "Scene 2.1" in scenes[2].heading

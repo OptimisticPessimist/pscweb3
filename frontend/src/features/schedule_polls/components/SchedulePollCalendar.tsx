@@ -5,6 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { PollCandidateAnalysis, SchedulePollCalendarAnalysis } from '../api/schedulePoll';
 import { useTranslation } from 'react-i18next';
+import { formatSceneNumber } from '@/utils/sceneFormatter';
 import { Clock, Users, Sparkles, CheckCircle2, AlertCircle, X, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -28,17 +29,18 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
             // Use the comprehensive scene list provided by the backend (includes impossible scenes)
             return [...analysis.all_scenes].sort((a, b) => a.scene_number - b.scene_number).map(s => ({
                 id: s.scene_id,
+                act_number: s.act_number,
                 number: s.scene_number,
                 heading: s.heading
             }));
         }
 
         // Fallback for older API responses
-        const sceneMap = new Map<string, { id: string, number: number, heading: string }>();
+        const sceneMap = new Map<string, { id: string, act_number?: number | null, number: number, heading: string }>();
         analysis.analyses.forEach(a => {
             [...a.possible_scenes, ...a.reach_scenes].forEach(s => {
                 if (!sceneMap.has(s.scene_id)) {
-                    sceneMap.set(s.scene_id, { id: s.scene_id, number: s.scene_number, heading: s.heading });
+                    sceneMap.set(s.scene_id, { id: s.scene_id, act_number: s.act_number, number: s.scene_number, heading: s.heading });
                 }
             });
         });
@@ -131,9 +133,9 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                             className="pl-10 pr-10 py-2.5 bg-gray-50 bg-none border border-gray-200 text-gray-700 text-sm font-bold rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full appearance-none transition-all hover:bg-white hover:shadow-md cursor-pointer !bg-none"
                         >
                             <option value="">{t('schedulePoll.allScenes') || '✨ すべてのシーンを表示'}</option>
-                            {scenes.map((scene: { id: string, number: number, heading: string }) => (
+                            {scenes.map((scene: { id: string, act_number?: number | null, number: number, heading: string }) => (
                                 <option key={scene.id} value={scene.id}>
-                                    #{scene.number} {scene.heading}
+                                    #{formatSceneNumber(scene.act_number, scene.number)} {scene.heading}
                                 </option>
                             ))}
                         </select>
@@ -296,8 +298,8 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                                     {selectedAnalysis.possible_scenes.map((scene) => (
                                                                         <div key={scene.scene_id} className={`bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between group hover:bg-emerald-50 transition-colors ${scene.scene_id === selectedSceneId ? 'ring-2 ring-emerald-500 ring-offset-2' : ''}`}>
                                                                             <div className="flex items-center space-x-3">
-                                                                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-emerald-100 flex items-center justify-center font-black text-emerald-600">
-                                                                                    {scene.scene_number}
+                                                                                <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-emerald-100 flex items-center justify-center font-black text-emerald-600 text-[10px] leading-tight text-center">
+                                                                                    {formatSceneNumber(scene.act_number, scene.scene_number)}
                                                                                 </div>
                                                                                 <div className="font-bold text-gray-900">{scene.heading}</div>
                                                                             </div>
@@ -323,8 +325,8 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                                         <div key={scene.scene_id} className={`bg-amber-50/50 border border-amber-100 rounded-2xl p-4 hover:bg-amber-50 transition-colors ${scene.scene_id === selectedSceneId ? 'ring-2 ring-amber-500 ring-offset-2' : ''}`}>
                                                                             <div className="flex items-center justify-between mb-2">
                                                                                 <div className="flex items-center space-x-3">
-                                                                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-amber-100 flex items-center justify-center font-black text-amber-600">
-                                                                                        {scene.scene_number}
+                                                                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm border border-amber-100 flex items-center justify-center font-black text-amber-600 text-[10px] leading-tight text-center">
+                                                                                        {formatSceneNumber(scene.act_number, scene.scene_number)}
                                                                                     </div>
                                                                                     <div className="font-bold text-gray-900">{scene.heading}</div>
                                                                                 </div>

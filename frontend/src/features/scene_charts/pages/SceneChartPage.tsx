@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '@/features/scripts/api/scripts';
 import { sceneChartsApi } from '@/features/scene_charts/api/sceneCharts';
 import { useTranslation } from 'react-i18next';
+import { formatSceneNumber } from '@/utils/sceneFormatter';
 
 export const SceneChartPage = () => {
     const { t, i18n } = useTranslation();
@@ -123,7 +124,7 @@ export const SceneChartPage = () => {
                                         {scene.act_number ? `#${scene.act_number}` : '-'}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-16 bg-white group-hover:bg-gray-50 font-bold border-r border-gray-100">
-                                        #{scene.scene_number}
+                                        #{formatSceneNumber(scene.act_number, scene.scene_number)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500 sticky left-36 bg-white group-hover:bg-gray-50 border-r border-gray-200 max-w-xs truncate" title={scene.scene_heading}>
                                         {scene.scene_heading}

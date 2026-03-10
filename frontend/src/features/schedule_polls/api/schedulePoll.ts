@@ -32,6 +32,7 @@ export interface SchedulePollResponse {
 
 export interface RecommendationScene {
     scene_id: string;
+    act_number: number | null;
     scene_number: number;
     scene_heading: string;
     score: number;
@@ -48,6 +49,7 @@ export interface ScheduleRecommendation {
 
 export interface SceneAvailability {
     scene_id: string;
+    act_number: number | null;
     scene_number: number;
     heading: string;
     is_possible: boolean;
@@ -78,6 +80,7 @@ export interface PollCandidateAnalysis {
 
 export interface PollSceneInfo {
     scene_id: string;
+    act_number: number | null;
     scene_number: number;
     heading: string;
 }

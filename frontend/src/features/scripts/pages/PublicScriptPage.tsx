@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { scriptsApi } from '../api/scripts';
 import { ArrowDownToLine, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { formatSceneNumber } from '@/utils/sceneFormatter';
 import toast from 'react-hot-toast';
 
 export const PublicScriptPage: React.FC = () => {
@@ -128,7 +129,7 @@ export const PublicScriptPage: React.FC = () => {
                                 {script.scenes.map((scene) => (
                                     <div key={scene.id} className="space-y-2">
                                         <h4 className="font-bold text-gray-800 uppercase">
-                                            {scene.scene_number}. {scene.heading}
+                                            {formatSceneNumber(scene.act_number, scene.scene_number)}. {scene.heading}
                                         </h4>
                                         {scene.description && (
                                             <p className="text-gray-600 italic whitespace-pre-wrap">{scene.description}</p>
