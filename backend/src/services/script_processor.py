@@ -219,6 +219,110 @@ async def cleanup_related_data(script: Script, db: AsyncSession) -> None:
     await db.flush()
 
 
+async def collect_associations(script_id: UUID, db: AsyncSession):
+    """削除前に重要な紐付け情報を収集."""
+    # 1. 配役情報 (名前ベース)
+    casting_stmt = (
+        select(Character.name, CharacterCasting.user_id, CharacterCasting.cast_name)
+        .join(CharacterCasting, Character.id == CharacterCasting.character_id)
+        .where(Character.script_id == script_id)
+    )
+    castings = (await db.execute(casting_stmt)).all()
+
+    # 2. 稽古-シーン紐付け (見出しと番号ベース)
+    re_scene_stmt = (
+        select(RehearsalScene.rehearsal_id, Scene.heading, Scene.act_number, Scene.scene_number)
+        .join(Scene, RehearsalScene.scene_id == Scene.id)
+        .where(Scene.script_id == script_id)
+    )
+    re_scenes = (await db.execute(re_scene_stmt)).all()
+
+    # 3. 稽古単体シーン紐付け (Rehearsal.scene_id)
+    re_single_stmt = (
+        select(Rehearsal.id, Scene.heading, Scene.act_number, Scene.scene_number)
+        .join(Scene, Rehearsal.scene_id == Scene.id)
+        .where(Scene.script_id == script_id)
+    )
+    re_singles = (await db.execute(re_single_stmt)).all()
+
+    # 4. 稽古ごとのキャスト指定 (RehearsalCast)
+    re_cast_stmt = (
+        select(RehearsalCast.rehearsal_id, Character.name, RehearsalCast.user_id)
+        .join(Character, RehearsalCast.character_id == Character.id)
+        .where(Character.script_id == script_id)
+    )
+    re_casts = (await db.execute(re_cast_stmt)).all()
+
+    return {
+        "castings": castings,
+        "re_scenes": re_scenes,
+        "re_singles": re_singles,
+        "re_casts": re_casts,
+    }
+
+
+async def restore_associations(script: Script, data: dict, db: AsyncSession):
+    """情報を新しいIDに紐付け直す."""
+    # 新しいキャラクターとシーンをロード
+    await db.refresh(script, ["characters", "scenes"])
+    
+    char_map = {c.name: c.id for c in script.characters}
+    
+    # 1. 配役の復元
+    for char_name, user_id, cast_name in data["castings"]:
+        if char_name in char_map:
+            db.add(CharacterCasting(
+                character_id=char_map[char_name],
+                user_id=user_id,
+                cast_name=cast_name
+            ))
+            
+    # 2. 稽古-シーン(多対多)の復元
+    for rehearsal_id, heading, act, scene_num in data["re_scenes"]:
+        # 見出しとAct/Scene番号でマッチするものを探す
+        matched_scene = None
+        for s in script.scenes:
+            if s.heading == heading and s.act_number == act and s.scene_number == scene_num:
+                matched_scene = s
+                break
+        
+        if not matched_scene:
+            # 見出しだけ同じものを探す（フォールバック）
+            for s in script.scenes:
+                if s.heading == heading:
+                    matched_scene = s
+                    break
+        
+        if matched_scene:
+            db.add(RehearsalScene(rehearsal_id=rehearsal_id, scene_id=matched_scene.id))
+
+    # 3. 稽古単体シーン(Rehearsal.scene_id)の復元
+    for rehearsal_id, heading, act, scene_num in data["re_singles"]:
+        matched_scene = None
+        for s in script.scenes:
+            if s.heading == heading and s.act_number == act and s.scene_number == scene_num:
+                matched_scene = s
+                break
+        
+        if matched_scene:
+            await db.execute(
+                update(Rehearsal)
+                .where(Rehearsal.id == rehearsal_id)
+                .values(scene_id=matched_scene.id)
+            )
+
+    # 4. 稽古ごとのキャスト指定 (RehearsalCast)
+    for rehearsal_id, char_name, user_id in data["re_casts"]:
+        if char_name in char_map:
+            db.add(RehearsalCast(
+                rehearsal_id=rehearsal_id,
+                character_id=char_map[char_name],
+                user_id=user_id
+            ))
+
+    await db.flush()
+
+
 async def parse_and_save_fountain(
     script: Script, fountain_text: str, db: AsyncSession
 ) -> Script:
@@ -334,6 +438,8 @@ async def process_script_upload(
     
     # 更新の場合は関連データを削除
     if is_update:
+        # Before cleanup, collect data to restore
+        associations = await collect_associations(script.id, db)
         await cleanup_related_data(script, db)
         await db.refresh(script)
         
@@ -345,5 +451,10 @@ async def process_script_upload(
     
     # Fountainパースと保存
     script = await parse_and_save_fountain(script, fountain_text, db)
+    
+    # Restore associations
+    if is_update:
+        await restore_associations(script, associations, db)
+        await db.commit() # Save restored data
     
     return script, is_update
