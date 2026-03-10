@@ -97,6 +97,7 @@ def _build_scene_chart_response(chart: SceneChart) -> SceneChartResponse:
         scene_id = mapping.scene_id
         if scene_id not in scene_dict:
             scene_dict[scene_id] = SceneInChart(
+                scene_id=scene_id,
                 act_number=mapping.scene.act_number,
                 scene_number=mapping.scene.scene_number,
                 scene_heading=mapping.scene.heading,
@@ -111,8 +112,8 @@ def _build_scene_chart_response(chart: SceneChart) -> SceneChartResponse:
             )
         )
 
-    # シーン番号順にソート
-    scenes = sorted(scene_dict.values(), key=lambda s: s.scene_number)
+    # Act と Scene の昇順でソート
+    scenes = sorted(scene_dict.values(), key=lambda s: (s.act_number or 0, s.scene_number))
 
     return SceneChartResponse(
         id=chart.id,

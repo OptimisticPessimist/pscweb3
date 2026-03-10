@@ -175,7 +175,7 @@ class Script(Base):
     project: Mapped["TheaterProject"] = relationship(back_populates="scripts")
     uploader: Mapped["User"] = relationship()
     scenes: Mapped[list["Scene"]] = relationship(
-        back_populates="script", cascade="all, delete-orphan"
+        back_populates="script", cascade="all, delete-orphan", order_by="Scene.act_number, Scene.scene_number"
     )
     characters: Mapped[list["Character"]] = relationship(
         back_populates="script", cascade="all, delete-orphan"
@@ -200,7 +200,7 @@ class Scene(Base):
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="scenes")
     lines: Mapped[list["Line"]] = relationship(
-        back_populates="scene", cascade="all, delete-orphan"
+        back_populates="scene", cascade="all, delete-orphan", order_by="Line.order"
     )
 
 

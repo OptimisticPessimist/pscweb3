@@ -19,6 +19,7 @@ class CharacterInScene(BaseModel):
 class SceneInChart(BaseModel):
     """香盤表のシーン."""
 
+    scene_id: UUID = Field(..., description="シーンID")
     act_number: int | None = Field(None, description="幕番号")
     scene_number: int = Field(..., description="シーン番号")
     scene_heading: str = Field(..., description="シーン見出し")

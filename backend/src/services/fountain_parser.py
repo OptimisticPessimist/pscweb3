@@ -266,6 +266,10 @@ async def parse_fountain_and_create_models(
             # Level 1 Heading detected (Act)
             heading_content = content_stripped
             
+            # 幕が変わったら収集を停止（前のシーンのあらすじに継続させない）
+            collecting_description = False
+            current_scene = None # Ensure text before first scene of new act doesn't append to previous act's scene
+
             # "登場人物" や "Character" は幕としてカウントしない
             if "登場人物" in heading_content or "Character" in heading_content:
                 pass
@@ -305,6 +309,12 @@ async def parse_fountain_and_create_models(
         if "登場人物" in content_stripped or "Character" in content_stripped:
             is_valid_scene_heading = False
             is_section_scene = False
+            collecting_description = False
+
+        # 見出し（Section Heading）だが、ActでもSceneでもない場合は収集を停止
+        if element.element_type == "Section Heading" and not (is_section_act or is_section_scene):
+            collecting_description = False
+            current_scene = None
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
