@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db import get_db
 from src.dependencies.auth import get_current_user_dep
-from src.db.models import User, TheaterProject, ProjectMember, SchedulePoll, SchedulePollCandidate, Rehearsal, RehearsalScene, RehearsalSchedule, RehearsalCast, RehearsalParticipant, CharacterCasting
+from src.db.models import User, TheaterProject, ProjectMember, SchedulePoll, SchedulePollCandidate, Rehearsal, RehearsalScene, RehearsalSchedule, RehearsalCast, RehearsalParticipant, CharacterCasting, Scene
 from src.schemas.schedule_poll import (
     SchedulePollCreate, SchedulePollResponse, SchedulePollAnswerUpdate, 
     SchedulePollFinalize, SchedulePollCalendarAnalysis,
