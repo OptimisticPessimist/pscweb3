@@ -1,5 +1,6 @@
 import logging
 import re
+import uuid
 
 from fountain.fountain import Fountain
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -189,6 +190,7 @@ async def parse_fountain_and_create_models(
                 # 既存キャラクターがなければ新規作成
                 if name_part and name_part not in character_map:
                     character = Character(
+                        id=uuid.uuid4(),
                         script_id=script.id,
                         name=name_part,
                         description=desc_part,
@@ -220,13 +222,11 @@ async def parse_fountain_and_create_models(
 
             if char_name and char_name not in character_map:
                 character = Character(
-                    script_id=script.id, name=char_name, order=current_order_index
+                    id=uuid.uuid4(), script_id=script.id, name=char_name, order=current_order_index
                 )
                 db.add(character)
                 character_map[char_name] = character
                 current_order_index += 1
-
-    await db.flush()  # Characterのidを取得
 
     # シーンとセリフを抽出
     current_scene: Scene | None = None
@@ -394,6 +394,7 @@ async def parse_fountain_and_create_models(
                     heading_text = heading_text.lstrip(".").strip()
 
             current_scene = Scene(
+                id=uuid.uuid4(),
                 script_id=script.id,
                 scene_number=current_scene_number,
                 act_number=current_act_number,
@@ -401,7 +402,6 @@ async def parse_fountain_and_create_models(
                 description="",  # Initialize description
             )
             db.add(current_scene)
-            await db.flush()
 
             # Reset description collection state
             collecting_description = True
@@ -469,12 +469,14 @@ async def parse_fountain_and_create_models(
                     # Get or create character
                     if char_name_raw not in character_map:
                         new_char = Character(
-                            script_id=script.id, name=char_name_raw, order=current_order_index
+                            id=uuid.uuid4(),
+                            script_id=script.id,
+                            name=char_name_raw,
+                            order=current_order_index,
                         )
                         db.add(new_char)
                         character_map[char_name_raw] = new_char
                         current_order_index += 1
-                        await db.flush()
 
                     char_obj = character_map[char_name_raw]
 

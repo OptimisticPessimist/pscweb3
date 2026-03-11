@@ -347,8 +347,6 @@ async def parse_and_save_fountain(script: Script, fountain_text: str, db: AsyncS
         # 香盤表の自動生成
         await generate_scene_chart(script, db)
 
-        await db.commit()
-
         # 再取得（確実にロードされた状態にする）
         result = await db.execute(stmt)
         script = result.scalar_one()
@@ -443,6 +441,7 @@ async def process_script_upload(
     # Restore associations
     if is_update:
         await restore_associations(script, associations, db)
-        await db.commit()  # Save restored data
+
+    await db.commit()  # 全て一括で保存
 
     return script, is_update

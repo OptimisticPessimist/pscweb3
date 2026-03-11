@@ -1,5 +1,7 @@
 """香盤表自動生成サービス."""
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,9 +26,8 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
         await db.flush()
 
     # 新しい香盤表を作成
-    chart = SceneChart(script_id=script.id)
+    chart = SceneChart(id=uuid.uuid4(), script_id=script.id)
     db.add(chart)
-    await db.flush()
 
     # 各シーンに登場する人物を抽出してマッピング
     for scene in script.scenes:
@@ -42,6 +43,7 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
         # マッピング作成
         for character_id in character_ids:
             mapping = SceneCharacterMapping(
+                id=uuid.uuid4(),
                 chart_id=chart.id,
                 scene_id=scene.id,
                 character_id=character_id,
