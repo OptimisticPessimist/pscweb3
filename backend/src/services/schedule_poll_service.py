@@ -588,9 +588,14 @@ class SchedulePollService:
                     })
 
 
-                elif not missing_roles and len(missing_chars) == 1:
-                    # リーチ状態（あと1役だけ足りない）
+                elif not missing_roles and len(missing_chars) > 0:
+                    # リーチ状態（不足しているキャラクターがいるが、表示はする）
+                    # 最初の不足メンバーを詳細として表示（ツールチップ用）
                     char_name, m_uids = missing_chars[0]
+                    reason = f"不足: {char_name}"
+                    if len(missing_chars) > 1:
+                        reason += f" 等({len(missing_chars)}名)"
+                        
                     reach_scenes.append({
                         "scene_id": scene.id,
                         "act_number": scene.act_number,
@@ -599,8 +604,9 @@ class SchedulePollService:
                         "is_possible": False,
                         "is_reach": True,
                         "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids] if m_uids else ["未配役"],
-                        "reason": f"不足: {char_name}"
+                        "reason": reason
                     })
+
 
                 elif missing_roles:
                     # 必須役職が足りない場合、リーチ判定にも含めないか、理由に役職不足を書く
@@ -638,13 +644,14 @@ class SchedulePollService:
             })
         all_scenes_info = [
             {
-                "scene_id": s.id,
+                "scene_id": str(s.id),
                 "act_number": s.act_number,
                 "scene_number": s.scene_number,
                 "heading": f"{s.act_number or 0}-{s.scene_number}: {s.heading}"
             }
             for s in scenes if s.scene_number > 0
         ]
+
 
 
         return {"poll_id": poll_id, "all_scenes": all_scenes_info, "analyses": analyses}

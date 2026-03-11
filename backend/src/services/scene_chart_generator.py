@@ -32,12 +32,15 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
 
     # 各シーンに登場する人物を抽出してマッピング
     for scene in script.scenes:
+        print(f"DEBUG: Processing scene {scene.scene_number} (ID: {scene.id})")
         # シーン番号が0以下のもの（あらすじなど）は香盤表に含めない
         if scene.scene_number <= 0:
+            print(f"DEBUG: Skipping scene {scene.scene_number}")
             continue
 
         # このシーンに登場する人物を取得（Lineから抽出）
         character_ids = {line.character_id for line in scene.lines if line.character_id is not None}
+
 
 
         # マッピング作成
