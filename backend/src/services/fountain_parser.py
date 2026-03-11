@@ -386,17 +386,15 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Character":
             # 登場人物検出 -> 説明収集終了（あらすじ以外）
-            if current_scene and getattr(current_scene, 'scene_number', None) != 0:
+            if current_scene and current_scene.scene_number != 0:
                 collecting_description = False
             last_scene_was_section = False
-
 
             # セリフを言う登場人物
             char_name = content_stripped
             if char_name.startswith("@"):
                 char_name = char_name[1:]
             current_character = character_map.get(char_name)
-
 
         elif element.element_type in ["Action", "Synopsis", "Parenthetical", "Transition", "Centered Text"]:
             # ト書き、あらすじ、括弧書き、移行、中央揃え
@@ -421,7 +419,7 @@ async def parse_fountain_and_create_models(
 
             # 一行セリフの判定 (@Name Dialogue) - Action の場合のみ
             if element.element_type == "Action" and stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
-                if current_scene and getattr(current_scene, 'scene_number', None) != 0:
+                if current_scene and current_scene.scene_number != 0:
                     collecting_description = False
                 last_scene_was_section = False
 
@@ -457,7 +455,7 @@ async def parse_fountain_and_create_models(
                         db.add(line)
                 else:
                     # Fallback
-                     if current_scene:
+                    if current_scene:
                         line_order += 1
                         line = Line(
                             scene_id=current_scene.id,
@@ -472,14 +470,14 @@ async def parse_fountain_and_create_models(
                 if current_scene:
                     # シーン冒頭のあらすじやト書きを詳細記述として収集
                     if collecting_description and element.element_type in ["Action", "Synopsis"]:
-                         if current_scene.description:
-                             current_scene.description += "\n" + stripped_content
-                         else:
-                             current_scene.description = stripped_content
+                        if current_scene.description:
+                            current_scene.description += "\n" + stripped_content
+                        else:
+                            current_scene.description = stripped_content
                     else:
                         # 最初のト書きセクション以外、または非Action/Synopsis要素が来たら収集終了
                         # ただし、あらすじ（シーン0）の場合は収集全般を継続する
-                        if getattr(current_scene, 'scene_number', None) != 0:
+                        if current_scene.scene_number != 0:
                             collecting_description = False
 
                     line_order += 1
@@ -500,7 +498,7 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Dialogue":
             # Description collection ends（あらすじ以外）
-            if current_scene and getattr(current_scene, 'scene_number', None) != 0:
+            if current_scene and current_scene.scene_number != 0:
                 collecting_description = False
             last_scene_was_section = False
 
