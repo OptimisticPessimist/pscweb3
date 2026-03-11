@@ -12,11 +12,7 @@ export const scriptsApi = {
     },
 
     uploadScript: async (projectId: string, formData: FormData): Promise<Script> => {
-        const response = await apiClient.post<Script>(`/scripts/${projectId}/upload`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        const response = await apiClient.post<Script>(`/scripts/${projectId}/upload`, formData);
         return response.data;
     },
 
@@ -47,11 +43,7 @@ export const scriptsApi = {
     updatePublicity: async (scriptId: string, isPublic: boolean): Promise<void> => {
         const formData = new FormData();
         formData.append('is_public', String(isPublic));
-        await apiClient.patch(`/scripts/${scriptId}/publicity`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        await apiClient.patch(`/scripts/${scriptId}/publicity`, formData);
     },
 
     getPublicScript: async (scriptId: string): Promise<Script> => {
