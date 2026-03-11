@@ -12,10 +12,12 @@
 ### Backend
 
 #### [MODIFY] `SchedulePollService` (file:///f:/src/PythonProject/pscweb3-1/backend/src/services/schedule_poll_service.py)
-- `get_calendar_analysis` および `get_recommendations` メソッドのロジックを修正：
-  - 加点/可用性チェックの対象を「少なくとも1人のユーザーが配役されているキャラクター」に限定します。
-  - キャラクターが設定されていないシーンについても、フィルタリングせずに「稽古可能」として扱います。
-  - シーンのリスト取得およびレスポンス生成時のソート順を `act_number, scene_number` に変更します。
+- `get_recommendations` および `get_calendar_analysis` の修正：
+  - **あらすじの完全除外**: シーン番号が 0 以下のシーンは、分析対象（`possible_scenes`, `reach_scenes`）から完全に除外します。
+  - **ダブルキャスト対応の統一**: `get_recommendations` の判定を `get_calendar_analysis` と同様に「各キャラクターに対して少なくとも1人のキャストが参加可能であればOK」というロジックに修正します。
+  - **未配役キャラクターの扱い**: 再検討の結果、未配役のキャラクターがいるシーンは「稽古可能」には含めず、属性（`missing_chars`）として扱うように微調整します（以前の「完全に無視する」から、存在は認めるが不足として扱う方向へ）。ただし、これによりシーン自体が一切表示されなくなるのを防ぐため、`all_scenes` には含め続けます。
+  - **表示形式の統一**: シーンの表示名称を `{Act}-{Scene}: {Heading}` 形式（例: `1-2: 稽古場`）に統一します。
+
 
 ## 検証計画
 
