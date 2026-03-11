@@ -49,7 +49,7 @@ CHARACTER
 Hello, world!
 """
 
-    files = {"file": ("test.fountain", BytesIO(fountain_content.encode()), "text/plain")}
+    files = {"script_file": ("test.fountain", BytesIO(fountain_content.encode()), "text/plain")}
     data = {"title": "テスト脚本", "author": "Test Author", "is_public": "false"}
 
     # Act
@@ -173,7 +173,7 @@ async def test_upload_script_unauthorized(
     """認証なしの脚本アップロードテスト."""
     # Arrange
     fountain_content = "Test content"
-    files = {"file": ("test.fountain", BytesIO(fountain_content.encode()), "text/plain")}
+    files = {"script_file": ("test.fountain", BytesIO(fountain_content.encode()), "text/plain")}
     data = {"title": "Unauthorized script", "is_public": "false"}
 
     # Act
