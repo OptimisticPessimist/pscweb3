@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 class ActivityItem(BaseModel):
     """アクティビティアイテム."""
-    
+
     type: str  # "script_upload", "milestone_created", etc.
     title: str
     description: str | None = None
@@ -18,7 +18,7 @@ class ActivityItem(BaseModel):
 
 class RehearsalInfo(BaseModel):
     """稽古情報（簡易版）."""
-    
+
     id: UUID
     title: str
     start_time: datetime
@@ -28,7 +28,7 @@ class RehearsalInfo(BaseModel):
 
 class MilestoneInfo(BaseModel):
     """マイルストーン情報（簡易版）."""
-    
+
     id: UUID
     title: str
     start_date: datetime
@@ -39,11 +39,11 @@ class MilestoneInfo(BaseModel):
 
 class DashboardResponse(BaseModel):
     """ダッシュボードレスポンス."""
-    
+
     next_rehearsal: RehearsalInfo | None = None
     next_milestone: MilestoneInfo | None = None
     pending_attendance_count: int = 0
     total_members: int = 0
     recent_activities: list[ActivityItem] = []
-    
+
     model_config = {"from_attributes": True}

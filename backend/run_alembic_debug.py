@@ -1,10 +1,11 @@
-import traceback
-import sys
 import logging
+import sys
+import traceback
 
 logging.basicConfig(level=logging.INFO)
 
 from alembic.config import Config
+
 from alembic import command
 
 try:

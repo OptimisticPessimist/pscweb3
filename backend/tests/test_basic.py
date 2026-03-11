@@ -3,8 +3,8 @@
 
 def test_import_models() -> None:
     """モデルのインポートテスト."""
-    from src.db.models import User, TheaterProject, Script
-    
+    from src.db.models import Script, TheaterProject, User
+
     assert User is not None
     assert TheaterProject is not None
     assert Script is not None

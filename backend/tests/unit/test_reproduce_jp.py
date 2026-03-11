@@ -1,6 +1,5 @@
-
-import pytest
 from fountain import fountain
+
 
 def test_reproduce_jp_fountain_parsing():
     custom_fountain = """Title: JP Test
@@ -37,13 +36,13 @@ Author: Tester
 
     # Assertions based on expectations (what we WANT)
     # This might fail if current behavior is different
-    
+
     # 1. Forced Scene Heading
     # ".1 冒頭のシーン" -> Should be Scene Heading
     # Current library might parse it as Action or Scene Heading
-    
+
     # 2. Forced Character
     # "@ピーター" -> Should be Character
-    
+
     # 3. Section Heading
     # "## シーン2..." -> Should be Section Heading (which our parser converts to Scene)

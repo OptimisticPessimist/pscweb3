@@ -1,9 +1,11 @@
 import logging
 import os
+
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 logger = logging.getLogger(__name__)
+
 
 class EmailService:
     def __init__(self):
@@ -14,16 +16,16 @@ class EmailService:
         self.client = SendGridAPIClient(self.api_key) if self.api_key else None
 
     def send_reservation_confirmation(
-        self, 
-        to_email: str, 
-        name: str, 
-        milestone_title: str, 
-        date_str: str, 
-        count: int, 
-        project_name: str, 
+        self,
+        to_email: str,
+        name: str,
+        milestone_title: str,
+        date_str: str,
+        count: int,
+        project_name: str,
         reservation_id: str,
         location: str | None = None,  # 🆕 場所を追加
-        description: str | None = None  # 🆕 説明を追加
+        description: str | None = None,  # 🆕 説明を追加
     ) -> bool:
         """予約確認メールを送信する."""
         if not self.client:
@@ -31,11 +33,11 @@ class EmailService:
             return False
 
         subject = f"【予約完了】{project_name} - {milestone_title} チケット予約のお知らせ"
-        
+
         # 場所と説明の追加
         location_info = f"■ 場所: {location}\n" if location else ""
         description_info = f"\n{description}\n" if description else ""
-        
+
         # テキスト版
         text_content = f"""
 {name} 様
@@ -58,11 +60,19 @@ class EmailService:
 
 ※このメールは送信専用アドレスから送信されています。
 """
-        
+
         # HTML版
-        location_html = f"<tr><td style='padding:8px 0;'><strong>■ 場所:</strong> {location}</td></tr>" if location else ""
-        description_html = f"<div style='margin:15px 0; padding:15px; background:#f9f9f9; border-left:3px solid #4CAF50;'>{description}</div>" if description else ""
-        
+        location_html = (
+            f"<tr><td style='padding:8px 0;'><strong>■ 場所:</strong> {location}</td></tr>"
+            if location
+            else ""
+        )
+        description_html = (
+            f"<div style='margin:15px 0; padding:15px; background:#f9f9f9; border-left:3px solid #4CAF50;'>{description}</div>"
+            if description
+            else ""
+        )
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
@@ -106,13 +116,13 @@ class EmailService:
 </body>
 </html>
 """
-        
+
         message = Mail(
             from_email=(self.from_email, self.from_name),
             to_emails=to_email,
             subject=subject,
             plain_text_content=text_content,
-            html_content=html_content
+            html_content=html_content,
         )
         message.reply_to = self.reply_to_email
 
@@ -125,7 +135,14 @@ class EmailService:
             return False
 
     def send_event_reminder(
-        self, to_email: str, name: str, milestone_title: str, date_str: str, count: int, project_name: str, location: str | None = None
+        self,
+        to_email: str,
+        name: str,
+        milestone_title: str,
+        date_str: str,
+        count: int,
+        project_name: str,
+        location: str | None = None,
     ) -> bool:
         """公演当日のリマインダーメールを送信する."""
         if not self.client:
@@ -133,9 +150,9 @@ class EmailService:
             return False
 
         subject = f"【本日開催】{project_name} - {milestone_title} のご案内"
-        
+
         location_info = f"■ 会場: {location}\n" if location else ""
-        
+
         # テキスト版
         text_content = f"""
 {name} 様
@@ -155,10 +172,14 @@ class EmailService:
 
 ※このメールは送信専用アドレスから送信されています。
 """
-        
+
         # HTML版
-        location_html = f"<tr><td style='padding:8px 0;'><strong>■ 会場:</strong> {location}</td></tr>" if location else ""
-        
+        location_html = (
+            f"<tr><td style='padding:8px 0;'><strong>■ 会場:</strong> {location}</td></tr>"
+            if location
+            else ""
+        )
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
@@ -195,22 +216,25 @@ class EmailService:
 </body>
 </html>
 """
-        
+
         message = Mail(
             from_email=(self.from_email, self.from_name),
             to_emails=to_email,
             subject=subject,
             plain_text_content=text_content,
-            html_content=html_content
+            html_content=html_content,
         )
         message.reply_to = self.reply_to_email
 
         try:
             response = self.client.send(message)
-            logger.info(f"Event reminder email sent to {to_email}. Status Code: {response.status_code}")
+            logger.info(
+                f"Event reminder email sent to {to_email}. Status Code: {response.status_code}"
+            )
             return str(response.status_code).startswith("2")
         except Exception as e:
             logger.error(f"Failed to send event reminder email to {to_email}: {e}")
             return False
+
 
 email_service = EmailService()

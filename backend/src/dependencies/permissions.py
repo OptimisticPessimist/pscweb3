@@ -1,13 +1,14 @@
 """権限チェック依存関係ロジック."""
 
 from uuid import UUID
+
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db import get_db
-from src.db.models import ProjectMember, User, Script, Scene, Line, Character
-from sqlalchemy.orm import selectinload
+from src.db.models import Character, Line, ProjectMember, Scene, Script, User
 from src.dependencies.auth import get_current_user_dep
 from src.services.project_limit import is_project_restricted
 
@@ -18,7 +19,7 @@ async def get_project_member_dep(
     db: AsyncSession = Depends(get_db),
 ) -> ProjectMember:
     """プロジェクトメンバー情報を取得する依存関係.
-    
+
     Args:
         project_id: プロジェクトID
         current_user: 認証ユーザー
@@ -40,10 +41,10 @@ async def get_project_member_dep(
         )
     )
     member = result.scalar_one_or_none()
-    
+
     if member is None:
         raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
-        
+
     return member
 
 
@@ -56,18 +57,17 @@ def check_role(required_roles: list[str]) -> callable:
     Returns:
         Callable: 依存関係関数
     """
-    async def dependency(
-        member: ProjectMember = Depends(get_project_member_dep)
-    ) -> ProjectMember:
+
+    async def dependency(member: ProjectMember = Depends(get_project_member_dep)) -> ProjectMember:
         if member.role not in required_roles:
             raise HTTPException(status_code=403, detail="この操作を行う権限がありません")
         return member
-    
+
     return dependency
 
 
 async def get_project_owner_dep(
-    member: ProjectMember = Depends(get_project_member_dep)
+    member: ProjectMember = Depends(get_project_member_dep),
 ) -> ProjectMember:
     """オーナー権限チェック用依存関係."""
     if member.role != "owner":
@@ -82,16 +82,15 @@ async def get_project_editor_dep(
     """編集者以上（オーナーまたはエディター）権限チェック用依存関係."""
     if member.role not in ["owner", "editor"]:
         raise HTTPException(status_code=403, detail="編集権限が必要です")
-    
+
     # プロジェクト制限チェック
     if await is_project_restricted(member.project_id, db):
         raise HTTPException(
-            status_code=403, 
-            detail="このプロジェクトは作成上限数を超えているため、制限モード（閲覧のみ）になっています。機能を利用するにはパスワードを更新するか、プロジェクトを整理してください。"
+            status_code=403,
+            detail="このプロジェクトは作成上限数を超えているため、制限モード（閲覧のみ）になっています。機能を利用するにはパスワードを更新するか、プロジェクトを整理してください。",
         )
-        
-    return member
 
+    return member
 
 
 async def get_script_member_dep(
@@ -120,12 +119,12 @@ async def get_script_member_dep(
             selectinload(Script.scenes)
             .selectinload(Scene.lines)
             .selectinload(Line.character)
-            .selectinload(Character.castings)
+            .selectinload(Character.castings),
         )
         .where(Script.id == script_id)
     )
     script = result.scalar_one_or_none()
-    
+
     if script is None:
         raise HTTPException(status_code=404, detail="脚本が見つかりません")
 
@@ -137,8 +136,8 @@ async def get_script_member_dep(
         )
     )
     member = result.scalar_one_or_none()
-    
+
     if member is None:
         raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
-        
+
     return member, script

@@ -1,7 +1,7 @@
-from collections import namedtuple
 import io
+from collections import namedtuple
 
-from reportlab.lib.pagesizes import portrait, A5
+from reportlab.lib.pagesizes import A5, portrait
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
@@ -9,15 +9,23 @@ from reportlab.pdfgen import canvas
 
 from .. import PScLineType
 
-_Size = namedtuple('Size', 'w h')
+_Size = namedtuple("Size", "w h")
 
 
 class PageMan:
-    """PDF ストリーム生成クラス
-    """
-    def __init__(self, size, margin=None, upper_space=None,
-                 font_name='HeiseiMin-W3', num_font_name='Times-Roman',
-                 font_size=10.0, line_space=None, before_init_page=None):
+    """PDF ストリーム生成クラス"""
+
+    def __init__(
+        self,
+        size,
+        margin=None,
+        upper_space=None,
+        font_name="HeiseiMin-W3",
+        num_font_name="Times-Roman",
+        font_size=10.0,
+        line_space=None,
+        before_init_page=None,
+    ):
         """コンストラクタ
 
         Parameters
@@ -39,7 +47,6 @@ class PageMan:
         before_init_page : function
             ページ初期化時のカスタム処理の関数
         """
-
         # 属性の設定
         self.size = _Size(*size)
         self.font_name = font_name
@@ -48,10 +55,8 @@ class PageMan:
         self.before_init_page = before_init_page
 
         self.margin = _Size(*margin) if margin else _Size(2 * cm, 2 * cm)
-        self.upper_space = self.size.h / 4 if upper_space is None \
-            else upper_space
-        self.line_space = self.font_size * 0.95 if line_space is None \
-            else line_space
+        self.upper_space = self.size.h / 4 if upper_space is None else upper_space
+        self.line_space = self.font_size * 0.95 if line_space is None else line_space
 
         # 書き出しの準備
         self.pdf = io.BytesIO()
@@ -73,8 +78,7 @@ class PageMan:
         return int(count)
 
     def _init_page(self):
-        """ページごとの初期化処理
-        """
+        """ページごとの初期化処理"""
         # カスタム処理
         if self.before_init_page:
             self.before_init_page(self)
@@ -90,26 +94,22 @@ class PageMan:
         self.canvas.setFont(self.font_name, self.font_size)
 
     def _commit_page(self):
-        """現在のページを確定し、次から新しいページに書き出す
-        """
+        """現在のページを確定し、次から新しいページに書き出す"""
         self.canvas.showPage()
 
     def close(self):
-        """PDF ストリームへの書き出しを終了する
-        """
+        """PDF ストリームへの書き出しを終了する"""
         self._commit_page()
         self.canvas.save()
         self.pdf.seek(0)
 
     def save(self, file_name):
-        """PDF ストリームをファイルに出力する
-        """
-        with open(file_name, 'wb') as f:
+        """PDF ストリームをファイルに出力する"""
+        with open(file_name, "wb") as f:
             f.write(self.pdf.read())
 
     def _draw_line(self, l_idx, text, indent=None):
-        """テキストを行末まで書き出して残りを返す
-        """
+        """テキストを行末まで書き出して残りを返す"""
         # インデントのデフォルトを1文字分とする
         if indent is None:
             indent = self.font_size
@@ -117,14 +117,13 @@ class PageMan:
         x = self._get_line_x(l_idx)
         y = self._get_line_y(indent)
 
-        height = self.size.h - 2 * self.margin.h - self.upper_space \
-            - indent
+        height = self.size.h - 2 * self.margin.h - self.upper_space - indent
         max_len = int(height // self.font_size)
 
         # 簡易的ぶら下げ処理
-        if len(text) > max_len and text[max_len] in '、。」':
+        if len(text) > max_len and text[max_len] in "、。」":
             max_len += 1
-            if len(text) > max_len and text[max_len] == '」':
+            if len(text) > max_len and text[max_len] == "」":
                 max_len -= 2
 
         # テキストを書き出す
@@ -132,8 +131,7 @@ class PageMan:
         return text[max_len:]
 
     def _draw_lines(self, l_idx, lines, indent=None, first_indent=None):
-        """複数行に渡るテキストを書き出す
-        """
+        """複数行に渡るテキストを書き出す"""
         if not first_indent:
             first_indent = indent
 
@@ -158,8 +156,7 @@ class PageMan:
         return l_idx
 
     def _draw_single_line(self, l_idx, line, indent=None):
-        """1行に収まるテキストを書き出す
-        """
+        """1行に収まるテキストを書き出す"""
         # l_idx をチェックして改ページ
         if l_idx >= self._max_line_count():
             self._commit_page()
@@ -171,14 +168,12 @@ class PageMan:
         return l_idx + 1
 
     def _draw_line_bottom(self, l_idx, line):
-        """テキストを下寄せで書き出す
-        """
+        """テキストを下寄せで書き出す"""
         # インデント (1文字分)
         indent = self.font_size
 
         # 1行に収まる文字数にする
-        height = self.size.h - 2 * self.margin.h - self.upper_space \
-            - indent
+        height = self.size.h - 2 * self.margin.h - self.upper_space - indent
         max_len = int(height // self.font_size)
         line = line[:max_len]
 
@@ -190,21 +185,18 @@ class PageMan:
         return l_idx
 
     def draw_title(self, l_idx, ttl_line):
-        """題名を PDF ストリームに書き出す
-        """
+        """題名を PDF ストリームに書き出す"""
         indent = self.font_size * 7
         l_idx = self._draw_lines(l_idx, ttl_line.text, indent=indent)
         return l_idx
 
     def draw_author(self, l_idx, athr_line):
-        """著者名を PDF ストリームに書き出す
-        """
+        """著者名を PDF ストリームに書き出す"""
         self._draw_line_bottom(l_idx, athr_line.text)
         return l_idx + 1
 
     def draw_charsheadline(self, l_idx, chead_line):
-        """登場人物見出し行を PDF ストリームに書き出す
-        """
+        """登場人物見出し行を PDF ストリームに書き出す"""
         # インデント (8文字分)
         indent = self.font_size * 8
 
@@ -213,17 +205,16 @@ class PageMan:
         return l_idx
 
     def draw_character(self, l_idx, char_line):
-        """登場人物行を PDF ストリームに書き出す
-        """
+        """登場人物行を PDF ストリームに書き出す"""
         name = char_line.name
-        text = char_line.text if hasattr(char_line, 'text') else ''
+        text = char_line.text if hasattr(char_line, "text") else ""
 
         # 名前に説明をつけて一個の文字列にする
         if text:
             # 名前が2文字未満の場合は空白を足してから説明をつける
             if len(name) < 2:
-                name += '　'
-            text = name + '　' + text
+                name += "　"
+            text = name + "　" + text
         else:
             text = name
 
@@ -232,13 +223,11 @@ class PageMan:
         indent = self.font_size * 10
 
         # テキストを書き出す
-        l_idx = self._draw_lines(
-            l_idx, text, indent=indent, first_indent=first_indent)
+        l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
         return l_idx
 
     def draw_slugline(self, l_idx, hx_line, number=None, border=False):
-        """柱を PDF ストリームに書き出す
-        """
+        """柱を PDF ストリームに書き出す"""
         # テキストを1行として書き出す
         l_idx = self._draw_single_line(l_idx, hx_line.text)
 
@@ -258,8 +247,7 @@ class PageMan:
         # 数字
         if number is not None:
             num_str = str(number)
-            w = self.canvas.stringWidth(
-                num_str, self.num_font_name, self.font_size)
+            w = self.canvas.stringWidth(num_str, self.num_font_name, self.font_size)
             x = self._get_line_x(l_idx - 1) - w / 2
             y = self._get_line_y(-self.font_size)
 
@@ -273,69 +261,71 @@ class PageMan:
         return l_idx
 
     def draw_direction(self, l_idx, drct_line):
-        """ト書き行を PDF ストリームに書き出す
-        """
+        """ト書き行を PDF ストリームに書き出す"""
         indent = self.font_size * 7
         l_idx = self._draw_lines(l_idx, drct_line.text, indent=indent)
         return l_idx
 
     def draw_dialogue(self, l_idx, dlg_line):
-        """セリフ行を PDF ストリームに書き出す
-        """
+        """セリフ行を PDF ストリームに書き出す"""
         name = dlg_line.name
         text = dlg_line.text
 
         # 名前にセリフをつけて一個の文字列にする
         if len(name) == 1:
-            name = ' ' + name + ' '
+            name = " " + name + " "
         elif len(name) == 2:
-            name = name[0] + ' ' + name[1]
-        text = name + '「' + text + '」'
+            name = name[0] + " " + name[1]
+        text = name + "「" + text + "」"
 
         # インデント (1文字分 -> 5文字分)
         first_indent = self.font_size * 1
         indent = self.font_size * 5
 
         # テキストを書き出す
-        l_idx = self._draw_lines(
-            l_idx, text, indent=indent, first_indent=first_indent)
+        l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
         return l_idx
 
     def draw_endmark(self, l_idx, endmk_line):
-        """エンドマークを PDF ストリームに書き出す
-        """
+        """エンドマークを PDF ストリームに書き出す"""
         self._draw_line_bottom(l_idx, endmk_line.text)
         return l_idx + 1
 
     def draw_comment(self, l_idx, cmmt_line):
-        """コメント行を PDF ストリームに書き出す
-        """
+        """コメント行を PDF ストリームに書き出す"""
         indent = self.font_size * 7
         l_idx = self._draw_lines(l_idx, cmmt_line.text, indent=indent)
         return l_idx
 
     def draw_empty(self, l_idx, empty_line):
-        """空行を PDF ストリームに書き出す
-        """
+        """空行を PDF ストリームに書き出す"""
         # 空文字列を1行として書き出す
-        l_idx = self._draw_single_line(l_idx, '')
+        l_idx = self._draw_single_line(l_idx, "")
         return l_idx
 
 
 def _get_h2_letter(h2_count):
     if h2_count < 1:
-        return ''
-    h2_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        return ""
+    h2_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     max_num = len(h2_letters)
     q = (h2_count - 1) // max_num
     s = (h2_count - 1) % max_num
     return _get_h2_letter(q) + h2_letters[s]
 
 
-def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
-               font_name='HeiseiMin-W3', num_font_name='Times-Roman',
-               font_size=10.0, line_space=None, before_init_page=None,
-               draw_page_num=True):
+def psc_to_pdf(
+    psc,
+    size=None,
+    margin=None,
+    upper_space=None,
+    font_name="HeiseiMin-W3",
+    num_font_name="Times-Roman",
+    font_size=10.0,
+    line_space=None,
+    before_init_page=None,
+    draw_page_num=True,
+):
     """台本オブジェクトから PDF ストリームを生成する
 
     Parameters
@@ -361,10 +351,11 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
     draw_page_num : bool
         ページ番号を書き出すかどうか
 
-    Returns
+    Returns:
     -------
     PDF ストリーム : BytesIO
     """
+
     # ページ初期化時のカスタム処理
     def custom_init(pm):
         if before_init_page:
@@ -372,11 +363,11 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
 
         if draw_page_num:
             # ページ番号を加算して文字列にする
-            if hasattr(pm, 'page_num'):
+            if hasattr(pm, "page_num"):
                 pm.page_num += 1
             else:
                 pm.page_num = 1
-            s = f'- {pm.page_num} -'
+            s = f"- {pm.page_num} -"
 
             # フォントと位置の準備
             f_name = pm.num_font_name
@@ -397,10 +388,16 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
         size = portrait(A5)
     if not margin:
         margin = (2.0 * cm, 2.0 * cm)
-    pm = PageMan(size, margin=margin, upper_space=upper_space,
-                 font_name=font_name, num_font_name=num_font_name,
-                 font_size=font_size, line_space=line_space,
-                 before_init_page=custom_init)
+    pm = PageMan(
+        size,
+        margin=margin,
+        upper_space=upper_space,
+        font_name=font_name,
+        num_font_name=num_font_name,
+        font_size=font_size,
+        line_space=line_space,
+        before_init_page=custom_init,
+    )
 
     last_line_type = None
     h1_count = h2_count = 0
@@ -412,8 +409,7 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
 
         # 行の種類が変わったら、1行空ける
         if last_line_type and (last_line_type != line_type):
-            if not (last_line_type == PScLineType.TITLE
-                    and line_type == PScLineType.AUTHOR):
+            if not (last_line_type == PScLineType.TITLE and line_type == PScLineType.AUTHOR):
                 l_idx += 1
 
         if line_type == PScLineType.TITLE:
@@ -431,8 +427,7 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
         elif line_type == PScLineType.H1:
             h1_count += 1
             h2_count = 0
-            l_idx = pm.draw_slugline(
-                l_idx, psc_line, number=h1_count, border=True)
+            l_idx = pm.draw_slugline(l_idx, psc_line, number=h1_count, border=True)
 
         elif line_type == PScLineType.H2:
             h2_count += 1
@@ -458,7 +453,7 @@ def psc_to_pdf(psc, size=None, margin=None, upper_space=None,
             l_idx = pm.draw_empty(l_idx, psc_line)
 
         else:
-            raise TypeError(f'{line_type} はサポートされていません。')
+            raise TypeError(f"{line_type} はサポートされていません。")
 
         last_line_type = line_type
 

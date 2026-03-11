@@ -20,7 +20,7 @@ def event_loop():
     """イベントループフィクスチャ."""
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    
+
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
     yield loop
@@ -28,7 +28,7 @@ def event_loop():
 
 
 @pytest.fixture(scope="function")
-async def db() -> AsyncGenerator[AsyncSession, None]:
+async def db() -> AsyncGenerator[AsyncSession]:
     """テスト用データベースセッションフィクスチャ."""
     # テスト用エンジン作成
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
@@ -86,11 +86,12 @@ async def test_project(db: AsyncSession, test_user: User) -> TheaterProject:
 
 
 @pytest.fixture
-async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient]:
     """テスト用APIクライアントフィクスチャ."""
+    from httpx import ASGITransport
+
     from src.db import get_db
     from src.main import app
-    from httpx import ASGITransport
 
     # 依存関係のオーバーライド
     app.dependency_overrides[get_db] = lambda: db
@@ -107,4 +108,5 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 def test_user_token(test_user: User) -> str:
     """テストユーザー用のJWTトークンフィクスチャ."""
     from src.auth.jwt import create_access_token
+
     return create_access_token(data={"sub": str(test_user.id)})

@@ -23,9 +23,7 @@ class SceneInChart(BaseModel):
     act_number: int | None = Field(None, description="幕番号")
     scene_number: int = Field(..., description="シーン番号")
     scene_heading: str = Field(..., description="シーン見出し")
-    characters: list[CharacterInScene] = Field(
-        default_factory=list, description="登場人物リスト"
-    )
+    characters: list[CharacterInScene] = Field(default_factory=list, description="登場人物リスト")
 
 
 class SceneChartResponse(BaseModel):

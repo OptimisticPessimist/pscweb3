@@ -2,7 +2,6 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import TheaterProject, User
 
@@ -20,7 +19,7 @@ async def test_get_project_dashboard(
         f"/api/projects/{test_project.id}/dashboard",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -41,7 +40,7 @@ async def test_get_dashboard_stats(
         f"/api/projects/{test_project.id}/dashboard",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     # レスポンスが有効なJSONであることを確認
@@ -59,6 +58,6 @@ async def test_dashboard_unauthorized(
     response = await client.get(
         f"/api/projects/{test_project.id}/dashboard",
     )
-    
+
     # Assert
     assert response.status_code == 401

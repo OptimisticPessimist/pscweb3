@@ -1,11 +1,11 @@
 """Fountainパーサーのテスト."""
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.models import Scene, Script, TheaterProject, User
 from src.services.fountain_parser import parse_fountain_and_create_models
-from src.db.models import TheaterProject, User, Script, Scene
 
 
 @pytest.mark.asyncio
@@ -24,7 +24,7 @@ A simple test scene.
 CHARACTER
 Hello, world!
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -33,15 +33,11 @@ Hello, world!
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
     assert script.title == "Simple Test"
@@ -66,7 +62,7 @@ Hi there!
 ALICE
 How are you?
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -75,15 +71,11 @@ How are you?
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
 
@@ -105,7 +97,7 @@ Who's there?
 
 Character looks around nervously.
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -114,15 +106,11 @@ Character looks around nervously.
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
     assert script.title == "Action Test"
@@ -147,7 +135,7 @@ INT. ROOM B - DAY
 
 Another scene.
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -156,15 +144,11 @@ Another scene.
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
 
@@ -176,7 +160,7 @@ async def test_parse_empty_fountain(
     """空のFountain脚本のパーステスト."""
     # Arrange
     fountain_content = ""
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -185,15 +169,11 @@ async def test_parse_empty_fountain(
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
     assert script.title == "Empty Test"
@@ -215,7 +195,7 @@ INT. 部屋 - 昼
 花子
 元気ですか？
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -224,15 +204,11 @@ INT. 部屋 - 昼
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     assert script is not None
     assert script.title == "日本語テスト"
@@ -255,7 +231,7 @@ Dialogue line.
 
 Another action line.
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -264,39 +240,35 @@ Another action line.
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     # Reload script with lines
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
-    
+
     result = await db.execute(
         select(Script)
         .where(Script.id == script.id)
         .options(selectinload(Script.scenes).selectinload(Scene.lines))
     )
     script_loaded = result.scalar_one()
-    
+
     assert len(script_loaded.scenes) == 1
     lines = sorted(script_loaded.scenes[0].lines, key=lambda x: x.order)
     assert len(lines) == 3
-    
+
     # 1. Action
     assert lines[0].content == "Action line here (Togaki)."
     assert lines[0].character_id is None
-    
+
     # 2. Dialogue
     assert lines[1].content == "Dialogue line."
     assert lines[1].character_id is not None
-    
+
     # 3. Action
     assert lines[2].content == "Another action line."
     assert lines[2].character_id is None
@@ -324,7 +296,7 @@ INT. ROOM - DAY
 TARO
 Hello!
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -333,29 +305,24 @@ Hello!
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     # Reload characters
     from sqlalchemy import select
+
     from src.db.models import Character
-    
-    result = await db.execute(
-        select(Character).where(Character.script_id == script.id)
-    )
+
+    result = await db.execute(select(Character).where(Character.script_id == script.id))
     characters = result.scalars().all()
     char_map = {c.name: c for c in characters}
-    
+
     assert "TARO" in char_map
     assert char_map["TARO"].description == "主人公。元気な男の子。"
-    
+
     assert "HANAKO" in char_map
     assert char_map["HANAKO"].description == "ヒロイン。"
 
@@ -387,7 +354,7 @@ INT. ROOM - DAY
 
 Action.
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -396,20 +363,16 @@ Action.
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     # Reload script
     result = await db.execute(select(Script).where(Script.id == script.id))
     loaded_script = result.scalar_one()
-    
+
     # Check metadata fields
     assert loaded_script.title == "Metadata Test"
     assert loaded_script.author == "Test Author"
@@ -441,7 +404,7 @@ TARO: 主人公。
 TARO
 Hello!
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -450,24 +413,21 @@ Hello!
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     from sqlalchemy import select
+
     from src.db.models import Scene
-    
+
     result = await db.execute(
         select(Scene).where(Scene.script_id == script.id).order_by(Scene.scene_number)
     )
     scenes = result.scalars().all()
-    
+
     # "登場人物"ブロックは無視され、"第1場"が最初のシーンになるべき
     assert len(scenes) == 1
     assert scenes[0].scene_number == 1
@@ -496,7 +456,7 @@ Content 1.2
 ## Scene 2.1
 Content 2.1
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -505,35 +465,34 @@ Content 2.1
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     from sqlalchemy import select
+
     from src.db.models import Scene
-    
+
     result = await db.execute(
-        select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
+        select(Scene)
+        .where(Scene.script_id == script.id)
+        .order_by(Scene.act_number, Scene.scene_number)
     )
     scenes = result.scalars().all()
-    
+
     assert len(scenes) == 3
-    
+
     # Act 1
     assert scenes[0].act_number == 1
     assert scenes[0].scene_number == 1
     assert "Scene 1.1" in scenes[0].heading
-    
+
     assert scenes[1].act_number == 1
     assert scenes[1].scene_number == 2
     assert "Scene 1.2" in scenes[1].heading
-    
+
     # Act 2
     assert scenes[2].act_number == 2
     assert scenes[2].scene_number == 1  # リセットされていること
@@ -559,7 +518,7 @@ HANAKO: The Heroine.
 INT. ROOM - DAY
 Scene content.
 """
-    
+
     script = Script(
         project_id=test_project.id,
         uploaded_by=test_user.id,
@@ -568,25 +527,22 @@ Scene content.
     )
     db.add(script)
     await db.flush()
-    
+
     # Act
-    await parse_fountain_and_create_models(
-        script=script,
-        fountain_content=fountain_content,
-        db=db
-    )
+    await parse_fountain_and_create_models(script=script, fountain_content=fountain_content, db=db)
     await db.commit()
-    
+
     # Assert
     from sqlalchemy import select
-    from src.db.models import Scene, Character
-    
+
+    from src.db.models import Character, Scene
+
     # あらすじシーンを取得
     result = await db.execute(
         select(Scene).where(Scene.script_id == script.id, Scene.scene_number == 0)
     )
     synopsis_scene = result.scalar_one_or_none()
-    
+
     assert synopsis_scene is not None
     assert synopsis_scene.description.strip() == "This is the true synopsis."
     # 後のキャラクター定義が含まれていないこと
@@ -594,8 +550,6 @@ Scene content.
     assert "HANAKO" not in synopsis_scene.description
 
     # キャラクターが正しく作成されていること（パース自体は継続していることの確認）
-    result = await db.execute(
-        select(Character).where(Character.script_id == script.id)
-    )
+    result = await db.execute(select(Character).where(Character.script_id == script.id))
     characters = result.scalars().all()
     assert len(characters) >= 2

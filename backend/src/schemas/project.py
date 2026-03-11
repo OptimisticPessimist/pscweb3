@@ -23,8 +23,12 @@ class ProjectUpdate(BaseModel):
     discord_webhook_url: str | None = Field(None, description="Discord Webhook URL")
     discord_script_webhook_url: str | None = Field(None, description="脚通知用 Webhook URL")
     discord_channel_id: str | None = Field(None, description="Discord Channel ID")
-    attendance_reminder_1_hours: int | None = Field(None, description="出欠リマインド1回目（稽古時間前）")
-    attendance_reminder_2_hours: int | None = Field(None, description="出欠リマインド2回目（稽古時間前）")
+    attendance_reminder_1_hours: int | None = Field(
+        None, description="出欠リマインド1回目（稽古時間前）"
+    )
+    attendance_reminder_2_hours: int | None = Field(
+        None, description="出欠リマインド2回目（稽古時間前）"
+    )
 
 
 class ProjectResponse(BaseModel):
@@ -48,7 +52,7 @@ class ProjectResponse(BaseModel):
 
 class ProjectMemberResponse(BaseModel):
     """プロジェクトメンバーレスポンス."""
-    
+
     user_id: UUID
     discord_username: str
     role: str
@@ -56,13 +60,13 @@ class ProjectMemberResponse(BaseModel):
     display_name: str | None = None  # 表示名
     discord_avatar_url: str | None = None  # DiscordアバターURL
     joined_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 
 class MemberRoleUpdate(BaseModel):
     """メンバーロール更新リクエスト."""
-    
+
     role: str = Field(..., pattern="^(owner|editor|viewer)$", description="新しいロール")
     default_staff_role: str | None = Field(None, description="基本的な役割（演出、照明など）")
     display_name: str | None = Field(None, description="表示名")
@@ -70,7 +74,7 @@ class MemberRoleUpdate(BaseModel):
 
 class MilestoneCreate(BaseModel):
     """マイルストーン作成スキーマ."""
-    
+
     title: str = Field(..., min_length=1, max_length=200)
     start_date: datetime
     end_date: datetime | None = None
@@ -80,7 +84,9 @@ class MilestoneCreate(BaseModel):
     reservation_capacity: int | None = Field(None, ge=1, description="予約定員")
     is_public: bool = Field(True, description="公開設定")
     create_attendance_check: bool = Field(False, description="出席確認を作成")
-    attendance_deadline: datetime | None = Field(None, description="出席確認期限（未指定の場合はstart_dateの24時間前）")  # Simple hex validation
+    attendance_deadline: datetime | None = Field(
+        None, description="出席確認期限（未指定の場合はstart_dateの24時間前）"
+    )  # Simple hex validation
 
 
 class MilestoneUpdate(BaseModel):
@@ -98,7 +104,7 @@ class MilestoneUpdate(BaseModel):
 
 class MilestoneResponse(BaseModel):
     """マイルストーンレスポンス."""
-    
+
     id: UUID
     project_id: UUID
     title: str
@@ -111,5 +117,5 @@ class MilestoneResponse(BaseModel):
     current_reservation_count: int = 0
     is_public: bool | None = None
     project_name: str | None = None
-    
+
     model_config = {"from_attributes": True}

@@ -1,10 +1,10 @@
 import logging
 import re
+
 from fountain.fountain import Fountain
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Line, Scene, Script
-
 
 logger = logging.getLogger("uvicorn")
 
@@ -12,18 +12,20 @@ logger = logging.getLogger("uvicorn")
 async def parse_fountain_and_create_models(
     script: Script, fountain_content: str, db: AsyncSession
 ) -> None:
-    fountain_content = fountain_content.strip() # Fix for fountain library bug with empty lines in header
+    fountain_content = (
+        fountain_content.strip()
+    )  # Fix for fountain library bug with empty lines in header
 
     # Pre-process: Inject blank lines in Character blocks to ensure proper parsing
     lines = fountain_content.splitlines()
     processed_lines = []
     in_char_block = False
     is_following_char = False
-    in_metadata = True # State to check if we are in metadata section
-    
+    in_metadata = True  # State to check if we are in metadata section
+
     for line in lines:
         stripped = line.strip()
-        
+
         # Metadata section ends at first blank line
         if in_metadata:
             if not stripped:
@@ -44,7 +46,7 @@ async def parse_fountain_and_create_models(
             if "登場人物" in stripped or "Characters" in stripped:
                 in_char_block = True
                 processed_lines.append(line)
-                processed_lines.append("") # Ensure blank line after character heading
+                processed_lines.append("")  # Ensure blank line after character heading
             else:
                 in_char_block = False
                 processed_lines.append(line)
@@ -53,14 +55,14 @@ async def parse_fountain_and_create_models(
             # Inside character block, ensure strings are separated by blank lines if not empty
             if stripped:
                 processed_lines.append(line)
-                processed_lines.append("") # Force blank line
+                processed_lines.append("")  # Force blank line
                 is_following_char = False
             else:
                 processed_lines.append(line)
                 is_following_char = False
         else:
             # General body processing
-            
+
             # Reset state on blank line
             if not stripped:
                 is_following_char = False
@@ -75,13 +77,13 @@ async def parse_fountain_and_create_models(
                     is_following_char = False
                 else:
                     is_following_char = True
-                
+
                 processed_lines.append(line)
                 continue
 
             # Check for indented line
             is_indented = line.startswith(" ") or line.startswith("　")
-            
+
             if is_indented:
                 if is_following_char:
                     # Indented Dialogue following @Name
@@ -93,41 +95,41 @@ async def parse_fountain_and_create_models(
                     processed_lines.append("!" + line)
                     is_following_char = False
             else:
-                 # Normal line (Action or other)
-                 if is_following_char:
-                     # This is likely Dialogue following @Name (Japanese style with no indent)
-                     # Keep it as is, but consume the flag
-                     is_following_char = False
-                     processed_lines.append(line)
-                 else:
-                     is_following_char = False
-                     processed_lines.append(line)
-            
+                # Normal line (Action or other)
+                if is_following_char:
+                    # This is likely Dialogue following @Name (Japanese style with no indent)
+                    # Keep it as is, but consume the flag
+                    is_following_char = False
+                    processed_lines.append(line)
+                else:
+                    is_following_char = False
+                    processed_lines.append(line)
+
     fountain_content = "\n".join(processed_lines)
-    
+
     f = Fountain(fountain_content)
     logger.info(f"Parsed {len(f.elements)} elements from Fountain content.")
-    
+
     # メタデータの抽出と保存
     metadata = f.metadata
-    
+
     if "date" in metadata:
         script.draft_date = "\n".join(metadata["date"])
     elif "draft date" in metadata:
         script.draft_date = "\n".join(metadata["draft date"])
-        
+
     if "copyright" in metadata:
         script.copyright = "\n".join(metadata["copyright"])
-        
+
     if "contact" in metadata:
         script.contact = "\n".join(metadata["contact"])
-        
+
     if "notes" in metadata:
         script.notes = "\n".join(metadata["notes"])
-        
+
     if "revision" in metadata:
         script.revision_text = "\n".join(metadata["revision"])
-        
+
     # authorも反映（フォーム入力がない場合などのため、または優先度によるが、ここではファイル内記述を反映させても良い）
     # ただし、API側で指定されたauthorを優先すべきか？
     # 通常、Fountainファイルの内容が正となることが多いが、アップロード時のフォームもある。
@@ -140,16 +142,16 @@ async def parse_fountain_and_create_models(
         script.author = "\n".join(metadata["author"])
 
     # 登場人物を抽出してマップを作成
-    
+
     character_map: dict[str, Character] = {}
     current_order_index = 1
-    
+
     # 1. カスタムセクション「# 登場人物」または「# Character」を探して明示的な順序と詳細情報を抽出
     in_character_section = False
-    
+
     for element in f.elements:
         content = element.original_content.strip()
-        
+
         # セクション見出しの検出
         if element.element_type == "Section Heading":
             if "登場人物" in content or "Character" in content:
@@ -157,7 +159,7 @@ async def parse_fountain_and_create_models(
                 logger.info("Found Character Definition Section")
             else:
                 in_character_section = False
-        
+
         # セクション内の要素を解析
         elif in_character_section and element.element_type in ["Action", "Character", "Dialogue"]:
             # Action要素内の各行を処理（Fountainパーサーが複数行を1つのActionとしてまとめる場合があるため）
@@ -170,7 +172,7 @@ async def parse_fountain_and_create_models(
                 line = line.strip()
                 if not line:
                     continue
-                
+
                 # "Name: Description" 形式を探す (コロン区切り)。なければ名前のみ
                 if ":" in line:
                     parts = line.split(":", 1)
@@ -179,45 +181,45 @@ async def parse_fountain_and_create_models(
                 else:
                     name_part = line.strip()
                     desc_part = ""
-                
+
                 if name_part.startswith("@"):
                     name_part = name_part[1:].strip()
-                
+
                 # 既存キャラクターがなければ新規作成
                 if name_part and name_part not in character_map:
                     character = Character(
                         script_id=script.id,
                         name=name_part,
                         description=desc_part,
-                        order=current_order_index
+                        order=current_order_index,
                     )
                     db.add(character)
                     character_map[name_part] = character
                     current_order_index += 1
-                    logger.info(f"Added character from section: {name_part} (order: {current_order_index-1})")
+                    logger.info(
+                        f"Added character from section: {name_part} (order: {current_order_index - 1})"
+                    )
 
     # 2. 本文からその他のキャラクターを登場順に抽出
     in_character_section = False
-    
+
     for element in f.elements:
         content = element.original_content.strip()
-        
+
         if element.element_type == "Section Heading":
             if "登場人物" in content or "Character" in content:
                 in_character_section = True
             else:
                 in_character_section = False
-                
+
         elif not in_character_section and element.element_type == "Character":
             char_name = content
             if char_name.startswith("@"):
                 char_name = char_name[1:]
-            
+
             if char_name and char_name not in character_map:
                 character = Character(
-                    script_id=script.id,
-                    name=char_name,
-                    order=current_order_index
+                    script_id=script.id, name=char_name, order=current_order_index
                 )
                 db.add(character)
                 character_map[char_name] = character
@@ -232,43 +234,57 @@ async def parse_fountain_and_create_models(
     line_order = 0
     current_character: Character | None = None
     collecting_description = False
-    last_scene_was_section = False # 節（Section Heading）でシーンが作成されたかのフラグ
+    last_scene_was_section = False  # 節（Section Heading）でシーンが作成されたかのフラグ
 
     for element in f.elements:
         content_stripped = element.original_content.strip()
-        
+
         # Act検出
         # 1. Section Heading level 1 (starts with #, not ##)
         # 2. Forced Scene Heading level 1 (starts with .1)
-        
+
         # NOTE: 本来Fountainでは # はSection Heading (Act相当) だが、
         # ユーザーが "# シーン1" のように書くケース救済のため、キーワードが含まれる場合はシーンとして扱う
-        SCENE_KEYWORDS = ["Scene", "scene", "シーン", "씬", "场", "場", "あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
+        SCENE_KEYWORDS = [
+            "Scene",
+            "scene",
+            "シーン",
+            "씬",
+            "场",
+            "場",
+            "あらすじ",
+            "Synopsis",
+            "synopsis",
+            "SYNOPSIS",
+            "줄거리",
+            "梗概",
+        ]
         has_scene_keyword = any(k in content_stripped for k in SCENE_KEYWORDS)
-        
+
         if "登場人物" in content_stripped or "Character" in content_stripped:
             has_scene_keyword = False
-        
-        is_section_act = (element.element_type == "Section Heading" and 
-                          content_stripped.startswith("#") and 
-                          not content_stripped.startswith("##") and
-                          not has_scene_keyword) # キーワードがあればActではない
-        
-        is_dot_act = (element.element_type == "Scene Heading" and 
-                      content_stripped.startswith(".1"))
-        
+
+        is_section_act = (
+            element.element_type == "Section Heading"
+            and content_stripped.startswith("#")
+            and not content_stripped.startswith("##")
+            and not has_scene_keyword
+        )  # キーワードがあればActではない
+
+        is_dot_act = element.element_type == "Scene Heading" and content_stripped.startswith(".1")
+
         # .1の場合でも、シーンキーワードが含まれていれば幕としては扱わない（シーンとして扱い、Actカウンタを上げないため）
         # ただし、.1 はもともと Scene Heading なので、ここでの除外は Act としての扱いを除外する意味になる。
         if is_dot_act and has_scene_keyword:
             is_dot_act = False
-                      
+
         if is_section_act or is_dot_act:
             # Level 1 Heading detected (Act)
             heading_content = content_stripped
-            
+
             # 幕が変わったら収集を停止（前のシーンのあらすじに継続させない）
             collecting_description = False
-            current_scene = None # Ensure text before first scene of new act doesn't append to previous act's scene
+            current_scene = None  # Ensure text before first scene of new act doesn't append to previous act's scene
 
             # "登場人物" や "Character" は幕としてカウントしない
             if "登場人物" in heading_content or "Character" in heading_content:
@@ -281,7 +297,7 @@ async def parse_fountain_and_create_models(
                     current_act_number += 1
                 scene_number = 0  # 幕が変わったらシーン番号をリセット
                 logger.info(f"Found Act #{current_act_number}: {heading_content}")
-                
+
             # .1 の場合はSceneとして処理しないようにcontinueする
             # ただし、Section Headingの場合はcontinueしなくても下のis_scene_heading等で弾かれる(Section Headingだから)
             # is_dot_actの場合はScene Headingなので、ここでcontinueしないと下でSceneとして作られてしまう
@@ -293,19 +309,21 @@ async def parse_fountain_and_create_models(
         # 2. Section Heading level 2 (starts with ##)
         # 3. Forced Scene Heading level 2 (starts with .2)
         # 4. Level 1 with scene keyword (# Scene...) [NEW]
-        
+
         is_scene_heading_type = element.element_type == "Scene Heading"
-        
+
         # .1 は上でActとして処理済み。それ以外のScene Headingはシーン
         # つまり、通常のINT.や、.2 (Level 2), . (Forced) はシーン
         # ただし、.1 でもキーワードがあればシーンとして扱う (is_dot_actがFalseになっているはず)
-        is_valid_scene_heading = (is_scene_heading_type and 
-                                  (not content_stripped.startswith(".1") or has_scene_keyword))
-        
-        is_section_scene = (element.element_type == "Section Heading" and 
-                            (content_stripped.startswith("##") or
-                             (content_stripped.startswith("#") and has_scene_keyword)))
-                             
+        is_valid_scene_heading = is_scene_heading_type and (
+            not content_stripped.startswith(".1") or has_scene_keyword
+        )
+
+        is_section_scene = element.element_type == "Section Heading" and (
+            content_stripped.startswith("##")
+            or (content_stripped.startswith("#") and has_scene_keyword)
+        )
+
         if "登場人物" in content_stripped or "Character" in content_stripped:
             is_valid_scene_heading = False
             is_section_scene = False
@@ -318,26 +336,31 @@ async def parse_fountain_and_create_models(
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
-            
+
             # Check for Synopsis
             SYNOPSIS_KEYWORDS = ["あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
             is_synopsis = any(k in content_stripped for k in SYNOPSIS_KEYWORDS)
 
             # 既存のSection Sceneのすぐ後にScene Headingが来た場合の結合処理
-            if is_valid_scene_heading and last_scene_was_section and current_scene and not is_synopsis:
+            if (
+                is_valid_scene_heading
+                and last_scene_was_section
+                and current_scene
+                and not is_synopsis
+            ):
                 heading_text = content_stripped
                 if heading_text.startswith("."):
                     if heading_text.startswith(".2"):
                         heading_text = heading_text[2:].strip()
                     else:
                         heading_text = heading_text.lstrip(".").strip()
-                
+
                 # 前のSection名と新しいScene Headingを結合
                 current_scene.heading = f"{current_scene.heading} ({heading_text})"
                 logger.info(f"Merged Scene Heading into previous Section: {current_scene.heading}")
-                
+
                 # シーン番号は増やさない
-                last_scene_was_section = False # 結合したのでリセット
+                last_scene_was_section = False  # 結合したのでリセット
                 line_order = 0
                 collecting_description = True
                 current_character = None
@@ -350,16 +373,16 @@ async def parse_fountain_and_create_models(
                 scene_number += 1
                 current_scene_number = scene_number
                 logger.info(f"Found Scene Heading #{scene_number}: {content_stripped}")
-                
+
             line_order = 0
-            
+
             heading_text = content_stripped
-            
+
             # Clean up heading text
             if element.element_type == "Section Heading":
-                 # Remove ##...
-                 heading_text = heading_text.lstrip("#").strip()
-            
+                # Remove ##...
+                heading_text = heading_text.lstrip("#").strip()
+
             if heading_text.startswith("."):
                 # Remove . or .2 etc
                 # If .2, remove .2
@@ -374,14 +397,14 @@ async def parse_fountain_and_create_models(
                 scene_number=current_scene_number,
                 act_number=current_act_number,
                 heading=heading_text,
-                description="" # Initialize description
+                description="",  # Initialize description
             )
             db.add(current_scene)
             await db.flush()
-            
+
             # Reset description collection state
             collecting_description = True
-            current_character = None 
+            current_character = None
             last_scene_was_section = is_section_scene
 
         elif element.element_type == "Character":
@@ -396,10 +419,16 @@ async def parse_fountain_and_create_models(
                 char_name = char_name[1:]
             current_character = character_map.get(char_name)
 
-        elif element.element_type in ["Action", "Synopsis", "Parenthetical", "Transition", "Centered Text"]:
+        elif element.element_type in [
+            "Action",
+            "Synopsis",
+            "Parenthetical",
+            "Transition",
+            "Centered Text",
+        ]:
             # ト書き、あらすじ、括弧書き、移行、中央揃え
             content = element.original_content.rstrip()
-            
+
             # マーカーの除去
             marker_removed_content = content
             if element.element_type == "Action" and marker_removed_content.startswith("!"):
@@ -413,37 +442,41 @@ async def parse_fountain_and_create_models(
                     marker_removed_content = marker_removed_content[1:].strip()
 
             stripped_content = marker_removed_content.strip()
-            
+
             if not stripped_content:
                 continue
 
             # 一行セリフの判定 (@Name Dialogue) - Action の場合のみ
-            if element.element_type == "Action" and stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
+            if (
+                element.element_type == "Action"
+                and stripped_content.startswith("@")
+                and (" " in stripped_content or "　" in stripped_content)
+            ):
                 if current_scene and current_scene.scene_number != 0:
                     collecting_description = False
                 last_scene_was_section = False
 
                 # Split by first whitespace (half or full width)
-                parts = re.split(r'[ 　]', stripped_content, maxsplit=1) # Split by space or full-width space
-                
+                parts = re.split(
+                    r"[ 　]", stripped_content, maxsplit=1
+                )  # Split by space or full-width space
+
                 if len(parts) >= 2:
-                    char_name_raw = parts[0][1:] # Remove @
+                    char_name_raw = parts[0][1:]  # Remove @
                     dialogue_content = parts[1]
-                    
+
                     # Get or create character
                     if char_name_raw not in character_map:
                         new_char = Character(
-                            script_id=script.id,
-                            name=char_name_raw,
-                            order=current_order_index
+                            script_id=script.id, name=char_name_raw, order=current_order_index
                         )
                         db.add(new_char)
                         character_map[char_name_raw] = new_char
                         current_order_index += 1
                         await db.flush()
-                    
+
                     char_obj = character_map[char_name_raw]
-                    
+
                     if current_scene:
                         line_order += 1
                         line = Line(
@@ -493,7 +526,7 @@ async def parse_fountain_and_create_models(
                         order=line_order,
                     )
                     db.add(line)
-                
+
                 last_scene_was_section = False
 
         elif element.element_type == "Dialogue":

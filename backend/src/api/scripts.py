@@ -1,11 +1,19 @@
 """脚本管理APIエンドポイント - 権限チェック付き."""
-import logging
-import uuid
-from datetime import datetime, timezone
+
 from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, BackgroundTasks, Response
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Response,
+    UploadFile,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,26 +21,18 @@ from sqlalchemy.orm import selectinload
 from src.db import get_db
 from src.db.models import (
     Character,
-    CharacterCasting,
     Line,
     ProjectMember,
-    Rehearsal,
-    RehearsalCast,
     Scene,
-    SceneChart,
-    SceneCharacterMapping,
     Script,
     TheaterProject,
     User,
 )
-
 from src.dependencies.auth import get_current_user_dep
-from src.schemas.script import ScriptListResponse, ScriptResponse
-from src.services.fountain_parser import parse_fountain_and_create_models
-from src.services.scene_chart_generator import generate_scene_chart
-from src.services.pdf_generator import generate_script_pdf
-from src.services.discord import DiscordService, get_discord_service
 from src.dependencies.permissions import get_project_member_dep, get_script_member_dep
+from src.schemas.script import ScriptListResponse, ScriptResponse
+from src.services.discord import DiscordService, get_discord_service
+from src.services.pdf_generator import generate_script_pdf
 
 router = APIRouter(tags=["scripts"])
 
@@ -40,6 +40,7 @@ router = APIRouter(tags=["scripts"])
 # ===========================
 # Scripts List & Detail
 # ===========================
+
 
 @router.get("/{project_id}", response_model=ScriptListResponse)
 async def get_scripts(
@@ -103,11 +104,11 @@ async def upload_script(
     Raises:
         HTTPException: 認証エラーまたは権限エラー
     """
-    from src.services.script_processor import (
-        validate_upload_request,
-        process_script_upload,
-    )
     from src.services.script_notification import send_script_notification
+    from src.services.script_processor import (
+        process_script_upload,
+        validate_upload_request,
+    )
 
     # 1. リクエスト検証
     await validate_upload_request(project_id, current_user, file.filename, db)
@@ -119,12 +120,21 @@ async def upload_script(
     # 3. スクリプト処理
     try:
         script, is_update = await process_script_upload(
-            project_id, current_user.id, title, author, fountain_text, is_public, db,
-            public_terms=public_terms, public_contact=public_contact,
-            pdf_orientation=pdf_orientation, pdf_writing_direction=pdf_writing_direction
+            project_id,
+            current_user.id,
+            title,
+            author,
+            fountain_text,
+            is_public,
+            db,
+            public_terms=public_terms,
+            public_contact=public_contact,
+            pdf_orientation=pdf_orientation,
+            pdf_writing_direction=pdf_writing_direction,
         )
     except Exception as e:
         import traceback
+
         print(f"[Upload Failed] {e}\n{traceback.format_exc()}")
         raise e
 
@@ -157,7 +167,9 @@ async def get_script(
 async def download_script_pdf(
     tuple_data: tuple[ProjectMember, Script] = Depends(get_script_member_dep),
     orientation: str | None = Query(None, description="Paper orientation: landscape or portrait"),
-    writing_direction: str | None = Query(None, description="Writing direction: vertical or horizontal"),
+    writing_direction: str | None = Query(
+        None, description="Writing direction: vertical or horizontal"
+    ),
 ):
     """脚本のPDFをダウンロード."""
     # 権限チェックはDepends(get_script_member_dep)内で完了済み
@@ -168,7 +180,7 @@ async def download_script_pdf(
         orientation = script.pdf_orientation or "landscape"
     if orientation not in ("landscape", "portrait"):
         orientation = "landscape"
-    
+
     if not writing_direction:
         writing_direction = script.pdf_writing_direction or "vertical"
     if writing_direction not in ("vertical", "horizontal"):
@@ -192,13 +204,14 @@ async def download_script_pdf(
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"}
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"},
     )
 
 
 # ===========================
 # Scenes
 # ===========================
+
 
 @router.get("/{project_id}/{script_id}/scenes")
 async def get_scenes(
@@ -226,6 +239,7 @@ async def get_scenes(
 # ===========================
 # Characters
 # ===========================
+
 
 @router.get("/{project_id}/{script_id}/characters")
 async def get_characters(

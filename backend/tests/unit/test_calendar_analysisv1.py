@@ -1,13 +1,21 @@
-import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
-from uuid import uuid4
-from datetime import datetime, timezone, timedelta
+
+import pytest
+
 from src.db.models import (
-    Script, Scene, Character, SceneCharacterMapping, 
-    CharacterCasting, SchedulePoll, SchedulePollCandidate, 
-    SchedulePollAnswer, ProjectMember
+    Character,
+    CharacterCasting,
+    ProjectMember,
+    Scene,
+    SceneCharacterMapping,
+    SchedulePoll,
+    SchedulePollAnswer,
+    SchedulePollCandidate,
+    Script,
 )
 from src.services.schedule_poll_service import SchedulePollService
+
 
 @pytest.mark.asyncio
 async def test_calendar_analysis_logic(db, test_project, test_user):
@@ -16,7 +24,7 @@ async def test_calendar_analysis_logic(db, test_project, test_user):
         project_id=test_project.id,
         uploaded_by=test_user.id,
         title="Test Script",
-        content="Test content"
+        content="Test content",
     )
     db.add(script)
     await db.flush()
@@ -38,7 +46,9 @@ async def test_calendar_analysis_logic(db, test_project, test_user):
     db.add(casting)
 
     # プロジェクトメンバー (名前取得用)
-    member = ProjectMember(project_id=test_project.id, user_id=test_user.id, role="owner", display_name="Hero Member")
+    member = ProjectMember(
+        project_id=test_project.id, user_id=test_user.id, role="owner", display_name="Hero Member"
+    )
     db.add(member)
 
     # 2. 日程調整のセットアップ
@@ -47,9 +57,9 @@ async def test_calendar_analysis_logic(db, test_project, test_user):
     await db.flush()
 
     candidate = SchedulePollCandidate(
-        poll_id=poll.id, 
-        start_datetime=datetime.now(timezone.utc), 
-        end_datetime=datetime.now(timezone.utc) + timedelta(hours=1)
+        poll_id=poll.id,
+        start_datetime=datetime.now(UTC),
+        end_datetime=datetime.now(UTC) + timedelta(hours=1),
     )
     db.add(candidate)
     await db.flush()
@@ -65,14 +75,15 @@ async def test_calendar_analysis_logic(db, test_project, test_user):
 
     assert analysis["poll_id"] == poll.id
     assert len(analysis["analyses"]) == 1
-    
+
     cand_analysis = analysis["analyses"][0]
     assert cand_analysis["candidate_id"] == candidate.id
-    
+
     # 稽古可能シーンの確認
     assert len(cand_analysis["possible_scenes"]) == 1
     assert cand_analysis["possible_scenes"][0]["scene_number"] == 1
     assert cand_analysis["possible_scenes"][0]["is_possible"] is True
+
 
 @pytest.mark.asyncio
 async def test_calendar_analysis_reach_logic(db, test_project, test_user):
@@ -81,7 +92,7 @@ async def test_calendar_analysis_reach_logic(db, test_project, test_user):
         project_id=test_project.id,
         uploaded_by=test_user.id,
         title="Test Script Reach",
-        content="Test content"
+        content="Test content",
     )
     db.add(script)
     await db.flush()
@@ -103,7 +114,9 @@ async def test_calendar_analysis_reach_logic(db, test_project, test_user):
     db.add(casting)
 
     # プロジェクトメンバー (名前取得用)
-    member = ProjectMember(project_id=test_project.id, user_id=test_user.id, role="owner", display_name="Hero Member")
+    member = ProjectMember(
+        project_id=test_project.id, user_id=test_user.id, role="owner", display_name="Hero Member"
+    )
     db.add(member)
 
     # 2. 日程調整のセットアップ
@@ -112,9 +125,9 @@ async def test_calendar_analysis_reach_logic(db, test_project, test_user):
     await db.flush()
 
     candidate = SchedulePollCandidate(
-        poll_id=poll.id, 
-        start_datetime=datetime.now(timezone.utc), 
-        end_datetime=datetime.now(timezone.utc) + timedelta(hours=1)
+        poll_id=poll.id,
+        start_datetime=datetime.now(UTC),
+        end_datetime=datetime.now(UTC) + timedelta(hours=1),
     )
     db.add(candidate)
     await db.flush()
@@ -127,9 +140,9 @@ async def test_calendar_analysis_reach_logic(db, test_project, test_user):
     # 4. 分析実行
     service = SchedulePollService(db, MagicMock())
     analysis = await service.get_calendar_analysis(poll.id)
-    
+
     cand_analysis = analysis["analyses"][0]
-    
+
     # リーチ判定の確認
     assert len(cand_analysis["possible_scenes"]) == 0
     assert len(cand_analysis["reach_scenes"]) == 1

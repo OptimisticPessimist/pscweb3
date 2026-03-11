@@ -5,17 +5,16 @@ Revises: ab6eb8af6b2b
 Create Date: 2026-03-09 22:44:39.419752
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
-revision: str = 'ce7cc9d0b71f'
-down_revision: Union[str, None] = 'ab6eb8af6b2b'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "ce7cc9d0b71f"
+down_revision: str | None = "ab6eb8af6b2b"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -29,7 +28,9 @@ def upgrade() -> None:
         # 既存の過剰なポリシーを削除
         op.execute(f'DROP POLICY IF EXISTS "Enable all access" ON public.{table}')
         # SELECTのみを許可するポリシーを作成（これは警告対象外）
-        op.execute(f'CREATE POLICY "Enable read access for all" ON public.{table} FOR SELECT USING (true)')
+        op.execute(
+            f'CREATE POLICY "Enable read access for all" ON public.{table} FOR SELECT USING (true)'
+        )
 
 
 def downgrade() -> None:
@@ -43,4 +44,6 @@ def downgrade() -> None:
         # SELECTのみのポリシーを削除
         op.execute(f'DROP POLICY IF EXISTS "Enable read access for all" ON public.{table}')
         # 元の過剰なポリシーを再作成
-        op.execute(f'CREATE POLICY "Enable all access" ON public.{table} FOR ALL USING (true) WITH CHECK (true)')
+        op.execute(
+            f'CREATE POLICY "Enable all access" ON public.{table} FOR ALL USING (true) WITH CHECK (true)'
+        )

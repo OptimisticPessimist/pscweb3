@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import Scene, SceneChart, SceneCharacterMapping, Script
+from src.db.models import SceneCharacterMapping, SceneChart, Script
 
 
 async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
@@ -17,9 +17,7 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
         SceneChart: 生成された香盤表
     """
     # 既存の香盤表を削除（再生成）
-    result = await db.execute(
-        select(SceneChart).where(SceneChart.script_id == script.id)
-    )
+    result = await db.execute(select(SceneChart).where(SceneChart.script_id == script.id))
     existing_chart = result.scalar_one_or_none()
     if existing_chart:
         await db.delete(existing_chart)
@@ -40,8 +38,6 @@ async def generate_scene_chart(script: Script, db: AsyncSession) -> SceneChart:
 
         # このシーンに登場する人物を取得（Lineから抽出）
         character_ids = {line.character_id for line in scene.lines if line.character_id is not None}
-
-
 
         # マッピング作成
         for character_id in character_ids:

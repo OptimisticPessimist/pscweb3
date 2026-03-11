@@ -2,16 +2,15 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.dependencies.auth import get_current_user_dep
 from src.db import get_db
-from src.db.models import ProjectMember, SceneChart, Script, User, SceneCharacterMapping
+from src.db.models import ProjectMember, SceneCharacterMapping, SceneChart, Script
+from src.dependencies.permissions import get_script_member_dep
 from src.schemas.scene_chart import CharacterInScene, SceneChartResponse, SceneInChart
 from src.services.scene_chart_generator import generate_scene_chart
-from src.dependencies.permissions import get_script_member_dep
 
 router = APIRouter()
 
@@ -65,11 +64,12 @@ async def get_scene_chart(
 
     # 香盤表取得 (関連データも一括取得)
     from sqlalchemy.orm import selectinload
+
     result = await db.execute(
         select(SceneChart)
         .options(
             selectinload(SceneChart.mappings).selectinload(SceneCharacterMapping.scene),
-            selectinload(SceneChart.mappings).selectinload(SceneCharacterMapping.character)
+            selectinload(SceneChart.mappings).selectinload(SceneCharacterMapping.character),
         )
         .where(SceneChart.script_id == script_id)
     )

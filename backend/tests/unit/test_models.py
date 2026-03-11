@@ -70,7 +70,7 @@ async def test_create_script_with_scenes_and_characters(
     """脚本、シーン、登場人物の作成テスト."""
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
-    
+
     # Arrange
     script_title = "ハムレット"
     content = "INT. ELSINORE CASTLE - DAY\n\nHAMLET\nTo be, or not to be..."
@@ -113,15 +113,12 @@ async def test_create_script_with_scenes_and_characters(
     db.add(line)
 
     await db.commit()
-    
+
     # リレーションシップを明示的にロード
     result = await db.execute(
         select(Script)
         .where(Script.id == script.id)
-        .options(
-            selectinload(Script.scenes),
-            selectinload(Script.characters)
-        )
+        .options(selectinload(Script.scenes), selectinload(Script.characters))
     )
     script = result.scalar_one()
 
@@ -141,7 +138,7 @@ async def test_character_casting_double_cast(
     """ダブルキャストのテスト."""
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
-    
+
     # Arrange: 脚本と登場人物を作成
     script = Script(
         project_id=test_project.id,
@@ -181,7 +178,7 @@ async def test_character_casting_double_cast(
     db.add(casting1)
     db.add(casting2)
     await db.commit()
-    
+
     # リレーションシップを明示的にロード
     result = await db.execute(
         select(Character)

@@ -1,7 +1,8 @@
 """ロギング用デコレータ."""
 
 import functools
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.core.logger import get_logger
 
@@ -17,6 +18,7 @@ def log_process(process_name: str) -> Callable:
     Returns:
         Callable: デコレータ
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -28,5 +30,7 @@ def log_process(process_name: str) -> Callable:
             except Exception as e:
                 logger.error(f"Failed {process_name}", error=str(e))
                 raise e
+
         return wrapper
+
     return decorator

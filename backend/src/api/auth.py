@@ -5,11 +5,10 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from src.auth.discord import get_discord_user_info, get_or_create_user_from_discord, oauth
+from src.auth.discord import get_or_create_user_from_discord, oauth
 from src.auth.jwt import create_access_token
 from src.config import settings
 from src.db import get_db
-from src.schemas.auth import UserResponse
 
 router = APIRouter()
 
@@ -34,32 +33,34 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> Redi
     # OSに応じた方法でDiscordからトークンとユーザー情報を取得
     try:
         import sys
-        code = request.query_params.get('code')
-        if not code:
-             raise HTTPException(status_code=400, detail="認証コードが見つかりません")
 
-        if sys.platform == 'win32':
+        code = request.query_params.get("code")
+        if not code:
+            raise HTTPException(status_code=400, detail="認証コードが見つかりません")
+
+        if sys.platform == "win32":
             auth_data = await _fetch_discord_token_windows(code)
         else:
             auth_data = await _fetch_discord_token_standard(code)
 
         token_data = auth_data.get("token")
         discord_user_data = auth_data.get("user")
-        
+
         if not token_data or not discord_user_data:
-             raise HTTPException(status_code=500, detail="認証データが不完全です")
+            raise HTTPException(status_code=500, detail="認証データが不完全です")
 
     except HTTPException as he:
         raise he
     except Exception as e:
         from src.core.logger import get_logger
+
         logger = get_logger(__name__)
         logger.error(f"Auth error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"認証処理中にエラーが発生しました: {e}")
 
     # ユーザーを取得または作成
     user = await get_or_create_user_from_discord(discord_user_data, db)
-    
+
     # JWT トークンを生成
     jwt_token = create_access_token({"sub": str(user.id)})
 
@@ -69,49 +70,49 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> Redi
 
 async def _fetch_discord_token_windows(code: str) -> dict:
     """Windows環境用: 外部プロセスを使ってDiscord認証を行う."""
-    import sys
-    import os
-    import uuid
-    import time
-    import subprocess
-    import json
     import asyncio
-    
+    import json
+    import os
+    import subprocess
+    import sys
+    import time
+    import uuid
+
     helper_script_path = os.path.join(os.path.dirname(__file__), "auth_helper.py")
     result_file = os.path.join(os.path.dirname(__file__), f"auth_result_{uuid.uuid4().hex}.json")
-    
+
     # DETACHED_PROCESS flag
     DETACHED_PROCESS = 0x00000008
-    
+
     cmd = [
-        sys.executable, 
+        sys.executable,
         helper_script_path,
         result_file,
         "https://discord.com/api/v10/oauth2/token",
         settings.discord_client_id,
         settings.discord_client_secret,
         settings.discord_redirect_uri,
-        code
+        code,
     ]
-    
+
     subprocess.Popen(
         cmd,
         creationflags=DETACHED_PROCESS,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        close_fds=True
+        close_fds=True,
     )
-    
+
     # ポーリング処理
     result = None
     start_time = time.time()
     timeout = 20.0
-    
+
     while time.time() - start_time < timeout:
         if os.path.exists(result_file):
-            await asyncio.sleep(0.5) 
+            await asyncio.sleep(0.5)
             try:
-                with open(result_file, "r", encoding="utf-8") as f:
+                with open(result_file, encoding="utf-8") as f:
                     content = f.read().strip()
                     if content:
                         result = json.loads(content)
@@ -119,7 +120,7 @@ async def _fetch_discord_token_windows(code: str) -> dict:
             except Exception:
                 pass
         await asyncio.sleep(0.5)
-        
+
     if os.path.exists(result_file):
         try:
             os.remove(result_file)
@@ -127,33 +128,36 @@ async def _fetch_discord_token_windows(code: str) -> dict:
             pass
 
     if not result:
-            raise HTTPException(status_code=504, detail="認証ヘルパーが応答しませんでした")
+        raise HTTPException(status_code=504, detail="認証ヘルパーが応答しませんでした")
 
-    if 'error' in result:
+    if "error" in result:
         raise HTTPException(status_code=400, detail=f"認証エラー: {result['error']}")
-        
+
     if result.get("status_code", 200) >= 400:
         raise HTTPException(status_code=400, detail=f"Discord API エラー: {result.get('body')}")
-            
+
     return result
 
 
 async def _fetch_discord_token_standard(code: str) -> dict:
     """標準環境用: httpxを使ってDiscord認証を行う."""
-    import httpx
     import asyncio
+
+    import httpx
+
     from src.core.logger import get_logger
+
     logger = get_logger(__name__)
-    
+
     token_endpoint = "https://discord.com/api/v10/oauth2/token"
     data = {
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': settings.discord_redirect_uri,
-        'client_id': settings.discord_client_id,
-        'client_secret': settings.discord_client_secret
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": settings.discord_redirect_uri,
+        "client_id": settings.discord_client_id,
+        "client_secret": settings.discord_client_secret,
     }
-    
+
     async with httpx.AsyncClient() as client:
         # 1. トークン交換 (リトライ付き)
         max_retries = 3
@@ -161,47 +165,51 @@ async def _fetch_discord_token_standard(code: str) -> dict:
         for i in range(max_retries + 1):
             resp = await client.post(token_endpoint, data=data)
             if resp.status_code == 429:
-                retry_after = float(resp.headers.get("Retry-After", 2 ** (i+1)))
-                logger.warning(f"Discord Token API Rate Limited (429). Retrying in {retry_after}s...", 
-                             headers=dict(resp.headers), body=resp.text)
+                retry_after = float(resp.headers.get("Retry-After", 2 ** (i + 1)))
+                logger.warning(
+                    f"Discord Token API Rate Limited (429). Retrying in {retry_after}s...",
+                    headers=dict(resp.headers),
+                    body=resp.text,
+                )
                 await asyncio.sleep(retry_after)
                 continue
-            
+
             if resp.status_code >= 400:
                 logger.error(f"Discord Token API Error: {resp.status_code}", body=resp.text)
-            
+
             resp.raise_for_status()
             token_data = resp.json()
             break
-            
+
         if not token_data:
-             raise HTTPException(status_code=500, detail="Discordトークンの取得に失敗しました")
-             
+            raise HTTPException(status_code=500, detail="Discordトークンの取得に失敗しました")
+
         access_token = token_data.get("access_token")
-        
+
         # 2. ユーザー情報取得 (リトライ付き)
         discord_user_data = None
         for i in range(max_retries + 1):
             user_resp = await client.get(
                 "https://discord.com/api/v10/users/@me",
-                headers={"Authorization": f"Bearer {access_token}"}
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             if user_resp.status_code == 429:
-                retry_after = float(user_resp.headers.get("Retry-After", 2 ** (i+1)))
-                logger.warning(f"Discord User Info API Rate Limited (429). Retrying in {retry_after}s...", 
-                             headers=dict(user_resp.headers), body=user_resp.text)
+                retry_after = float(user_resp.headers.get("Retry-After", 2 ** (i + 1)))
+                logger.warning(
+                    f"Discord User Info API Rate Limited (429). Retrying in {retry_after}s...",
+                    headers=dict(user_resp.headers),
+                    body=user_resp.text,
+                )
                 await asyncio.sleep(retry_after)
                 continue
-            
+
             if user_resp.status_code >= 400:
-                logger.error(f"Discord User Info API Error: {user_resp.status_code}", body=user_resp.text)
+                logger.error(
+                    f"Discord User Info API Error: {user_resp.status_code}", body=user_resp.text
+                )
 
             user_resp.raise_for_status()
             discord_user_data = user_resp.json()
             break
 
-    return {
-        "token": token_data,
-        "user": discord_user_data
-    }
-
+    return {"token": token_data, "user": discord_user_data}

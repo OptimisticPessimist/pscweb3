@@ -1,28 +1,27 @@
 """日程調整サービス."""
 
-from datetime import datetime, timezone, timedelta
 import uuid
-from typing import Optional
+from datetime import UTC, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from structlog import get_logger
 
-from src.db.models import (
-    SchedulePoll, 
-    SchedulePollCandidate, 
-    SchedulePollAnswer, 
-    TheaterProject, 
-    ProjectMember, 
-    CharacterCasting, 
-    SceneCharacterMapping, 
-    Scene,
-    User,
-    Script,
-    Character
-)
 from src.config import settings
+from src.db.models import (
+    Character,
+    CharacterCasting,
+    ProjectMember,
+    Scene,
+    SceneCharacterMapping,
+    SchedulePoll,
+    SchedulePollAnswer,
+    SchedulePollCandidate,
+    Script,
+    TheaterProject,
+    User,
+)
 from src.services.discord import DiscordService
 
 logger = get_logger(__name__)
@@ -39,15 +38,15 @@ class SchedulePollService:
         self,
         project: TheaterProject,
         title: str,
-        description: Optional[str],
+        description: str | None,
         candidates_data: list[dict],
         creator_id: uuid.UUID,
         required_roles: list[str] | None = None,
-        deadline: datetime | None = None
+        deadline: datetime | None = None,
     ) -> SchedulePoll:
         """日程調整を作成し、Discordに送信."""
         poll_id = uuid.uuid4()
-        
+
         # 役職リストをカンマ区切り文字列に変換
         required_roles_str = ",".join(required_roles) if required_roles else None
 
@@ -59,29 +58,37 @@ class SchedulePollService:
             creator_id=creator_id,
             is_closed=False,
             required_roles=required_roles_str,
-            deadline=deadline
+            deadline=deadline,
         )
         self.db.add(poll)
-        
+
         candidates = []
         for c_data in candidates_data:
             candidate = SchedulePollCandidate(
                 id=uuid.uuid4(),
                 poll_id=poll_id,
                 start_datetime=c_data["start_datetime"],
-                end_datetime=c_data["end_datetime"]
+                end_datetime=c_data["end_datetime"],
             )
             candidates.append(candidate)
             self.db.add(candidate)
-        
+
         await self.db.flush()
 
         # Discord通知
         if project.discord_channel_id:
-            logger.info("Sending schedule poll to Discord", project_id=project.id, channel_id=project.discord_channel_id)
-            
+            logger.info(
+                "Sending schedule poll to Discord",
+                project_id=project.id,
+                channel_id=project.discord_channel_id,
+            )
+
             # メンバー属性（Discord ID）を取得するためにクエリ
-            stmt = select(ProjectMember).where(ProjectMember.project_id == project.id).options(selectinload(ProjectMember.user))
+            stmt = (
+                select(ProjectMember)
+                .where(ProjectMember.project_id == project.id)
+                .options(selectinload(ProjectMember.user))
+            )
             result = await self.db.execute(stmt)
             all_members = result.scalars().all()
 
@@ -90,26 +97,28 @@ class SchedulePollService:
             for m in all_members:
                 if m.user.discord_id:
                     mentions.append(f"<@{m.user.discord_id}>")
-            
+
             mention_str = " ".join(mentions) if mentions else ""
 
             # メッセージ構築
             message_content = ""
             if mention_str:
                 message_content += f"{mention_str}\n\n"
-            
+
             message_content += f"**【日程調整】{title}**\n"
             if description:
                 message_content += f"{description}\n"
-            
+
             if deadline:
                 deadline_ts = int(deadline.timestamp())
                 message_content += f"\n**回答期限:** <t:{deadline_ts}:f>\n"
-            
-            message_content += "\n（※以下のボタンから回答するか、Webフォームを開いて回答してください）\n"
-            
+
+            message_content += (
+                "\n（※以下のボタンから回答するか、Webフォームを開いて回答してください）\n"
+            )
+
             components = []
-            
+
             # 5日程以内の場合は行ごとのボタンを表示
             # 5日程以内の場合は詳細をメッセージに含める
             if len(candidates) <= 5:
@@ -117,67 +126,67 @@ class SchedulePollService:
                 for i, c in enumerate(candidates):
                     # 内容には動的タイムスタンプを使用して、表示側のタイムゾーンに合わせる
                     ts = int(c.start_datetime.timestamp())
-                    message_content += f"{i+1}. <t:{ts}:F>\n"
-                    
+                    message_content += f"{i + 1}. <t:{ts}:F>\n"
+
                     # ボタンラベル用（JST固定）
                     jst_time = c.start_datetime.astimezone(timezone(timedelta(hours=9)))
                     start_str_label = jst_time.strftime("%m/%d(%a) %H:%M")
-                    
+
                     row = {
                         "type": 1,
                         "components": [
                             {
                                 "type": 2,
-                                "style": 2, # Secondary
-                                "label": f"{i+1}. {start_str_label}",
+                                "style": 2,  # Secondary
+                                "label": f"{i + 1}. {start_str_label}",
                                 "custom_id": f"poll_noop:{c.id}",
-                                "disabled": True
+                                "disabled": True,
                             },
                             {
                                 "type": 2,
-                                "style": 3, # Success
+                                "style": 3,  # Success
                                 "label": "〇",
-                                "custom_id": f"poll_answer:{c.id}:ok"
+                                "custom_id": f"poll_answer:{c.id}:ok",
                             },
                             {
                                 "type": 2,
-                                "style": 1, # Primary
+                                "style": 1,  # Primary
                                 "label": "△",
-                                "custom_id": f"poll_answer:{c.id}:maybe"
+                                "custom_id": f"poll_answer:{c.id}:maybe",
                             },
                             {
                                 "type": 2,
-                                "style": 4, # Danger
+                                "style": 4,  # Danger
                                 "label": "×",
-                                "custom_id": f"poll_answer:{c.id}:ng"
-                            }
-                        ]
+                                "custom_id": f"poll_answer:{c.id}:ng",
+                            },
+                        ],
                     }
                     components.append(row)
-            
+
             # Webフォームへのリンクボタン (Action Row)
             base_url = settings.frontend_url or "https://pscweb3.azurewebsites.net"
             web_url = f"{base_url}/projects/{project.id}/polls/{poll_id}"
-            
+
             web_row = {
                 "type": 1,
                 "components": [
                     {
                         "type": 2,
-                        "style": 5, # Link
+                        "style": 5,  # Link
                         "label": "🌐 Webフォームを開いて一括回答する",
-                        "url": web_url
+                        "url": web_url,
                     }
-                ]
+                ],
             }
             components.append(web_row)
 
             discord_resp = await self.discord_service.send_channel_message(
                 channel_id=project.discord_channel_id,
                 content=message_content,
-                components=components
+                components=components,
             )
-            
+
             if discord_resp:
                 poll.message_id = discord_resp.get("id")
                 poll.channel_id = project.discord_channel_id
@@ -185,7 +194,7 @@ class SchedulePollService:
         await self.db.commit()
         return await self.get_poll_with_details(poll_id)
 
-    async def get_poll_with_details(self, poll_id: uuid.UUID) -> Optional[SchedulePoll]:
+    async def get_poll_with_details(self, poll_id: uuid.UUID) -> SchedulePoll | None:
         """詳細情報付きで日程調整を取得."""
         stmt = (
             select(SchedulePoll)
@@ -200,67 +209,72 @@ class SchedulePollService:
         poll = result.scalar_one_or_none()
         if not poll:
             return None
-            
+
         # メンバーの表示名と役職を取得
         member_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
         member_result = await self.db.execute(member_stmt)
         members = member_result.scalars().all()
         name_map = {m.user_id: m.display_name for m in members}
         staff_role_map = {m.user_id: m.default_staff_role for m in members}
-        
+
         # 配役の取得（最新の脚本に基づく）
-        script_stmt = select(Script).where(Script.project_id == poll.project_id).order_by(Script.revision.desc()).limit(1)
+        script_stmt = (
+            select(Script)
+            .where(Script.project_id == poll.project_id)
+            .order_by(Script.revision.desc())
+            .limit(1)
+        )
         script_result = await self.db.execute(script_stmt)
         script = script_result.scalar_one_or_none()
-        
+
         cast_map = {}
         if script:
-            cast_stmt = select(CharacterCasting).join(CharacterCasting.character).where(Character.script_id == script.id).options(selectinload(CharacterCasting.character))
+            cast_stmt = (
+                select(CharacterCasting)
+                .join(CharacterCasting.character)
+                .where(Character.script_id == script.id)
+                .options(selectinload(CharacterCasting.character))
+            )
             cast_result = await self.db.execute(cast_stmt)
             for casting in cast_result.scalars().all():
                 if casting.user_id not in cast_map:
                     cast_map[casting.user_id] = []
                 cast_map[casting.user_id].append(casting.character.name)
-        
+
         # 回答情報を補完
         for candidate in poll.candidates:
             for answer in candidate.answers:
                 # Pydanticが拾えるように属性をセット
                 answer.display_name = name_map.get(answer.user_id)
                 answer.discord_username = answer.user.display_name if answer.user else None
-                
+
                 roles = []
                 staff_role = staff_role_map.get(answer.user_id)
                 if staff_role:
                     roles.append(staff_role)
-                
+
                 casts = cast_map.get(answer.user_id)
                 if casts:
                     roles.extend(casts)
-                    
+
                 answer.role = " / ".join(roles) if roles else None
-        
+
         return poll
 
     async def upsert_answer(self, candidate_id: uuid.UUID, user_id: uuid.UUID, status: str):
         """回答を登録/更新."""
         stmt = select(SchedulePollAnswer).where(
-            SchedulePollAnswer.candidate_id == candidate_id,
-            SchedulePollAnswer.user_id == user_id
+            SchedulePollAnswer.candidate_id == candidate_id, SchedulePollAnswer.user_id == user_id
         )
         result = await self.db.execute(stmt)
         answer = result.scalar_one_or_none()
-        
+
         if answer:
             answer.status = status
         else:
-            answer = SchedulePollAnswer(
-                candidate_id=candidate_id,
-                user_id=user_id,
-                status=status
-            )
+            answer = SchedulePollAnswer(candidate_id=candidate_id, user_id=user_id, status=status)
             self.db.add(answer)
-        
+
         await self.db.commit()
 
     async def get_recommendations(self, poll_id: uuid.UUID):
@@ -268,12 +282,17 @@ class SchedulePollService:
         poll = await self.get_poll_with_details(poll_id)
         if not poll:
             return []
-        
+
         # プロジェクトの最新の脚本を対象とする
-        script_stmt = select(Script).where(Script.project_id == poll.project_id).order_by(Script.revision.desc()).limit(1)
+        script_stmt = (
+            select(Script)
+            .where(Script.project_id == poll.project_id)
+            .order_by(Script.revision.desc())
+            .limit(1)
+        )
         script_result = await self.db.execute(script_stmt)
         script = script_result.scalar_one_or_none()
-        
+
         # 脚本が設定されていない場合のフォールバック（全体出席数に基づく）
         if not script:
             recommendations = []
@@ -281,39 +300,59 @@ class SchedulePollService:
                 ok_count = sum(1 for a in candidate.answers if a.status == "ok")
                 maybe_count = sum(1 for a in candidate.answers if a.status == "maybe")
                 score = ok_count * 10 + maybe_count * 5
-                
+
                 if score > 0 or not candidate.answers:
-                    recommendations.append({
-                        "candidate_id": candidate.id,
-                        "start_datetime": candidate.start_datetime,
-                        "end_datetime": candidate.end_datetime,
-                        "possible_scenes": [],
-                        "reason": f"出席可能者: {ok_count}名" if ok_count > 0 else "稽古可能なメンバーがいます"
-                    })
-            recommendations.sort(key=lambda x: (sum(1 for a in [c for c in poll.candidates if c.id == x["candidate_id"]][0].answers if a.status == "ok")), reverse=True)
+                    recommendations.append(
+                        {
+                            "candidate_id": candidate.id,
+                            "start_datetime": candidate.start_datetime,
+                            "end_datetime": candidate.end_datetime,
+                            "possible_scenes": [],
+                            "reason": f"出席可能者: {ok_count}名"
+                            if ok_count > 0
+                            else "稽古可能なメンバーがいます",
+                        }
+                    )
+            recommendations.sort(
+                key=lambda x: (
+                    sum(
+                        1
+                        for a in [c for c in poll.candidates if c.id == x["candidate_id"]][
+                            0
+                        ].answers
+                        if a.status == "ok"
+                    )
+                ),
+                reverse=True,
+            )
             return recommendations[:3]
-        
+
         # シーンごとの必須ユーザーIDセットを作成
-        mapping_stmt = select(SceneCharacterMapping).join(SceneCharacterMapping.scene).where(Scene.script_id == script.id)
+        mapping_stmt = (
+            select(SceneCharacterMapping)
+            .join(SceneCharacterMapping.scene)
+            .where(Scene.script_id == script.id)
+        )
         mapping_result = await self.db.execute(mapping_stmt)
         mappings = mapping_result.scalars().all()
-        
+
         # シーンごとの必要キャラクターマップ
-        scene_chars = {} # {scene_id: [character_id]}
+        scene_chars = {}  # {scene_id: [character_id]}
         for m in mappings:
             if m.scene_id not in scene_chars:
                 scene_chars[m.scene_id] = []
             scene_chars[m.scene_id].append(m.character_id)
 
         # キャラクターごとのキャストマップ
-        casting_stmt = select(CharacterCasting).join(Character).where(Character.script_id == script.id)
+        casting_stmt = (
+            select(CharacterCasting).join(Character).where(Character.script_id == script.id)
+        )
         castings = (await self.db.execute(casting_stmt)).scalars().all()
-        char_users = {} # {character_id: [user_id]}
+        char_users = {}  # {character_id: [user_id]}
         for c in castings:
             if c.character_id not in char_users:
                 char_users[c.character_id] = []
             char_users[c.character_id].append(c.user_id)
-
 
         # プロジェクトメンバー全員を取得して役職マップを作成
         all_members_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
@@ -337,20 +376,27 @@ class SchedulePollService:
                 priority_user_ids.update(role_users.get(role, []))
         else:
             # 従来通りのデフォルト優先メンバー
-            priority_user_ids = {m.user_id for m in all_members if m.default_staff_role in ["演出", "演出助手", "制作"]}
+            priority_user_ids = {
+                m.user_id
+                for m in all_members
+                if m.default_staff_role in ["演出", "演出助手", "制作"]
+            }
 
         # シーン情報を取得
-        scene_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
+        scene_stmt = (
+            select(Scene)
+            .where(Scene.script_id == script.id)
+            .order_by(Scene.act_number, Scene.scene_number)
+        )
         scene_result = await self.db.execute(scene_stmt)
         scenes_map = {s.id: s for s in scene_result.scalars().all()}
-
 
         recommendations = []
         for candidate in poll.candidates:
             user_answers = {a.user_id: a.status for a in candidate.answers}
             ok_count_total = sum(1 for a in candidate.answers if a.status == "ok")
             maybe_count_total = sum(1 for a in candidate.answers if a.status == "maybe")
-            
+
             # 必須役職のNGチェック
             missing_roles = []
             for role in required_roles:
@@ -363,10 +409,10 @@ class SchedulePollService:
             for scene_id, scene in scenes_map.items():
                 if scene.scene_number <= 0:
                     continue
-                
+
                 # シーンに必要なキャラクターとそのキャストを取得
                 req_chars = scene_chars.get(scene_id, [])
-                
+
                 is_possible = True
                 uncast_exist = False
                 if missing_roles:
@@ -384,7 +430,6 @@ class SchedulePollService:
                             is_possible = False
                             break
 
-                
                 if is_possible:
                     score = 0
                     ok_count = 0
@@ -397,7 +442,7 @@ class SchedulePollService:
                             ok_count += 1
                         elif any(user_answers.get(uid) == "maybe" for uid in c_users):
                             score += 5
-                    
+
                     priority_ok = False
                     for pid in priority_user_ids:
                         if user_answers.get(pid) == "ok":
@@ -405,7 +450,7 @@ class SchedulePollService:
                             priority_ok = True
                         elif user_answers.get(pid) == "maybe":
                             score += 10
-                    
+
                     reason_parts = []
                     if not req_chars:
                         reason_parts.append("キャラクターの登場なし")
@@ -415,25 +460,23 @@ class SchedulePollService:
                         reason_parts.append("必須キャスト全員出席可能")
                     elif ok_count > 0:
                         reason_parts.append(f"必須キャスト{ok_count}名出席可能")
-                    
+
                     if priority_ok:
                         reason_parts.append("演出・制作メンバー出席可能")
 
-                        
-                    candidate_possible_scenes.append({
-                        "scene_id": scene_id,
-                        "act_number": scene.act_number,
-                        "scene_number": scene.scene_number,
-                        "scene_heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
-                        "score": score,
-                        "reason": " / ".join(reason_parts)
-                    })
+                    candidate_possible_scenes.append(
+                        {
+                            "scene_id": scene_id,
+                            "act_number": scene.act_number,
+                            "scene_number": scene.scene_number,
+                            "scene_heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
+                            "score": score,
+                            "reason": " / ".join(reason_parts),
+                        }
+                    )
 
-
-
-            
             candidate_possible_scenes.sort(key=lambda x: x["score"], reverse=True)
-            
+
             # 理由の決定
             if candidate_possible_scenes:
                 top_scene = candidate_possible_scenes[0]
@@ -442,23 +485,33 @@ class SchedulePollService:
                 if missing_roles:
                     summary_reason = f"不足役職: {', '.join(missing_roles)}"
                 else:
-                    summary_reason = f"出席可能者: {ok_count_total}名" if ok_count_total > 0 else "稽古可能なメンバーがいます"
+                    summary_reason = (
+                        f"出席可能者: {ok_count_total}名"
+                        if ok_count_total > 0
+                        else "稽古可能なメンバーがいます"
+                    )
 
             # スコアの決定（シーンスコアがあればそれ、なければ全体出席数ベース）
-            total_score = candidate_possible_scenes[0]["score"] if candidate_possible_scenes else (ok_count_total * 5)
+            total_score = (
+                candidate_possible_scenes[0]["score"]
+                if candidate_possible_scenes
+                else (ok_count_total * 5)
+            )
             if missing_roles:
                 total_score = 0
 
             if total_score > 0 or not candidate.answers:
-                recommendations.append({
-                    "candidate_id": candidate.id,
-                    "start_datetime": candidate.start_datetime,
-                    "end_datetime": candidate.end_datetime,
-                    "possible_scenes": candidate_possible_scenes[:5],
-                    "reason": summary_reason,
-                    "score": total_score
-                })
-            
+                recommendations.append(
+                    {
+                        "candidate_id": candidate.id,
+                        "start_datetime": candidate.start_datetime,
+                        "end_datetime": candidate.end_datetime,
+                        "possible_scenes": candidate_possible_scenes[:5],
+                        "reason": summary_reason,
+                        "score": total_score,
+                    }
+                )
+
         # おすすめ度順にソート（上位3件）
         recommendations.sort(key=lambda x: x["score"], reverse=True)
         return recommendations[:3]
@@ -468,43 +521,57 @@ class SchedulePollService:
         poll = await self.get_poll_with_details(poll_id)
         if not poll:
             return None
-        
+
         # 1. データの準備
-        script_stmt = select(Script).where(Script.project_id == poll.project_id).order_by(Script.revision.desc()).limit(1)
+        script_stmt = (
+            select(Script)
+            .where(Script.project_id == poll.project_id)
+            .order_by(Script.revision.desc())
+            .limit(1)
+        )
         script = (await self.db.execute(script_stmt)).scalar_one_or_none()
         if not script:
             return {"poll_id": poll_id, "analyses": []}
 
         # シーン一覧
-        scenes_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
+        scenes_stmt = (
+            select(Scene)
+            .where(Scene.script_id == script.id)
+            .order_by(Scene.act_number, Scene.scene_number)
+        )
         scenes = (await self.db.execute(scenes_stmt)).scalars().all()
 
-
         # シーンごとの必要キャラクター
-        mapping_stmt = select(SceneCharacterMapping).where(SceneCharacterMapping.chart_id.in_(
-            select(Script.id).where(Script.project_id == poll.project_id) # 香盤表はScriptに紐付いている前提
-        ))
+        mapping_stmt = select(SceneCharacterMapping).where(
+            SceneCharacterMapping.chart_id.in_(
+                select(Script.id).where(
+                    Script.project_id == poll.project_id
+                )  # 香盤表はScriptに紐付いている前提
+            )
+        )
         # 実際には SceneCharacterMapping は scene_id に紐付いているのでそちらで。
         mapping_stmt = select(SceneCharacterMapping).join(Scene).where(Scene.script_id == script.id)
         mappings = (await self.db.execute(mapping_stmt)).scalars().all()
-        
-        scene_chars = {} # {scene_id: [character_id]}
+
+        scene_chars = {}  # {scene_id: [character_id]}
         for m in mappings:
             if m.scene_id not in scene_chars:
-
-
-
                 scene_chars[m.scene_id] = []
             scene_chars[m.scene_id].append(m.character_id)
 
         # キャラクターごとのキャスト（ユーザーID）
-        casting_stmt = select(CharacterCasting).join(Character).where(Character.script_id == script.id).options(selectinload(CharacterCasting.character))
+        casting_stmt = (
+            select(CharacterCasting)
+            .join(Character)
+            .where(Character.script_id == script.id)
+            .options(selectinload(CharacterCasting.character))
+        )
         castings = (await self.db.execute(casting_stmt)).scalars().all()
-        
-        char_users = {} # {character_id: [user_id]}
-        user_names = {} # {user_id: name}
-        char_name_map = {} # {character_id: name}
-        
+
+        char_users = {}  # {character_id: [user_id]}
+        user_names = {}  # {user_id: name}
+        char_name_map = {}  # {character_id: name}
+
         # ユーザー名取得用
         all_member_stmt = select(ProjectMember).where(ProjectMember.project_id == poll.project_id)
         members = (await self.db.execute(all_member_stmt)).scalars().all()
@@ -517,16 +584,14 @@ class SchedulePollService:
             if c.character:
                 char_name_map[c.character_id] = c.character.name
 
-
-
         # 必須役職の抽出
         required_roles = []
         if poll.required_roles:
             required_roles = [r.strip() for r in poll.required_roles.split(",") if r.strip()]
 
         # 役職ごとのユーザーマップ
-        role_users = {} # {role: [user_id]}
-        user_roles = {} # {user_id: str}
+        role_users = {}  # {role: [user_id]}
+        user_roles = {}  # {user_id: str}
         for m in members:
             roles = []
             if m.default_staff_role:
@@ -541,14 +606,13 @@ class SchedulePollService:
             if c.user_id in user_roles and c.character:
                 user_roles[c.user_id].append(c.character.name)
 
-
         # 2. 各候補日程の分析
         analyses = []
         for candidate in poll.candidates:
             # OK/Maybe ユーザーの抽出
             available_users = {a.user_id for a in candidate.answers if a.status in ["ok", "maybe"]}
             maybe_users = {a.user_id for a in candidate.answers if a.status == "maybe"}
-            
+
             # 必須役職のチェック
             missing_roles = []
             for role in required_roles:
@@ -558,71 +622,72 @@ class SchedulePollService:
 
             possible_scenes = []
             reach_scenes = []
-            
+
             for scene in scenes:
                 if scene.scene_number <= 0:
                     continue
                 req_chars = scene_chars.get(scene.id, [])
-                
-                missing_cast_roles = [] # [(char_name, [missing_user_ids])]
-                uncast_chars = [] # [char_name]
-                
+
+                missing_cast_roles = []  # [(char_name, [missing_user_ids])]
+                uncast_chars = []  # [char_name]
+
                 for char_id in req_chars:
                     c_users = char_users.get(char_id, [])
                     char_name = char_name_map.get(char_id, "Unknown")
-                    
+
                     if not c_users:
                         # 未配役
                         uncast_chars.append(char_name)
                         continue
-                        
+
                     # ダブルキャスト対応：1人でも利用可能ならOK
                     if not any(uid in available_users for uid in c_users):
                         missing_cast_roles.append((char_name, c_users))
 
-
-                
                 if not missing_cast_roles and not missing_roles:
                     # 稽古可能
                     reason = "全員揃っています" if req_chars else "登場キャラクターなし"
                     if uncast_chars:
                         reason = f"未配役あり({', '.join(uncast_chars[:2])}{'等' if len(uncast_chars) > 2 else ''})"
-                        
-                    possible_scenes.append({
-                        "scene_id": str(scene.id),
-                        "act_number": scene.act_number,
-                        "scene_number": scene.scene_number,
-                        "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
-                        "is_possible": True,
-                        "uncast_chars_exist": len(uncast_chars) > 0,
-                        "reason": reason
-                    })
 
+                    possible_scenes.append(
+                        {
+                            "scene_id": str(scene.id),
+                            "act_number": scene.act_number,
+                            "scene_number": scene.scene_number,
+                            "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
+                            "is_possible": True,
+                            "uncast_chars_exist": len(uncast_chars) > 0,
+                            "reason": reason,
+                        }
+                    )
 
                 elif not missing_roles and len(missing_cast_roles) == 1:
                     # リーチ状態（ちょうど1人足りない場合のみ）
                     char_name, m_uids = missing_cast_roles[0]
                     reason = f"不足: {char_name}"
-                        
-                    reach_scenes.append({
-                        "scene_id": str(scene.id),
-                        "act_number": scene.act_number,
-                        "scene_number": scene.scene_number,
-                        "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
-                        "is_possible": False,
-                        "is_reach": True,
-                        "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids] if m_uids else ["未配役"],
-                        "uncast_chars_exist": len(uncast_chars) > 0,
-                        "reason": reason
-                    })
 
-
+                    reach_scenes.append(
+                        {
+                            "scene_id": str(scene.id),
+                            "act_number": scene.act_number,
+                            "scene_number": scene.scene_number,
+                            "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
+                            "is_possible": False,
+                            "is_reach": True,
+                            "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids]
+                            if m_uids
+                            else ["未配役"],
+                            "uncast_chars_exist": len(uncast_chars) > 0,
+                            "reason": reason,
+                        }
+                    )
 
                 elif missing_roles:
                     # 必須役職が足りない場合、リーチ判定にも含めないか、理由に役職不足を書く
                     # 今回は「役職不足」としてリーチには入れない（役者が揃っていても不可能なので）
                     pass
-            
+
             # メンバー詳細情報の構築
             available_members = []
             maybe_members = []
@@ -630,39 +695,38 @@ class SchedulePollService:
                 name = user_names.get(uid, "Unknown")
                 roles_list = user_roles.get(uid, [])
                 role_str = " / ".join(roles_list) if roles_list else None
-                member_info = {
-                    "user_id": uid,
-                    "name": name,
-                    "role": role_str
-                }
+                member_info = {"user_id": uid, "name": name, "role": role_str}
                 available_members.append(member_info)
                 if uid in maybe_users:
                     maybe_members.append(member_info)
 
-            analyses.append({
-                "candidate_id": candidate.id,
-                "start_datetime": candidate.start_datetime,
-                "end_datetime": candidate.end_datetime,
-                "possible_scenes": possible_scenes,
-                "reach_scenes": reach_scenes,
-                "available_users": list(available_users),
-                "maybe_users": list(maybe_users),
-                "available_user_names": [user_names.get(uid, "Unknown") for uid in available_users],
-                "maybe_user_names": [user_names.get(uid, "Unknown") for uid in maybe_users],
-                "available_members": available_members,
-                "maybe_members": maybe_members,
-            })
+            analyses.append(
+                {
+                    "candidate_id": candidate.id,
+                    "start_datetime": candidate.start_datetime,
+                    "end_datetime": candidate.end_datetime,
+                    "possible_scenes": possible_scenes,
+                    "reach_scenes": reach_scenes,
+                    "available_users": list(available_users),
+                    "maybe_users": list(maybe_users),
+                    "available_user_names": [
+                        user_names.get(uid, "Unknown") for uid in available_users
+                    ],
+                    "maybe_user_names": [user_names.get(uid, "Unknown") for uid in maybe_users],
+                    "available_members": available_members,
+                    "maybe_members": maybe_members,
+                }
+            )
         all_scenes_info = [
             {
                 "scene_id": str(s.id),
                 "act_number": s.act_number,
                 "scene_number": s.scene_number,
-                "heading": f"{s.act_number or 0}-{s.scene_number}: {s.heading}"
+                "heading": f"{s.act_number or 0}-{s.scene_number}: {s.heading}",
             }
-            for s in scenes if s.scene_number > 0
+            for s in scenes
+            if s.scene_number > 0
         ]
-
-
 
         return {"poll_id": poll_id, "all_scenes": all_scenes_info, "analyses": analyses}
 
@@ -672,8 +736,7 @@ class SchedulePollService:
             select(SchedulePoll)
             .where(SchedulePoll.id == poll_id)
             .options(
-                selectinload(SchedulePoll.candidates)
-                .selectinload(SchedulePollCandidate.answers)
+                selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers)
             )
         )
         result = await self.db.execute(stmt)
@@ -699,16 +762,20 @@ class SchedulePollService:
         unanswered = []
         for m in members:
             if m.user_id not in answered_user_ids:
-                unanswered.append({
-                    "user_id": m.user_id,
-                    "name": m.display_name or (m.user.display_name if m.user else "Unknown"),
-                    "role": m.default_staff_role,
-                    "discord_id": m.user.discord_id if m.user else None
-                })
-        
+                unanswered.append(
+                    {
+                        "user_id": m.user_id,
+                        "name": m.display_name or (m.user.display_name if m.user else "Unknown"),
+                        "role": m.default_staff_role,
+                        "discord_id": m.user.discord_id if m.user else None,
+                    }
+                )
+
         return unanswered
 
-    async def send_reminder(self, poll_id: uuid.UUID, target_user_ids: list[uuid.UUID], base_url: str):
+    async def send_reminder(
+        self, poll_id: uuid.UUID, target_user_ids: list[uuid.UUID], base_url: str
+    ):
         """未回答メンバーにDiscordリマインドを送信."""
         stmt = select(SchedulePoll).where(SchedulePoll.id == poll_id)
         result = await self.db.execute(stmt)
@@ -724,36 +791,31 @@ class SchedulePollService:
         user_stmt = select(User).where(User.id.in_(target_user_ids))
         user_result = await self.db.execute(user_stmt)
         users = user_result.scalars().all()
-        
+
         mentions = [f"<@{u.discord_id}>" for u in users if u.discord_id]
         if not mentions:
             return
 
         web_url = f"{base_url}/projects/{project.id}/polls/{poll_id}"
-        
+
         content = (
             f"🔔 **【日程調整リマインド】**\n"
             f"「**{poll.title}**」の回答がまだの方がいらっしゃいます。お手数ですが回答をお願いします！\n\n"
         )
-        
+
         if poll.deadline:
             deadline_ts = int(poll.deadline.timestamp())
             content += f"**回答期限:** <t:{deadline_ts}:f>\n\n"
-            
-        content += (
-            f"{' '.join(mentions)}\n\n"
-            f"🌐 {web_url}"
-        )
+
+        content += f"{' '.join(mentions)}\n\n🌐 {web_url}"
 
         if project.discord_webhook_url:
             await self.discord_service.send_notification(
-                content=content,
-                webhook_url=project.discord_webhook_url
+                content=content, webhook_url=project.discord_webhook_url
             )
         elif project.discord_channel_id:
             await self.discord_service.send_channel_message(
-                channel_id=project.discord_channel_id,
-                content=content
+                channel_id=project.discord_channel_id, content=content
             )
 
     async def stop_auto_reminder(self, poll_id: uuid.UUID) -> bool:
@@ -761,7 +823,7 @@ class SchedulePollService:
         poll = await self.db.get(SchedulePoll, poll_id)
         if not poll:
             return False
-        
+
         poll.auto_reminder_stopped = True
         await self.db.commit()
         return True
@@ -769,7 +831,7 @@ class SchedulePollService:
     async def check_poll_deadlines(self, base_url: str) -> dict[str, int]:
         """期限が過ぎた日程調整の自動リマインドをチェックして送信."""
         stats = {"checked_polls": 0, "reminders_sent": 0, "errors": 0}
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # 期限が過ぎており、未リマインドかつ停止されていない、未完了のPollを取得
         stmt = (
@@ -779,11 +841,11 @@ class SchedulePollService:
                 SchedulePoll.deadline <= now,
                 SchedulePoll.reminder_sent_at.is_(None),
                 SchedulePoll.auto_reminder_stopped == False,
-                SchedulePoll.is_closed == False
+                SchedulePoll.is_closed == False,
             )
             .options(selectinload(SchedulePoll.project))
         )
-        
+
         result = await self.db.execute(stmt)
         polls = result.scalars().all()
         stats["checked_polls"] = len(polls)
@@ -796,16 +858,20 @@ class SchedulePollService:
                     target_user_ids = [u["user_id"] for u in unanswered]
                     await self.send_reminder(poll.id, target_user_ids, base_url)
                     stats["reminders_sent"] += 1
-                
+
                 # 送信済みとしてマーク（未回答者がいない場合も、今後送らないようにマーク）
                 poll.reminder_sent_at = now
             except Exception as e:
-                logger.error(f"Error sending auto reminder for poll {poll.id}: {e}", poll_id=poll.id)
+                logger.error(
+                    f"Error sending auto reminder for poll {poll.id}: {e}", poll_id=poll.id
+                )
                 stats["errors"] += 1
-        
+
         await self.db.commit()
         return stats
 
 
-def get_schedule_poll_service(db: AsyncSession, discord_service: DiscordService) -> SchedulePollService:
+def get_schedule_poll_service(
+    db: AsyncSession, discord_service: DiscordService
+) -> SchedulePollService:
     return SchedulePollService(db, discord_service)

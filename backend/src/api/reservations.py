@@ -1,25 +1,38 @@
 import csv
 import io
-from datetime import datetime, timezone, timedelta
-from typing import Annotated
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.db import get_db
-from src.db.models import Reservation, User, Milestone, TheaterProject, ProjectMember, CharacterCasting
-from src.schemas.reservation import ReservationCreate, ReservationResponse, ReservationUpdate, ReservationCancel
-from src.services.email import email_service
-from src.dependencies.auth import get_current_user_dep as get_current_user, get_optional_current_user_dep as get_current_user_optional
+from src.db.models import (
+    CharacterCasting,
+    Milestone,
+    ProjectMember,
+    Reservation,
+    TheaterProject,
+    User,
+)
+from src.dependencies.auth import get_current_user_dep as get_current_user
+from src.dependencies.auth import get_optional_current_user_dep as get_current_user_optional
 from src.schemas.project import MilestoneResponse
+from src.schemas.reservation import (
+    ReservationCancel,
+    ReservationCreate,
+    ReservationResponse,
+    ReservationUpdate,
+)
+from src.services.email import email_service
 
 router = APIRouter()
 
 # --- Public API ---
+
 
 @router.post("/public/reservations", response_model=ReservationResponse)
 async def create_reservation(
@@ -37,15 +50,15 @@ async def create_reservation(
     # 定員チェック
     if milestone.reservation_capacity is not None:
         result = await db.scalar(
-            select(func.sum(Reservation.count))
-            .where(Reservation.milestone_id == reservation.milestone_id)
+            select(func.sum(Reservation.count)).where(
+                Reservation.milestone_id == reservation.milestone_id
+            )
         )
         current_count = result or 0
         remaining = milestone.reservation_capacity - current_count
         if current_count + reservation.count > milestone.reservation_capacity:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Capacity exceeded. Only {remaining} tickets remaining."
+                status_code=400, detail=f"Capacity exceeded. Only {remaining} tickets remaining."
             )
 
     # 予約作成
@@ -62,18 +75,20 @@ async def create_reservation(
     await db.refresh(db_reservation)
 
     # プロジェクト取得
-    project = await db.scalar(select(TheaterProject).where(TheaterProject.id == milestone.project_id))
+    project = await db.scalar(
+        select(TheaterProject).where(TheaterProject.id == milestone.project_id)
+    )
 
     # Discord Timestamp for notifications
-    milestone_ts = int(milestone.start_date.replace(tzinfo=timezone.utc).timestamp())
+    milestone_ts = int(milestone.start_date.replace(tzinfo=UTC).timestamp())
     discord_date_str = f"<t:{milestone_ts}:f>"
-    
+
     # Mail still needs formatted string (keep JST as default for mail)
     jst = timezone(timedelta(hours=9))
-    start_date_utc = milestone.start_date.replace(tzinfo=timezone.utc)
+    start_date_utc = milestone.start_date.replace(tzinfo=UTC)
     start_date_jst = start_date_utc.astimezone(jst)
     date_str = start_date_jst.strftime("%Y/%m/%d %H:%M")
-    
+
     background_tasks.add_task(
         email_service.send_reservation_confirmation,
         to_email=reservation.email,
@@ -84,15 +99,16 @@ async def create_reservation(
         project_name=project.name if project else "不明なプロジェクト",
         reservation_id=str(db_reservation.id),
         location=milestone.location,  # 🆕 場所を追加
-        description=milestone.description  # 🆕 説明を追加
+        description=milestone.description,  # 🆕 説明を追加
     )
 
     # Discord通知 (Webhook)
     # プロジェクトに設定されたWebhookを使用
     if project and project.discord_webhook_url:
         from src.services.discord import get_discord_service
+
         discord_service = get_discord_service()
-        
+
         # 扱い（紹介者）の取得
         referral_name = "なし"
         if reservation.referral_user_id:
@@ -102,12 +118,23 @@ async def create_reservation(
             # 一旦ID解決せず、もしあればキャッシュ等... ないので、
             # クエリ発行して名前取得
             try:
-                 ref_user = await db.scalar(select(User).where(User.id == reservation.referral_user_id))
-                 if ref_user:
-                     # ProjectMemberも見てdisplay_nameがあればそれを使う
-                     ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == reservation.referral_user_id, ProjectMember.project_id == project.id))
-                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
-            except Exception as e:
+                ref_user = await db.scalar(
+                    select(User).where(User.id == reservation.referral_user_id)
+                )
+                if ref_user:
+                    # ProjectMemberも見てdisplay_nameがあればそれを使う
+                    ref_pm = await db.scalar(
+                        select(ProjectMember).where(
+                            ProjectMember.user_id == reservation.referral_user_id,
+                            ProjectMember.project_id == project.id,
+                        )
+                    )
+                    referral_name = (
+                        (ref_pm.display_name if ref_pm and ref_pm.display_name else None)
+                        or ref_user.display_name
+                        or "不明"
+                    )
+            except Exception:
                 # 失敗しても通知は送る
                 pass
 
@@ -120,7 +147,7 @@ async def create_reservation(
         background_tasks.add_task(
             discord_service.send_notification,
             content=notification_content,
-            webhook_url=project.discord_webhook_url
+            webhook_url=project.discord_webhook_url,
         )
 
     return db_reservation
@@ -135,14 +162,17 @@ async def get_public_milestone(
     # UUID形式のバリデーション
     try:
         from uuid import UUID
+
         UUID(id)  # UUIDとして解析できるか確認
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid milestone ID format. Must be a valid UUID.")
-    
+        raise HTTPException(
+            status_code=400, detail="Invalid milestone ID format. Must be a valid UUID."
+        )
+
     # マイルストーンと予約数を同時に取得
     from sqlalchemy import func
     # ✅ Reservationは既にファイル先頭でインポート済み
-    
+
     stmt = (
         select(Milestone, func.coalesce(func.sum(Reservation.count), 0).label("total_reserved"))
         .outerjoin(Reservation, Milestone.id == Reservation.milestone_id)
@@ -150,25 +180,25 @@ async def get_public_milestone(
         .options(selectinload(Milestone.project))
         .where(
             Milestone.id == id,
-            Milestone.is_public == True  # マイルストーンのis_publicのみチェック
+            Milestone.is_public == True,  # マイルストーンのis_publicのみチェック
         )
         .group_by(Milestone.id)
     )
-    
+
     result = await db.execute(stmt)
     row = result.first()
-    
+
     if not row:
         raise HTTPException(status_code=404, detail="Milestone not found")
-    
+
     milestone, total_reserved = row
-    
+
     # Pydanticモデルのために辞書化して project_name と current_reservation_count を追加
     response = MilestoneResponse.model_validate(milestone)
     response.current_reservation_count = total_reserved
     if milestone.project:
         response.project_name = milestone.project.name
-        
+
     return response
 
 
@@ -179,12 +209,17 @@ async def get_project_members_public(
     db: AsyncSession = Depends(get_db),
 ):
     """紹介者リスト取得 (Public)."""
-    stmt = select(User, ProjectMember).join(ProjectMember, User.id == ProjectMember.user_id).where(ProjectMember.project_id == project_id)
+    stmt = (
+        select(User, ProjectMember)
+        .join(ProjectMember, User.id == ProjectMember.user_id)
+        .where(ProjectMember.project_id == project_id)
+    )
 
     if role == "cast":
         # キャストとして配役されているユーザーのみ
         # 注意: CharacterCasting -> Character -> Script と辿って project_id を確認する
         from src.db.models import Character, Script
+
         stmt = (
             stmt.join(CharacterCasting, CharacterCasting.user_id == User.id)
             .join(Character, Character.id == CharacterCasting.character_id)
@@ -195,14 +230,14 @@ async def get_project_members_public(
     # 重複排除のためにdistinctを使用
     result = await db.execute(stmt.distinct())
     rows = result.all()
-    
+
     response = []
     seen_ids = set()
     for user, member in rows:
         if user.id in seen_ids:
             continue
         seen_ids.add(user.id)
-        
+
         name = member.display_name or user.display_name
         response.append({"id": user.id, "name": name})
 
@@ -231,7 +266,7 @@ async def cancel_reservation(
     res_name = reservation.name
     res_count = reservation.count
     res_ref_id = reservation.referral_user_id
-    
+
     # 削除
     await db.delete(reservation)
     await db.commit()
@@ -240,26 +275,36 @@ async def cancel_reservation(
     project = await db.scalar(select(TheaterProject).where(TheaterProject.id == project_id))
     if project and project.discord_webhook_url:
         from src.services.discord import get_discord_service
+
         discord_service = get_discord_service()
-        
+
         # 扱い（紹介者）の取得
         referral_name = "なし"
         if res_ref_id:
             try:
-                 ref_user = await db.scalar(select(User).where(User.id == res_ref_id))
-                 if ref_user:
-                     ref_pm = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == res_ref_id, ProjectMember.project_id == project.id))
-                     referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
+                ref_user = await db.scalar(select(User).where(User.id == res_ref_id))
+                if ref_user:
+                    ref_pm = await db.scalar(
+                        select(ProjectMember).where(
+                            ProjectMember.user_id == res_ref_id,
+                            ProjectMember.project_id == project.id,
+                        )
+                    )
+                    referral_name = (
+                        (ref_pm.display_name if ref_pm and ref_pm.display_name else None)
+                        or ref_user.display_name
+                        or "不明"
+                    )
             except:
                 pass
 
         # Discord Timestamp for notifications
-        milestone_ts = int(start_date.replace(tzinfo=timezone.utc).timestamp())
+        milestone_ts = int(start_date.replace(tzinfo=UTC).timestamp())
         discord_date_str = f"<t:{milestone_ts}:f>"
 
         # 日時JST変換
         jst = timezone(timedelta(hours=9))
-        start_date_utc = start_date.replace(tzinfo=timezone.utc)
+        start_date_utc = start_date.replace(tzinfo=UTC)
         date_str = start_date_utc.astimezone(jst).strftime("%Y/%m/%d %H:%M")
 
         notification_content = f"""🗑️ **チケット予約キャンセル**
@@ -271,11 +316,8 @@ async def cancel_reservation(
         background_tasks.add_task(
             discord_service.send_notification,
             content=notification_content,
-            webhook_url=project.discord_webhook_url
+            webhook_url=project.discord_webhook_url,
         )
-
-
-
 
 
 @router.get("/public/schedule", response_model=list[MilestoneResponse])
@@ -284,8 +326,8 @@ async def get_public_schedule(
 ):
     """公開スケジュール取得."""
     # 公開プロジェクトの未来のマイルストーンを取得
-    now = datetime.now(timezone.utc)
-    
+    now = datetime.now(UTC)
+
     # プロジェクトがpublicで、マイルストーンが未来のもの
     stmt = (
         select(Milestone)
@@ -293,24 +335,25 @@ async def get_public_schedule(
         .options(selectinload(Milestone.project))
         .where(
             Milestone.is_public == True,  # マイルストーンのis_publicのみチェック
-            Milestone.start_date >= now
+            Milestone.start_date >= now,
         )
         .order_by(Milestone.start_date)
     )
     result = await db.scalars(stmt)
     milestones = result.all()
-    
+
     response = []
     for m in milestones:
         m_res = MilestoneResponse.model_validate(m)
         if m.project:
             m_res.project_name = m.project.name
         response.append(m_res)
-        
+
     return response
 
 
 # --- Internal API ---
+
 
 @router.get("/projects/{project_id}/reservations", response_model=list[ReservationResponse])
 async def get_reservations(
@@ -323,8 +366,7 @@ async def get_reservations(
     # 権限チェック: プロジェクトメンバーであること
     member = await db.scalar(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id
+            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
         )
     )
     if not member:
@@ -333,12 +375,11 @@ async def get_reservations(
     stmt = select(Reservation).join(Milestone).where(Milestone.project_id == project_id)
     if milestone_id:
         stmt = stmt.where(Reservation.milestone_id == milestone_id)
-    
+
     stmt = stmt.options(
-        selectinload(Reservation.milestone),
-        selectinload(Reservation.referral_user)
+        selectinload(Reservation.milestone), selectinload(Reservation.referral_user)
     ).order_by(Reservation.created_at.desc())
-    
+
     result = await db.scalars(stmt)
     reservations = result.all()
 
@@ -347,7 +388,7 @@ async def get_reservations(
     # Eager Loadingでそこまで絞り込むのは複雑なため、単純にReservation取得後に都度解決するか、
     # あるいは ProjectMember も join して fetch する。
     # ここではループ内で取得するコストを避けるため、プロジェクトメンバー辞書を作成しておく。
-    
+
     # 全プロジェクトメンバー取得
     pm_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
     pm_result = await db.scalars(pm_stmt)
@@ -358,7 +399,7 @@ async def get_reservations(
     for r in reservations:
         res_dict = r.__dict__.copy()
         res_dict["milestone_title"] = r.milestone.title
-        
+
         referral_name = None
         if r.referral_user:
             # プロジェクトメンバーとしての情報を優先
@@ -367,10 +408,10 @@ async def get_reservations(
                 referral_name = pm.display_name
             else:
                 referral_name = r.referral_user.display_name
-        
+
         res_dict["referral_name"] = referral_name
         results.append(res_dict)
-        
+
     return results
 
 
@@ -384,20 +425,24 @@ async def get_milestone_reservations(
     milestone = await db.scalar(select(Milestone).where(Milestone.id == milestone_id))
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
-    
+
     member = await db.scalar(
         select(ProjectMember).where(
             ProjectMember.project_id == milestone.project_id,
-            ProjectMember.user_id == current_user.id
+            ProjectMember.user_id == current_user.id,
         )
     )
     if not member:
         raise HTTPException(status_code=403, detail="Not a project member")
-    
-    stmt = select(Reservation).where(Reservation.milestone_id == milestone_id).order_by(Reservation.created_at.desc())
+
+    stmt = (
+        select(Reservation)
+        .where(Reservation.milestone_id == milestone_id)
+        .order_by(Reservation.created_at.desc())
+    )
     result = await db.execute(stmt)
     reservations = result.scalars().all()
-    
+
     response_list = []
     for reservation in reservations:
         referral_name = None
@@ -407,11 +452,15 @@ async def get_milestone_reservations(
                 ref_pm = await db.scalar(
                     select(ProjectMember).where(
                         ProjectMember.user_id == reservation.referral_user_id,
-                        ProjectMember.project_id == milestone.project_id
+                        ProjectMember.project_id == milestone.project_id,
                     )
                 )
-                referral_name = (ref_pm.display_name if ref_pm and ref_pm.display_name else None) or ref_user.display_name or "不明"
-        
+                referral_name = (
+                    (ref_pm.display_name if ref_pm and ref_pm.display_name else None)
+                    or ref_user.display_name
+                    or "不明"
+                )
+
         response_list.append(
             ReservationResponse(
                 id=str(reservation.id),
@@ -422,10 +471,10 @@ async def get_milestone_reservations(
                 count=reservation.count,
                 attended=reservation.attended,
                 created_at=reservation.created_at,
-                referral_name=referral_name
+                referral_name=referral_name,
             )
         )
-    
+
     return response_list
 
 
@@ -438,7 +487,9 @@ async def update_attendance(
 ):
     """出欠更新."""
     reservation = await db.scalar(
-        select(Reservation).options(selectinload(Reservation.milestone)).where(Reservation.id == reservation_id)
+        select(Reservation)
+        .options(selectinload(Reservation.milestone))
+        .where(Reservation.id == reservation_id)
     )
     if not reservation:
         raise HTTPException(status_code=404, detail="Reservation not found")
@@ -447,8 +498,7 @@ async def update_attendance(
     project_id = reservation.milestone.project_id
     member = await db.scalar(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id
+            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
         )
     )
     if not member:
@@ -471,11 +521,10 @@ async def export_reservations(
     current_user: User = Depends(get_current_user),
 ):
     """CSVエクスポート."""
-        # 権限チェック: プロジェクトメンバーであること
+    # 権限チェック: プロジェクトメンバーであること
     member = await db.scalar(
         select(ProjectMember).where(
-            ProjectMember.project_id == project_id,
-            ProjectMember.user_id == current_user.id
+            ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
         )
     )
     if not member:
@@ -484,33 +533,28 @@ async def export_reservations(
     stmt = select(Reservation).join(Milestone).where(Milestone.project_id == project_id)
     if milestone_id:
         stmt = stmt.where(Reservation.milestone_id == milestone_id)
-        
+
     stmt = stmt.options(
-        selectinload(Reservation.milestone),
-        selectinload(Reservation.referral_user)
+        selectinload(Reservation.milestone), selectinload(Reservation.referral_user)
     ).order_by(Reservation.milestone_id, Reservation.created_at)
-    
+
     result = await db.scalars(stmt)
     reservations = result.all()
 
     # CSV生成
     output = io.StringIO()
     writer = csv.writer(output)
-    
+
     # Viewer権限の場合、メールアドレスを非表示
-    is_viewer = member.role == 'viewer'
-    
+    is_viewer = member.role == "viewer"
+
     if is_viewer:
-        writer.writerow([
-            "ID", "公演名", "日時", "予約者名", "人数", 
-            "紹介者", "出席", "予約日時"
-        ])
+        writer.writerow(["ID", "公演名", "日時", "予約者名", "人数", "紹介者", "出席", "予約日時"])
     else:
-        writer.writerow([
-            "ID", "公演名", "日時", "予約者名", "Email", "人数", 
-            "紹介者", "出席", "予約日時"
-        ])
-    
+        writer.writerow(
+            ["ID", "公演名", "日時", "予約者名", "Email", "人数", "紹介者", "出席", "予約日時"]
+        )
+
     # 全プロジェクトメンバー取得（名前解決用）
     pm_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
     pm_result = await db.scalars(pm_stmt)
@@ -527,20 +571,37 @@ async def export_reservations(
 
         date_str = r.milestone.start_date.strftime("%Y/%m/%d %H:%M")
         created_str = r.created_at.strftime("%Y/%m/%d %H:%M:%S")
-        
+
         if is_viewer:
-            writer.writerow([
-                str(r.id), r.milestone.title, date_str, r.name, r.count,
-                referral, "済" if r.attended else "未", created_str
-            ])
+            writer.writerow(
+                [
+                    str(r.id),
+                    r.milestone.title,
+                    date_str,
+                    r.name,
+                    r.count,
+                    referral,
+                    "済" if r.attended else "未",
+                    created_str,
+                ]
+            )
         else:
-            writer.writerow([
-                str(r.id), r.milestone.title, date_str, r.name, r.email, r.count,
-                referral, "済" if r.attended else "未", created_str
-            ])
-    
+            writer.writerow(
+                [
+                    str(r.id),
+                    r.milestone.title,
+                    date_str,
+                    r.name,
+                    r.email,
+                    r.count,
+                    referral,
+                    "済" if r.attended else "未",
+                    created_str,
+                ]
+            )
+
     output.seek(0)
-    
+
     # ファイル名用の日時
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"reservations_{timestamp}.csv"
@@ -548,7 +609,7 @@ async def export_reservations(
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -560,18 +621,13 @@ async def send_event_reminders_manually(
     """リマインダーメール手動送信（管理者用）."""
     # 任意のプロジェクトのownerまたはeditorであることを確認
     # 簡易的にプロジェクトメンバーであればOKとする
-    member = await db.scalar(
-        select(ProjectMember).where(ProjectMember.user_id == current_user.id)
-    )
+    member = await db.scalar(select(ProjectMember).where(ProjectMember.user_id == current_user.id))
     if not member:
         raise HTTPException(status_code=403, detail="Not a project member")
-    
+
     # タスク実行
     from src.services.reservation_tasks import check_todays_events
-    stats = await check_todays_events()
-    
-    return {
-        "message": "Event reminder task completed",
-        "stats": stats
-    }
 
+    stats = await check_todays_events()
+
+    return {"message": "Event reminder task completed", "stats": stats}

@@ -4,27 +4,25 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import ProjectMember, TheaterProject, User
+from src.db.models import TheaterProject, User
 
 
 @pytest.mark.asyncio
-async def test_create_project(
-    client: AsyncClient, test_user: User, test_user_token: str
-) -> None:
+async def test_create_project(client: AsyncClient, test_user: User, test_user_token: str) -> None:
     """プロジェクト作成のテスト."""
     # Arrange
     project_data = {
         "name": "新しいプロジェクト",
         "description": "テスト用プロジェクト",
     }
-    
+
     # Act
     response = await client.post(
         "/api/projects/",
         json=project_data,
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code in [200, 201]
     data = response.json()
@@ -43,7 +41,7 @@ async def test_list_projects(
         "/api/projects/",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -61,7 +59,7 @@ async def test_get_project(
         f"/api/projects/{test_project.id}",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -79,14 +77,14 @@ async def test_update_project(
         "name": "更新されたプロジェクト名",
         "description": "更新された説明",
     }
-    
+
     # Act
     response = await client.put(
         f"/api/projects/{test_project.id}",
         json=update_data,
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -96,7 +94,11 @@ async def test_update_project(
 
 @pytest.mark.asyncio
 async def test_delete_project(
-    client: AsyncClient, test_user: User, test_project: TheaterProject, test_user_token: str, db: AsyncSession
+    client: AsyncClient,
+    test_user: User,
+    test_project: TheaterProject,
+    test_user_token: str,
+    db: AsyncSession,
 ) -> None:
     """プロジェクト削除のテスト."""
     # Act
@@ -104,7 +106,7 @@ async def test_delete_project(
         f"/api/projects/{test_project.id}",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
 
@@ -119,7 +121,7 @@ async def test_get_project_members(
         f"/api/projects/{test_project.id}/members",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -133,6 +135,6 @@ async def test_unauthorized_access(client: AsyncClient, test_project: TheaterPro
     """認証なしのアクセステスト."""
     # Act
     response = await client.get(f"/api/projects/{test_project.id}")
-    
+
     # Assert
     assert response.status_code == 401

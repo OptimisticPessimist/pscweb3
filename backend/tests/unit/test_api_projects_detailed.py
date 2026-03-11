@@ -1,11 +1,12 @@
 """プロジェクトAPI詳細テスト（メンバー管理・マイルストーン）."""
 
-import pytest
 from datetime import UTC, datetime, timedelta
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import TheaterProject, User, ProjectMember
+from src.db.models import ProjectMember, TheaterProject, User
 
 
 @pytest.fixture
@@ -18,7 +19,7 @@ async def second_user(db: AsyncSession, test_project: TheaterProject) -> User:
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    
+
     # プロジェクトメンバーとして追加
     member = ProjectMember(
         project_id=test_project.id,
@@ -27,7 +28,7 @@ async def second_user(db: AsyncSession, test_project: TheaterProject) -> User:
     )
     db.add(member)
     await db.commit()
-    
+
     return user
 
 
@@ -46,14 +47,14 @@ async def test_update_member_role(
         "default_staff_role": "director",
         "display_name": "演出担当",
     }
-    
+
     # Act
     response = await client.put(
         f"/api/projects/{test_project.id}/members/{second_user.id}",
         json=role_update,
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -74,7 +75,7 @@ async def test_remove_member(
         f"/api/projects/{test_project.id}/members/{second_user.id}",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
 
@@ -96,14 +97,14 @@ async def test_create_milestone(
         "color": "#FF5733",
         "create_attendance_check": False,
     }
-    
+
     # Act
     response = await client.post(
         f"/api/projects/{test_project.id}/milestones",
         json=milestone_data,
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code in [200, 201]
 
@@ -121,7 +122,7 @@ async def test_list_milestones(
         f"/api/projects/{test_project.id}/milestones",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 200
     data = response.json()
@@ -139,6 +140,7 @@ async def test_delete_milestone(
     """マイルストーン削除のテスト."""
     # Arrange - マイルストーンを作成
     from src.db.models import Milestone
+
     milestone = Milestone(
         project_id=test_project.id,
         title="削除テスト",
@@ -147,13 +149,13 @@ async def test_delete_milestone(
     db.add(milestone)
     await db.commit()
     await db.refresh(milestone)
-    
+
     # Act
     response = await client.delete(
         f"/api/projects/{test_project.id}/milestones/{milestone.id}",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 204
 
@@ -170,14 +172,14 @@ async def test_update_member_role_self(
     role_update = {
         "role": "member",  # ownerからmemberへ降格
     }
-    
+
     # Act
     response = await client.put(
         f"/api/projects/{test_project.id}/members/{test_user.id}",
         json=role_update,
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code in [400, 422]  # エラーになるべき
 
@@ -195,6 +197,6 @@ async def test_remove_owner_self(
         f"/api/projects/{test_project.id}/members/{test_user.id}",
         headers={"Authorization": f"Bearer {test_user_token}"},
     )
-    
+
     # Assert
     assert response.status_code == 400  # エラーになるべき

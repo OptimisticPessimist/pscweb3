@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ReservationBase(BaseModel):
@@ -33,7 +33,7 @@ class ReservationResponse(ReservationBase):
     attended: bool = False
     reminder_sent_at: datetime | None = None
     created_at: datetime
-    
+
     # 関連情報
     milestone_title: str | None = None
     referral_name: str | None = None

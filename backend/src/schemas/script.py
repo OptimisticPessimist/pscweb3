@@ -5,8 +5,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+
 class CastingResponse(BaseModel):
     """キャスティングレスポンス."""
+
     user_id: UUID = Field(..., description="ユーザーID")
     cast_name: str | None = Field(None, description="役名（上書き）")
 
@@ -67,9 +69,7 @@ class ScriptResponse(BaseModel):
     revision_text: str | None = Field(None, description="リビジョン情報")
     pdf_orientation: str = Field(default="landscape", description="PDF用紙の向き")
     pdf_writing_direction: str = Field(default="vertical", description="PDF文字方向")
-    characters: list[CharacterResponse] = Field(
-        default_factory=list, description="登場人物リスト"
-    )
+    characters: list[CharacterResponse] = Field(default_factory=list, description="登場人物リスト")
     scenes: list[SceneResponse] = Field(default_factory=list, description="シーンリスト")
 
     model_config = {"from_attributes": True}
@@ -100,4 +100,5 @@ class ScriptSummary(BaseModel):
 
 class ScriptListResponse(BaseModel):
     """脚本一覧レスポンスWrapper."""
+
     scripts: list[ScriptSummary] = Field(..., description="脚本リスト")

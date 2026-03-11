@@ -5,17 +5,19 @@ import sys
 sys.path.append(os.path.dirname(__file__))
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from src.db.models import User, RehearsalParticipant, RehearsalCast, Rehearsal, TheaterProject
+
 from src.config import settings
+from src.db.models import Rehearsal, RehearsalCast, RehearsalParticipant, User
 
 DATABASE_URL = settings.database_url
 engine = create_async_engine(DATABASE_URL)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+
 async def inspect_db():
-    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding="utf-8")
     async with AsyncSessionLocal() as db:
         print("\n--- Users ---")
         result = await db.execute(select(User))
@@ -34,20 +36,18 @@ async def inspect_db():
 
         print("\n--- Rehearsal Participants (User only) ---")
         result = await db.execute(
-            select(RehearsalParticipant)
-            .where(RehearsalParticipant.user_id == real_user.id)
+            select(RehearsalParticipant).where(RehearsalParticipant.user_id == real_user.id)
         )
         parts = result.scalars().all()
         for p in parts:
             print(f" - RehearsalID: {p.rehearsal_id}")
-        
+
         if not parts:
             print("No participation entries found.")
 
         print("\n--- Rehearsal Casts (User only) ---")
         result = await db.execute(
-            select(RehearsalCast)
-            .where(RehearsalCast.user_id == real_user.id)
+            select(RehearsalCast).where(RehearsalCast.user_id == real_user.id)
         )
         casts = result.scalars().all()
         for c in casts:
@@ -55,7 +55,7 @@ async def inspect_db():
 
         if not casts:
             print("No cast entries found.")
-            
+
         # Check actual Rehearsal objects to ensure they exist and have dates
         if parts or casts:
             param_r_ids = [p.rehearsal_id for p in parts] + [c.rehearsal_id for c in casts]
@@ -72,4 +72,5 @@ if __name__ == "__main__":
         asyncio.run(inspect_db())
     except Exception:
         import traceback
+
         traceback.print_exc()

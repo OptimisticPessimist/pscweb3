@@ -1,5 +1,4 @@
 from src.services.pdf_generator import generate_script_pdf
-import os
 
 dummy_fountain = """
 Title: Test Script
@@ -20,4 +19,5 @@ try:
 except Exception as e:
     print(f"Error generating PDF: {e}")
     import traceback
+
     traceback.print_exc()

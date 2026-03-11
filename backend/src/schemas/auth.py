@@ -1,6 +1,7 @@
 """Pydanticスキーマ - 認証関連."""
 
 from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -27,7 +28,7 @@ class UserResponse(BaseModel):
             screen_name=user.screen_name,
             discord_avatar_url=user.discord_avatar_url,
             has_premium_password=bool(user.premium_password),
-            premium_tier=premium_tier
+            premium_tier=premium_tier,
         )
 
 

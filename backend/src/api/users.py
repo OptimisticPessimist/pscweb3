@@ -2,26 +2,24 @@
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 
 from src.auth.jwt import get_current_user
 from src.db import get_db
 from src.db.models import (
-    Rehearsal,
-    RehearsalParticipant,
-    RehearsalCast,
     Milestone,
     ProjectMember,
-    TheaterProject,
+    Rehearsal,
+    RehearsalCast,
+    RehearsalParticipant,
     RehearsalSchedule,
-    User,
+    TheaterProject,
 )
 from src.schemas.auth import UserResponse, UserUpdate
-from src.schemas.schedule import UserScheduleResponse, ScheduleItem
+from src.schemas.schedule import ScheduleItem, UserScheduleResponse
 from src.services.premium_config import PremiumConfigService
 
 router = APIRouter()
@@ -30,7 +28,7 @@ router = APIRouter()
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     authorization: str = Header(..., description="Bearer <token>"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     """現在のユーザー情報を取得.
 
@@ -45,10 +43,10 @@ async def get_current_user_info(
         HTTPException: 認証エラー
     """
     if not authorization.startswith("Bearer "):
-         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    
+        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+
     token = authorization.split(" ")[1]
-    
+
     user = await get_current_user(token, db)
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -64,7 +62,7 @@ async def get_current_user_info(
 async def patch_current_user_info(
     user_update: UserUpdate,
     authorization: str = Header(..., description="Bearer <token>"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
     """現在のユーザー情報を更新.
 
@@ -77,10 +75,10 @@ async def patch_current_user_info(
         UserResponse: 更新後のユーザー情報
     """
     if not authorization.startswith("Bearer "):
-         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    
+        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+
     token = authorization.split(" ")[1]
-    
+
     user = await get_current_user(token, db)
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -103,12 +101,12 @@ async def patch_current_user_info(
 @router.get("/me/schedule", response_model=UserScheduleResponse)
 async def get_my_schedule(
     authorization: str = Header(..., description="Bearer <token>"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> UserScheduleResponse:
     """自分のスケジュール（稽古・マイルストーン）を取得."""
     if not authorization.startswith("Bearer "):
-         raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-    
+        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+
     token = authorization.split(" ")[1]
     user = await get_current_user(token, db)
     if user is None:
@@ -124,25 +122,20 @@ async def get_my_schedule(
         .outerjoin(RehearsalCast, Rehearsal.id == RehearsalCast.rehearsal_id)
         .options(
             selectinload(Rehearsal.schedule).selectinload(RehearsalSchedule.project),
-            selectinload(Rehearsal.scene)
+            selectinload(Rehearsal.scene),
         )
-        .where(
-            or_(
-                RehearsalParticipant.user_id == user.id,
-                RehearsalCast.user_id == user.id
-            )
-        )
+        .where(or_(RehearsalParticipant.user_id == user.id, RehearsalCast.user_id == user.id))
         .distinct()
     )
     # RehearsalSchedule is needed for project link.
     # Note: Rehearsal has `schedule` relationship, Schedule has `project`.
-    
+
     # Wait, I need to check Rehearsal model for relationships.
     # Rehearsal -> Schedule -> Project.
     # Rehearsal.schedule is Mapped[RehearsalSchedule]. RehearsalSchedule.project is Mapped[TheaterProject].
-    
+
     # Updating stmt to be correct with models
-    
+
     # 2. マイルストーンの取得
     # 所属しているプロジェクトのマイルストーン
     milestone_stmt = (
@@ -166,35 +159,38 @@ async def get_my_schedule(
         project = r.schedule.project
         # End date calculation: date + duration_minutes
         end_date = r.date + timedelta(minutes=r.duration_minutes)
-        
-        items.append(ScheduleItem(
-            id=r.id,
-            type="rehearsal",
-            title=f"Rehearsal: {r.scene.heading if r.scene else 'No Scene'}",
-            date=r.date,
-            end_date=end_date,
-            project_id=project.id,
-            project_name=project.name,
-            description=r.notes,
-            location=r.location,
-            scene_heading=r.scene.heading if r.scene else None
-        ))
+
+        items.append(
+            ScheduleItem(
+                id=r.id,
+                type="rehearsal",
+                title=f"Rehearsal: {r.scene.heading if r.scene else 'No Scene'}",
+                date=r.date,
+                end_date=end_date,
+                project_id=project.id,
+                project_name=project.name,
+                description=r.notes,
+                location=r.location,
+                scene_heading=r.scene.heading if r.scene else None,
+            )
+        )
 
     for m in milestones:
-        items.append(ScheduleItem(
-            id=m.id,
-            type="milestone",
-            title=m.title,
-            date=m.start_date,
-            end_date=m.end_date,
-            project_id=m.project.id,
-            project_name=m.project.name,
-            description=m.description,
-            color=m.color
-        ))
+        items.append(
+            ScheduleItem(
+                id=m.id,
+                type="milestone",
+                title=m.title,
+                date=m.start_date,
+                end_date=m.end_date,
+                project_id=m.project.id,
+                project_name=m.project.name,
+                description=m.description,
+                color=m.color,
+            )
+        )
 
     # Sort by date
     items.sort(key=lambda x: x.date)
 
     return UserScheduleResponse(items=items)
-
