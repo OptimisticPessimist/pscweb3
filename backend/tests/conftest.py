@@ -96,16 +96,7 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient]:
     # 依存関係のオーバーライド
     app.dependency_overrides[get_db] = lambda: db
 
-    # ASGI レベルでパスを書き換えるラップ
-    async def mock_app_wrapper(scope, receive, send):
-        if scope["type"] == "http" and scope["path"].startswith("/api"):
-            # /api/ -> / に変換
-            scope["path"] = scope["path"][4:]
-            if not scope["path"].startswith("/"):
-                scope["path"] = "/" + scope["path"]
-        return await app(scope, receive, send)
-
-    transport = ASGITransport(app=mock_app_wrapper)
+    transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 

@@ -2,6 +2,8 @@ import json
 import logging
 import traceback
 
+logging.info("Function App loading...")
+
 import azure.functions as func
 
 from src.services.reservation_tasks import check_todays_events

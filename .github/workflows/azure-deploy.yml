@@ -8,7 +8,7 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'backend'
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   # Azure Functions でバックエンド (HTTP API + Timer) をデプロイ
@@ -29,15 +29,17 @@ jobs:
 
       - name: Install dependencies
         shell: bash
+      - name: Install dependencies (local check only)
+        shell: bash
         run: |
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          mkdir -p .python_packages/lib/site-packages
-          pip install -r requirements.txt --target=.python_packages/lib/site-packages
+          # 依存関係の整合性チェックのみ行い、パッケージの生成は行わない
+          pip install -r requirements.txt
 
       - name: Zip artifact for deployment
         run: |
           cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          zip -r ../release.zip . -x ".venv/*" -x "__pycache__/*" -x "*.pyc" -x "tests/*" -x "htmlcov/*" -x "*.log" -x ".env" -x "pyproject.toml" -x "uv.lock"
+          zip -r ../release.zip . -x ".venv/*" -x "__pycache__/*" -x "*.pyc" -x "tests/*" -x "htmlcov/*" -x "*.log" -x ".env" -x "pyproject.toml" -x "uv.lock" -x ".python_packages/*"
 
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
@@ -45,8 +47,8 @@ jobs:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
           package: './release.zip'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          scm-do-build-during-deployment: false
-          enable-oryx-build: false
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
 
   # Static Web Apps でフロントエンドをデプロイ
   build_and_deploy_frontend:

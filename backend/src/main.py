@@ -48,7 +48,7 @@ async def startup_event():
     pass
 
 
-@app.get("/fix-system")
+@app.get("/api/fix-system")
 async def manual_fix_system():
     """システム修復用エンドポイント (Migration & Data Fix)."""
     log = []
@@ -113,24 +113,24 @@ app.add_middleware(
 )
 
 # ルーター登録
-app.include_router(auth.router, prefix="/auth", tags=["認証"])
-app.include_router(projects.router, prefix="/projects", tags=["プロジェクト"])
-app.include_router(invitations.router, prefix="", tags=["招待"])
-app.include_router(attendance.router, prefix="/projects", tags=["出欠確認"])
-app.include_router(public.router, prefix="/public", tags=["公開API"])
-app.include_router(interactions.router, prefix="", tags=["Discord Interactions"])
+app.include_router(auth.router, prefix="/api/auth", tags=["認証"])
+app.include_router(projects.router, prefix="/api/projects", tags=["プロジェクト"])
+app.include_router(invitations.router, prefix="/api", tags=["招待"])
+app.include_router(attendance.router, prefix="/api/projects", tags=["出欠確認"])
+app.include_router(public.router, prefix="/api/public", tags=["公開API"])
+app.include_router(interactions.router, prefix="/api", tags=["Discord Interactions"])
 # 香盤表はscriptsの下 (scripts.routerより先に定義して、具体的なパスを優先させる)
-app.include_router(scene_charts.router, prefix="/scripts", tags=["香盤表"])
-app.include_router(scripts.router, prefix="/scripts", tags=["脚本"])
+app.include_router(scene_charts.router, prefix="/api/scripts", tags=["香盤表"])
+app.include_router(scripts.router, prefix="/api/scripts", tags=["脚本"])
 # キャスティングはprojectsの下
-app.include_router(characters.router, prefix="/projects", tags=["キャスティング"])
-app.include_router(rehearsals.project_router, prefix="/projects", tags=["稽古スケジュール"])
-app.include_router(rehearsals.router, prefix="", tags=["稽古スケジュール"])
-app.include_router(dashboard.router, prefix="/projects", tags=["ダッシュボード"])
-app.include_router(my_schedule.router, prefix="", tags=["マイスケジュール"])
-app.include_router(users.router, prefix="/users", tags=["ユーザー"])
-app.include_router(reservations.router, prefix="", tags=["予約"])
-app.include_router(schedule_polls.router, prefix="", tags=["日程調整"])
+app.include_router(characters.router, prefix="/api/projects", tags=["キャスティング"])
+app.include_router(rehearsals.project_router, prefix="/api/projects", tags=["稽古スケジュール"])
+app.include_router(rehearsals.router, prefix="/api", tags=["稽古スケジュール"])
+app.include_router(dashboard.router, prefix="/api/projects", tags=["ダッシュボード"])
+app.include_router(my_schedule.router, prefix="/api", tags=["マイスケジュール"])
+app.include_router(users.router, prefix="/api/users", tags=["ユーザー"])
+app.include_router(reservations.router, prefix="/api", tags=["予約"])
+app.include_router(schedule_polls.router, prefix="/api", tags=["日程調整"])
 
 
 @app.get("/")
@@ -143,7 +143,7 @@ async def root() -> dict[str, str]:
     return {"message": "PSC Web 3 API"}
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health() -> dict[str, str]:
     """ヘルスチェックエンドポイント.
 
