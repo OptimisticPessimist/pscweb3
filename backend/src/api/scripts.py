@@ -74,14 +74,14 @@ async def get_scripts(
 async def upload_script(
     project_id: UUID,
     background_tasks: BackgroundTasks,
-    title: str = Form(...),
+    title: str | None = Form(None),
     author: str | None = Form(None),
-    script_file: UploadFile = File(...),
-    is_public: str = Form("false"),  # 型変換エラー回避のため str で受け取る
+    script_file: UploadFile | None = File(None),
+    is_public: str | None = Form(None),
     public_terms: str | None = Form(None),
     public_contact: str | None = Form(None),
-    pdf_orientation: str = Form("landscape"),
-    pdf_writing_direction: str = Form("vertical"),
+    pdf_orientation: str | None = Form(None),
+    pdf_writing_direction: str | None = Form(None),
     current_user: User | None = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
@@ -93,12 +93,30 @@ async def upload_script(
         validate_upload_request,
     )
 
-    # デバッグログ
-    print(f"[Upload Debug] project_id={project_id}, title={title}, author={author}, is_public={is_public}")
+    # デバッグログ（詳細版）
+    print(f"[Upload Debug Start] project_id={project_id}")
+    print(f"[Upload Debug] title={title}")
+    print(f"[Upload Debug] author={author}")
     print(f"[Upload Debug] script_file={script_file.filename if script_file else 'None'}")
+    print(f"[Upload Debug] is_public={is_public}")
+    print(f"[Upload Debug] public_terms={public_terms}")
+    print(f"[Upload Debug] public_contact={public_contact}")
+    print(f"[Upload Debug] pdf_orientation={pdf_orientation}")
+    print(f"[Upload Debug] pdf_writing_direction={pdf_writing_direction}")
+    print(f"[Upload Debug] current_user={current_user.id if current_user else 'None'}")
 
-    # is_public の変換
+    # 必須パラメータのチェック（422を回避するため関数内でチェック）
+    if not title:
+        raise HTTPException(status_code=422, detail="Title is required")
+    if not script_file:
+        raise HTTPException(status_code=422, detail="Script file is required")
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    # 型の正規化
     is_public_bool = str(is_public).lower() == "true"
+    norm_orientation = pdf_orientation or "landscape"
+    norm_writing_direction = pdf_writing_direction or "vertical"
 
     # 1. リクエスト検証
     await validate_upload_request(project_id, current_user, script_file.filename, db)
