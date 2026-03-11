@@ -76,8 +76,6 @@ select = [
 ]
 ignore = [
     # Type annotation
-    "ANN101",  # missing-type-self
-    "ANN102",  # missing-type-cls
     "B008",    # function-call-in-default-argument (FastAPI Depends)
     
     # Format compatibility

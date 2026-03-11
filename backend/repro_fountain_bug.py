@@ -1,6 +1,7 @@
 
-from fountain.fountain import Fountain
 import re
+
+from fountain.fountain import Fountain
 
 def clean_fountain_content(content):
     # Replace all lines that only contain whitespace with truly empty lines
