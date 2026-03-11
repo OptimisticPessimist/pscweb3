@@ -208,6 +208,7 @@
         "notFound": "Script not found",
         "downloadPdf": "Download PDF",
         "characters": "Characters",
+        "synopsis": "Synopsis",
         "noCharacters": "No characters found.",
         "noContent": "No parsed content available.",
         "content": "Script Content",

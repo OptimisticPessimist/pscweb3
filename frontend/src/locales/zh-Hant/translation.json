@@ -194,6 +194,7 @@
         "uploadedAt": "上傳時間",
         "scenes": "場景",
         "characters": "角色",
+        "synopsis": "梗概",
         "noCharacters": "未找到角色。",
         "noContent": "無可用解析內容。",
         "fountainFormat": "Fountain 格式",

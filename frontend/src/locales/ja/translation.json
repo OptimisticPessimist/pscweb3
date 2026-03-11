@@ -237,6 +237,7 @@
         "uploadedAt": "アップロード日時",
         "scenes": "シーン",
         "characters": "登場人物",
+        "synopsis": "あらすじ",
         "noCharacters": "登場人物が見つかりません。",
         "noContent": "解析されたコンテンツがありません。",
         "fountainFormat": "Fountain形式",

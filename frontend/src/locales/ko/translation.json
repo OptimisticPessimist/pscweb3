@@ -194,6 +194,7 @@
         "uploadedAt": "업로드 일시",
         "scenes": "장면",
         "characters": "등장인물",
+        "synopsis": "줄거리",
         "noCharacters": "등장인물을 찾을 수 없습니다.",
         "noContent": "분석된 콘텐츠가 없습니다.",
         "fountainFormat": "Fountain 형식",

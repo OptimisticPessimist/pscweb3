@@ -61,6 +61,9 @@ export const ScriptDetailPage: React.FC = () => {
     if (isLoading) return <div>{t('common.loading')}</div>;
     if (!script) return <div>{t('script.notFound')}</div>;
 
+    const synopsisScene = script.scenes.find(s => s.scene_number === 0);
+    const mainScenes = script.scenes.filter(s => s.scene_number !== 0);
+
     return (
         <div className="space-y-6">
             <div className="md:flex md:items-center md:justify-between">
@@ -167,6 +170,18 @@ export const ScriptDetailPage: React.FC = () => {
                 </div>
             )}
 
+            {/* Synopsis Section */}
+            {synopsisScene && (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900">{t('script.synopsis')}</h3>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-5 sm:p-6 italic text-gray-700 whitespace-pre-wrap">
+                        {synopsisScene.description}
+                    </div>
+                </div>
+            )}
+
             {/* Character List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-lg">
                 <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -211,9 +226,9 @@ export const ScriptDetailPage: React.FC = () => {
                     </p>
                 </div>
                 <div className="bg-gray-50 px-4 py-5 sm:p-6 font-mono text-sm whitespace-pre-wrap overflow-x-auto">
-                    {script.scenes.length > 0 ? (
+                    {mainScenes.length > 0 ? (
                         <div className="space-y-4">
-                            {script.scenes.map((scene) => (
+                            {mainScenes.map((scene) => (
                                 <div key={scene.id} className="space-y-2">
                                     <h4 className="font-bold text-gray-800 uppercase">
                                         {formatSceneNumber(scene.act_number, scene.scene_number)}. {scene.heading}
