@@ -475,8 +475,6 @@ class Milestone(Base):
         back_populates="milestone", cascade="all, delete-orphan"
     )
 
-    reservation_capacity: Mapped[int | None] = mapped_column(default=None)  # 予約定員 (None=無制限)
-
 
 class Reservation(Base):
     """チケット予約."""
