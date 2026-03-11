@@ -368,6 +368,7 @@ class SchedulePollService:
                 req_chars = scene_chars.get(scene_id, [])
                 
                 is_possible = True
+                uncast_exist = False
                 if missing_roles:
                     is_possible = False
                 else:
@@ -375,13 +376,14 @@ class SchedulePollService:
                     for cid in req_chars:
                         c_users = char_users.get(cid, [])
                         if not c_users:
-                            # 未配役のキャラクターがいる場合は、現在は「稽古不可」とする要件
-                            is_possible = False
-                            break
+                            # 未配役のキャラクターがいる場合はフラグを立てるが、稽古可能とはみなす
+                            uncast_exist = True
+                            continue
                         # ダブルキャスト対応：少なくとも1人のキャストがOK/MaybeであればOK
                         if not any(user_answers.get(uid) in ["ok", "maybe"] for uid in c_users):
                             is_possible = False
                             break
+
                 
                 if is_possible:
                     score = 0
@@ -407,6 +409,8 @@ class SchedulePollService:
                     reason_parts = []
                     if not req_chars:
                         reason_parts.append("キャラクターの登場なし")
+                    elif uncast_exist:
+                        reason_parts.append("未配役あり(配役済みは全員出席可)")
                     elif ok_count == len(req_chars):
                         reason_parts.append("必須キャスト全員出席可能")
                     elif ok_count > 0:
@@ -414,6 +418,7 @@ class SchedulePollService:
                     
                     if priority_ok:
                         reason_parts.append("演出・制作メンバー出席可能")
+
                         
                     candidate_possible_scenes.append({
                         "scene_id": scene_id,
@@ -559,53 +564,58 @@ class SchedulePollService:
                     continue
                 req_chars = scene_chars.get(scene.id, [])
                 
-                missing_chars = [] # [(char_name, [missing_user_ids])]
+                missing_cast_roles = [] # [(char_name, [missing_user_ids])]
+                uncast_chars = [] # [char_name]
                 
                 for char_id in req_chars:
                     c_users = char_users.get(char_id, [])
                     char_name = char_name_map.get(char_id, "Unknown")
                     
                     if not c_users:
-                        # 配役されていないキャラクターは「未配役」として不足リストに含める
-                        missing_chars.append((char_name, []))
+                        # 未配役
+                        uncast_chars.append(char_name)
                         continue
                         
                     # ダブルキャスト対応：1人でも利用可能ならOK
                     if not any(uid in available_users for uid in c_users):
-                        missing_chars.append((char_name, c_users))
+                        missing_cast_roles.append((char_name, c_users))
 
 
                 
-                if not missing_chars and not missing_roles:
+                if not missing_cast_roles and not missing_roles:
                     # 稽古可能
+                    reason = "全員揃っています" if req_chars else "登場キャラクターなし"
+                    if uncast_chars:
+                        reason = f"未配役あり({', '.join(uncast_chars[:2])}{'等' if len(uncast_chars) > 2 else ''})"
+                        
                     possible_scenes.append({
-                        "scene_id": scene.id,
+                        "scene_id": str(scene.id),
                         "act_number": scene.act_number,
                         "scene_number": scene.scene_number,
                         "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
                         "is_possible": True,
-                        "reason": "全員揃っています" if req_chars else "登場キャラクターなし"
+                        "uncast_chars_exist": len(uncast_chars) > 0,
+                        "reason": reason
                     })
 
 
-                elif not missing_roles and len(missing_chars) > 0:
-                    # リーチ状態（不足しているキャラクターがいるが、表示はする）
-                    # 最初の不足メンバーを詳細として表示（ツールチップ用）
-                    char_name, m_uids = missing_chars[0]
+                elif not missing_roles and len(missing_cast_roles) == 1:
+                    # リーチ状態（ちょうど1人足りない場合のみ）
+                    char_name, m_uids = missing_cast_roles[0]
                     reason = f"不足: {char_name}"
-                    if len(missing_chars) > 1:
-                        reason += f" 等({len(missing_chars)}名)"
                         
                     reach_scenes.append({
-                        "scene_id": scene.id,
+                        "scene_id": str(scene.id),
                         "act_number": scene.act_number,
                         "scene_number": scene.scene_number,
                         "heading": f"{scene.act_number or 0}-{scene.scene_number}: {scene.heading}",
                         "is_possible": False,
                         "is_reach": True,
                         "missing_user_names": [user_names.get(uid, "未配役") for uid in m_uids] if m_uids else ["未配役"],
+                        "uncast_chars_exist": len(uncast_chars) > 0,
                         "reason": reason
                     })
+
 
 
                 elif missing_roles:
