@@ -1,27 +1,27 @@
 """スクリプト処理サービス."""
 
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
 
-from sqlalchemy import select, delete, update
+from fastapi import HTTPException
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException
 
 from src.db.models import (
-    Script,
-    Scene,
     Character,
-    Line,
-    SceneChart,
-    SceneCharacterMapping,
     CharacterCasting,
-    Rehearsal,
-    RehearsalScene,
-    RehearsalCast,
-    User,
+    Line,
     ProjectMember,
+    Rehearsal,
+    RehearsalCast,
+    RehearsalScene,
+    Scene,
+    SceneCharacterMapping,
+    SceneChart,
+    Script,
     TheaterProject,
+    User,
 )
 
 
@@ -32,23 +32,23 @@ async def validate_upload_request(
     db: AsyncSession,
 ) -> ProjectMember:
     """脚本アップロードリクエストの検証.
-    
+
     Args:
         project_id: プロジェクトID
         current_user: 認証ユーザー
         filename: アップロードファイル名
         db: データベースセッション
-    
+
     Returns:
         ProjectMember: プロジェクトメンバー情報
-    
+
     Raises:
         HTTPException: 認証エラー、権限エラー、ファイル形式エラー
     """
     # 認証チェック
     if current_user is None:
         raise HTTPException(status_code=401, detail="認証が必要です")
-    
+
     # プロジェクトメンバーシップチェック
     result = await db.execute(
         select(ProjectMember).where(
@@ -58,21 +58,19 @@ async def validate_upload_request(
     )
     member = result.scalar_one_or_none()
     if member is None:
-        raise HTTPException(
-            status_code=403, detail="このプロジェクトへのアクセス権がありません"
-        )
-    
+        raise HTTPException(status_code=403, detail="このプロジェクトへのアクセス権がありません")
+
     if member.role not in ["owner", "editor"]:
         raise HTTPException(
             status_code=403, detail="権限がありません（閲覧者はアップロードできません）"
         )
-    
+
     # ファイル拡張子チェック
     if not filename.endswith(".fountain"):
         raise HTTPException(
             status_code=400, detail="Fountainファイル(.fountain)のみアップロード可能です"
         )
-    
+
     return member
 
 
@@ -90,7 +88,7 @@ async def get_or_create_script(
     pdf_writing_direction: str = "vertical",
 ) -> tuple[Script, bool]:
     """既存スクリプトを取得、または新規作成.
-    
+
     Args:
         project_id: プロジェクトID
         user_id: ユーザーID
@@ -101,32 +99,32 @@ async def get_or_create_script(
         db: データベースセッション
         public_terms: 使用条件
         public_contact: 連絡先
-    
+
     Returns:
         tuple[Script, bool]: (スクリプト, 更新フラグ)
     """
     # プロジェクトに既存の脚本があるか確認
     result = await db.execute(select(Script).where(Script.project_id == project_id))
     existing_scripts = result.scalars().all()
-    
+
     is_update = False
-    
+
     if existing_scripts:
         # 既存スクリプトがある場合（1プロジェクト1脚本制）
         script = existing_scripts[0]
         is_update = True
-        
+
         # 重複削除
         if len(existing_scripts) > 1:
             for duplicate in existing_scripts[1:]:
                 await db.delete(duplicate)
-        
+
         # Update existing script
         script.title = title
         script.author = author
         script.content = fountain_text
         script.uploaded_by = user_id
-        script.uploaded_at = datetime.now(timezone.utc)
+        script.uploaded_at = datetime.now(UTC)
         script.is_public = is_public
         script.public_terms = public_terms
         script.public_contact = public_contact
@@ -149,73 +147,59 @@ async def get_or_create_script(
         )
         db.add(script)
         await db.flush()
-    
+
     return script, is_update
 
 
 async def cleanup_related_data(script: Script, db: AsyncSession) -> None:
     """スクリプトに関連する古いデータを削除.
-    
+
     Args:
         script: スクリプト
         db: データベースセッション
     """
     # 1. 香盤表とマッピング
-    chart_result = await db.execute(
-        select(SceneChart.id).where(SceneChart.script_id == script.id)
-    )
-    chart_ids = [r for r in chart_result.scalars().all()]
-    
+    chart_result = await db.execute(select(SceneChart.id).where(SceneChart.script_id == script.id))
+    chart_ids = list(chart_result.scalars().all())
+
     if chart_ids:
         await db.execute(
-            delete(SceneCharacterMapping).where(
-                SceneCharacterMapping.chart_id.in_(chart_ids)
-            )
+            delete(SceneCharacterMapping).where(SceneCharacterMapping.chart_id.in_(chart_ids))
         )
         await db.execute(delete(SceneChart).where(SceneChart.id.in_(chart_ids)))
-    
+
     # 2. セリフ (SceneとCharacterに依存)
-    scene_result = await db.execute(
-        select(Scene.id).where(Scene.script_id == script.id)
-    )
-    scene_ids = [r for r in scene_result.scalars().all()]
-    
+    scene_result = await db.execute(select(Scene.id).where(Scene.script_id == script.id))
+    scene_ids = list(scene_result.scalars().all())
+
     if scene_ids:
         # RehearsalSceneを先に削除 (rehearsal_scenes テーブル)
-        await db.execute(
-            delete(RehearsalScene).where(RehearsalScene.scene_id.in_(scene_ids))
-        )
-        
+        await db.execute(delete(RehearsalScene).where(RehearsalScene.scene_id.in_(scene_ids)))
+
         # Rehearsalのscene_idをNULLにする (稽古自体は残す)
         await db.execute(
-            update(Rehearsal)
-            .where(Rehearsal.scene_id.in_(scene_ids))
-            .values(scene_id=None)
+            update(Rehearsal).where(Rehearsal.scene_id.in_(scene_ids)).values(scene_id=None)
         )
-        
+
         await db.execute(delete(Line).where(Line.scene_id.in_(scene_ids)))
-    
+
     # 3. シーン
     await db.execute(delete(Scene).where(Scene.script_id == script.id))
-    
+
     # 4. キャラクター (CharacterCasting, RehearsalCastも削除)
     character_result = await db.execute(
         select(Character.id).where(Character.script_id == script.id)
     )
-    character_ids = [r for r in character_result.scalars().all()]
-    
+    character_ids = list(character_result.scalars().all())
+
     if character_ids:
         await db.execute(
-            delete(CharacterCasting).where(
-                CharacterCasting.character_id.in_(character_ids)
-            )
+            delete(CharacterCasting).where(CharacterCasting.character_id.in_(character_ids))
         )
-        await db.execute(
-            delete(RehearsalCast).where(RehearsalCast.character_id.in_(character_ids))
-        )
-    
+        await db.execute(delete(RehearsalCast).where(RehearsalCast.character_id.in_(character_ids)))
+
     await db.execute(delete(Character).where(Character.script_id == script.id))
-    
+
     await db.flush()
 
 
@@ -265,18 +249,18 @@ async def restore_associations(script: Script, data: dict, db: AsyncSession):
     """情報を新しいIDに紐付け直す."""
     # 新しいキャラクターとシーンをロード
     await db.refresh(script, ["characters", "scenes"])
-    
+
     char_map = {c.name: c.id for c in script.characters}
-    
+
     # 1. 配役の復元
     for char_name, user_id, cast_name in data["castings"]:
         if char_name in char_map:
-            db.add(CharacterCasting(
-                character_id=char_map[char_name],
-                user_id=user_id,
-                cast_name=cast_name
-            ))
-            
+            db.add(
+                CharacterCasting(
+                    character_id=char_map[char_name], user_id=user_id, cast_name=cast_name
+                )
+            )
+
     # 2. 稽古-シーン(多対多)の復元
     for rehearsal_id, heading, act, scene_num in data["re_scenes"]:
         # 見出しとAct/Scene番号でマッチするものを探す
@@ -285,14 +269,14 @@ async def restore_associations(script: Script, data: dict, db: AsyncSession):
             if s.heading == heading and s.act_number == act and s.scene_number == scene_num:
                 matched_scene = s
                 break
-        
+
         if not matched_scene:
             # 見出しだけ同じものを探す（フォールバック）
             for s in script.scenes:
                 if s.heading == heading:
                     matched_scene = s
                     break
-        
+
         if matched_scene:
             db.add(RehearsalScene(rehearsal_id=rehearsal_id, scene_id=matched_scene.id))
 
@@ -303,7 +287,7 @@ async def restore_associations(script: Script, data: dict, db: AsyncSession):
             if s.heading == heading and s.act_number == act and s.scene_number == scene_num:
                 matched_scene = s
                 break
-        
+
         if matched_scene:
             await db.execute(
                 update(Rehearsal)
@@ -314,38 +298,36 @@ async def restore_associations(script: Script, data: dict, db: AsyncSession):
     # 4. 稽古ごとのキャスト指定 (RehearsalCast)
     for rehearsal_id, char_name, user_id in data["re_casts"]:
         if char_name in char_map:
-            db.add(RehearsalCast(
-                rehearsal_id=rehearsal_id,
-                character_id=char_map[char_name],
-                user_id=user_id
-            ))
+            db.add(
+                RehearsalCast(
+                    rehearsal_id=rehearsal_id, character_id=char_map[char_name], user_id=user_id
+                )
+            )
 
     await db.flush()
 
 
-async def parse_and_save_fountain(
-    script: Script, fountain_text: str, db: AsyncSession
-) -> Script:
+async def parse_and_save_fountain(script: Script, fountain_text: str, db: AsyncSession) -> Script:
     """Fountainテキストをパースしてデータベースに保存.
-    
+
     Args:
         script: スクリプト
         fountain_text: Fountainテキスト
         db: データベースセッション
-    
+
     Returns:
         Script: リレーションがロードされたスクリプト
-    
+
     Raises:
         HTTPException: パース失敗時
     """
     from src.services.fountain_parser import parse_fountain_and_create_models
     from src.services.scene_chart_generator import generate_scene_chart
-    
+
     try:
         # Fountainパース
         await parse_fountain_and_create_models(script, fountain_text, db)
-        
+
         # リレーションをロード
         stmt = (
             select(Script)
@@ -361,26 +343,27 @@ async def parse_and_save_fountain(
         )
         result = await db.execute(stmt)
         script = result.scalar_one()
-        
+
         # 香盤表の自動生成
         await generate_scene_chart(script, db)
-        
+
         await db.commit()
-        
+
         # 再取得（確実にロードされた状態にする）
         result = await db.execute(stmt)
         script = result.scalar_one()
-        
+
         return script
-        
+
     except Exception as e:
         await db.rollback()
         import traceback
+
         error_msg = traceback.format_exc()
-        
+
         # デバッグログ出力（console only - Azure is read-only filesystem）
         print(f"[Script Upload Error] {error_msg}")
-        
+
         raise HTTPException(
             status_code=500,
             detail=f"脚本の解析またはデータ保存中にエラーが発生しました: {str(e)}",
@@ -401,7 +384,7 @@ async def process_script_upload(
     pdf_writing_direction: str = "vertical",
 ) -> tuple[Script, bool]:
     """スクリプトアップロード処理のメインロジック.
-    
+
     Args:
         project_id: プロジェクトID
         user_id: ユーザーID
@@ -412,49 +395,54 @@ async def process_script_upload(
         db: データベースセッション
         public_terms: 使用条件
         public_contact: 連絡先
-    
+
     Returns:
         tuple[Script, bool]: (処理済みスクリプト, 更新フラグ)
     """
     from src.services.project_limit import check_project_limit
-    
+
     # プロジェクト数制限チェック (Loophole Prevention)
     # 脚本の公開/非公開設定によって、プロジェクトが「非公開」としてカウントされるかどうかが変わる
     # 既存プロジェクトのため、自分自身を除外して再計算する
     # ※ 現在は1プロジェクト1脚本制であるため、この脚本設定がプロジェクト全体の属性になる
     await check_project_limit(
-        user_id=user_id,
-        db=db,
-        project_id_to_exclude=project_id,
-        new_project_is_public=is_public
+        user_id=user_id, db=db, project_id_to_exclude=project_id, new_project_is_public=is_public
     )
 
     # スクリプトの取得または作成
     script, is_update = await get_or_create_script(
-        project_id, user_id, title, author, fountain_text, is_public, db,
-        public_terms=public_terms, public_contact=public_contact,
-        pdf_orientation=pdf_orientation, pdf_writing_direction=pdf_writing_direction
+        project_id,
+        user_id,
+        title,
+        author,
+        fountain_text,
+        is_public,
+        db,
+        public_terms=public_terms,
+        public_contact=public_contact,
+        pdf_orientation=pdf_orientation,
+        pdf_writing_direction=pdf_writing_direction,
     )
-    
+
     # 更新の場合は関連データを削除
     if is_update:
         # Before cleanup, collect data to restore
         associations = await collect_associations(script.id, db)
         await cleanup_related_data(script, db)
         await db.refresh(script)
-        
+
     # プロジェクトの公開設定を同期 (1プロジェクト1脚本のため、脚本の設定=プロジェクトの設定)
     project = await db.get(TheaterProject, project_id)
     if project:
         project.is_public = is_public
         db.add(project)
-    
+
     # Fountainパースと保存
     script = await parse_and_save_fountain(script, fountain_text, db)
-    
+
     # Restore associations
     if is_update:
         await restore_associations(script, associations, db)
-        await db.commit() # Save restored data
-    
+        await db.commit()  # Save restored data
+
     return script, is_update

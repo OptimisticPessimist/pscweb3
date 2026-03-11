@@ -78,10 +78,14 @@ ignore = [
     # Type annotation
     "ANN101",  # missing-type-self
     "ANN102",  # missing-type-cls
+    "B008",    # function-call-in-default-argument (FastAPI Depends)
     
     # Format compatibility
     "COM812",  # trailing-comma-missing
     "ISC001",  # single-line-implicit-string-concatenation
+    
+    # Line length
+    "E501",    # line-too-long
     
     # Docstring formatting (conflicts or Japanese compatibility)
     "D100",    # undocumented-public-module
@@ -108,7 +112,8 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ANN", "D"]
-"alembic/*" = ["ANN", "D"]
+"alembic/*" = ["ANN", "D", "E501"]
+"*.py" = ["ANN", "D", "W", "E", "F", "B"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

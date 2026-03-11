@@ -1,8 +1,7 @@
 """出席確認サービス."""
 
-from datetime import datetime, timedelta, timezone
 import uuid
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,10 +38,10 @@ class AttendanceService:
         title: str,
         deadline: datetime,
         schedule_date: datetime,
-        location: Optional[str] = None,
-        description: Optional[str] = None,
-        target_user_ids: Optional[list[uuid.UUID]] = None,
-    ) -> Optional[AttendanceEvent]:
+        location: str | None = None,
+        description: str | None = None,
+        target_user_ids: list[uuid.UUID] | None = None,
+    ) -> AttendanceEvent | None:
         """出席確認イベントを作成し、Disocrdに通知を送信する.
 
         Args:
@@ -60,8 +59,10 @@ class AttendanceService:
         if not project.discord_channel_id:
             logger.warning("Discord Channel ID not set for project", project_id=project.id)
             return None
-            
-        logger.info(f"Creating attendance for project {project.name}, channel {project.discord_channel_id}")
+
+        logger.info(
+            f"Creating attendance for project {project.name}, channel {project.discord_channel_id}"
+        )
 
         valid_users = []
         if target_user_ids:
@@ -78,7 +79,7 @@ class AttendanceService:
             )
             all_members = all_members_result.scalars().all()
             all_target_ids = [m.user_id for m in all_members]
-            
+
             # ユーザー取得（discord_id所持者のみ）
             users_result = await self.db.execute(
                 select(User).where(User.id.in_(all_target_ids), User.discord_id.isnot(None))
@@ -92,68 +93,62 @@ class AttendanceService:
 
         # メンション作成
         mentions = [f"<@{u.discord_id}>" for u in valid_users]
-        deadline_ts = int(deadline.replace(tzinfo=timezone.utc).timestamp())
-        schedule_ts = int(schedule_date.replace(tzinfo=timezone.utc).timestamp())
+        deadline_ts = int(deadline.replace(tzinfo=UTC).timestamp())
+        schedule_ts = int(schedule_date.replace(tzinfo=UTC).timestamp())
         deadline_str = f"<t:{deadline_ts}:f>"
         schedule_str = f"<t:{schedule_ts}:f>"
 
-        message_content = (
-            f"**【出欠確認】{title}**\n"
-            f"日時: {schedule_str}\n"
-            f"期限: {deadline_str}\n"
-        )
-        
+        message_content = f"**【出欠確認】{title}**\n日時: {schedule_str}\n期限: {deadline_str}\n"
+
         if location:
             message_content += f"場所: {location}\n"
-            
+
         message_content += f"対象: {' '.join(mentions)}\n\n"
-        
+
         if description:
             message_content += f"{description}\n\n"
-            
+
         message_content += "以下のボタンで出欠を登録してください。"
 
         # ボタンコンポーネント (Action Row)
         # 暫定的にDB保存前にIDが必要だが、event_idはまだない。
         # なので、message_idが返ってきてからupdateするか、UUIDを先に振るか。
         # UUIDはPython側で生成しているので、先に生成して使うのが良い。
-        
+
         # UUID生成
         import uuid
+
         event_id = uuid.uuid4()
-        
+
         components = [
             {
-                "type": 1, # Action Row
+                "type": 1,  # Action Row
                 "components": [
                     {
-                        "type": 2, # Button
-                        "style": 1, # Primary (Blurple) -> 3 (Green) for OK?
+                        "type": 2,  # Button
                         "label": "参加",
                         "custom_id": f"attendance:{event_id}:ok",
-                        "style": 3 # Success
-                    },
-                    {
-                        "type": 2, 
-                        "style": 4, # Danger
-                        "label": "不参加",
-                        "custom_id": f"attendance:{event_id}:ng"
+                        "style": 3,  # Success
                     },
                     {
                         "type": 2,
-                        "style": 2, # Secondary (Grey)
+                        "style": 4,  # Danger
+                        "label": "不参加",
+                        "custom_id": f"attendance:{event_id}:ng",
+                    },
+                    {
+                        "type": 2,
+                        "style": 2,  # Secondary (Grey)
                         "label": "保留",
-                        "custom_id": f"attendance:{event_id}:pending"
-                    }
-                ]
+                        "custom_id": f"attendance:{event_id}:pending",
+                    },
+                ],
             }
         ]
 
         # Discord送信
         discord_resp = await self.discord_service.send_channel_message(
-            channel_id=project.discord_channel_id,
-            content=message_content,
-            components=components
+            channel_id=project.discord_channel_id, content=message_content, components=components
         )
 
         if not discord_resp or "id" not in discord_resp:
@@ -169,22 +164,20 @@ class AttendanceService:
             title=title,
             schedule_date=schedule_date,
             deadline=deadline,
-            completed=False
+            completed=False,
         )
         self.db.add(attendance_event)
         await self.db.flush()
 
         for user in valid_users:
             target = AttendanceTarget(
-                event_id=attendance_event.id,
-                user_id=user.id,
-                status="pending"
+                event_id=attendance_event.id, user_id=user.id, status="pending"
             )
             self.db.add(target)
 
         await self.db.commit()
         await self.db.refresh(attendance_event)
-        
+
         return attendance_event
 
 
