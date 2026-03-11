@@ -11,7 +11,6 @@ from fastapi import (
     Form,
     HTTPException,
     Query,
-    Request,
     Response,
     UploadFile,
 )
@@ -74,17 +73,16 @@ async def get_scripts(
 @router.post("/{project_id}/upload", response_model=ScriptResponse)
 async def upload_script(
     project_id: UUID,
-    request: Request,
     background_tasks: BackgroundTasks,
-    title: str | None = Form(None),
+    title: str = Form(...),
     author: str | None = Form(None),
-    script_file: UploadFile | None = File(None),
-    is_public: str | None = Form(None),
+    script_file: UploadFile = File(...),
+    is_public: bool = Form(False),
     public_terms: str | None = Form(None),
     public_contact: str | None = Form(None),
     pdf_orientation: str | None = Form(None),
     pdf_writing_direction: str | None = Form(None),
-    current_user: User | None = Depends(get_current_user_dep),
+    current_user: User = Depends(get_current_user_dep),
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
 ) -> ScriptResponse:
@@ -94,52 +92,6 @@ async def upload_script(
         process_script_upload,
         validate_upload_request,
     )
-
-    # 生のリクエスト診断
-    content_type = request.headers.get("content-type", "None")
-    body_len = 0
-    try:
-        # ⚠️ 注意: AsgiFunctionAppによってはbody()を呼ぶと後続の引数解析が壊れる可能性があるが、
-        # 現在既に引数がNoneなので、壊れることを承知で診断を優先する
-        body = await request.body()
-        body_len = len(body)
-    except Exception as e:
-        print(f"[Upload Debug Error] Failed to read body: {e}")
-
-    form_keys = []
-    try:
-        form = await request.form()
-        form_keys = list(form.keys())
-    except Exception as e:
-        print(f"[Upload Debug Error] Failed to read form: {e}")
-
-    # デバッグログ（詳細版）
-    print(f"[Upload Debug Start] project_id={project_id}")
-    print(f"[Upload Debug] Content-Type: {content_type}")
-    print(f"[Upload Debug] Body Length: {body_len}")
-    print(f"[Upload Debug] Form Keys: {form_keys}")
-    print(f"[Upload Debug] title={title}")
-    print(f"[Upload Debug] author={author}")
-    print(f"[Upload Debug] script_file={script_file.filename if script_file else 'None'}")
-    print(f"[Upload Debug] is_public={is_public}")
-    print(f"[Upload Debug] public_terms={public_terms}")
-    print(f"[Upload Debug] public_contact={public_contact}")
-    print(f"[Upload Debug] pdf_orientation={pdf_orientation}")
-    print(f"[Upload Debug] pdf_writing_direction={pdf_writing_direction}")
-    print(f"[Upload Debug] current_user={current_user.id if current_user else 'None'}")
-
-    # 必須パラメータのチェック（422を回避するため関数内でチェック）
-    if not title:
-        raise HTTPException(status_code=422, detail="Title is required")
-    if not script_file:
-        raise HTTPException(status_code=422, detail="Script file is required")
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-
-    # 型の正規化
-    is_public_bool = str(is_public).lower() == "true"
-    norm_orientation = pdf_orientation or "landscape"
-    norm_writing_direction = pdf_writing_direction or "vertical"
 
     # 1. リクエスト検証
     await validate_upload_request(project_id, current_user, script_file.filename, db)
@@ -175,7 +127,7 @@ async def upload_script(
             title,
             author,
             fountain_text,
-            is_public_bool,
+            is_public,
             db,
             public_terms=public_terms,
             public_contact=public_contact,
