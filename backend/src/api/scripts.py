@@ -76,7 +76,7 @@ async def upload_script(
     background_tasks: BackgroundTasks,
     title: str = Form(...),
     author: str | None = Form(None),
-    file: UploadFile = File(...),
+    script_file: UploadFile = File(...), # changed from file to script_file to match frontend
     is_public: bool = Form(False),
     public_terms: str | None = Form(None),
     public_contact: str | None = Form(None),
@@ -86,24 +86,7 @@ async def upload_script(
     db: AsyncSession = Depends(get_db),
     discord_service: DiscordService = Depends(get_discord_service),
 ) -> ScriptResponse:
-    """Fountain脚本をアップロード.
-
-    Args:
-        project_id: プロジェクトID
-        background_tasks: バックグラウンドタスク
-        title: 脚本タイトル
-        file: Fountainファイル
-        is_public: 全体公開するか（デフォルト: False）
-        current_user: 認証ユーザー
-        db: データベースセッション
-        discord_service: Discordサービス
-
-    Returns:
-        ScriptResponse: アップロードされた脚本
-
-    Raises:
-        HTTPException: 認証エラーまたは権限エラー
-    """
+    """Fountain脚本をアップロード."""
     from src.services.script_notification import send_script_notification
     from src.services.script_processor import (
         process_script_upload,
@@ -111,11 +94,30 @@ async def upload_script(
     )
 
     # 1. リクエスト検証
-    await validate_upload_request(project_id, current_user, file.filename, db)
+    await validate_upload_request(project_id, current_user, script_file.filename, db)
 
-    # 2. ファイル読み込み
-    file_content = await file.read()
-    fountain_text = file_content.decode("utf-8")
+    # 2. ファイル読み込みとエンコーディング判別
+    file_content = await script_file.read()
+    
+    fountain_text = None
+    for encoding in ["utf-8-sig", "utf-8", "cp932"]:
+        try:
+            fountain_text = file_content.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+            
+    if fountain_text is None:
+        try:
+            import charset_normalizer
+            result = charset_normalizer.from_bytes(file_content).best()
+            if result and result.encoding:
+                fountain_text = str(result)
+        except Exception:
+            pass
+
+    if fountain_text is None:
+        raise HTTPException(status_code=400, detail="ファイルのエンコーディングを判別できませんでした (UTF-8 または Shift_JIS にてアップロードしてください)")
 
     # 3. スクリプト処理
     try:
@@ -136,7 +138,7 @@ async def upload_script(
         import traceback
 
         print(f"[Upload Failed] {e}\n{traceback.format_exc()}")
-        raise e
+        raise HTTPException(status_code=500, detail=f"Upload Failed: {str(e)}")
 
     # 4. Discord通知（バックグラウンド）
     project = await db.get(TheaterProject, project_id)

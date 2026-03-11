@@ -12,9 +12,10 @@ logger = logging.getLogger("uvicorn")
 async def parse_fountain_and_create_models(
     script: Script, fountain_content: str, db: AsyncSession
 ) -> None:
-    fountain_content = (
-        fountain_content.strip()
-    )  # Fix for fountain library bug with empty lines in header
+    # Fix for fountain library bug with empty lines in header
+    fountain_content = fountain_content.strip()
+    # Fix for fountain library bug with whitespace-only lines causing IndexError
+    fountain_content = re.sub(r"^[ \t]+$", "", fountain_content, flags=re.MULTILINE)
 
     # Pre-process: Inject blank lines in Character blocks to ensure proper parsing
     lines = fountain_content.splitlines()
