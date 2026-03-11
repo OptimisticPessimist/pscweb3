@@ -386,7 +386,7 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Character":
             # 登場人物検出 -> 説明収集終了（あらすじ以外）
-            if current_scene and current_scene.scene_number != 0:
+            if current_scene and getattr(current_scene, 'scene_number', None) != 0:
                 collecting_description = False
             last_scene_was_section = False
 
@@ -421,7 +421,7 @@ async def parse_fountain_and_create_models(
 
             # 一行セリフの判定 (@Name Dialogue) - Action の場合のみ
             if element.element_type == "Action" and stripped_content.startswith("@") and (" " in stripped_content or "　" in stripped_content):
-                if current_scene and current_scene.scene_number != 0:
+                if current_scene and getattr(current_scene, 'scene_number', None) != 0:
                     collecting_description = False
                 last_scene_was_section = False
 
@@ -477,10 +477,10 @@ async def parse_fountain_and_create_models(
                          else:
                              current_scene.description = stripped_content
                     else:
-                         # 最初のト書きセクション以外、または非Action/Synopsis要素が来たら収集終了
-                         # ただし、あらすじ（シーン0）の場合は収集全般を継続する
-                         if current_scene.scene_number != 0:
-                             collecting_description = False
+                        # 最初のト書きセクション以外、または非Action/Synopsis要素が来たら収集終了
+                        # ただし、あらすじ（シーン0）の場合は収集全般を継続する
+                        if getattr(current_scene, 'scene_number', None) != 0:
+                            collecting_description = False
 
                     line_order += 1
                     # 括弧書きの場合は、直前のキャラクターに紐付ける
@@ -500,7 +500,7 @@ async def parse_fountain_and_create_models(
 
         elif element.element_type == "Dialogue":
             # Description collection ends（あらすじ以外）
-            if current_scene and current_scene.scene_number != 0:
+            if current_scene and getattr(current_scene, 'scene_number', None) != 0:
                 collecting_description = False
             last_scene_was_section = False
 
