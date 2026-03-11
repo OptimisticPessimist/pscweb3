@@ -1,5 +1,5 @@
-
 import re
+
 from fountain.fountain import Fountain
 
 def clean_fountain_content(content):
