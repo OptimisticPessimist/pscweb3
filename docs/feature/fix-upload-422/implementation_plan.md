@@ -1,30 +1,26 @@
-# 実装計画 - 脚本アップロードエラー(422)の修正
+# 実装計画 - 脚本アップロードエラー(422)の再調査と根本修正
 
-脚本アップロード時に 422 Unprocessable Entity エラーが発生する問題を修正します。
+フロントエンドの修正後も 422 エラーが発生し続けているため、原因を特定するためのデバッグログ追加と、型変換の緩和を行います。
 
 ## ユーザーレビューが必要な項目
 - ありません。
 
 ## Proposed Changes
 
-### frontend
-
-#### [MODIFY] [scripts.ts](file:///f:/src/PythonProject/pscweb3-1/frontend/src/features/scripts/api/scripts.ts)
-- `uploadScript` および `updatePublicity` メソッドにおいて、`headers` から `'Content-Type': 'multipart/form-data'` を削除します。
-  - **理由**: `axios` で `FormData` を送信する場合、手動で `Content-Type` を設定すると、ブラウザが自動付与する `boundary` パラメータが欠落し、バックエンドがマルチパートデータを正しく解析できなくなります（結果として必須フィールドが欠落しているとみなされ 422 エラーとなります）。
-
-### backend (Optional/Cleanup)
+### backend
 
 #### [MODIFY] [scripts.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/api/scripts.py)
-- コード内のコメントや不要な型変換があれば整理します。
+- `upload_script` 関数の冒頭に `print` 文によるデバッグログを追加します（Azure プロセスの標準出力はログに記録されます）。
+- `is_public: bool` を `is_public: str` に変更し、関数内部で手動パース（`"true"` -> `True` など）するようにします。
+  - **理由**: Pydantic v2 がマルチパートフォーム内のボリアン値を厳格に扱う場合があり、意図しない 422 エラーを引き起こす可能性があるためです。
 
 ## Verification Plan
 
 ### Automated Tests
-- フロントエンドの問題であるため、ブラウザを使用してアップロード機能の正常動作を確認します。
-- 必要に応じて、`curl` などでマルチパートリクエストを手動送信し、バックエンドが正しく受け取れるか検証します。
+- バックエンドをデプロイし、実際のアップロードリクエスト時のログ出力を確認します。
 
 ### Manual Verification
 1.  プロジェクトの脚本一覧ページから「アップロード」ボタンをクリックします。
 2.  適当な `.fountain` ファイルを選択し、タイトル等を入力して「アップロード」を実行します。
-3.  エラーなくスクリプト一覧に戻り、新しいスクリプトが表示されることを確認します。
+  - ログに `[Upload Debug]` で始まる行が出力されていることを確認します。
+  - 依然として 422 が発生する場合、その詳細（どのフィールドがエラーになっているか）を特定します。

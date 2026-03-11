@@ -76,8 +76,8 @@ async def upload_script(
     background_tasks: BackgroundTasks,
     title: str = Form(...),
     author: str | None = Form(None),
-    script_file: UploadFile = File(...), # changed from file to script_file to match frontend
-    is_public: bool = Form(False),
+    script_file: UploadFile = File(...),
+    is_public: str = Form("false"),  # 型変換エラー回避のため str で受け取る
     public_terms: str | None = Form(None),
     public_contact: str | None = Form(None),
     pdf_orientation: str = Form("landscape"),
@@ -92,6 +92,13 @@ async def upload_script(
         process_script_upload,
         validate_upload_request,
     )
+
+    # デバッグログ
+    print(f"[Upload Debug] project_id={project_id}, title={title}, author={author}, is_public={is_public}")
+    print(f"[Upload Debug] script_file={script_file.filename if script_file else 'None'}")
+
+    # is_public の変換
+    is_public_bool = str(is_public).lower() == "true"
 
     # 1. リクエスト検証
     await validate_upload_request(project_id, current_user, script_file.filename, db)
@@ -127,7 +134,7 @@ async def upload_script(
             title,
             author,
             fountain_text,
-            is_public,
+            is_public_bool,
             db,
             public_terms=public_terms,
             public_contact=public_contact,
