@@ -24,6 +24,10 @@ async def login(request: Request) -> RedirectResponse:
         RedirectResponse: Discord 認証ページへのリダイレクト
     """
     redirect_uri = settings.discord_redirect_uri
+    from src.core.logger import get_logger
+
+    logger = get_logger(__name__)
+    logger.info(f"Starting Discord login with redirect_uri: {redirect_uri}")
     return await oauth.discord.authorize_redirect(request, redirect_uri)
 
 
