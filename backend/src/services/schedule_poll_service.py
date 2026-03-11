@@ -301,6 +301,9 @@ class SchedulePollService:
         scene_required_users = {} # {scene_id: set(user_id)}
         for m in mappings:
             if m.scene_id not in scene_required_users:
+
+
+
                 scene_required_users[m.scene_id] = set()
             
             cast_stmt = select(CharacterCasting).where(CharacterCasting.character_id == m.character_id)
@@ -333,9 +336,10 @@ class SchedulePollService:
             priority_user_ids = {m.user_id for m in all_members if m.default_staff_role in ["演出", "演出助手", "制作"]}
 
         # シーン情報を取得
-        scene_stmt = select(Scene).where(Scene.script_id == script.id)
+        scene_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
         scene_result = await self.db.execute(scene_stmt)
         scenes_map = {s.id: s for s in scene_result.scalars().all()}
+
 
         recommendations = []
         for candidate in poll.candidates:
@@ -351,20 +355,25 @@ class SchedulePollService:
                     missing_roles.append(role)
 
             candidate_possible_scenes = []
-            for scene_id, required_user_ids in scene_required_users.items():
+            # character がいないシーンも推薦に含めるため、scenes_map の全シーンをループ対象にする
+            for scene_id, scene in scenes_map.items():
+                required_user_ids = scene_required_users.get(scene_id, set())
+                
                 is_possible = True
                 if missing_roles:
                     is_possible = False
                 else:
+                    # 実際に配役されているユーザーのみチェック
                     for rid in required_user_ids:
                         status = user_answers.get(rid, "pending")
                         if status == "ng":
                             is_possible = False
                             break
                 
-                if is_possible and required_user_ids:
+                if is_possible:
                     score = 0
                     ok_count = 0
+                    # 加点も配役されているユーザーに限定
                     for rid in required_user_ids:
                         if user_answers.get(rid) == "ok":
                             score += 10
@@ -380,25 +389,26 @@ class SchedulePollService:
                         elif user_answers.get(pid) == "maybe":
                             score += 10
                     
-                    scene = scenes_map.get(scene_id)
-                    if scene:
-                        reason_parts = []
-                        if ok_count == len(required_user_ids):
-                            reason_parts.append("必須キャスト全員出席可能")
-                        elif ok_count > 0:
-                            reason_parts.append(f"必須キャスト{ok_count}名出席可能")
+                    reason_parts = []
+                    if not required_user_ids:
+                        reason_parts.append("キャラクターの登場なし")
+                    elif ok_count == len(required_user_ids):
+                        reason_parts.append("必須キャスト全員出席可能")
+                    elif ok_count > 0:
+                        reason_parts.append(f"必須キャスト{ok_count}名出席可能")
+                    
+                    if priority_ok:
+                        reason_parts.append("演出・制作メンバー出席可能")
                         
-                        if priority_ok:
-                            reason_parts.append("演出・制作メンバー出席可能")
-                            
-                        candidate_possible_scenes.append({
-                            "scene_id": scene_id,
-                            "act_number": scene.act_number,
-                            "scene_number": scene.scene_number,
-                            "scene_heading": scene.heading,
-                            "score": score,
-                            "reason": " / ".join(reason_parts)
-                        })
+                    candidate_possible_scenes.append({
+                        "scene_id": scene_id,
+                        "act_number": scene.act_number,
+                        "scene_number": scene.scene_number,
+                        "scene_heading": scene.heading,
+                        "score": score,
+                        "reason": " / ".join(reason_parts)
+                    })
+
             
             candidate_possible_scenes.sort(key=lambda x: x["score"], reverse=True)
             
@@ -444,8 +454,9 @@ class SchedulePollService:
             return {"poll_id": poll_id, "analyses": []}
 
         # シーン一覧
-        scenes_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.scene_number)
+        scenes_stmt = select(Scene).where(Scene.script_id == script.id).order_by(Scene.act_number, Scene.scene_number)
         scenes = (await self.db.execute(scenes_stmt)).scalars().all()
+
 
         # シーンごとの必要キャラクター
         mapping_stmt = select(SceneCharacterMapping).where(SceneCharacterMapping.chart_id.in_(
@@ -458,6 +469,9 @@ class SchedulePollService:
         scene_chars = {} # {scene_id: [character_id]}
         for m in mappings:
             if m.scene_id not in scene_chars:
+
+
+
                 scene_chars[m.scene_id] = []
             scene_chars[m.scene_id].append(m.character_id)
 
@@ -521,17 +535,20 @@ class SchedulePollService:
             
             for scene in scenes:
                 req_chars = scene_chars.get(scene.id, [])
-                if not req_chars:
-                    continue
                 
                 missing_chars = [] # [(char_name, [missing_user_ids])]
+
                 
                 for char_id in req_chars:
                     c_users = char_users.get(char_id, [])
+                    if not c_users:
+                        continue # 配役されていないキャラクターはチェック対象外
+                        
                     # ダブルキャスト対応：1人でも利用可能ならOK
                     if not any(uid in available_users for uid in c_users):
                         char_name = char_name_map.get(char_id, "Unknown")
                         missing_chars.append((char_name, c_users))
+
                 
                 if not missing_chars and not missing_roles:
                     # 稽古可能
@@ -541,8 +558,9 @@ class SchedulePollService:
                         "scene_number": scene.scene_number,
                         "heading": scene.heading,
                         "is_possible": True,
-                        "reason": "全員揃っています"
+                        "reason": "全員揃っています" if req_chars else "登場キャラクターなし"
                     })
+
                 elif not missing_roles and len(missing_chars) == 1:
                     # リーチ状態（あと1役だけ足りない）
                     char_name, m_uids = missing_chars[0]
