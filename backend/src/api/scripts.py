@@ -11,6 +11,7 @@ from fastapi import (
     Form,
     HTTPException,
     Query,
+    Request,
     Response,
     UploadFile,
 )
@@ -73,6 +74,7 @@ async def get_scripts(
 @router.post("/{project_id}/upload", response_model=ScriptResponse)
 async def upload_script(
     project_id: UUID,
+    request: Request,
     background_tasks: BackgroundTasks,
     title: str | None = Form(None),
     author: str | None = Form(None),
@@ -93,8 +95,29 @@ async def upload_script(
         validate_upload_request,
     )
 
+    # 生のリクエスト診断
+    content_type = request.headers.get("content-type", "None")
+    body_len = 0
+    try:
+        # ⚠️ 注意: AsgiFunctionAppによってはbody()を呼ぶと後続の引数解析が壊れる可能性があるが、
+        # 現在既に引数がNoneなので、壊れることを承知で診断を優先する
+        body = await request.body()
+        body_len = len(body)
+    except Exception as e:
+        print(f"[Upload Debug Error] Failed to read body: {e}")
+
+    form_keys = []
+    try:
+        form = await request.form()
+        form_keys = list(form.keys())
+    except Exception as e:
+        print(f"[Upload Debug Error] Failed to read form: {e}")
+
     # デバッグログ（詳細版）
     print(f"[Upload Debug Start] project_id={project_id}")
+    print(f"[Upload Debug] Content-Type: {content_type}")
+    print(f"[Upload Debug] Body Length: {body_len}")
+    print(f"[Upload Debug] Form Keys: {form_keys}")
     print(f"[Upload Debug] title={title}")
     print(f"[Upload Debug] author={author}")
     print(f"[Upload Debug] script_file={script_file.filename if script_file else 'None'}")
