@@ -106,6 +106,15 @@ class DiscordService:
             response.raise_for_status()
             logger.info("Discord notification sent", url=target_url)
 
+        except httpx.HTTPStatusError as e:
+            # HTTPエラーの場合はDiscordから返されるエラーボディ（JSON等）もログに出力する
+            logger.error(
+                "Failed to send Discord notification (HTTP Status Error)",
+                status_code=e.response.status_code,
+                error=str(e),
+                response_body=e.response.text,
+                url=target_url,
+            )
         except Exception as e:
             logger.error("Failed to send Discord notification", error=str(e), url=target_url)
 

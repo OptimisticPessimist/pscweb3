@@ -37,7 +37,9 @@ async def send_script_notification(
         from src.services.pdf_generator import generate_script_pdf
 
         pdf_bytes = generate_script_pdf(script.content)
-        pdf_file = {"filename": f"{script.title}.pdf", "content": pdf_bytes}
+        # DiscordのWebhookは一部のHTTPクライアントが生成する日本語(non-ASCII)ファイル名のマルチパート拡張を
+        # 正しくパースできず400エラーとなる場合があるため、固定のASCIIファイル名を使用する。
+        pdf_file = {"filename": "script.pdf", "content": pdf_bytes}
     except Exception as e:
         # PDF生成失敗しても通知は送る
         message += f"\n\n⚠️ PDF生成に失敗しました: {e}"

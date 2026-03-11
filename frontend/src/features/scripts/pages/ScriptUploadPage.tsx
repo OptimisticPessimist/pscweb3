@@ -124,7 +124,7 @@ export const ScriptUploadPage: React.FC = () => {
         if (!file) return;
 
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('script_file', file);
         formData.append('title', title);
         if (author) {
             formData.append('author', author);
