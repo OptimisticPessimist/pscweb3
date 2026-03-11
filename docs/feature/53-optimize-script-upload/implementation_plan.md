@@ -8,6 +8,8 @@
 
 ## 提案される変更点
 
+### [Component] Backend / API & Services
+
 ### [Component] Backend / Services
 
 #### [MODIFY] [fountain_parser.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/fountain_parser.py)
@@ -20,7 +22,10 @@
 - 解析およびデータ紐付け完了までを一つのトランザクションにまとめる。
 
 #### [MODIFY] [scene_chart_generator.py](file:///f:/src/PythonProject/pscweb3-1/backend/src/services/scene_chart_generator.py)
-- 冗長な `db.flush()` を削除。
+- 冗長な `db.flush()` を整理（削除後のフラッシュはユニーク制約回避のため維持）。
+
+## 検証計画
+- 最適化によりアップロードが正常完了し、既存の成功時 Discord 通知が正しく送信されることを確認。
 
 ## 検証計画
 
