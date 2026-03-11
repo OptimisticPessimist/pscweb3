@@ -89,7 +89,7 @@ DATABASE_URL=postgresql+asyncpg://user:password@host:port/dbname
 # Discord Integration
 DISCORD_CLIENT_ID=your_client_id
 DISCORD_CLIENT_SECRET=your_client_secret
-DISCORD_REDIRECT_URI=http://localhost:5173/auth/callback
+DISCORD_REDIRECT_URI=http://localhost:5173/api/auth/callback
 DISCORD_BOT_TOKEN=your_bot_token
 
 # SendGrid Email Service
@@ -109,6 +109,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 > ```bash
 > cp .env.example .env
 > ```
+
+> [!IMPORTANT]
+> **Discord Developer Portal の設定**
+> アプリケーションの `OAuth2 -> General` 設定にて、`Redirects` に必ず上記で設定した `DISCORD_REDIRECT_URI` と完全に一致するURL（例: `http://localhost:5173/api/auth/callback`）を登録してください。
+
 
 ### 3. バックエンドのセットアップ
 
@@ -312,6 +317,11 @@ GitHub Actions による CI/CD が設定されています。`main` ブランチ
 | `FROM_EMAIL` | メール送信元アドレス |
 | `FROM_NAME` | メール送信者名 |
 | `REPLY_TO_EMAIL` | 返信先アドレス |
+
+> [!IMPORTANT]
+> **Discord Redirect URI について**
+> 本番環境での `DISCORD_REDIRECT_URI` は、フロントエンドのドメインを用いて `https://<YOUR_FRONTEND_DOMAIN>/api/auth/callback` のように設定し、Discord Developer Portal 上にも同様のURLを登録する必要があります。
+
 
 > [!TIP]
 > 詳細なセットアップ手順は [docs/azure_functions_setup.md](docs/azure_functions_setup.md) を参照してください。
