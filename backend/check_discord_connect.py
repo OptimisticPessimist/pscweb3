@@ -20,7 +20,7 @@ async def check_connection():
                 data={
                     "grant_type": "authorization_code",
                     "code": "dummy_code",
-                    "redirect_uri": "http://localhost:8000/auth/callback",
+                    "redirect_uri": "http://localhost:8000/api/auth/callback",
                     "client_id": "dummy_id",
                     "client_secret": "dummy_secret",
                 },

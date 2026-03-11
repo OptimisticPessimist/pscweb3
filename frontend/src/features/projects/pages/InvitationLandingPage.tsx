@@ -35,7 +35,7 @@ export const InvitationLandingPage: React.FC = () => {
         localStorage.setItem('postLoginRedirect', `${location.pathname}?auto_accept=true`);
         // バックエンドのDiscord認証エンドポイントへ直接リダイレクト
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        window.location.href = `${apiUrl}/auth/login`;
+        window.location.href = `${apiUrl}/api/auth/login`;
     };
 
     // 自動参加処理の実行

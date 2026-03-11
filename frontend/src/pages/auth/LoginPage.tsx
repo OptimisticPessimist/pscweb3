@@ -27,7 +27,7 @@ export const LoginPage = () => {
         // バックエンドのDiscord認証エンドポイントへリダイレクト
         // VITE_API_URLは http://localhost:8000 など
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        window.location.href = `${apiUrl}/auth/login`;
+        window.location.href = `${apiUrl}/api/auth/login`;
     };
 
     return (

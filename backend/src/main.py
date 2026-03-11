@@ -113,7 +113,7 @@ app.add_middleware(
 )
 
 # ルーター登録
-app.include_router(auth.router, prefix="/auth", tags=["認証"])
+app.include_router(auth.router, prefix="/api/auth", tags=["認証"])
 app.include_router(projects.router, prefix="/api/projects", tags=["プロジェクト"])
 app.include_router(invitations.router, prefix="/api", tags=["招待"])
 app.include_router(attendance.router, prefix="/api/projects", tags=["出欠確認"])
