@@ -395,6 +395,7 @@ async def parse_fountain_and_create_models(
 
             if is_synopsis:
                 current_scene_number = 0
+                current_act_number = None  # Synopsis should not belong to any Act
                 logger.info(f"Found Synopsis (Scene #0): {content_stripped}")
             else:
                 scene_number += 1
