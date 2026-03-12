@@ -1,6 +1,7 @@
 """Discord通知サービス."""
 
 import httpx
+from typing import Any
 from structlog import get_logger
 
 from src.config import settings
@@ -89,7 +90,7 @@ class DiscordService:
             if file:
                 import json
 
-                payload_dict = {"content": content}
+                payload_dict: dict[str, Any] = {"content": content}
                 if embeds:
                     payload_dict["embeds"] = embeds
                 data = {"payload_json": json.dumps(payload_dict)}
@@ -99,7 +100,7 @@ class DiscordService:
                     "POST", target_url, data=data, files=files
                 )
             else:
-                payload = {"content": content}
+                payload: dict[str, Any] = {"content": content}
                 if embeds:
                     payload["embeds"] = embeds
                 response = await self._request_with_retry("POST", target_url, json=payload)
@@ -134,7 +135,7 @@ class DiscordService:
         url = f"{self.api_base}/channels/{channel_id}/messages"
         headers = {"Authorization": f"Bot {self.bot_token}"}
 
-        payload = {"content": content}
+        payload: dict[str, Any] = {"content": content}
         if embeds:
             payload["embeds"] = embeds
         if components:
@@ -169,7 +170,7 @@ class DiscordService:
 
         try:
             while True:
-                params = {"limit": 100}
+                params: dict[str, Any] = {"limit": 100}
                 if after:
                     params["after"] = after
 
