@@ -8,6 +8,9 @@ from src.db.models import Script, Scene, Line, Character
 from src.services.fountain_parser import parse_fountain_and_create_models
 
 async def repro():
+    import sys
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
     # Use in-memory SQLite for testing
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
@@ -26,30 +29,38 @@ async def repro():
         session.add(script)
         await session.commit()
         
-        fountain_content = """
-Title: Synopsis Repro
-Author: Test Author
+        fountain_content = """Title: Preservation Test
 
-# Synopsis
-= This is a synopsis line.
-This is an action line in synopsis.
-@CHARACTER
-(Parenthetical in synopsis)
-Dialogue in synopsis.
-> TRANSITION IN SYNOPSIS
+# あらすじ
+= 1行目のあらすじ
+= 2行目のあらすじ
 
-# Scene 1
-Scene 1 action.
+BRICK
+(whispering)
+Hello in synopsis.
+
+Parenthetical in synopsis as action.
+
+## シーン1
+通常ト書き
+
+BRICK
+(whispering)
+Hello.
+
+> CUT TO:
 """
         await parse_fountain_and_create_models(script, fountain_content, session)
         
-        # Also inspect what the Fountain library sees
+        # Also inspect what the Fountain library sees (with preprocessing)
         from fountain.fountain import Fountain
-        f = Fountain(fountain_content)
-        print("\n--- Fountain Elements ---")
+        from src.utils.fountain_utils import preprocess_fountain
+        f_raw = preprocess_fountain(fountain_content)
+        f = Fountain(f_raw)
+        print("\n--- Preprocessed Fountain Elements ---")
         for i, element in enumerate(f.elements):
             print(f"[{i}] {element.element_type}: {repr(element.original_content)}")
-        print("--------------------------\n")
+        print("--------------------------------------\n")
         
         # Verify
         from sqlalchemy import select

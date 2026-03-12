@@ -6,6 +6,7 @@ from fountain.fountain import Fountain
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Character, Line, Scene, Script
+from src.utils.fountain_utils import preprocess_fountain
 
 logger = logging.getLogger("uvicorn")
 
@@ -13,128 +14,8 @@ logger = logging.getLogger("uvicorn")
 async def parse_fountain_and_create_models(
     script: Script, fountain_content: str, db: AsyncSession
 ) -> None:
-    # Fix for fountain library bug with empty lines in header
-    fountain_content = fountain_content.strip()
-    # Fix for fountain library bug with whitespace-only lines causing IndexError
-    fountain_content = re.sub(r"^[ \t]+$", "", fountain_content, flags=re.MULTILINE)
-
-    # Pre-process: Inject blank lines in Character blocks to ensure proper parsing
-    lines = fountain_content.splitlines()
-    processed_lines = []
-    in_char_block = False
-    is_following_char = False
-    in_metadata = True  # State to check if we are in metadata section
-
-    for line in lines:
-        stripped = line.strip()
-
-        # Metadata section ends at first blank line
-        if in_metadata:
-            if not stripped:
-                in_metadata = False
-                processed_lines.append(line)
-                continue
-            # Logic: If it looks like a heading or @ character before a blank line,
-            # metadata also ends (fountain library behavior can be complex but blank line is safest).
-            # But the metadata section is at the VERY top.
-            # If we see something starting with # or @ early, we might assume header ended,
-            # but usually a blank line is mandatory.
-            processed_lines.append(line)
-            continue
-
-        # Check for block start/end
-        if stripped.startswith("#"):
-            # Ensure blank line before header
-            if processed_lines and processed_lines[-1].strip():
-                processed_lines.append("")
-
-            # Check if this header starts a character block
-            if "登場人物" in stripped or "Characters" in stripped:
-                in_char_block = True
-                processed_lines.append(line)
-                processed_lines.append("")  # Ensure blank line after character heading
-            else:
-                in_char_block = False
-                processed_lines.append(line)
-                processed_lines.append("")  # Ensure blank line after header
-            is_following_char = False
-        elif in_char_block:
-            # Inside character block, ensure strings are separated by blank lines if not empty
-            if stripped:
-                processed_lines.append(line)
-                processed_lines.append("")  # Force blank line
-                is_following_char = False
-            else:
-                processed_lines.append(line)
-                is_following_char = False
-        else:
-            # General body processing
-
-            # Reset state on blank line
-            if not stripped:
-                is_following_char = False
-                processed_lines.append(line)
-                continue
-
-            # Synopsis marker - Ensure blank lines around it
-            if stripped.startswith("="):
-                if processed_lines and processed_lines[-1].strip():
-                    processed_lines.append("")
-                processed_lines.append(line)
-                processed_lines.append("")
-                is_following_char = False
-                continue
-
-            # Transition marker - Ensure blank lines around it
-            if stripped.startswith(">") and not stripped.startswith("> <"):
-                if processed_lines and processed_lines[-1].strip():
-                    processed_lines.append("")
-                processed_lines.append(line)
-                processed_lines.append("")
-                is_following_char = False
-                continue
-
-            # Check for Character line (@Name)
-            if stripped.startswith("@"):
-                # Ensure blank line before character if not following another character
-                if processed_lines and processed_lines[-1].strip() and not is_following_char:
-                    processed_lines.append("")
-
-                # Check if it is one-line dialogue (@Name Dialogue)
-                if " " in stripped or "　" in stripped:
-                    is_following_char = False
-                else:
-                    is_following_char = True
-
-                processed_lines.append(line)
-                continue
-
-            # Check for indented line
-            is_indented = line.startswith(" ") or line.startswith("　")
-
-            if is_indented:
-                if is_following_char:
-                    # Indented Dialogue following @Name
-                    is_following_char = False
-                    processed_lines.append(line)
-                else:
-                    # Indented Action (Togaki) - Force preservation
-                    processed_lines.append("!" + line)
-                    is_following_char = False
-            else:
-                # Normal line (Action or other)
-                if is_following_char:
-                    # Likely Dialogue following @Name (Japanese style with no indent)
-                    is_following_char = False
-                    processed_lines.append(line)
-                else:
-                    # Normal action line - ensure blank line before if it follows a special block
-                    # (e.g. following a character or dialogue without a blank line)
-                    # But be careful not to break Dialogue detection.
-                    is_following_char = False
-                    processed_lines.append(line)
-
-    fountain_content_raw = "\n".join(processed_lines)
+    # Pre-process
+    fountain_content_raw = preprocess_fountain(fountain_content)
     f = Fountain(fountain_content_raw)
     logger.info(f"Parsed {len(f.elements)} elements from Fountain content.")
 
@@ -265,7 +146,6 @@ async def parse_fountain_and_create_models(
 
     for element in f.elements:
         content_stripped = element.original_content.strip()
-
         # Act検出
         # 1. Section Heading level 1 (starts with #, not ##)
         # 2. Forced Scene Heading level 1 (starts with .1)
@@ -395,6 +275,14 @@ async def parse_fountain_and_create_models(
                 continue
 
             if is_synopsis:
+                # すでにSynopsisシーンが開いている場合は、新しく作らずにそのまま継続する
+                if current_scene and current_scene.scene_number == 0:
+                    logger.info(f"Continuing existing Synopsis (Scene #0) for: {content_stripped}")
+                    collecting_description = True
+                    current_character = None
+                    last_scene_was_section = is_section_scene
+                    continue
+
                 current_scene_number = 0
                 current_act_number = None  # Synopsis should not belong to any Act
                 logger.info(f"Found Synopsis (Scene #0): {content_stripped}")
@@ -437,19 +325,16 @@ async def parse_fountain_and_create_models(
             last_scene_was_section = is_section_scene
 
         elif element.element_type == "Character":
-            # 登場人物検出 -> 説明収集終了（あらすじ以外）
-            if current_scene and current_scene.scene_number != 0:
-                collecting_description = False
-            else:
-                # あらすじシーン（#0）なら継続
-                pass
-            last_scene_was_section = False
-
-            # セリフを言う登場人物
             char_name = content_stripped
             if char_name.startswith("@"):
                 char_name = char_name[1:]
+            
+            if current_scene and current_scene.scene_number != 0:
+                collecting_description = False
+
             current_character = character_map.get(char_name)
+            last_scene_was_section = False
+            continue
 
         elif element.element_type in [
             "Action",
@@ -457,6 +342,7 @@ async def parse_fountain_and_create_models(
             "Parenthetical",
             "Transition",
             "Centered Text",
+            "Empty Line", 
         ]:
             # ト書き、あらすじ、括弧書き、移行、中央揃え
             content = element.original_content.rstrip()
@@ -472,11 +358,32 @@ async def parse_fountain_and_create_models(
                     marker_removed_content = marker_removed_content[1:-1].strip()
                 elif marker_removed_content.startswith(">"):
                     marker_removed_content = marker_removed_content[1:].strip()
+            
+            # Parenthetical等の余計な空白を除去 (元の実装との互換性のため、保存内容はstripする)
+            if element.element_type in ["Parenthetical", "Transition"]:
+                marker_removed_content = marker_removed_content.strip()
 
             stripped_content = marker_removed_content.strip()
 
+            # 空行であっても、あらすじ収集中の場合は改行として扱いたい（ただし連続改行は防ぐ）
             if not stripped_content:
+                if current_scene and current_scene.scene_number == 0 and current_scene.description and not current_scene.description.endswith("\n"):
+                     current_scene.description += "\n"
                 continue
+
+            # もしシーン見出しより前にテキストが出てきた場合、自動的にあらすじシーンを作成
+            if not current_scene and element.element_type != "Empty Line":
+                current_scene = Scene(
+                    id=uuid.uuid4(),
+                    script_id=script.id,
+                    scene_number=0,
+                    act_number=None,
+                    heading="Synopsis",
+                    description="",
+                )
+                db.add(current_scene)
+                collecting_description = True
+                logger.info(f"Automatically created Synopsis (Scene #0) for {element.element_type} before heading.")
 
             # 一行セリフの判定 (@Name Dialogue) - Action の場合のみ
             if (
@@ -515,8 +422,9 @@ async def parse_fountain_and_create_models(
                         # あらすじシーンなら説明にも追加
                         if current_scene.scene_number == 0:
                             if current_scene.description:
+                                separator = "" if current_scene.description.endswith("\n") else "\n"
                                 current_scene.description += (
-                                    f"\n{char_name_raw}: {dialogue_content}"
+                                    f"{separator}{char_name_raw}: {dialogue_content}"
                                 )
                             else:
                                 current_scene.description = (
@@ -544,67 +452,57 @@ async def parse_fountain_and_create_models(
                         db.add(line)
 
             else:
-                # 通常のト書き、あらすじ、またはその他の要素
+                # 通常のト書き、またはその他の要素
                 if current_scene:
-                    # シーン冒頭のあらすじやト書きを詳細記述として収集
-                    # シーン番号0（あらすじ）の場合は、要素タイプに関わらず全て収集する
-                    is_synopsis_scene = current_scene.scene_number == 0
-                    if is_synopsis_scene or (
-                        collecting_description and element.element_type in ["Action", "Synopsis"]
-                    ):
+                    if current_scene.scene_number == 0:
+                        if current_scene.description:
+                            current_scene.description += "\n" + marker_removed_content
+                        else:
+                            current_scene.description = marker_removed_content
+                    elif collecting_description and element.element_type in ["Action", "Synopsis"]:
                         if current_scene.description:
                             current_scene.description += "\n" + stripped_content
                         else:
                             current_scene.description = stripped_content
                     else:
-                        # 最初のト書きセクション以外、または非Action/Synopsis要素が来たら収集終了
-                        # ただし、あらすじ（シーン0）の場合は収集全般を継続する
-                        if current_scene.scene_number != 0:
-                            collecting_description = False
+                        collecting_description = False
 
                     line_order += 1
-                    # 括弧書きの場合は、直前のキャラクターに紐付ける
                     line_character_id = None
                     if element.element_type == "Parenthetical" and current_character:
                         line_character_id = current_character.id
 
-                    line = Line(
+                    db.add(Line(
                         scene_id=current_scene.id,
                         character_id=line_character_id,
                         content=marker_removed_content,
                         order=line_order,
-                    )
-                    db.add(line)
-
-                # 通常のト書きの場合、Sectionからの結合フラグはリセットしない
-                # (Sectionの見出しの後にト書きが続いてから。シーン見出しが来るケースを許容するため)
+                    ))
+                last_scene_was_section = False
                 pass
 
         elif element.element_type == "Dialogue":
-            # Description collection ends（あらすじ以外）
-            if current_scene and current_scene.scene_number != 0:
+            dialogue_text = content_stripped
+            if current_scene and current_scene.scene_number == 0:
+                # Format as "Name: Text"
+                name = current_character.name if current_character else "CHARACTER"
+                formatted = f"{name}: {dialogue_text}"
+                if current_scene.description:
+                    current_scene.description += "\n" + formatted
+                else:
+                    current_scene.description = formatted
+            elif current_scene:
                 collecting_description = False
-            last_scene_was_section = False
 
-            # セリフ
-            if current_scene and current_character:
-                # あらすじシーンなら説明にも追加
-                if current_scene.scene_number == 0:
-                    dialogue_text = element.original_content.strip()
-                    if current_scene.description:
-                        current_scene.description += (
-                            f"\n{current_character.name}: {dialogue_text}"
-                        )
-                    else:
-                        current_scene.description = f"{current_character.name}: {dialogue_text}"
-
+            if current_scene:
                 line_order += 1
-                line = Line(
+                db.add(Line(
                     scene_id=current_scene.id,
-                    character_id=current_character.id,
-                    content=element.original_content.strip(),
-                    order=line_order,
-                )
-                db.add(line)
+                    character_id=current_character.id if current_character else None,
+                    content=dialogue_text,
+                    order=line_order
+                ))
+            last_scene_was_section = False
+            continue
 
     await db.flush()

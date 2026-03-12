@@ -1,16 +1,13 @@
-# あらすじ表示不備の調査と修正
+# タスクリスト - あらすじ表示の修正
 
-あらすじが1行しか表示されない問題の原因を特定し、修正します。
-
-## タスク
-
-- [x] 原因調査
-    - [x] `fountain_parser.py` の動作確認
-    - [x] `script_processor.py` の動作確認
-    - [x] データベースに保存されているデータの確認（仕様確認により特定）
-- [x] 修正計画の作成: `docs/feature/fix-synopsis-display/implementation_plan.md`
-- [/] 実装
-    - [ ] バックエンド（解析・保存ロジック）の修正
-    - [ ] フロントエンド（表示ロジック）の調整（必要に応じて）
-- [ ] 検証
-- [ ] ドキュメント更新
+- [x] 現状の課題の特定と再現スクリプト (`repro_synopsis.py`) の作成
+- [x] `backend/src/utils/fountain_utils.py` の修正
+  - [x] あらすじセクション内での強制 `=` プレフィックス付与の削除
+- [x] `backend/src/services/fountain_parser.py` の修正
+  - [x] シーン#0 における全要素（Character, Dialogue, Action, Parenthetical 等）の説明文への集約ロジックの実装
+  - [x] セリフの整形（"名前: セリフ"）
+  - [x] シーン#0 でのキャラクター名単体追加のスキップ（重複防止）
+  - [x] 不要なデバッグプリントの削除
+- [x] 再現スクリプトによる動作確認
+- [x] `docs/feature/fix-synopsis-display/` へのドキュメント作成
+- [ ] プルリクエストの作成とマージ

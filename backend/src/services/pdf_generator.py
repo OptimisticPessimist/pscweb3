@@ -4,6 +4,7 @@ from collections import namedtuple
 
 from playscript import PScLineType
 from playscript.conv import fountain
+from src.utils.fountain_utils import preprocess_fountain
 from reportlab.lib.pagesizes import A4, A5, landscape, portrait
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
@@ -755,6 +756,9 @@ def generate_script_pdf(
         PDF バイナリデータ
     """
     from fountain.fountain import Fountain
+
+    # Pre-process
+    fountain_content = preprocess_fountain(fountain_content)
 
     # Standard parsing
     f_parser = Fountain(fountain_content)
