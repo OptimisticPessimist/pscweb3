@@ -68,19 +68,19 @@ async def parse_fountain_and_create_models(
                 logger.info("Found Character Definition Section")
             else:
                 in_character_section = False
+        elif element.element_type == "Scene Heading":
+            in_character_section = False
 
         # セクション内の要素を解析
         elif in_character_section and element.element_type in ["Action", "Character", "Dialogue"]:
-            # Action要素内の各行を処理（Fountainパーサーが複数行を1つのActionとしてまとめる場合があるため）
-            # ! で始まる場合は除去する (前処理で追加された場合)
-            if content.startswith("!"):
-                content = content[1:]
-
             lines = content.splitlines()
             for line in lines:
                 line = line.strip()
                 if not line:
                     continue
+                # ! で始まる場合は除去する (前処理で追加された場合)
+                if line.startswith("!"):
+                    line = line[1:].strip()
 
                 # "Name: Description" 形式を探す (コロン区切り)。なければ名前のみ
                 if ":" in line:
@@ -107,8 +107,11 @@ async def parse_fountain_and_create_models(
                     character_map[name_part] = character
                     current_order_index += 1
                     logger.info(
-                        f"Added character from section: {name_part} (order: {current_order_index - 1})"
+                        f"Added character from section: [{name_part}] (order: {current_order_index - 1})"
                     )
+
+        else:
+            pass
 
     # 2. 本文からその他のキャラクターを登場順に抽出
     in_character_section = False
@@ -121,8 +124,13 @@ async def parse_fountain_and_create_models(
                 in_character_section = True
             else:
                 in_character_section = False
+        elif element.element_type == "Scene Heading":
+            in_character_section = False
 
-        elif not in_character_section and element.element_type == "Character":
+        if in_character_section:
+            continue
+
+        if element.element_type == "Character":
             char_name = content
             if char_name.startswith("@"):
                 char_name = char_name[1:]
@@ -143,6 +151,8 @@ async def parse_fountain_and_create_models(
     current_character: Character | None = None
     collecting_description = False
     last_scene_was_section = False  # 節（Section Heading）でシーンが作成されたかのフラグ
+    in_ignored_section = False
+    synopsis_scene_already_exists = False
 
     for element in f.elements:
         content_stripped = element.original_content.strip()
@@ -192,6 +202,8 @@ async def parse_fountain_and_create_models(
             # 幕が変わったら収集を停止（前のシーンのあらすじに継続させない）
             collecting_description = False
             current_scene = None  # Ensure text before first scene of new act doesn't append to previous act's scene
+            current_character = None
+            last_scene_was_section = False
 
             # "登場人物" や "Character" は幕としてカウントしない
             if "登場人物" in heading_content or "Character" in heading_content:
@@ -235,14 +247,21 @@ async def parse_fountain_and_create_models(
             is_valid_scene_heading = False
             is_section_scene = False
             collecting_description = False
+            in_ignored_section = True
+            current_scene = None
+            continue
 
         # 見出し（Section Heading）だが、ActでもSceneでもない場合は収集を停止
         if element.element_type == "Section Heading" and not (is_section_act or is_section_scene):
             collecting_description = False
             current_scene = None
+            # ActかSceneでない Section Heading が来たら、ignored_section を継続するか検討
+            # 通常はここでも in_ignored_section = False で良い（登場人物以外のセクション）
+            in_ignored_section = False
 
         if is_valid_scene_heading or is_section_scene:
             # 新しいシーン
+            in_ignored_section = False
 
             # Check for Synopsis
             SYNOPSIS_KEYWORDS = ["あらすじ", "Synopsis", "synopsis", "SYNOPSIS", "줄거리", "梗概"]
@@ -275,16 +294,28 @@ async def parse_fountain_and_create_models(
                 continue
 
             if is_synopsis:
-                # すでにSynopsisシーンが開いている場合は、新しく作らずにそのまま継続する
-                if current_scene and current_scene.scene_number == 0:
+                if synopsis_scene_already_exists and current_scene and current_scene.scene_number == 0:
                     logger.info(f"Continuing existing Synopsis (Scene #0) for: {content_stripped}")
                     collecting_description = True
                     current_character = None
                     last_scene_was_section = is_section_scene
                     continue
-
+                
+                # すでに別の（以前の）Synopsisがある場合は、それに追加したいが、
+                # ここでは新しく作らずに既存のものを探すか、後続で処理。
+                # 基本的に一つにまとめる。
+                if synopsis_scene_already_exists:
+                    # 既に作られているならそれを使う
+                     current_scene_number = 0
+                     # Re-use existing synopsis_scene object if we had it, but here we just continue
+                     # we need the object. But let's just create a new one for now if not current,
+                     # or better, just always use scene_number 0.
+                     pass 
+                
                 current_scene_number = 0
-                current_act_number = None  # Synopsis should not belong to any Act
+                synopsis_scene_already_exists = True
+                # current_act_number = None  <-- DO NOT set to None here if we want to preserve it for next scenes
+                # Actually, Synopsis shouldn't belong to an Act, but it shouldn't CLEAR the counter either.
                 logger.info(f"Found Synopsis (Scene #0): {content_stripped}")
             else:
                 scene_number += 1
@@ -325,6 +356,9 @@ async def parse_fountain_and_create_models(
             last_scene_was_section = is_section_scene
 
         elif element.element_type == "Character":
+            if in_ignored_section:
+                continue
+                
             char_name = content_stripped
             if char_name.startswith("@"):
                 char_name = char_name[1:]
@@ -371,8 +405,10 @@ async def parse_fountain_and_create_models(
                      current_scene.description += "\n"
                 continue
 
-            # もしシーン見出しより前にテキストが出てきた場合、自動的にあらすじシーンを作成
             if not current_scene and element.element_type != "Empty Line":
+                if in_ignored_section or synopsis_scene_already_exists:
+                    continue
+                    
                 current_scene = Scene(
                     id=uuid.uuid4(),
                     script_id=script.id,
@@ -382,6 +418,7 @@ async def parse_fountain_and_create_models(
                     description="",
                 )
                 db.add(current_scene)
+                synopsis_scene_already_exists = True
                 collecting_description = True
                 logger.info(f"Automatically created Synopsis (Scene #0) for {element.element_type} before heading.")
 
@@ -478,10 +515,16 @@ async def parse_fountain_and_create_models(
                         content=marker_removed_content,
                         order=line_order,
                     ))
-                last_scene_was_section = False
+                
+                # Check for merge break
+                if element.element_type not in ["Empty Line", "Action"]:
+                    last_scene_was_section = False
                 pass
 
         elif element.element_type == "Dialogue":
+            if in_ignored_section:
+                continue
+                
             dialogue_text = content_stripped
             if current_scene and current_scene.scene_number == 0:
                 # Format as "Name: Text"

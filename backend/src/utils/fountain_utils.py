@@ -16,6 +16,7 @@ def preprocess_fountain(fountain_content: str) -> str:
     in_char_block = False
     is_following_char = False
     is_in_synopsis_section = False
+    is_in_character_section = False
     in_metadata = True
 
     for line in lines:
@@ -28,7 +29,7 @@ def preprocess_fountain(fountain_content: str) -> str:
                 processed_lines.append(line)
                 continue
             # If a heading starts before metadata ends, end metadata
-            if stripped.startswith("#") or any(stripped.startswith(x) for x in ["INT.", "EXT.", "INT/EXT", "I/E"]):
+            if stripped.startswith(("#", ".")) or any(stripped.startswith(x) for x in ["INT.", "EXT.", "INT/EXT", "I/E"]):
                 in_metadata = False
             else:
                 processed_lines.append(line)
@@ -43,19 +44,35 @@ def preprocess_fountain(fountain_content: str) -> str:
         # Element Specific Processing
         
         # 1. Section/Scene Headings
-        if stripped.startswith("#"):
+        if stripped.startswith(("#", ".")) or any(stripped.startswith(x) for x in ["INT.", "EXT.", "INT/EXT", "I/E"]):
             if processed_lines and processed_lines[-1].strip():
                 processed_lines.append("")
             
-            # Check if this is a synopsis section
-            if any(k in stripped for k in ["あらすじ", "Synopsis", "synopsis", "줄거리", "梗概"]):
+            # Check if this is a synopsis section or character section
+            if stripped.startswith("#") and any(k in stripped for k in ["あらすじ", "Synopsis", "synopsis", "줄거리", "梗概"]):
                 is_in_synopsis_section = True
+                is_in_character_section = False
+            elif stripped.startswith("#") and any(k in stripped for k in ["登場人物", "Character", "Characters"]):
+                is_in_character_section = True
+                is_in_synopsis_section = False
             else:
                 is_in_synopsis_section = False
+                is_in_character_section = False
             
             processed_lines.append(line)
             processed_lines.append("") # Ensure blank line after heading
             is_following_char = False
+            continue
+
+        # 1.5. Character Section Processing
+        if is_in_character_section:
+            if processed_lines and processed_lines[-1].strip():
+                processed_lines.append("") # MUST ADD BLANK LINE for fountain-python to see both
+            
+            if not stripped.startswith("!"):
+                processed_lines.append("!" + line)
+            else:
+                processed_lines.append(line)
             continue
 
         # 2. Synopsis Marker
@@ -80,10 +97,15 @@ def preprocess_fountain(fountain_content: str) -> str:
             if processed_lines and processed_lines[-1].strip():
                 processed_lines.append("")
             
-            if " " in stripped or "　" in stripped:
-                # One-line dialogue (@Name Text)
-                processed_lines.append(line)
-                is_following_char = False
+            # Smart split for one-line dialogue
+            match = re.match(r"^@([^\s　]+)[\s　]+([^（(].*)$", stripped)
+            if match:
+                # (@Name Dialogue) and Dialogue doesn't start with (
+                name = match.group(1)
+                dialogue = match.group(2)
+                processed_lines.append(f"@{name}")
+                processed_lines.append(dialogue)
+                is_following_char = True
             else:
                 # Standard character header
                 processed_lines.append(line)
@@ -97,7 +119,8 @@ def preprocess_fountain(fountain_content: str) -> str:
             continue
 
         # 6. Standard Character detection (uppercase)
-        is_all_caps = stripped.isupper() and any(c.isalpha() for c in stripped)
+        # Avoid matching definitions like "NAME: Description" as characters
+        is_all_caps = stripped.isupper() and any(c.isalpha() for c in stripped) and ":" not in stripped
         if is_all_caps:
             if processed_lines and processed_lines[-1].strip():
                 processed_lines.append("")
@@ -112,7 +135,7 @@ def preprocess_fountain(fountain_content: str) -> str:
             if not stripped.startswith("("):
                 processed_lines.append("")
         
-        if stripped.startswith("(") or stripped.startswith("!"):
+        if stripped.startswith(("(", "!", "@", ">", ".")) or any(stripped.startswith(x) for x in ["INT.", "EXT.", "INT/EXT", "I/E"]):
             processed_lines.append(line)
         else:
             processed_lines.append("!" + line)
