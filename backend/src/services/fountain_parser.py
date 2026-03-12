@@ -44,6 +44,10 @@ async def parse_fountain_and_create_models(
 
         # Check for block start/end
         if stripped.startswith("#"):
+            # Ensure blank line before header
+            if processed_lines and processed_lines[-1].strip():
+                processed_lines.append("")
+
             # Check if this header starts a character block
             if "登場人物" in stripped or "Characters" in stripped:
                 in_char_block = True
@@ -52,6 +56,7 @@ async def parse_fountain_and_create_models(
             else:
                 in_char_block = False
                 processed_lines.append(line)
+                processed_lines.append("")  # Ensure blank line after header
             is_following_char = False
         elif in_char_block:
             # Inside character block, ensure strings are separated by blank lines if not empty
@@ -71,10 +76,31 @@ async def parse_fountain_and_create_models(
                 processed_lines.append(line)
                 continue
 
+            # Synopsis marker - Ensure blank lines around it
+            if stripped.startswith("="):
+                if processed_lines and processed_lines[-1].strip():
+                    processed_lines.append("")
+                processed_lines.append(line)
+                processed_lines.append("")
+                is_following_char = False
+                continue
+
+            # Transition marker - Ensure blank lines around it
+            if stripped.startswith(">") and not stripped.startswith("> <"):
+                if processed_lines and processed_lines[-1].strip():
+                    processed_lines.append("")
+                processed_lines.append(line)
+                processed_lines.append("")
+                is_following_char = False
+                continue
+
             # Check for Character line (@Name)
             if stripped.startswith("@"):
+                # Ensure blank line before character if not following another character
+                if processed_lines and processed_lines[-1].strip() and not is_following_char:
+                    processed_lines.append("")
+
                 # Check if it is one-line dialogue (@Name Dialogue)
-                # If it has space/full-width space, it is one-line dialogue -> Dialogue consumes Character immediately
                 if " " in stripped or "　" in stripped:
                     is_following_char = False
                 else:
@@ -89,7 +115,6 @@ async def parse_fountain_and_create_models(
             if is_indented:
                 if is_following_char:
                     # Indented Dialogue following @Name
-                    # Do nothing to preserve as Dialogue (fountain will strip indent but that's standard behavior)
                     is_following_char = False
                     processed_lines.append(line)
                 else:
@@ -99,17 +124,18 @@ async def parse_fountain_and_create_models(
             else:
                 # Normal line (Action or other)
                 if is_following_char:
-                    # This is likely Dialogue following @Name (Japanese style with no indent)
-                    # Keep it as is, but consume the flag
+                    # Likely Dialogue following @Name (Japanese style with no indent)
                     is_following_char = False
                     processed_lines.append(line)
                 else:
+                    # Normal action line - ensure blank line before if it follows a special block
+                    # (e.g. following a character or dialogue without a blank line)
+                    # But be careful not to break Dialogue detection.
                     is_following_char = False
                     processed_lines.append(line)
 
-    fountain_content = "\n".join(processed_lines)
-
-    f = Fountain(fountain_content)
+    fountain_content_raw = "\n".join(processed_lines)
+    f = Fountain(fountain_content_raw)
     logger.info(f"Parsed {len(f.elements)} elements from Fountain content.")
 
     # メタデータの抽出と保存
@@ -412,6 +438,9 @@ async def parse_fountain_and_create_models(
             # 登場人物検出 -> 説明収集終了（あらすじ以外）
             if current_scene and current_scene.scene_number != 0:
                 collecting_description = False
+            else:
+                # あらすじシーン（#0）なら継続
+                pass
             last_scene_was_section = False
 
             # セリフを言う登場人物
@@ -481,6 +510,17 @@ async def parse_fountain_and_create_models(
                     char_obj = character_map[char_name_raw]
 
                     if current_scene:
+                        # あらすじシーンなら説明にも追加
+                        if current_scene.scene_number == 0:
+                            if current_scene.description:
+                                current_scene.description += (
+                                    f"\n{char_name_raw}: {dialogue_content}"
+                                )
+                            else:
+                                current_scene.description = (
+                                    f"{char_name_raw}: {dialogue_content}"
+                                )
+
                         line_order += 1
                         line = Line(
                             scene_id=current_scene.id,
@@ -505,7 +545,11 @@ async def parse_fountain_and_create_models(
                 # 通常のト書き、あらすじ、またはその他の要素
                 if current_scene:
                     # シーン冒頭のあらすじやト書きを詳細記述として収集
-                    if collecting_description and element.element_type in ["Action", "Synopsis"]:
+                    # シーン番号0（あらすじ）の場合は、要素タイプに関わらず全て収集する
+                    is_synopsis_scene = current_scene.scene_number == 0
+                    if is_synopsis_scene or (
+                        collecting_description and element.element_type in ["Action", "Synopsis"]
+                    ):
                         if current_scene.description:
                             current_scene.description += "\n" + stripped_content
                         else:
@@ -540,6 +584,16 @@ async def parse_fountain_and_create_models(
 
             # セリフ
             if current_scene and current_character:
+                # あらすじシーンなら説明にも追加
+                if current_scene.scene_number == 0:
+                    dialogue_text = element.original_content.strip()
+                    if current_scene.description:
+                        current_scene.description += (
+                            f"\n{current_character.name}: {dialogue_text}"
+                        )
+                    else:
+                        current_scene.description = f"{current_character.name}: {dialogue_text}"
+
                 line_order += 1
                 line = Line(
                     scene_id=current_scene.id,
