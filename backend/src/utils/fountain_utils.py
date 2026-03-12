@@ -1,5 +1,5 @@
-
 import re
+
 
 def preprocess_fountain(fountain_content: str) -> str:
     """Fountainテキストのパース前の前処理.

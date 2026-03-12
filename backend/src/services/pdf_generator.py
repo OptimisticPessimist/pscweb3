@@ -4,13 +4,14 @@ from collections import namedtuple
 
 from playscript import PScLineType
 from playscript.conv import fountain
-from src.utils.fountain_utils import preprocess_fountain
 from reportlab.lib.pagesizes import A4, A5, landscape, portrait
 from reportlab.lib.units import cm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+
+from src.utils.fountain_utils import preprocess_fountain
 
 # Font registration logic (kept from previous version)
 try:

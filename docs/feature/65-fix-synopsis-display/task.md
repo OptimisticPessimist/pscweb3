@@ -1,16 +1,13 @@
-# あらすじ表示不備の修正タスク
+# タスクリスト - あらすじ表示の修正
 
-- [x] 現象の再現と原因特定 (Scene #0 における要素収集漏れの確認)
-- [/] Fountainパーサー (`fountain_parser.py`) の修正
-    - [x] Scene #0 で登場人物、セリフ、括弧書きを `description` に追加するロジックの実装
-    - [x] 括弧書き (`Parenthetical`) の保存内容から不要な空白を削除
-- [/] 前処理ロジック (`fountain_utils.py`) の修正
-    - [x] 全大文字の行（キャラクター名候補）に強制的に `!` を付与しないように調整
-- [ ] 修正内容の検証
-    - [ ] 再現スクリプト (`repro_synopsis.py`) の実行確認
-    - [ ] 単体テスト (`test_fountain_preservation.py`) の実行確認
-- [ ] ドキュメント作成
-    - [x] `task.md` の作成
-    - [x] `implementation_plan.md` の作成
-    - [ ] `walkthrough.md` の作成
-- [ ] コードレビューとマージ
+- [x] 現状の課題の特定と再現スクリプト (`repro_synopsis.py`) の作成
+- [x] `backend/src/utils/fountain_utils.py` の修正
+  - [x] あらすじセクション内での強制 `=` プレフィックス付与の削除
+- [x] `backend/src/services/fountain_parser.py` の修正
+  - [x] シーン#0 における全要素（Character, Dialogue, Action, Parenthetical 等）の説明文への集約ロジックの実装
+  - [x] セリフの整形（"名前: セリフ"）
+  - [x] シーン#0 でのキャラクター名単体追加のスキップ（重複防止）
+  - [x] 不要なデバッグプリントの削除
+- [x] 再現スクリプトによる動作確認
+- [x] `docs/feature/65-fix-synopsis-display/` へのドキュメント作成
+- [x] プルリクエストの作成とマージ
