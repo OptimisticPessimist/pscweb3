@@ -373,6 +373,7 @@ async def parse_fountain_and_create_models(
                 is_valid_scene_heading
                 and last_scene_was_section
                 and current_scene
+                and current_scene.scene_number != 0
                 and not is_synopsis
             ):
                 heading_text = content_stripped
@@ -575,7 +576,9 @@ async def parse_fountain_and_create_models(
                     )
                     db.add(line)
 
-                last_scene_was_section = False
+                # 通常のト書きの場合、Sectionからの結合フラグはリセットしない
+                # (Sectionの見出しの後にト書きが続いてから。シーン見出しが来るケースを許容するため)
+                pass
 
         elif element.element_type == "Dialogue":
             # Description collection ends（あらすじ以外）
