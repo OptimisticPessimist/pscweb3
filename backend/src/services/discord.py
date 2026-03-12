@@ -1,7 +1,8 @@
 """Discord通知サービス."""
 
-import httpx
 from typing import Any
+
+import httpx
 from structlog import get_logger
 
 from src.config import settings
