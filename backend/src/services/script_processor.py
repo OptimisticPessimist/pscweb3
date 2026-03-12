@@ -444,4 +444,20 @@ async def process_script_upload(
 
     await db.commit()  # 全て一括で保存
 
+    # Responseのために再取得 (MissingGreenletエラー回避)
+    stmt = (
+        select(Script)
+        .where(Script.id == script.id)
+        .options(
+            selectinload(Script.characters).selectinload(Character.castings),
+            selectinload(Script.scenes).options(
+                selectinload(Scene.lines).options(
+                    selectinload(Line.character).selectinload(Character.castings)
+                )
+            ),
+        )
+    )
+    result = await db.execute(stmt)
+    script = result.scalar_one()
+
     return script, is_update
