@@ -22,7 +22,8 @@ class DiscordService:
         max_retries = 3
         retry_count = 0
 
-        async with httpx.AsyncClient() as client:
+        # ファイルアップロードが含まれる場合があるため、タイムアウトを長めに設定（60秒）
+        async with httpx.AsyncClient(timeout=60.0) as client:
             while True:
                 try:
                     response = await client.request(method, url, **kwargs)
