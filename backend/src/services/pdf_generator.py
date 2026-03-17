@@ -104,6 +104,8 @@ class CustomPageMan:
                     if len(remaining) > max_len and remaining[max_len] == "」":
                         max_len -= 2
                     max_len = max(1, max_len)
+                if max_len > 0 and max_len < len(remaining) and remaining[max_len - 1] == "…" and remaining[max_len] == "…":
+                    max_len = max(1, max_len - 1)
                 total += 1
                 remaining = remaining[max_len:]
                 is_first_column = False
@@ -148,6 +150,8 @@ class CustomPageMan:
             max_len += 1
             if len(text) > max_len and text[max_len] == "」":
                 max_len -= 2
+        if max_len > 0 and max_len < len(text) and text[max_len - 1] == "…" and text[max_len] == "…":
+            max_len = max(1, max_len - 1)
 
         if is_bold:
             # Use low-level PDF operations for fake bold
@@ -214,18 +218,17 @@ class CustomPageMan:
         l_idx = self._draw_single_line(l_idx, chead_line.text, indent=indent)
         return l_idx
 
-    def draw_character(self, l_idx, char_line):
-        name = char_line.name.lstrip("!")
-        text = char_line.text if hasattr(char_line, "text") else ""
-        if text:
-            if len(name) < 2:
-                name += "　"
-            text = name + "　" + text
-        else:
-            text = name
+    def draw_character(self, l_idx, char_line, name_col_width=4):
+        name = char_line.name.lstrip("!").rstrip("：")
+        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+        padded_name = name + "　" * max(0, name_col_width - len(name))
         first_indent = self.font_size * 7
-        indent = self.font_size * 10
-        l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
+        desc_indent = first_indent + (name_col_width + 1) * self.font_size
+        if text:
+            combined = padded_name + "　" + text
+        else:
+            combined = padded_name
+        l_idx = self._draw_lines(l_idx, combined, indent=desc_indent, first_indent=first_indent)
         return l_idx
 
     def draw_slugline(self, l_idx, hx_line, number=None, border=False):
@@ -348,6 +351,8 @@ class HorizontalPageMan:
                     if cut < len(remaining) and remaining[cut] == "」":
                         cut -= 2
                     cut = max(1, cut)
+                if cut > 0 and cut < len(remaining) and remaining[cut - 1] == "…" and remaining[cut] == "…":
+                    cut = max(1, cut - 1)
                 total += 1
                 remaining = remaining[cut:]
         return max(total, 1)
@@ -394,20 +399,28 @@ class HorizontalPageMan:
 
         self.current_y -= self.line_height
 
-    def _draw_wrapped_text(self, text, x_offset=0, is_bold=False):
+    def _draw_wrapped_text(self, text, x_offset=0, cont_x_offset=None, is_bold=False):
         """テキストを折り返して複数行描画"""
-        max_chars = max(1, int(self._usable_width() - x_offset) // int(self.font_size))
+        if cont_x_offset is None:
+            cont_x_offset = x_offset
+        first = True
 
         for line_text in text.splitlines():
-            while len(line_text) > 0:
-                cut = min(max_chars, len(line_text))
-                if cut < len(line_text) and line_text[cut] in "、。」":
+            remaining = line_text
+            while len(remaining) > 0:
+                cur_x = x_offset if first else cont_x_offset
+                max_chars = max(1, int(self._usable_width() - cur_x) // int(self.font_size))
+                cut = min(max_chars, len(remaining))
+                if cut < len(remaining) and remaining[cut] in "、。」":
                     cut += 1
-                    if cut < len(line_text) and line_text[cut] == "」":
+                    if cut < len(remaining) and remaining[cut] == "」":
                         cut -= 2
                     cut = max(1, cut)
-                self._draw_text_line(line_text[:cut], x_offset=x_offset, is_bold=is_bold)
-                line_text = line_text[cut:]
+                if cut > 0 and cut < len(remaining) and remaining[cut - 1] == "…" and remaining[cut] == "…":
+                    cut = max(1, cut - 1)
+                self._draw_text_line(remaining[:cut], x_offset=cur_x, is_bold=is_bold)
+                remaining = remaining[cut:]
+                first = False
 
     def draw_title(self, ttl_line):
         """タイトルを中央に大きく描画"""
@@ -441,15 +454,18 @@ class HorizontalPageMan:
         """登場人物見出し"""
         self._draw_text_line(chead_line.text, is_bold=True)
 
-    def draw_character(self, char_line):
+    def draw_character(self, char_line, name_col_width=4):
         """登場人物"""
-        name = char_line.name.lstrip("!")
-        text = char_line.text if hasattr(char_line, "text") else ""
+        name = char_line.name.lstrip("!").rstrip("：")
+        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+        padded_name = name + "　" * max(0, name_col_width - len(name))
+        base_x = self.font_size * 2
+        desc_x = base_x + (name_col_width + 1) * self.font_size
         if text:
-            display = f"  {name}　{text}"
+            combined = padded_name + "　" + text
+            self._draw_wrapped_text(combined, x_offset=base_x, cont_x_offset=desc_x)
         else:
-            display = f"  {name}"
-        self._draw_wrapped_text(display, x_offset=self.font_size * 2)
+            self._draw_text_line(padded_name, x_offset=base_x)
 
     def draw_slugline(self, hx_line, number=None, border=False):
         """シーン見出し"""
@@ -573,6 +589,13 @@ def custom_psc_to_pdf(
 
     in_synopsis = False
 
+    # Pre-scan: 登場人物の最長役名幅を計算
+    char_name_col_width = max(
+        (len(line.name.lstrip("!").rstrip("：")) for line in psc.lines if line.type == PScLineType.CHARACTER),
+        default=2,
+    )
+    char_name_col_width = max(char_name_col_width, 2)
+
     # Pre-scan for Title/Author to ensure we handle the cover page break correctly
     # actually we can just monitor usage.
 
@@ -617,7 +640,7 @@ def custom_psc_to_pdf(
             l_idx = pm.draw_charsheadline(l_idx, psc_line)
 
         elif line_type == PScLineType.CHARACTER:
-            l_idx = pm.draw_character(l_idx, psc_line)
+            l_idx = pm.draw_character(l_idx, psc_line, name_col_width=char_name_col_width)
 
         elif line_type == PScLineType.H1:
             if in_synopsis:
@@ -726,6 +749,13 @@ def horizontal_psc_to_pdf(
     h1_count = h2_count = 0
     in_synopsis = False
 
+    # Pre-scan: 登場人物の最長役名幅を計算
+    char_name_col_width = max(
+        (len(line.name.lstrip("!").rstrip("：")) for line in psc.lines if line.type == PScLineType.CHARACTER),
+        default=2,
+    )
+    char_name_col_width = max(char_name_col_width, 2)
+
     for i, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
 
@@ -751,7 +781,7 @@ def horizontal_psc_to_pdf(
             pm.draw_charsheadline(psc_line)
 
         elif line_type == PScLineType.CHARACTER:
-            pm.draw_character(psc_line)
+            pm.draw_character(psc_line, name_col_width=char_name_col_width)
 
         elif line_type == PScLineType.H1:
             if in_synopsis:
