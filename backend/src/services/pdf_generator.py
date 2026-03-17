@@ -960,16 +960,16 @@ def generate_script_pdf(
                 author_injected = True
             else:
                 if found_title and not author_injected:
-                    author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+                    author_line = PScLine(PScLineType.AUTHOR, text=final_metadata_str)
                     new_lines.append(author_line)
                     author_injected = True
                 new_lines.append(line)
 
         if not found_title and not author_injected:
-            author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+            author_line = PScLine(PScLineType.AUTHOR, text=final_metadata_str)
             new_lines.insert(0, author_line)
         if found_title and not author_injected:
-            author_line = PScLine(type=PScLineType.AUTHOR, text=final_metadata_str)
+            author_line = PScLine(PScLineType.AUTHOR, text=final_metadata_str)
             new_lines.append(author_line)
 
         script.lines = new_lines
