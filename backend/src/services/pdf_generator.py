@@ -252,7 +252,8 @@ class CustomPageMan:
 
     def draw_direction(self, l_idx, drct_line):
         indent = self.font_size * 7
-        l_idx = self._draw_lines(l_idx, drct_line.text, indent=indent)
+        text = drct_line.text.lstrip("!")
+        l_idx = self._draw_lines(l_idx, text, indent=indent)
         return l_idx
 
     def draw_synopsis_text(self, l_idx, text):
@@ -473,7 +474,8 @@ class HorizontalPageMan:
 
     def draw_direction(self, drct_line):
         """ト書き"""
-        self._draw_wrapped_text(drct_line.text, x_offset=self.font_size * 4)
+        text = drct_line.text.lstrip("!")
+        self._draw_wrapped_text(text, x_offset=self.font_size * 4)
 
     def draw_synopsis_text(self, text):
         """あらすじテキスト"""
