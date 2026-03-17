@@ -218,18 +218,28 @@ class CustomPageMan:
         l_idx = self._draw_single_line(l_idx, chead_line.text, indent=indent)
         return l_idx
 
-    def draw_character(self, l_idx, char_line, name_col_width=4):
-        name = char_line.name.lstrip("!").rstrip("：")
-        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+    def _draw_character_entry(self, l_idx, name, text, name_col_width=4):
         padded_name = name + "　" * max(0, name_col_width - len(name))
         first_indent = self.font_size * 7
         desc_indent = first_indent + (name_col_width + 1) * self.font_size
-        if text:
-            combined = padded_name + "　" + text
+        combined = padded_name + "　" + text if text else padded_name
+        return self._draw_lines(l_idx, combined, indent=desc_indent, first_indent=first_indent)
+
+    def draw_character(self, l_idx, char_line, name_col_width=4):
+        name = char_line.name.lstrip("!").rstrip("：")
+        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+        return self._draw_character_entry(l_idx, name, text, name_col_width)
+
+    def draw_direction_as_character(self, l_idx, raw_text, name_col_width=4):
+        """登場人物セクション内のAction要素を登場人物エントリとして描画"""
+        text = raw_text.lstrip("!")
+        if "：" in text:
+            name, desc = text.split("：", 1)
+        elif "　" in text:
+            name, desc = text.split("　", 1)
         else:
-            combined = padded_name
-        l_idx = self._draw_lines(l_idx, combined, indent=desc_indent, first_indent=first_indent)
-        return l_idx
+            name, desc = text, ""
+        return self._draw_character_entry(l_idx, name.strip(), desc.strip(), name_col_width)
 
     def draw_slugline(self, l_idx, hx_line, number=None, border=False):
         l_idx = self._draw_single_line(l_idx, hx_line.text)
@@ -449,10 +459,7 @@ class HorizontalPageMan:
         """登場人物見出し"""
         self._draw_text_line(chead_line.text, is_bold=True)
 
-    def draw_character(self, char_line, name_col_width=4):
-        """登場人物"""
-        name = char_line.name.lstrip("!").rstrip("：")
-        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+    def _draw_character_entry(self, name, text, name_col_width=4):
         padded_name = name + "　" * max(0, name_col_width - len(name))
         base_x = self.font_size * 2
         desc_x = base_x + (name_col_width + 1) * self.font_size
@@ -461,6 +468,23 @@ class HorizontalPageMan:
             self._draw_wrapped_text(combined, x_offset=base_x, cont_x_offset=desc_x)
         else:
             self._draw_text_line(padded_name, x_offset=base_x)
+
+    def draw_character(self, char_line, name_col_width=4):
+        """登場人物"""
+        name = char_line.name.lstrip("!").rstrip("：")
+        text = (char_line.text if hasattr(char_line, "text") else "").lstrip("!").lstrip("：")
+        self._draw_character_entry(name, text, name_col_width)
+
+    def draw_direction_as_character(self, raw_text, name_col_width=4):
+        """登場人物セクション内のAction要素を登場人物エントリとして描画"""
+        text = raw_text.lstrip("!")
+        if "：" in text:
+            name, desc = text.split("：", 1)
+        elif "　" in text:
+            name, desc = text.split("　", 1)
+        else:
+            name, desc = text, ""
+        self._draw_character_entry(name.strip(), desc.strip(), name_col_width)
 
     def draw_slugline(self, hx_line, number=None, border=False):
         """シーン見出し"""
@@ -521,6 +545,16 @@ class HorizontalPageMan:
     def draw_empty(self):
         """空行"""
         self.current_y -= self.line_height
+
+
+def _extract_char_name(text):
+    """登場人物テキストから役名部分を抽出する"""
+    t = text.lstrip("!")
+    if "：" in t:
+        return t.split("：", 1)[0].strip()
+    if "　" in t:
+        return t.split("　", 1)[0].strip()
+    return t.strip()
 
 
 def _get_h2_letter(h2_count):
@@ -585,24 +619,30 @@ def custom_psc_to_pdf(
     l_idx = 0
 
     in_synopsis = False
+    in_character_section = False
 
-    # Pre-scan: 登場人物の最長役名幅を計算
-    char_name_col_width = max(
-        (len(line.name.lstrip("!").rstrip("：")) for line in psc.lines if line.type == PScLineType.CHARACTER),
-        default=2,
-    )
-    char_name_col_width = max(char_name_col_width, 2)
-
-    # Pre-scan for Title/Author to ensure we handle the cover page break correctly
-    # actually we can just monitor usage.
-
-    # Pre-scan for Title/Author to ensure we handle the cover page break correctly
-    # actually we can just monitor usage.
+    # Pre-scan: 登場人物の最長役名幅を計算（CHARACTER型 + 登場人物セクション内のDIRECTION型）
+    _in_char_scan = False
+    char_name_col_width = 2
+    for _line in psc.lines:
+        if _line.type == PScLineType.CHARSHEADLINE:
+            _in_char_scan = True
+        elif _line.type in (PScLineType.H1, PScLineType.H2):
+            _in_char_scan = False
+        elif _line.type == PScLineType.CHARACTER:
+            char_name_col_width = max(char_name_col_width, len(_line.name.lstrip("!").rstrip("：")))
+        elif _in_char_scan and _line.type == PScLineType.DIRECTION:
+            char_name_col_width = max(char_name_col_width, len(_extract_char_name(_line.text)))
 
     for _, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
 
-        # Check if we are entering Synopsis section
+        # セクション状態の更新
+        if line_type == PScLineType.CHARSHEADLINE:
+            in_character_section = True
+        elif line_type in (PScLineType.H1, PScLineType.H2):
+            in_character_section = False
+
         if line_type == PScLineType.H1:
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
                 in_synopsis = True
@@ -660,6 +700,8 @@ def custom_psc_to_pdf(
         elif line_type == PScLineType.DIRECTION:
             if in_synopsis:
                 l_idx = pm.draw_synopsis_text(l_idx, psc_line.text)
+            elif in_character_section:
+                l_idx = pm.draw_direction_as_character(l_idx, psc_line.text, name_col_width=char_name_col_width)
             else:
                 l_idx = pm.draw_direction(l_idx, psc_line)
 
@@ -746,15 +788,28 @@ def horizontal_psc_to_pdf(
     h1_count = h2_count = 0
     in_synopsis = False
 
-    # Pre-scan: 登場人物の最長役名幅を計算
-    char_name_col_width = max(
-        (len(line.name.lstrip("!").rstrip("：")) for line in psc.lines if line.type == PScLineType.CHARACTER),
-        default=2,
-    )
-    char_name_col_width = max(char_name_col_width, 2)
+    # Pre-scan: 登場人物の最長役名幅を計算（CHARACTER型 + 登場人物セクション内のDIRECTION型）
+    _in_char_scan2 = False
+    char_name_col_width = 2
+    for _line in psc.lines:
+        if _line.type == PScLineType.CHARSHEADLINE:
+            _in_char_scan2 = True
+        elif _line.type in (PScLineType.H1, PScLineType.H2):
+            _in_char_scan2 = False
+        elif _line.type == PScLineType.CHARACTER:
+            char_name_col_width = max(char_name_col_width, len(_line.name.lstrip("!").rstrip("：")))
+        elif _in_char_scan2 and _line.type == PScLineType.DIRECTION:
+            char_name_col_width = max(char_name_col_width, len(_extract_char_name(_line.text)))
+
+    in_character_section = False
 
     for i, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
+
+        if line_type == PScLineType.CHARSHEADLINE:
+            in_character_section = True
+        elif line_type in (PScLineType.H1, PScLineType.H2):
+            in_character_section = False
 
         if line_type == PScLineType.H1:
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
@@ -799,6 +854,8 @@ def horizontal_psc_to_pdf(
         elif line_type == PScLineType.DIRECTION:
             if in_synopsis:
                 pm.draw_synopsis_text(psc_line.text)
+            elif in_character_section:
+                pm.draw_direction_as_character(psc_line.text, name_col_width=char_name_col_width)
             else:
                 pm.draw_direction(psc_line)
 
