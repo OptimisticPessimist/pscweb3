@@ -620,6 +620,7 @@ def custom_psc_to_pdf(
 
     in_synopsis = False
     in_character_section = False
+    pending_char_name_in_section = None  # CHARACTER型で説明文が空の場合、次のDIALOGUEと結合するための保留名
 
     # Pre-scan: 登場人物の最長役名幅を計算（CHARACTER型 + 登場人物セクション内のDIRECTION型）
     _in_char_scan = False
@@ -642,6 +643,7 @@ def custom_psc_to_pdf(
             in_character_section = True
         elif line_type in (PScLineType.H1, PScLineType.H2):
             in_character_section = False
+            pending_char_name_in_section = None
 
         if line_type == PScLineType.H1:
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
@@ -678,8 +680,15 @@ def custom_psc_to_pdf(
 
         elif line_type == PScLineType.CHARACTER:
             if in_character_section:
-                raw = psc_line.name + ("　" + psc_line.text if getattr(psc_line, "text", "") else "")
-                l_idx = pm.draw_direction_as_character(l_idx, raw, name_col_width=char_name_col_width)
+                text = getattr(psc_line, "text", "")
+                if text:
+                    raw = psc_line.name + "　" + text
+                    l_idx = pm.draw_direction_as_character(l_idx, raw, name_col_width=char_name_col_width)
+                    pending_char_name_in_section = None
+                else:
+                    # 説明文が空: 次のDIALOGUE要素に説明文が来る可能性があるため保留
+                    pending_char_name_in_section = psc_line.name
+                    continue  # last_line_typeを更新せずスキップ
             else:
                 l_idx = pm.draw_character(l_idx, psc_line, name_col_width=char_name_col_width)
 
@@ -714,6 +723,12 @@ def custom_psc_to_pdf(
                 l_idx = pm.draw_synopsis_text(
                     l_idx, psc_line.text
                 )  # Strip name if it was parsed as dialogue?
+            elif in_character_section and pending_char_name_in_section is not None:
+                # CHARACTER型の説明文がDIALOGUE要素として続いた場合、登場人物エントリとして描画
+                raw = pending_char_name_in_section + "　" + psc_line.text
+                l_idx = pm.draw_direction_as_character(l_idx, raw, name_col_width=char_name_col_width)
+                pending_char_name_in_section = None
+                line_type = PScLineType.DIRECTION  # 次の要素との行間隔をDIRECTION相当にする
             else:
                 l_idx = pm.draw_dialogue(l_idx, psc_line)
 
@@ -806,6 +821,7 @@ def horizontal_psc_to_pdf(
             char_name_col_width = max(char_name_col_width, len(_extract_char_name(_line.text)))
 
     in_character_section = False
+    pending_char_name_in_section = None  # CHARACTER型で説明文が空の場合、次のDIALOGUEと結合するための保留名
 
     for i, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
@@ -814,6 +830,7 @@ def horizontal_psc_to_pdf(
             in_character_section = True
         elif line_type in (PScLineType.H1, PScLineType.H2):
             in_character_section = False
+            pending_char_name_in_section = None
 
         if line_type == PScLineType.H1:
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
@@ -838,8 +855,15 @@ def horizontal_psc_to_pdf(
 
         elif line_type == PScLineType.CHARACTER:
             if in_character_section:
-                raw = psc_line.name + ("　" + psc_line.text if getattr(psc_line, "text", "") else "")
-                pm.draw_direction_as_character(raw, name_col_width=char_name_col_width)
+                text = getattr(psc_line, "text", "")
+                if text:
+                    raw = psc_line.name + "　" + text
+                    pm.draw_direction_as_character(raw, name_col_width=char_name_col_width)
+                    pending_char_name_in_section = None
+                else:
+                    # 説明文が空: 次のDIALOGUE要素に説明文が来る可能性があるため保留
+                    pending_char_name_in_section = psc_line.name
+                    continue  # last_line_typeを更新せずスキップ
             else:
                 pm.draw_character(psc_line, name_col_width=char_name_col_width)
 
@@ -870,6 +894,12 @@ def horizontal_psc_to_pdf(
         elif line_type == PScLineType.DIALOGUE:
             if in_synopsis:
                 pm.draw_synopsis_text(psc_line.text)
+            elif in_character_section and pending_char_name_in_section is not None:
+                # CHARACTER型の説明文がDIALOGUE要素として続いた場合、登場人物エントリとして描画
+                raw = pending_char_name_in_section + "　" + psc_line.text
+                pm.draw_direction_as_character(raw, name_col_width=char_name_col_width)
+                pending_char_name_in_section = None
+                line_type = PScLineType.DIRECTION  # 次の要素との行間隔をDIRECTION相当にする
             else:
                 pm.draw_dialogue(psc_line)
 
