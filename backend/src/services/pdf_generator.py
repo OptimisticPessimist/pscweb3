@@ -492,7 +492,7 @@ class HorizontalPageMan:
         """あらすじテキスト"""
         paragraphs = text.lstrip("!").splitlines()
         indented = "\n".join("　" + p if p.strip() else p for p in paragraphs)
-        self._draw_wrapped_text(indented, x_offset=self.font_size * 2)
+        self._draw_wrapped_text(indented, x_offset=0)
 
     def draw_dialogue(self, dlg_line):
         """セリフ"""
