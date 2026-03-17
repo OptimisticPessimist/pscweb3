@@ -144,7 +144,7 @@ class CustomPageMan:
         y = self._get_line_y(indent)
 
         height = self.size.h - 2 * self.margin.h - self.upper_space - indent
-        max_len = int(height // self.font_size)
+        max_len = max(1, int(height // self.font_size))
 
         if len(text) > max_len and text[max_len] in "、。」":
             max_len += 1
