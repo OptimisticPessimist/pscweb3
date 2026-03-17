@@ -677,7 +677,11 @@ def custom_psc_to_pdf(
             l_idx = pm.draw_charsheadline(l_idx, psc_line)
 
         elif line_type == PScLineType.CHARACTER:
-            l_idx = pm.draw_character(l_idx, psc_line, name_col_width=char_name_col_width)
+            if in_character_section:
+                raw = psc_line.name + ("　" + psc_line.text if psc_line.text else "")
+                l_idx = pm.draw_direction_as_character(l_idx, raw, name_col_width=char_name_col_width)
+            else:
+                l_idx = pm.draw_character(l_idx, psc_line, name_col_width=char_name_col_width)
 
         elif line_type == PScLineType.H1:
             if in_synopsis:
@@ -833,7 +837,11 @@ def horizontal_psc_to_pdf(
             pm.draw_charsheadline(psc_line)
 
         elif line_type == PScLineType.CHARACTER:
-            pm.draw_character(psc_line, name_col_width=char_name_col_width)
+            if in_character_section:
+                raw = psc_line.name + ("　" + psc_line.text if psc_line.text else "")
+                pm.draw_direction_as_character(raw, name_col_width=char_name_col_width)
+            else:
+                pm.draw_character(psc_line, name_col_width=char_name_col_width)
 
         elif line_type == PScLineType.H1:
             if in_synopsis:
