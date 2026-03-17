@@ -237,6 +237,10 @@ class CustomPageMan:
             name, desc = text.split("：", 1)
         elif "　" in text:
             name, desc = text.split("　", 1)
+        elif ": " in text:
+            name, desc = text.split(": ", 1)
+        elif ":" in text:
+            name, desc = text.split(":", 1)
         else:
             name, desc = text, ""
         return self._draw_character_entry(l_idx, name.strip(), desc.strip(), name_col_width)
@@ -482,6 +486,10 @@ class HorizontalPageMan:
             name, desc = text.split("：", 1)
         elif "　" in text:
             name, desc = text.split("　", 1)
+        elif ": " in text:
+            name, desc = text.split(": ", 1)
+        elif ":" in text:
+            name, desc = text.split(":", 1)
         else:
             name, desc = text, ""
         self._draw_character_entry(name.strip(), desc.strip(), name_col_width)
@@ -619,6 +627,7 @@ def custom_psc_to_pdf(
     l_idx = 0
 
     in_synopsis = False
+    synopsis_buffer = []  # あらすじテキストをまとめて描画するためのバッファ
     in_character_section = False
     pending_char_name_in_section = None  # CHARACTER型で説明文が空の場合、次のDIALOGUEと結合するための保留名
 
@@ -635,12 +644,20 @@ def custom_psc_to_pdf(
         elif _in_char_scan and _line.type == PScLineType.DIRECTION:
             char_name_col_width = max(char_name_col_width, len(_extract_char_name(_line.text)))
 
+    def _flush_synopsis(pm, l_idx, buf):
+        if buf:
+            l_idx = pm.draw_synopsis_text(l_idx, "\n".join(buf))
+            buf.clear()
+        return l_idx
+
     for _, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
 
         # セクション状態の更新
         if line_type == PScLineType.CHARSHEADLINE:
+            l_idx = _flush_synopsis(pm, l_idx, synopsis_buffer)
             in_character_section = True
+            in_synopsis = False
         elif line_type in (PScLineType.H1, PScLineType.H2):
             in_character_section = False
             pending_char_name_in_section = None
@@ -649,6 +666,7 @@ def custom_psc_to_pdf(
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
                 in_synopsis = True
             else:
+                l_idx = _flush_synopsis(pm, l_idx, synopsis_buffer)
                 in_synopsis = False
 
         # 行の種類が変わったら、1行空ける (standard logic)
@@ -712,7 +730,7 @@ def custom_psc_to_pdf(
 
         elif line_type == PScLineType.DIRECTION:
             if in_synopsis:
-                l_idx = pm.draw_synopsis_text(l_idx, psc_line.text)
+                synopsis_buffer.append(psc_line.text.lstrip("!"))
             elif in_character_section:
                 l_idx = pm.draw_direction_as_character(l_idx, psc_line.text, name_col_width=char_name_col_width)
             else:
@@ -720,9 +738,7 @@ def custom_psc_to_pdf(
 
         elif line_type == PScLineType.DIALOGUE:
             if in_synopsis:
-                l_idx = pm.draw_synopsis_text(
-                    l_idx, psc_line.text
-                )  # Strip name if it was parsed as dialogue?
+                synopsis_buffer.append(psc_line.text)
             elif in_character_section and pending_char_name_in_section is not None:
                 # CHARACTER型の説明文がDIALOGUE要素として続いた場合、登場人物エントリとして描画
                 raw = pending_char_name_in_section + "　" + psc_line.text
@@ -748,6 +764,7 @@ def custom_psc_to_pdf(
 
         last_line_type = line_type
 
+    _flush_synopsis(pm, l_idx, synopsis_buffer)
     pm.close()
     return pm.pdf
 
@@ -806,6 +823,7 @@ def horizontal_psc_to_pdf(
     last_line_type = None
     h1_count = h2_count = 0
     in_synopsis = False
+    synopsis_buffer = []  # あらすじテキストをまとめて描画するためのバッファ
 
     # Pre-scan: 登場人物の最長役名幅を計算（CHARACTER型 + 登場人物セクション内のDIRECTION型）
     _in_char_scan2 = False
@@ -823,11 +841,18 @@ def horizontal_psc_to_pdf(
     in_character_section = False
     pending_char_name_in_section = None  # CHARACTER型で説明文が空の場合、次のDIALOGUEと結合するための保留名
 
+    def _flush_synopsis_h(pm, buf):
+        if buf:
+            pm.draw_synopsis_text("\n".join(buf))
+            buf.clear()
+
     for i, psc_line in enumerate(psc.lines):
         line_type = psc_line.type
 
         if line_type == PScLineType.CHARSHEADLINE:
+            _flush_synopsis_h(pm, synopsis_buffer)
             in_character_section = True
+            in_synopsis = False
         elif line_type in (PScLineType.H1, PScLineType.H2):
             in_character_section = False
             pending_char_name_in_section = None
@@ -836,6 +861,7 @@ def horizontal_psc_to_pdf(
             if "あらすじ" in psc_line.text or "Synopsis" in psc_line.text:
                 in_synopsis = True
             else:
+                _flush_synopsis_h(pm, synopsis_buffer)
                 in_synopsis = False
 
         # 行の種類が変わったら、1行空ける
@@ -885,7 +911,7 @@ def horizontal_psc_to_pdf(
 
         elif line_type == PScLineType.DIRECTION:
             if in_synopsis:
-                pm.draw_synopsis_text(psc_line.text)
+                synopsis_buffer.append(psc_line.text.lstrip("!"))
             elif in_character_section:
                 pm.draw_direction_as_character(psc_line.text, name_col_width=char_name_col_width)
             else:
@@ -893,7 +919,7 @@ def horizontal_psc_to_pdf(
 
         elif line_type == PScLineType.DIALOGUE:
             if in_synopsis:
-                pm.draw_synopsis_text(psc_line.text)
+                synopsis_buffer.append(psc_line.text)
             elif in_character_section and pending_char_name_in_section is not None:
                 # CHARACTER型の説明文がDIALOGUE要素として続いた場合、登場人物エントリとして描画
                 raw = pending_char_name_in_section + "　" + psc_line.text
@@ -914,6 +940,7 @@ def horizontal_psc_to_pdf(
 
         last_line_type = line_type
 
+    _flush_synopsis_h(pm, synopsis_buffer)
     pm.close()
     return pm.pdf
 

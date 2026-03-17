@@ -66,9 +66,7 @@ def preprocess_fountain(fountain_content: str) -> str:
 
         # 1.5. Character Section Processing
         if is_in_character_section:
-            if processed_lines and processed_lines[-1].strip():
-                processed_lines.append("") # MUST ADD BLANK LINE for fountain-python to see both
-            
+            # 空行を追加しない（psc_from_fountainは空行でセクション終了と判断するため）
             if not stripped.startswith("!"):
                 processed_lines.append("!" + line)
             else:
