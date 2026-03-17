@@ -84,6 +84,31 @@ class CustomPageMan:
         count = area_w // (self.font_size + self.line_space)
         return int(count)
 
+    def _calc_lines_needed(self, text, indent=None, first_indent=None):
+        """テキストを描画するのに必要な列数を計算する（ドライラン）"""
+        if indent is None:
+            indent = self.font_size
+        if first_indent is None:
+            first_indent = indent
+
+        total = 0
+        is_first_column = True
+        for t in text.splitlines():
+            remaining = t
+            while remaining:
+                line_indent = first_indent if is_first_column else indent
+                height = self.size.h - 2 * self.margin.h - self.upper_space - line_indent
+                max_len = max(1, int(height // self.font_size))
+                if len(remaining) > max_len and remaining[max_len] in "、。」":
+                    max_len += 1
+                    if len(remaining) > max_len and remaining[max_len] == "」":
+                        max_len -= 2
+                    max_len = max(1, max_len)
+                total += 1
+                remaining = remaining[max_len:]
+                is_first_column = False
+        return total
+
     def _init_page(self):
         if self.before_init_page:
             self.before_init_page(self)
@@ -253,6 +278,9 @@ class CustomPageMan:
         text = name + "「" + text + "」"
         first_indent = self.font_size * 1
         indent = self.font_size * 5
+        needed = self._calc_lines_needed(text, indent=indent, first_indent=first_indent)
+        if self._max_line_count() - l_idx < needed:
+            l_idx = self.force_page_break()
         l_idx = self._draw_lines(l_idx, text, indent=indent, first_indent=first_indent)
         return l_idx
 
@@ -303,6 +331,26 @@ class HorizontalPageMan:
     def _usable_height(self):
         return self.size.h - 2 * self.margin.h
 
+    def _calc_lines_needed(self, text, x_offset=0):
+        """テキストが何行になるか計算する（ドライラン）"""
+        max_chars = max(1, int(self._usable_width() - x_offset) // int(self.font_size))
+        total = 0
+        for line_text in text.splitlines():
+            if not line_text:
+                total += 1
+                continue
+            remaining = line_text
+            while remaining:
+                cut = min(max_chars, len(remaining))
+                if cut < len(remaining) and remaining[cut] in "、。」":
+                    cut += 1
+                    if cut < len(remaining) and remaining[cut] == "」":
+                        cut -= 2
+                    cut = max(1, cut)
+                total += 1
+                remaining = remaining[cut:]
+        return max(total, 1)
+
     def _init_page(self):
         if self.before_init_page:
             self.before_init_page(self)
@@ -347,17 +395,18 @@ class HorizontalPageMan:
 
     def _draw_wrapped_text(self, text, x_offset=0, is_bold=False):
         """テキストを折り返して複数行描画"""
-        max_chars = int(self._usable_width() - x_offset) // int(self.font_size)
-        if max_chars < 1:
-            max_chars = 1
+        max_chars = max(1, int(self._usable_width() - x_offset) // int(self.font_size))
 
-        lines_text = text.splitlines()
-        for line_text in lines_text:
+        for line_text in text.splitlines():
             while len(line_text) > 0:
-                self._draw_text_line(line_text[:max_chars], x_offset=x_offset, is_bold=is_bold)
-                line_text = line_text[max_chars:]
-            if not line_text and len(lines_text) > 1:
-                pass  # 改行は自動的に処理される
+                cut = min(max_chars, len(line_text))
+                if cut < len(line_text) and line_text[cut] in "、。」":
+                    cut += 1
+                    if cut < len(line_text) and line_text[cut] == "」":
+                        cut -= 2
+                    cut = max(1, cut)
+                self._draw_text_line(line_text[:cut], x_offset=x_offset, is_bold=is_bold)
+                line_text = line_text[cut:]
 
     def draw_title(self, ttl_line):
         """タイトルを中央に大きく描画"""
@@ -434,10 +483,12 @@ class HorizontalPageMan:
         """セリフ"""
         name = dlg_line.name
         text = dlg_line.text
-        # 名前を表示
+        dialogue_text = f"「{text}」"
+        total_height = self.line_height + self._calc_lines_needed(dialogue_text, x_offset=self.font_size * 4) * self.line_height
+        if self.current_y - self.margin.h < total_height:
+            self.force_page_break()
         self._draw_text_line(f"  {name}", x_offset=self.font_size * 2, is_bold=True)
-        # セリフ本文
-        self._draw_wrapped_text(f"「{text}」", x_offset=self.font_size * 4)
+        self._draw_wrapped_text(dialogue_text, x_offset=self.font_size * 4)
 
     def draw_endmark(self, endmk_line):
         """終了マーク（右寄せ）"""
