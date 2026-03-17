@@ -215,7 +215,7 @@ class CustomPageMan:
         return l_idx
 
     def draw_character(self, l_idx, char_line):
-        name = char_line.name
+        name = char_line.name.lstrip("!")
         text = char_line.text if hasattr(char_line, "text") else ""
         if text:
             if len(name) < 2:
@@ -266,7 +266,7 @@ class CustomPageMan:
         # Let's try indentation *2 (closer to top/character names) but not *7.
         # Or maybe *4?
         indent = self.font_size * 4
-        l_idx = self._draw_lines(l_idx, text, indent=indent)
+        l_idx = self._draw_lines(l_idx, text.lstrip("!"), indent=indent)
         return l_idx
 
     def draw_dialogue(self, l_idx, dlg_line):
@@ -443,7 +443,7 @@ class HorizontalPageMan:
 
     def draw_character(self, char_line):
         """登場人物"""
-        name = char_line.name
+        name = char_line.name.lstrip("!")
         text = char_line.text if hasattr(char_line, "text") else ""
         if text:
             display = f"  {name}　{text}"
@@ -479,7 +479,7 @@ class HorizontalPageMan:
 
     def draw_synopsis_text(self, text):
         """あらすじテキスト"""
-        self._draw_wrapped_text(text, x_offset=self.font_size * 2)
+        self._draw_wrapped_text(text.lstrip("!"), x_offset=self.font_size * 2)
 
     def draw_dialogue(self, dlg_line):
         """セリフ"""
