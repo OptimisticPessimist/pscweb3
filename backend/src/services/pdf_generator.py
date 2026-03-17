@@ -261,15 +261,10 @@ class CustomPageMan:
 
     def draw_synopsis_text(self, l_idx, text):
         """Draw text specifically for synopsis body"""
-        # Synopsis style:
-        # - Slightly more indented top or bottom?
-        # - Or just block indent?
-        # Let's match typical Japanese novel text or just standard indentation but distinct.
-        # Standard direction is *7. User wants it styled differently from other chapters.
-        # Let's try indentation *2 (closer to top/character names) but not *7.
-        # Or maybe *4?
         indent = self.font_size * 4
-        l_idx = self._draw_lines(l_idx, text.lstrip("!"), indent=indent)
+        paragraphs = text.lstrip("!").splitlines()
+        indented = "\n".join("　" + p if p.strip() else p for p in paragraphs)
+        l_idx = self._draw_lines(l_idx, indented, indent=indent)
         return l_idx
 
     def draw_dialogue(self, l_idx, dlg_line):
@@ -495,7 +490,9 @@ class HorizontalPageMan:
 
     def draw_synopsis_text(self, text):
         """あらすじテキスト"""
-        self._draw_wrapped_text(text.lstrip("!"), x_offset=self.font_size * 2)
+        paragraphs = text.lstrip("!").splitlines()
+        indented = "\n".join("　" + p if p.strip() else p for p in paragraphs)
+        self._draw_wrapped_text(indented, x_offset=self.font_size * 2)
 
     def draw_dialogue(self, dlg_line):
         """セリフ"""
