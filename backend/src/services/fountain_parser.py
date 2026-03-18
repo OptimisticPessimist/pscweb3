@@ -73,7 +73,7 @@ async def parse_fountain_and_create_models(
 
         # セクション内の要素を解析
         elif in_character_section and element.element_type in ["Action", "Character", "Dialogue"]:
-            lines = content.splitlines()
+            lines = (element.element_text or content).splitlines()
             for line in lines:
                 line = line.strip()
                 if not line:
