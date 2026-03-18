@@ -85,13 +85,9 @@ export const ScriptUploadPage: React.FC = () => {
             // Extract metadata
             const { extractedTitle, extractedAuthor } = await extractMetadata(uploadedFile);
 
-            // Auto-fill title from metadata or filename if empty
+            // Auto-fill title from filename if empty
             if (!title) {
-                if (extractedTitle) {
-                    setTitle(extractedTitle);
-                } else {
-                    setTitle(uploadedFile.name.replace('.fountain', ''));
-                }
+                setTitle(uploadedFile.name.replace(/\.fountain$/i, ''));
             }
 
             // Auto-fill author if empty

@@ -18,7 +18,7 @@ interface UploadFormData {
 
 export const ScriptUploadModal = ({ projectId, isOpen, onClose, initialTitle }: ScriptUploadModalProps) => {
     const queryClient = useQueryClient();
-    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<UploadFormData>();
+    const { register, handleSubmit, reset, setValue, getValues, formState: { errors } } = useForm<UploadFormData>();
     const [uploadError, setUploadError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -110,6 +110,12 @@ export const ScriptUploadModal = ({ projectId, isOpen, onClose, initialTitle }: 
                                                 required: 'File is required',
                                                 validate: {
                                                     isFountain: files => files?.[0]?.name.endsWith('.fountain') || 'Only .fountain files are allowed'
+                                                },
+                                                onChange: (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file && !getValues('title')) {
+                                                        setValue('title', file.name.replace(/\.fountain$/i, ''));
+                                                    }
                                                 }
                                             })}
                                             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
