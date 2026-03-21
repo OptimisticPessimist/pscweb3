@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -6,8 +6,6 @@ import { projectsApi } from '@/features/projects/api/projects';
 import {
     Calendar,
     Clock,
-    Plus,
-    Trash2,
     ChevronLeft,
     Send,
     Shield,
@@ -16,12 +14,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
 import toast from 'react-hot-toast';
-
-interface DateCandidate {
-    start_date: string;
-    start_time: string;
-    end_time: string;
-}
+import { CandidatePicker } from '../components/candidate-picker/CandidatePicker';
+import type { CandidateSlot } from '../components/candidate-picker/types';
 
 export const SchedulePollCreatePage: React.FC = () => {
     const { t } = useTranslation();
@@ -32,9 +26,7 @@ export const SchedulePollCreatePage: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [requiredRoles, setRequiredRoles] = useState<string[]>([]);
-    const [candidates, setCandidates] = useState<DateCandidate[]>([
-        { start_date: '', start_time: '22:00', end_time: '23:59' }
-    ]);
+    const [pickerCandidates, setPickerCandidates] = useState<CandidateSlot[]>([]);
     const [deadlineDate, setDeadlineDate] = useState('');
     const [deadlineTime, setDeadlineTime] = useState('18:00');
 
@@ -67,26 +59,9 @@ export const SchedulePollCreatePage: React.FC = () => {
         }
     });
 
-    const addCandidate = () => {
-        const last = candidates[candidates.length - 1];
-        setCandidates([...candidates, {
-            start_date: last?.start_date || '',
-            start_time: last?.start_time || '22:00',
-            end_time: last?.end_time || '23:59'
-        }]);
-    };
-
-    const removeCandidate = (index: number) => {
-        if (candidates.length > 1) {
-            setCandidates(candidates.filter((_, i) => i !== index));
-        }
-    };
-
-    const updateCandidate = (index: number, field: keyof DateCandidate, value: string) => {
-        const newCandidates = [...candidates];
-        newCandidates[index] = { ...newCandidates[index], [field]: value };
-        setCandidates(newCandidates);
-    };
+    const handleCandidatesChange = useCallback((candidates: CandidateSlot[]) => {
+        setPickerCandidates(candidates);
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -96,16 +71,8 @@ export const SchedulePollCreatePage: React.FC = () => {
             return;
         }
 
-        const formattedCandidates = candidates
-            .filter(c => c.start_date && c.start_time && c.end_time)
-            .map(c => ({
-                // ブラウザのローカル時間としてパースしてからUTCに変換する
-                start_datetime: new Date(`${c.start_date}T${c.start_time}:00`).toISOString(),
-                end_datetime: new Date(`${c.start_date}T${c.end_time}:00`).toISOString()
-            }));
-
-        if (formattedCandidates.length === 0) {
-            toast.error(t('schedulePoll.atLeastOneCandidate') || '少なくとも1つの候補日を正しく入力してください');
+        if (pickerCandidates.length === 0) {
+            toast.error(t('schedulePoll.atLeastOneCandidate') || '少なくとも1つの候補日時を選択してください');
             return;
         }
 
@@ -118,7 +85,7 @@ export const SchedulePollCreatePage: React.FC = () => {
             description,
             required_roles: requiredRoles,
             deadline,
-            candidates: formattedCandidates
+            candidates: pickerCandidates
         });
     };
 
@@ -235,68 +202,8 @@ export const SchedulePollCreatePage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <label className="block text-sm font-bold text-gray-700">
-                            {t('schedulePoll.candidatesLabel') || '候補日時'}
-                        </label>
-                        <button
-                            type="button"
-                            onClick={addCandidate}
-                            className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center bg-indigo-50 px-3 py-2 rounded-lg transition-colors"
-                        >
-                            <Plus className="h-4 w-4 mr-1" />
-                            {t('schedulePoll.addCandidate') || '追加'}
-                        </button>
-                    </div>
-
-                    <div className="space-y-4">
-                        {candidates.map((candidate, index) => (
-                            <div key={index} className="flex items-center space-x-3 animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
-                                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div className="relative">
-                                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                        <input
-                                            type="date"
-                                            value={candidate.start_date}
-                                            onChange={(e) => updateCandidate(index, 'start_date', e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="relative">
-                                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                        <input
-                                            type="time"
-                                            value={candidate.start_time}
-                                            onChange={(e) => updateCandidate(index, 'start_time', e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="relative">
-                                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                        <input
-                                            type="time"
-                                            value={candidate.end_time}
-                                            onChange={(e) => updateCandidate(index, 'end_time', e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removeCandidate(index)}
-                                    disabled={candidates.length === 1}
-                                    className="p-3 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-                                >
-                                    <Trash2 className="h-5 w-5" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                {/* Candidate Picker: Calendar + Timeline */}
+                <CandidatePicker onChange={handleCandidatesChange} />
 
                 <div className="flex justify-end pt-4">
                     <button
