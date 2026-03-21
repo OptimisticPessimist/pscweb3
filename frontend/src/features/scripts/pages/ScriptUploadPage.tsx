@@ -87,7 +87,7 @@ export const ScriptUploadPage: React.FC = () => {
 
             // Auto-fill title from filename if empty
             if (!title) {
-                setTitle(uploadedFile.name.replace(/\.fountain$/i, ''));
+                setTitle(extractedTitle || uploadedFile.name.replace(/\.fountain$/i, ''));
             }
 
             // Auto-fill author if empty
