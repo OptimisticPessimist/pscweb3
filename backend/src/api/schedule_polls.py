@@ -1,6 +1,6 @@
 """日程調整APIエンドポイント."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
