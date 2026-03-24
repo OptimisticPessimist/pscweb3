@@ -258,8 +258,8 @@ async def remind_pending_users(
     mentions = [f"<@{u.discord_id}>" for u in pending_users]
 
     # メッセージ作成
-    deadline_str = event.deadline.strftime("%Y-%m-%d %H:%M") if event.deadline else "未設定"
-    schedule_str = event.schedule_date.strftime("%Y-%m-%d %H:%M") if event.schedule_date else "未定"
+    deadline_str = f"<t:{int(event.deadline.replace(tzinfo=UTC).timestamp())}:f>" if event.deadline else "未設定"
+    schedule_str = f"<t:{int(event.schedule_date.replace(tzinfo=UTC).timestamp())}:f>" if event.schedule_date else "未定"
 
     message_content = (
         f"**【出欠確認リマインダー】{event.title}**\n"

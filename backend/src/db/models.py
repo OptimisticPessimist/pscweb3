@@ -105,6 +105,9 @@ class TheaterProject(Base):
     attendance_reminder_2_hours: Mapped[int] = mapped_column(
         default=24
     )  # 出欠リマインド2回目（稽古時間前）
+    attendance_reminder_3_hours: Mapped[int] = mapped_column(
+        default=12
+    )  # 出欠リマインド3回目（稽古時間前、不参加以外の全員対象）
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
@@ -572,6 +575,9 @@ class AttendanceEvent(Base):
     reminder_2_sent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )  # 2回目のリマインダー送信日時
+    reminder_3_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )  # 3回目のリマインダー送信日時
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

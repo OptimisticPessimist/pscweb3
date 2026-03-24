@@ -12,6 +12,7 @@ class ProjectCreate(BaseModel):
     is_public: bool = Field(False, description="公開プロジェクトかどうか")
     attendance_reminder_1_hours: int = Field(48, description="出欠リマインド1回目（稽古時間前）")
     attendance_reminder_2_hours: int = Field(24, description="出欠リマインド2回目（稽古時間前）")
+    attendance_reminder_3_hours: int = Field(12, description="出欠リマインド3回目（稽古時間前、不参加以外の全員対象）")
     source_public_script_id: UUID | None = Field(None, description="コピー元の公開脚本ID")
 
 
@@ -29,6 +30,9 @@ class ProjectUpdate(BaseModel):
     attendance_reminder_2_hours: int | None = Field(
         None, description="出欠リマインド2回目（稽古時間前）"
     )
+    attendance_reminder_3_hours: int | None = Field(
+        None, description="出欠リマインド3回目（稽古時間前、不参加以外の全員対象）"
+    )
 
 
 class ProjectResponse(BaseModel):
@@ -44,6 +48,7 @@ class ProjectResponse(BaseModel):
     is_public: bool = False
     attendance_reminder_1_hours: int = 48
     attendance_reminder_2_hours: int = 24
+    attendance_reminder_3_hours: int = 12
     is_restricted: bool = False  # 上限超過による制限モードフラグ
     created_at: datetime
 

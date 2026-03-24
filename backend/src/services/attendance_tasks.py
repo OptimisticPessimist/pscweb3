@@ -37,6 +37,7 @@ async def check_deadlines() -> dict[str, int]:
                 or_(
                     AttendanceEvent.reminder_1_sent_at.is_(None),
                     AttendanceEvent.reminder_2_sent_at.is_(None),
+                    AttendanceEvent.reminder_3_sent_at.is_(None),
                 ),
             )
             .options(
@@ -61,12 +62,20 @@ async def check_deadlines() -> dict[str, int]:
 
                 # 未回答(pending)のターゲットを抽出
                 pending_targets = [t for t in event.targets if t.status == "pending"]
+                # 不参加(ng)以外のターゲットを抽出
+                not_absent_targets = [t for t in event.targets if t.status != "ng"]
 
                 if not pending_targets:
-                    # 未回答者がいない場合は送信済みとしてマークして終了
-                    event.reminder_1_sent_at = now
-                    event.reminder_2_sent_at = now
-                    continue
+                    # 未回答者がいない場合は1回目・2回目は送信済みとしてマーク
+                    if event.reminder_1_sent_at is None:
+                        event.reminder_1_sent_at = now
+                    if event.reminder_2_sent_at is None:
+                        event.reminder_2_sent_at = now
+
+                if not not_absent_targets:
+                    # 不参加以外がいない場合は3回目も送信済みとしてマーク
+                    if event.reminder_3_sent_at is None:
+                        event.reminder_3_sent_at = now
 
                 # 稽古日未定ならスキップ
                 if event.schedule_date is None:
@@ -91,13 +100,28 @@ async def check_deadlines() -> dict[str, int]:
                     trigger_time = event.schedule_date - timedelta(
                         hours=project.attendance_reminder_2_hours
                     )
-                    if now >= trigger_time:
+                    if now >= trigger_time and pending_targets:
                         sent = await _send_reminder(
                             event, pending_targets, project, reminder_type="2"
                         )
                         event.reminder_2_sent_at = now
                         if sent:
                             stats["deadline_reminders_sent"] += 1
+                            reminded_this_run = True
+
+                # 3. 3回目のリマインダー判定（不参加以外全員）
+                if event.reminder_3_sent_at is None and not reminded_this_run:
+                    trigger_time = event.schedule_date - timedelta(
+                        hours=project.attendance_reminder_3_hours
+                    )
+                    if now >= trigger_time and not_absent_targets:
+                        sent = await _send_reminder(
+                            event, not_absent_targets, project, reminder_type="3"
+                        )
+                        event.reminder_3_sent_at = now
+                        if sent:
+                            stats["schedule_reminders_sent"] += 1
+                            reminded_this_run = True
 
             except Exception as e:
                 logger.error(f"Error processing event {event.id}: {e}", exc_info=True)
@@ -110,14 +134,14 @@ async def check_deadlines() -> dict[str, int]:
 
 async def _send_reminder(
     event: AttendanceEvent,
-    pending_targets: list[AttendanceTarget],
+    targets: list[AttendanceTarget],
     project: TheaterProject,
     reminder_type: str = "1",
 ) -> bool:
     """Discordリマインダー送信.
 
     Args:
-        reminder_type: "1" (1回目) or "2" (2回目)
+        reminder_type: "1" (1回目), "2" (2回目), or "3" (3回目)
 
     Returns:
         bool: 送信成功の場合True
@@ -125,7 +149,7 @@ async def _send_reminder(
     if not project.discord_channel_id:
         return False
 
-    mentions = [f"<@{t.user.discord_id}>" for t in pending_targets if t.user and t.user.discord_id]
+    mentions = [f"<@{t.user.discord_id}>" for t in targets if t.user and t.user.discord_id]
 
     if not mentions:
         return False
@@ -141,18 +165,27 @@ async def _send_reminder(
     # リマインダーの種類に応じてメッセージのヘッダーを変更
     if reminder_type == "1":
         hour_text = project.attendance_reminder_1_hours
-    else:
+        header = f"**【自動リマインダー】間もなく稽古({hour_text}時間前)ですが、出欠が未回答です**"
+        mention_label = "未回答の方"
+        footer = "回答をお願いします。"
+    elif reminder_type == "2":
         hour_text = project.attendance_reminder_2_hours
-
-    header = f"**【自動リマインダー】間もなく稽古({hour_text}時間前)ですが、出欠が未回答です**"
+        header = f"**【自動リマインダー】間もなく稽古({hour_text}時間前)ですが、出欠が未回答です**"
+        mention_label = "未回答の方"
+        footer = "回答をお願いします。"
+    else:
+        hour_text = project.attendance_reminder_3_hours
+        header = f"**【自動リマインダー】間もなく稽古({hour_text}時間前)です。出席予定の方は忘れずにご参加ください**"
+        mention_label = "対象の方"
+        footer = "※未回答の方は至急出欠を入力してください。"
 
     message_content = (
         f"{header}\n"
         f"イベント: **{event.title}**\n"
         f"日時: {schedule_str}\n"
         f"期限: {deadline_str}\n"
-        f"未回答の方: {' '.join(mentions)}\n\n"
-        f"回答をお願いします。"
+        f"{mention_label}: {' '.join(mentions)}\n\n"
+        f"{footer}"
     )
 
     discord_service = get_discord_service()
