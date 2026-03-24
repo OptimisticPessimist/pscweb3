@@ -73,6 +73,7 @@ async def create_project(
         is_public=project_data.is_public,
         attendance_reminder_1_hours=project_data.attendance_reminder_1_hours,
         attendance_reminder_2_hours=project_data.attendance_reminder_2_hours,
+        attendance_reminder_3_hours=project_data.attendance_reminder_3_hours,
         created_by_id=current_user.id,
     )
     db.add(project)
@@ -204,6 +205,7 @@ async def list_projects(
                 is_public=project.is_public,
                 attendance_reminder_1_hours=project.attendance_reminder_1_hours,
                 attendance_reminder_2_hours=project.attendance_reminder_2_hours,
+                attendance_reminder_3_hours=project.attendance_reminder_3_hours,
                 is_restricted=is_restricted,
                 created_at=project.created_at,
                 role=role,
@@ -303,6 +305,8 @@ async def update_project(
         project.attendance_reminder_1_hours = project_update.attendance_reminder_1_hours
     if project_update.attendance_reminder_2_hours is not None:
         project.attendance_reminder_2_hours = project_update.attendance_reminder_2_hours
+    if project_update.attendance_reminder_3_hours is not None:
+        project.attendance_reminder_3_hours = project_update.attendance_reminder_3_hours
 
     # 監査ログ
     audit = AuditLog(
