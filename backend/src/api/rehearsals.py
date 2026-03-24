@@ -1,6 +1,6 @@
 """稽古スケジュール管理APIエンドポイント."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -37,6 +37,7 @@ from src.schemas.rehearsal import (
     RehearsalUpdate,
 )
 from src.services.attendance import AttendanceService
+from src.services.calendar_url import build_google_calendar_url
 from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
@@ -518,7 +519,7 @@ async def add_rehearsal(
 
         await attendance_service.create_attendance_event(
             project=project,
-            title=f"稽古: {rehearsal_data.date.strftime('%m/%d %H:%M')}"
+            title=f"稽古: {rehearsal_data.date.astimezone().strftime('%m/%d %H:%M')}"
             + (f" ({scene_text})" if scene_text else ""),
             deadline=deadline,
             schedule_date=schedule_date,
@@ -600,35 +601,21 @@ async def add_rehearsal(
         content += f"\n\n{mentions}"
 
     if project.discord_webhook_url:
-        now_str = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(UTC)
-        start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
         end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
-        end_str = end_dt.strftime("%Y%m%dT%H%M%SZ")
-
-        ics_content = (
-            "BEGIN:VCALENDAR\r\n"
-            "VERSION:2.0\r\n"
-            "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
-            "CALSCALE:GREGORIAN\r\n"
-            "BEGIN:VEVENT\r\n"
-            f"UID:{rehearsal.id}@pscweb3.local\r\n"
-            f"DTSTAMP:{now_str}\r\n"
-            f"DTSTART:{start_str}\r\n"
-            f"DTEND:{end_str}\r\n"
-            f"SUMMARY:📌 稽古 - {project.name}\r\n"
-            f"DESCRIPTION:{'シーン: ' + scene_text if scene_text else '稽古'}\\n場所: {rehearsal.location or '未定'}\r\n"
-            f"LOCATION:{rehearsal.location or '未定'}\r\n"
-            "END:VEVENT\r\n"
-            "END:VCALENDAR\r\n"
+        gcal_url = build_google_calendar_url(
+            title=f"稽古 - {project.name}",
+            start_dt=start_dt,
+            end_dt=end_dt,
+            description=f"{'シーン: ' + scene_text if scene_text else '稽古'}\n場所: {rehearsal.location or '未定'}",
+            location=rehearsal.location or "",
         )
-        ics_file = {"filename": "rehearsal.ics", "content": ics_content.encode("utf-8")}
+        content += f"\n📎 Googleカレンダーに追加: {gcal_url}"
 
         background_tasks.add_task(
             discord_service.send_notification,
             content=content,
             webhook_url=project.discord_webhook_url,
-            file=ics_file,
         )
 
     return RehearsalResponse(
@@ -878,35 +865,22 @@ async def update_rehearsal(
             mentions = " ".join([f"<@{uid}>" for uid in mention_ids])
             content += f"\n\n{mentions}"
 
-        now_str = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(UTC)
-        start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
         end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
-        end_str = end_dt.strftime("%Y%m%dT%H%M%SZ")
-
-        ics_content = (
-            "BEGIN:VCALENDAR\r\n"
-            "VERSION:2.0\r\n"
-            "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
-            "CALSCALE:GREGORIAN\r\n"
-            "BEGIN:VEVENT\r\n"
-            f"UID:{rehearsal.id}@pscweb3.local\r\n"
-            f"DTSTAMP:{now_str}\r\n"
-            f"DTSTART:{start_str}\r\n"
-            f"DTEND:{end_str}\r\n"
-            f"SUMMARY:📌 稽古更新 - {project.name}\r\n"
-            f"DESCRIPTION:{'シーン: ' + scene_heading if scene_heading else '稽古'}\\n場所: {rehearsal.location or '未定'}\r\n"
-            f"LOCATION:{rehearsal.location or '未定'}\r\n"
-            "END:VEVENT\r\n"
-            "END:VCALENDAR\r\n"
+        gcal_url = build_google_calendar_url(
+            title=f"稽古更新 - {project.name}",
+            start_dt=start_dt,
+            end_dt=end_dt,
+            description=f"{'シーン: ' + scene_heading if scene_heading else '稽古'}\n場所: {rehearsal.location or '未定'}",
+            location=rehearsal.location or "",
         )
-        ics_file = {"filename": "rehearsal.ics", "content": ics_content.encode("utf-8")}
+        content += f"\n📎 Googleカレンダーに追加: {gcal_url}"
+        content += "\n⚠ カレンダーを更新した場合は、前回登録した予定を手動で削除してください"
 
         background_tasks.add_task(
             discord_service.send_notification,
             content=content,
             webhook_url=project.discord_webhook_url,
-            file=ics_file,
         )
 
     return RehearsalResponse(
@@ -1044,7 +1018,8 @@ async def delete_rehearsal(
         raise HTTPException(status_code=403, detail="稽古削除の権限がありません")
 
     # Discord通知用データ退避
-    rehearsal_date = rehearsal.date.strftime("%Y/%m/%d %H:%M")
+    rehearsal_ts = int(rehearsal.date.replace(tzinfo=UTC).timestamp())
+    rehearsal_date = f"<t:{rehearsal_ts}:f>"
 
     # 削除前に関係者のDiscord IDを取得 (メンション用)
     target_discord_ids = set()

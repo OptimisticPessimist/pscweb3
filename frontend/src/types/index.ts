@@ -19,8 +19,9 @@ export interface Project {
     discord_script_webhook_url: string | null;
     discord_channel_id: string | null;
     is_public?: boolean;
-    attendance_reminder_hours?: number; // 新規追加
-    attendance_deadline_reminder_hours?: number; // 新規追加
+    attendance_reminder_1_hours?: number;
+    attendance_reminder_2_hours?: number;
+    attendance_reminder_3_hours?: number;
     is_restricted?: boolean; // 新規追加: 送信上限等による制限
     role: 'owner' | 'editor' | 'viewer';
 }

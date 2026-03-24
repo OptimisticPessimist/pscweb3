@@ -269,8 +269,9 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
     const [webhookUrl, setWebhookUrl] = useState(project.discord_webhook_url || '');
     const [scriptWebhookUrl, setScriptWebhookUrl] = useState(project.discord_script_webhook_url || '');
     const [channelId, setChannelId] = useState(project.discord_channel_id || '');
-    const [attendanceReminderHours, setAttendanceReminderHours] = useState(project.attendance_reminder_hours ?? 24);
-    const [attendanceDeadlineReminderHours, setAttendanceDeadlineReminderHours] = useState(project.attendance_deadline_reminder_hours ?? 24);
+    const [attendanceReminder1Hours, setAttendanceReminder1Hours] = useState(project.attendance_reminder_1_hours ?? 48);
+    const [attendanceReminder2Hours, setAttendanceReminder2Hours] = useState(project.attendance_reminder_2_hours ?? 24);
+    const [attendanceReminder3Hours, setAttendanceReminder3Hours] = useState(project.attendance_reminder_3_hours ?? 12);
 
     const updateProjectMutation = useMutation({
         mutationFn: (data: Partial<Project>) => projectsApi.updateProject(projectId, data),
@@ -291,8 +292,9 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
             discord_webhook_url: webhookUrl,
             discord_script_webhook_url: scriptWebhookUrl,
             discord_channel_id: channelId,
-            attendance_reminder_hours: attendanceReminderHours,
-            attendance_deadline_reminder_hours: attendanceDeadlineReminderHours,
+            attendance_reminder_1_hours: attendanceReminder1Hours,
+            attendance_reminder_2_hours: attendanceReminder2Hours,
+            attendance_reminder_3_hours: attendanceReminder3Hours,
         });
     };
 
@@ -382,38 +384,54 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                         <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceChannelHelper')}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2 mt-4">
+                    <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-3 mt-4">
                         <div>
-                            <label htmlFor="attendanceReminderHours" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceReminderHours')}</label>
+                            <label htmlFor="attendanceReminder1Hours" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceReminder1Hours')}</label>
                             <div className="mt-1 flex rounded-md shadow-sm items-center">
                                 <input
                                     type="number"
-                                    id="attendanceReminderHours"
+                                    id="attendanceReminder1Hours"
                                     min="0"
                                     max="720"
-                                    value={attendanceReminderHours}
-                                    onChange={(e) => setAttendanceReminderHours(Number(e.target.value))}
+                                    value={attendanceReminder1Hours}
+                                    onChange={(e) => setAttendanceReminder1Hours(Number(e.target.value))}
                                     className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                                 <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
                             </div>
-                            <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceReminderHoursHelper')}</p>
+                            <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceReminder1HoursHelper')}</p>
                         </div>
                         <div>
-                            <label htmlFor="attendanceDeadlineReminderHours" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceDeadlineReminderHours')}</label>
+                            <label htmlFor="attendanceReminder2Hours" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceReminder2Hours')}</label>
                             <div className="mt-1 flex rounded-md shadow-sm items-center">
                                 <input
                                     type="number"
-                                    id="attendanceDeadlineReminderHours"
+                                    id="attendanceReminder2Hours"
                                     min="0"
                                     max="720"
-                                    value={attendanceDeadlineReminderHours}
-                                    onChange={(e) => setAttendanceDeadlineReminderHours(Number(e.target.value))}
+                                    value={attendanceReminder2Hours}
+                                    onChange={(e) => setAttendanceReminder2Hours(Number(e.target.value))}
                                     className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                                 <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
                             </div>
-                            <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceDeadlineReminderHoursHelper')}</p>
+                            <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceReminder2HoursHelper')}</p>
+                        </div>
+                        <div>
+                            <label htmlFor="attendanceReminder3Hours" className="block text-sm font-medium text-gray-700">{t('project.settings.form.attendanceReminder3Hours')}</label>
+                            <div className="mt-1 flex rounded-md shadow-sm items-center">
+                                <input
+                                    type="number"
+                                    id="attendanceReminder3Hours"
+                                    min="0"
+                                    max="720"
+                                    value={attendanceReminder3Hours}
+                                    onChange={(e) => setAttendanceReminder3Hours(Number(e.target.value))}
+                                    className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                                <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">{t('project.settings.form.attendanceReminder3HoursHelper')}</p>
                         </div>
                     </div>
                 </div>

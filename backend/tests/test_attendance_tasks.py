@@ -56,6 +56,7 @@ async def test_check_deadlines_send_reminder(mock_db_session, mock_discord_servi
         discord_channel_id="123456789",
         attendance_reminder_1_hours=48,
         attendance_reminder_2_hours=24,
+        attendance_reminder_3_hours=12,
     )
     user = User(id=user_id, discord_id="987654321")
 
@@ -68,6 +69,7 @@ async def test_check_deadlines_send_reminder(mock_db_session, mock_discord_servi
         deadline=datetime.now(UTC) + timedelta(hours=5),
         reminder_1_sent_at=None,
         reminder_2_sent_at=None,
+        reminder_3_sent_at=None,
         completed=False,
         project=project,
         targets=[target],
@@ -104,16 +106,18 @@ async def test_check_deadlines_no_pending_users(mock_db_session, mock_discord_se
     event = AttendanceEvent(
         id=uuid.uuid4(),
         title="Test Event",
-        schedule_date=datetime.now(UTC) + timedelta(hours=10),
+        schedule_date=datetime.now(UTC) + timedelta(hours=20),
         deadline=datetime.now(UTC) - timedelta(hours=1),
         reminder_1_sent_at=None,
         reminder_2_sent_at=None,
+        reminder_3_sent_at=None,
         completed=False,
         project=TheaterProject(
             id=project_id,
             discord_channel_id="123456789",
             attendance_reminder_1_hours=48,
             attendance_reminder_2_hours=24,
+            attendance_reminder_3_hours=12,
         ),
         targets=[
             AttendanceTarget(status="ok", user=User(discord_id="111")),  # OKなので対象外
@@ -134,8 +138,10 @@ async def test_check_deadlines_no_pending_users(mock_db_session, mock_discord_se
 
     mock_discord_service.send_channel_message.assert_not_called()
 
-    # 送信はしていないが、reminder_1_sent_atは更新される仕様 (次回以降チェックしないため)
+    # 送信はしていないが、対象者がいない場合は送信済み扱いになる
     assert event.reminder_1_sent_at is not None
+    assert event.reminder_2_sent_at is not None
+    assert event.reminder_3_sent_at is None
     mock_db_session.commit.assert_awaited_once()
 
 
@@ -149,6 +155,7 @@ async def test_check_deadlines_no_discord_channel(mock_db_session, mock_discord_
         deadline=datetime.now(UTC) - timedelta(minutes=10),
         reminder_1_sent_at=None,
         reminder_2_sent_at=None,
+        reminder_3_sent_at=None,
         completed=False,
         project=TheaterProject(
             id=uuid.uuid4(),
@@ -156,6 +163,7 @@ async def test_check_deadlines_no_discord_channel(mock_db_session, mock_discord_
             discord_channel_id=None,
             attendance_reminder_1_hours=48,
             attendance_reminder_2_hours=24,
+            attendance_reminder_3_hours=12,
         ),  # IDなし
         targets=[AttendanceTarget(status="pending", user=User(discord_id="123"))],
     )
@@ -188,3 +196,60 @@ async def test_check_deadlines_no_discord_channel(mock_db_session, mock_discord_
     #   event.reminder_sent_at = now
     # なので、更新されるはず。
     assert event.reminder_1_sent_at is not None
+
+
+@pytest.mark.asyncio
+async def test_check_deadlines_send_reminder_3(mock_db_session, mock_discord_service):
+    """3回目のリマインダーを送信するテスト."""
+    project_id = uuid.uuid4()
+    
+    # 1回目、2回目は送信済みとする
+    now = datetime.now(UTC)
+    event = AttendanceEvent(
+        id=uuid.uuid4(),
+        title="Test Event 3rd Reminder",
+        schedule_date=now + timedelta(hours=10),  # 12時間前を切っている
+        deadline=now + timedelta(hours=5),
+        reminder_1_sent_at=now - timedelta(days=2),
+        reminder_2_sent_at=now - timedelta(days=1),
+        reminder_3_sent_at=None,
+        completed=False,
+        project=TheaterProject(
+            id=project_id,
+            discord_channel_id="123456789",
+            attendance_reminder_1_hours=48,
+            attendance_reminder_2_hours=24,
+            attendance_reminder_3_hours=12,
+        ),
+        targets=[
+            # OKのユーザー：送信対象
+            AttendanceTarget(status="ok", user=User(discord_id="user_ok")),
+            # NGのユーザー：送信対象外
+            AttendanceTarget(status="ng", user=User(discord_id="user_ng")),
+            # 未回答のユーザー：送信対象
+            AttendanceTarget(status="pending", user=User(discord_id="user_pending")),
+        ],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [event]
+    mock_db_session.execute.return_value = mock_result
+
+    stats = await check_deadlines()
+
+    assert stats["checked_events"] == 1
+    assert stats["schedule_reminders_sent"] == 1
+    
+    # Discord送信確認
+    mock_discord_service.send_channel_message.assert_called_once()
+    call_args = mock_discord_service.send_channel_message.call_args[1]
+    msg = call_args["content"]
+    assert "<@user_ok>" in msg
+    assert "<@user_pending>" in msg
+    assert "<@user_ng>" not in msg
+    
+    # 12時間前の独自メッセージが含まれるか
+    assert "間もなく稽古(12時間前)です" in msg
+
+    assert event.reminder_3_sent_at is not None
+    mock_db_session.commit.assert_awaited_once()

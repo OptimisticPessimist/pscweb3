@@ -1,4 +1,4 @@
-"""稽古ICSファイル生成のテスト."""
+"""稽古GoogleカレンダーURL通知のテスト."""
 
 from datetime import UTC
 from unittest.mock import AsyncMock, patch
@@ -11,14 +11,14 @@ from src.db.models import Rehearsal, RehearsalSchedule, Script, TheaterProject, 
 
 
 @pytest.mark.asyncio
-async def test_update_rehearsal_ics_notification(
+async def test_update_rehearsal_gcal_notification(
     client: AsyncClient,
     test_user: User,
     test_project: TheaterProject,
     test_user_token: str,
     db: AsyncSession,
 ) -> None:
-    """稽古更新時のICS通知テスト."""
+    """稽古更新時のGoogleカレンダーURL通知テスト."""
     # Arrange: 脚本とスケジュール、稽古を作成
     script = Script(
         project_id=test_project.id,
@@ -68,21 +68,21 @@ async def test_update_rehearsal_ics_notification(
         # 通知が呼ばれたか確認
         assert mock_send.called
         args, kwargs = mock_send.call_args
-        assert "file" in kwargs
-        assert kwargs["file"]["filename"] == "rehearsal.ics"
-        assert b"BEGIN:VCALENDAR" in kwargs["file"]["content"]
-        assert "📌 稽古更新".encode() in kwargs["file"]["content"]
+        assert "file" not in kwargs
+        assert "calendar.google.com/calendar/render" in kwargs["content"]
+        assert "稽古スケジュールが更新されました" in kwargs["content"]
+        assert "前回登録した予定を手動で削除してください" in kwargs["content"]
 
 
 @pytest.mark.asyncio
-async def test_finalize_poll_ics_notification(
+async def test_finalize_poll_gcal_notification(
     client: AsyncClient,
     test_user: User,
     test_project: TheaterProject,
     test_user_token: str,
     db: AsyncSession,
 ) -> None:
-    """日程調整確定時のICS通知テスト."""
+    """日程調整確定時のGoogleカレンダーURL通知テスト."""
     # Arrange: 脚本、日程調整、候補日を作成
     script = Script(
         project_id=test_project.id,
@@ -131,7 +131,6 @@ async def test_finalize_poll_ics_notification(
         # 通知が呼ばれたか確認
         assert mock_send.called
         args, kwargs = mock_send.call_args
-        assert "file" in kwargs
-        assert kwargs["file"]["filename"] == "rehearsal.ics"
-        assert b"BEGIN:VCALENDAR" in kwargs["file"]["content"]
-        assert "📌 稽古確定".encode() in kwargs["file"]["content"]
+        assert "file" not in kwargs
+        assert "calendar.google.com/calendar/render" in kwargs["content"]
+        assert "稽古が確定しました" in kwargs["content"]

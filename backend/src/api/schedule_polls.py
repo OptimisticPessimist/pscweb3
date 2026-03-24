@@ -1,6 +1,6 @@
 """日程調整APIエンドポイント."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -31,6 +31,7 @@ from src.schemas.schedule_poll import (
     UnansweredMemberResponse,
 )
 from src.services.attendance import AttendanceService
+from src.services.calendar_url import build_google_calendar_url
 from src.services.discord import DiscordService, get_discord_service
 from src.services.schedule_poll_service import get_schedule_poll_service
 
@@ -313,35 +314,21 @@ async def finalize_poll(
         if scene_text:
             content += f"\nシーン: {scene_text}"
 
-        now_str = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         start_dt = rehearsal.date.astimezone(UTC)
-        start_str = start_dt.strftime("%Y%m%dT%H%M%SZ")
         end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
-        end_str = end_dt.strftime("%Y%m%dT%H%M%SZ")
-
-        ics_content = (
-            "BEGIN:VCALENDAR\r\n"
-            "VERSION:2.0\r\n"
-            "PRODID:-//PSCWeb3//Rehearsal Schedule//EN\r\n"
-            "CALSCALE:GREGORIAN\r\n"
-            "BEGIN:VEVENT\r\n"
-            f"UID:{rehearsal.id}@pscweb3.local\r\n"
-            f"DTSTAMP:{now_str}\r\n"
-            f"DTSTART:{start_str}\r\n"
-            f"DTEND:{end_str}\r\n"
-            f"SUMMARY:📌 稽古確定 - {project.name}\r\n"
-            f"DESCRIPTION:日程調整により稽古が確定しました。\\n{'シーン: ' + scene_text if scene_text else ''}\\n場所: {rehearsal.location or '未定'}\r\n"
-            f"LOCATION:{rehearsal.location or '未定'}\r\n"
-            "END:VEVENT\r\n"
-            "END:VCALENDAR\r\n"
+        gcal_url = build_google_calendar_url(
+            title=f"稽古確定 - {project.name}",
+            start_dt=start_dt,
+            end_dt=end_dt,
+            description=f"日程調整により稽古が確定しました。\n{'シーン: ' + scene_text if scene_text else ''}\n場所: {rehearsal.location or '未定'}",
+            location=rehearsal.location or "",
         )
-        ics_file = {"filename": "rehearsal.ics", "content": ics_content.encode("utf-8")}
+        content += f"\n📎 Googleカレンダーに追加: {gcal_url}"
 
         background_tasks.add_task(
             discord_service.send_notification,
             content=content,
             webhook_url=project.discord_webhook_url,
-            file=ics_file,
         )
 
     return {"status": "ok", "rehearsal_id": rehearsal.id}
