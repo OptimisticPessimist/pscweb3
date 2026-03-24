@@ -230,6 +230,7 @@ async def _build_project_response(
         is_public=project.is_public,
         attendance_reminder_1_hours=project.attendance_reminder_1_hours,
         attendance_reminder_2_hours=project.attendance_reminder_2_hours,
+        attendance_reminder_3_hours=project.attendance_reminder_3_hours,
         is_restricted=is_restricted,
         created_at=project.created_at,
         role=role,
