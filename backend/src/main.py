@@ -45,6 +45,19 @@ app = FastAPI(
 )
 
 
+def _run_alembic_upgrade() -> None:
+    """alembic upgrade head をPython APIで実行する."""
+    from pathlib import Path
+
+    from alembic import command
+    from alembic.config import Config
+
+    backend_dir = Path(__file__).resolve().parents[1]
+    alembic_cfg = Config(str(backend_dir / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(backend_dir / "alembic"))
+    command.upgrade(alembic_cfg, "head")
+
+
 @app.on_event("startup")
 async def startup_event():
     auto_migrate = settings.environment == "development" or os.getenv(
@@ -54,29 +67,8 @@ async def startup_event():
         return
 
     try:
-        import subprocess
-        from pathlib import Path
-
-        backend_dir = Path(__file__).resolve().parents[1]
-        process = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-m",
-            "alembic",
-            "upgrade",
-            "head",
-            cwd=str(backend_dir),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            logger.error(
-                "Startup migration failed",
-                returncode=process.returncode,
-                stderr=stderr.decode(errors="ignore"),
-            )
-        else:
-            logger.info("Startup migration completed", stdout=stdout.decode(errors="ignore"))
+        _run_alembic_upgrade()
+        logger.info("Startup migration completed")
     except Exception as exc:
         logger.error("Startup migration crashed", error=str(exc), exc_info=True)
 
@@ -88,7 +80,6 @@ async def manual_fix_system():
     try:
         # 1. Run Migration
         import os
-        import subprocess
         import sys
 
         # backend rootをパスに追加
@@ -97,20 +88,8 @@ async def manual_fix_system():
         if backend_dir not in sys.path:
             sys.path.append(backend_dir)
 
-        # 1-1. Alembic migration
-        process = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-m",
-            "alembic",
-            "upgrade",
-            "head",
-            cwd=backend_dir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            raise RuntimeError(f"Alembic migration failed: {stderr.decode(errors='ignore')}")
+        # 1-1. Alembic migration (Python API経由)
+        _run_alembic_upgrade()
         log.append("Alembic migration executed successfully.")
 
         # 1-2. Legacy SQL migration
