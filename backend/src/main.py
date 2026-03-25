@@ -49,8 +49,9 @@ def _run_alembic_upgrade() -> None:
     """alembic upgrade head をPython APIで実行する."""
     from pathlib import Path
 
-    from alembic import command
     from alembic.config import Config
+
+    from alembic import command
 
     backend_dir = Path(__file__).resolve().parents[1]
     alembic_cfg = Config(str(backend_dir / "alembic.ini"))
