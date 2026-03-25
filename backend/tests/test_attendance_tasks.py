@@ -253,3 +253,50 @@ async def test_check_deadlines_send_reminder_3(mock_db_session, mock_discord_ser
 
     assert event.reminder_3_sent_at is not None
     mock_db_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_check_deadlines_skip_past_events(mock_db_session, mock_discord_service):
+    """過去の稽古に対してリマインダーを送信しないテスト."""
+    now = datetime.now(UTC)
+
+    # schedule_date が過去のイベント
+    event = AttendanceEvent(
+        id=uuid.uuid4(),
+        title="Past Event",
+        schedule_date=now - timedelta(days=3),  # 3日前の稽古
+        deadline=now - timedelta(days=4),
+        reminder_1_sent_at=None,
+        reminder_2_sent_at=None,
+        reminder_3_sent_at=None,
+        completed=False,
+        project=TheaterProject(
+            id=uuid.uuid4(),
+            discord_channel_id="123456789",
+            attendance_reminder_1_hours=48,
+            attendance_reminder_2_hours=24,
+            attendance_reminder_3_hours=12,
+        ),
+        targets=[
+            AttendanceTarget(status="pending", user=User(discord_id="user1")),
+        ],
+    )
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [event]
+    mock_db_session.execute.return_value = mock_result
+
+    stats = await check_deadlines()
+
+    # 通知は送信されない
+    assert stats["checked_events"] == 1
+    assert stats["past_events_skipped"] == 1
+    assert stats["schedule_reminders_sent"] == 0
+    assert stats["deadline_reminders_sent"] == 0
+    mock_discord_service.send_channel_message.assert_not_called()
+
+    # リマインダーは全て「送信済み」マークされる（再度拾われない）
+    assert event.reminder_1_sent_at is not None
+    assert event.reminder_2_sent_at is not None
+    assert event.reminder_3_sent_at is not None
+    mock_db_session.commit.assert_awaited_once()

@@ -23,6 +23,7 @@ async def check_deadlines() -> dict[str, int]:
         "checked_events": 0,
         "schedule_reminders_sent": 0,
         "deadline_reminders_sent": 0,
+        "past_events_skipped": 0,
         "errors": 0,
     }
 
@@ -79,6 +80,21 @@ async def check_deadlines() -> dict[str, int]:
 
                 # 稽古日未定ならスキップ
                 if event.schedule_date is None:
+                    continue
+
+                # 稽古日が過去ならリマインダー不要 → 送信済みマークして次へ
+                if now >= event.schedule_date:
+                    if event.reminder_1_sent_at is None:
+                        event.reminder_1_sent_at = now
+                    if event.reminder_2_sent_at is None:
+                        event.reminder_2_sent_at = now
+                    if event.reminder_3_sent_at is None:
+                        event.reminder_3_sent_at = now
+                    stats["past_events_skipped"] += 1
+                    logger.info(
+                        f"Skipped past event {event.id} "
+                        f"(schedule_date={event.schedule_date})"
+                    )
                     continue
 
                 # 1. 1回目のリマインダー判定
