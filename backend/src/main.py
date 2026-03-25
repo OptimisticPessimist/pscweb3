@@ -68,7 +68,9 @@ async def startup_event():
         return
 
     try:
-        _run_alembic_upgrade()
+        # alembic env.py が asyncio.run() を使うため、
+        # 既存イベントループと衝突しないよう別スレッドで実行する
+        await asyncio.to_thread(_run_alembic_upgrade)
         logger.info("Startup migration completed")
     except Exception as exc:
         logger.error("Startup migration crashed", error=str(exc), exc_info=True)
@@ -89,8 +91,8 @@ async def manual_fix_system():
         if backend_dir not in sys.path:
             sys.path.append(backend_dir)
 
-        # 1-1. Alembic migration (Python API経由)
-        _run_alembic_upgrade()
+        # 1-1. Alembic migration (Python API経由、別スレッドで実行)
+        await asyncio.to_thread(_run_alembic_upgrade)
         log.append("Alembic migration executed successfully.")
 
         # 1-2. Legacy SQL migration
