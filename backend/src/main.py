@@ -1,6 +1,7 @@
 """FastAPI メインアプリケーション."""
 
 import asyncio
+import os
 import sys
 
 # サブプロセスを使用するため、Windowsのデフォルト（Proactor）を明示的に使用
@@ -30,11 +31,12 @@ from src.api import (
     users,
 )
 from src.config import settings
-from src.core.logger import configure_logger
+from src.core.logger import configure_logger, get_logger
 from src.middleware.request_logging import RequestLoggingMiddleware
 
 # ロガー初期化
 configure_logger()
+logger = get_logger(__name__)
 
 app = FastAPI(
     title="PSCWeb3 API",
@@ -45,7 +47,38 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
-    pass
+    auto_migrate = settings.environment == "development" or os.getenv(
+        "AUTO_MIGRATE_ON_STARTUP", "false"
+    ).lower() in {"1", "true", "yes"}
+    if not auto_migrate:
+        return
+
+    try:
+        import subprocess
+        from pathlib import Path
+
+        backend_dir = Path(__file__).resolve().parents[1]
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "alembic",
+            "upgrade",
+            "head",
+            cwd=str(backend_dir),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            logger.error(
+                "Startup migration failed",
+                returncode=process.returncode,
+                stderr=stderr.decode(errors="ignore"),
+            )
+        else:
+            logger.info("Startup migration completed", stdout=stdout.decode(errors="ignore"))
+    except Exception as exc:
+        logger.error("Startup migration crashed", error=str(exc), exc_info=True)
 
 
 @app.get("/api/fix-system")
@@ -55,6 +88,7 @@ async def manual_fix_system():
     try:
         # 1. Run Migration
         import os
+        import subprocess
         import sys
 
         # backend rootをパスに追加
@@ -63,10 +97,27 @@ async def manual_fix_system():
         if backend_dir not in sys.path:
             sys.path.append(backend_dir)
 
+        # 1-1. Alembic migration
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "alembic",
+            "upgrade",
+            "head",
+            cwd=backend_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError(f"Alembic migration failed: {stderr.decode(errors='ignore')}")
+        log.append("Alembic migration executed successfully.")
+
+        # 1-2. Legacy SQL migration
         import apply_migration
 
         await apply_migration.apply_migration()
-        log.append("Migration executed successfully.")
+        log.append("Legacy SQL migration executed successfully.")
 
         # 2. Run Data Fix
         import fix_data_is_public
