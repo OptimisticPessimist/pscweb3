@@ -54,5 +54,10 @@ export const scriptsApi = {
     importScript: async (scriptId: string): Promise<any> => {
         const response = await apiClient.post(`/projects/import-script/${scriptId}`);
         return response.data;
-    }
+    },
+
+    // 脚本リセット（脚本由来データを削除、カスタムデータは保持）
+    resetScript: async (projectId: string): Promise<void> => {
+        await apiClient.delete(`/scripts/${projectId}/scripts`);
+    },
 };

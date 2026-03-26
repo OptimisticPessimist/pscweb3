@@ -60,6 +60,8 @@ export interface CharacterInScene {
     id: string;
     name: string;
     order: number;
+    is_custom: boolean;
+    is_manual: boolean;
 }
 
 export interface SceneInChart {
@@ -67,6 +69,7 @@ export interface SceneInChart {
     act_number: number | null | undefined;
     scene_number: number;
     scene_heading: string;
+    is_custom: boolean;
     characters: CharacterInScene[];
 }
 
@@ -89,6 +92,7 @@ export interface CharacterWithCastings {
     id: string;
     name: string;
     description?: string | null;
+    is_custom: boolean;
     castings: CastingUser[];
 }
 

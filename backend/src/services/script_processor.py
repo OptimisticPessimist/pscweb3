@@ -158,66 +158,91 @@ async def cleanup_related_data(script: Script, db: AsyncSession) -> None:
         script: スクリプト
         db: データベースセッション
     """
-    # 1. 香盤表とマッピング
+    # 1. 削除対象のシーン・キャラクターIDを収集
+    scene_result = await db.execute(
+        select(Scene.id).where(Scene.script_id == script.id, Scene.is_custom == False)  # noqa: E712
+    )
+    scene_ids = list(scene_result.scalars().all())
+
+    character_result = await db.execute(
+        select(Character.id).where(
+            Character.script_id == script.id, Character.is_custom == False  # noqa: E712
+        )
+    )
+    character_ids = list(character_result.scalars().all())
+
+    # 2. 香盤表マッピング削除（自動 + 削除対象エンティティを参照する手動マッピング）
     chart_result = await db.execute(select(SceneChart.id).where(SceneChart.script_id == script.id))
     chart_ids = list(chart_result.scalars().all())
 
     if chart_ids:
+        # 自動マッピングをすべて削除
         await db.execute(
-            delete(SceneCharacterMapping).where(SceneCharacterMapping.chart_id.in_(chart_ids))
+            delete(SceneCharacterMapping).where(
+                SceneCharacterMapping.chart_id.in_(chart_ids),
+                SceneCharacterMapping.is_manual == False,  # noqa: E712
+            )
         )
-        await db.execute(delete(SceneChart).where(SceneChart.id.in_(chart_ids)))
+        # 削除対象シーン/キャラを参照する手動マッピングも削除（FK違反防止）
+        if scene_ids:
+            await db.execute(
+                delete(SceneCharacterMapping).where(
+                    SceneCharacterMapping.chart_id.in_(chart_ids),
+                    SceneCharacterMapping.scene_id.in_(scene_ids),
+                )
+            )
+        if character_ids:
+            await db.execute(
+                delete(SceneCharacterMapping).where(
+                    SceneCharacterMapping.chart_id.in_(chart_ids),
+                    SceneCharacterMapping.character_id.in_(character_ids),
+                )
+            )
 
-    # 2. セリフ (SceneとCharacterに依存)
-    scene_result = await db.execute(select(Scene.id).where(Scene.script_id == script.id))
-    scene_ids = list(scene_result.scalars().all())
-
+    # 3. セリフ (脚本由来のシーンのみ対象)
     if scene_ids:
-        # RehearsalSceneを先に削除 (rehearsal_scenes テーブル)
         await db.execute(delete(RehearsalScene).where(RehearsalScene.scene_id.in_(scene_ids)))
-
-        # Rehearsalのscene_idをNULLにする (稽古自体は残す)
         await db.execute(
             update(Rehearsal).where(Rehearsal.scene_id.in_(scene_ids)).values(scene_id=None)
         )
-
         await db.execute(delete(Line).where(Line.scene_id.in_(scene_ids)))
 
-    # 3. シーン
-    await db.execute(delete(Scene).where(Scene.script_id == script.id))
-
-    # 4. キャラクター (CharacterCasting, RehearsalCastも削除)
-    character_result = await db.execute(
-        select(Character.id).where(Character.script_id == script.id)
+    # 4. 脚本由来のシーンのみ削除（カスタムシーンは保持）
+    await db.execute(
+        delete(Scene).where(Scene.script_id == script.id, Scene.is_custom == False)  # noqa: E712
     )
-    character_ids = list(character_result.scalars().all())
 
+    # 5. 脚本由来のキャラクターのみ削除（カスタムキャラクターは保持）
     if character_ids:
         await db.execute(
             delete(CharacterCasting).where(CharacterCasting.character_id.in_(character_ids))
         )
         await db.execute(delete(RehearsalCast).where(RehearsalCast.character_id.in_(character_ids)))
 
-    await db.execute(delete(Character).where(Character.script_id == script.id))
+    await db.execute(
+        delete(Character).where(
+            Character.script_id == script.id, Character.is_custom == False  # noqa: E712
+        )
+    )
 
     await db.flush()
 
 
 async def collect_associations(script_id: UUID, db: AsyncSession):
     """削除前に重要な紐付け情報を収集."""
-    # 1. 配役情報 (名前ベース)
+    # 1. 配役情報 (名前ベース、脚本由来のキャラクターのみ)
     casting_stmt = (
         select(Character.name, CharacterCasting.user_id, CharacterCasting.cast_name)
         .join(CharacterCasting, Character.id == CharacterCasting.character_id)
-        .where(Character.script_id == script_id)
+        .where(Character.script_id == script_id, Character.is_custom == False)  # noqa: E712
     )
     castings = (await db.execute(casting_stmt)).all()
 
-    # 2. 稽古-シーン紐付け (見出しと番号ベース)
+    # 2. 稽古-シーン紐付け (見出しと番号ベース、脚本由来のシーンのみ)
     re_scene_stmt = (
         select(RehearsalScene.rehearsal_id, Scene.heading, Scene.act_number, Scene.scene_number)
         .join(Scene, RehearsalScene.scene_id == Scene.id)
-        .where(Scene.script_id == script_id)
+        .where(Scene.script_id == script_id, Scene.is_custom == False)  # noqa: E712
     )
     re_scenes = (await db.execute(re_scene_stmt)).all()
 
@@ -225,7 +250,7 @@ async def collect_associations(script_id: UUID, db: AsyncSession):
     re_single_stmt = (
         select(Rehearsal.id, Scene.heading, Scene.act_number, Scene.scene_number)
         .join(Scene, Rehearsal.scene_id == Scene.id)
-        .where(Scene.script_id == script_id)
+        .where(Scene.script_id == script_id, Scene.is_custom == False)  # noqa: E712
     )
     re_singles = (await db.execute(re_single_stmt)).all()
 
@@ -233,7 +258,7 @@ async def collect_associations(script_id: UUID, db: AsyncSession):
     re_cast_stmt = (
         select(RehearsalCast.rehearsal_id, Character.name, RehearsalCast.user_id)
         .join(Character, RehearsalCast.character_id == Character.id)
-        .where(Character.script_id == script_id)
+        .where(Character.script_id == script_id, Character.is_custom == False)  # noqa: E712
     )
     re_casts = (await db.execute(re_cast_stmt)).all()
 
