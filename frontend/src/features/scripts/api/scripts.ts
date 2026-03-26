@@ -5,6 +5,11 @@ interface ScriptListResponse {
     scripts: ScriptSummary[];
 }
 
+interface ImportedProjectResponse {
+    id: string;
+    scripts?: Array<{ id: string }>;
+}
+
 export const scriptsApi = {
     getScripts: async (projectId: string): Promise<ScriptSummary[]> => {
         const response = await apiClient.get<ScriptListResponse>(`/scripts/${projectId}`);
@@ -22,7 +27,8 @@ export const scriptsApi = {
     },
 
     deleteScript: async (projectId: string, scriptId: string): Promise<void> => {
-        await apiClient.delete(`/scripts/${projectId}/${scriptId}`);
+        void scriptId;
+        await apiClient.delete(`/scripts/${projectId}/scripts`);
     },
 
     downloadScriptPdf: async (
@@ -51,8 +57,8 @@ export const scriptsApi = {
         return response.data;
     },
 
-    importScript: async (scriptId: string): Promise<any> => {
-        const response = await apiClient.post(`/projects/import-script/${scriptId}`);
+    importScript: async (scriptId: string): Promise<ImportedProjectResponse> => {
+        const response = await apiClient.post<ImportedProjectResponse>(`/projects/import-script/${scriptId}`);
         return response.data;
     },
 
