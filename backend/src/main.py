@@ -154,6 +154,7 @@ app.include_router(public.router, prefix="/api/public", tags=["公開API"])
 app.include_router(interactions.router, prefix="/api", tags=["Discord Interactions"])
 # 香盤表はscriptsの下 (scripts.routerより先に定義して、具体的なパスを優先させる)
 app.include_router(scene_charts.router, prefix="/api/scripts", tags=["香盤表"])
+app.include_router(scene_charts.project_router, prefix="/api/projects", tags=["香盤表"])
 app.include_router(scripts.router, prefix="/api/scripts", tags=["脚本"])
 # キャスティングはprojectsの下
 app.include_router(characters.router, prefix="/api/projects", tags=["キャスティング"])

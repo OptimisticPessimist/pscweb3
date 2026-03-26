@@ -146,6 +146,13 @@ export const schedulePollApi = {
     },
 
     // 自動リマインドを停止
+    updateRequiredRoles: async (projectId: string, pollId: string, requiredRoles: string[]): Promise<SchedulePollResponse> => {
+        const response = await apiClient.patch<SchedulePollResponse>(`/projects/${projectId}/polls/${pollId}`, {
+            required_roles: requiredRoles,
+        });
+        return response.data;
+    },
+
     stopAutoReminder: async (projectId: string, pollId: string): Promise<void> => {
         await apiClient.post(`/projects/${projectId}/polls/${pollId}/stop-reminder`);
     },

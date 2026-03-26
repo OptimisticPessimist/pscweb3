@@ -21,9 +21,17 @@ class CharacterResponse(BaseModel):
 
     id: UUID = Field(..., description="キャラクターID")
     name: str = Field(..., description="キャラクター名")
+    is_custom: bool = Field(False, description="カスタムキャラクターフラグ")
     castings: list[CastingUser] = Field(default_factory=list, description="配役リスト")
 
     model_config = {"from_attributes": True}
+
+
+class CharacterCreate(BaseModel):
+    """カスタムキャラクター作成リクエスト."""
+
+    name: str = Field(..., min_length=1, max_length=100, description="キャラクター名")
+    description: str | None = Field(None, description="説明")
 
 
 class CastingCreate(BaseModel):

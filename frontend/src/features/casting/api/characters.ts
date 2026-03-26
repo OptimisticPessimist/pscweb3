@@ -22,4 +22,18 @@ export const charactersApi = {
         const response = await apiClient.delete(`/projects/${projectId}/characters/${characterId}/cast/${userId}`);
         return response.data;
     },
+
+    // カスタムキャラクター作成
+    createCustomCharacter: async (projectId: string, name: string, description?: string): Promise<CharacterWithCastings> => {
+        const response = await apiClient.post(`/projects/${projectId}/characters`, {
+            name,
+            description,
+        });
+        return response.data;
+    },
+
+    // カスタムキャラクター削除
+    deleteCustomCharacter: async (projectId: string, characterId: string): Promise<void> => {
+        await apiClient.delete(`/projects/${projectId}/characters/${characterId}`);
+    },
 };

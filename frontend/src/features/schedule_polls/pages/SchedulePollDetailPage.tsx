@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -38,6 +38,8 @@ export const SchedulePollDetailPage: React.FC = () => {
     const [selectedCandidateForFinalize, setSelectedCandidateForFinalize] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
     const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
+    const [isEditingRequiredRoles, setIsEditingRequiredRoles] = useState(false);
+    const [requiredRolesDraft, setRequiredRolesDraft] = useState<string[] | null>(null);
 
     const { data: poll, isLoading } = useQuery({
         queryKey: ['schedulePoll', projectId, pollId],
@@ -87,19 +89,30 @@ export const SchedulePollDetailPage: React.FC = () => {
         }
     });
 
-    const [targetUserIds, setTargetUserIds] = useState<string[]>([]);
+    const updateRequiredRolesMutation = useMutation({
+        mutationFn: (requiredRoles: string[]) =>
+            schedulePollApi.updateRequiredRoles(projectId!, pollId!, requiredRoles),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedulePoll', projectId, pollId] });
+            queryClient.invalidateQueries({ queryKey: ['schedulePollRecommendations', projectId, pollId] });
+            queryClient.invalidateQueries({ queryKey: ['schedulePollAnalysis', projectId, pollId] });
+            queryClient.invalidateQueries({ queryKey: ['schedulePolls', projectId] });
+            setIsEditingRequiredRoles(false);
+            setRequiredRolesDraft(null);
+            toast.success(t('common.saved') || '保存しました');
+        },
+        onError: () => {
+            toast.error('必須役職の更新に失敗しました');
+        },
+    });
+
+    const [excludedReminderUserIds, setExcludedReminderUserIds] = useState<string[]>([]);
 
     const { data: unansweredMembers, refetch: refetchUnanswered } = useQuery({
         queryKey: ['schedulePollUnanswered', projectId, pollId],
         queryFn: () => schedulePollApi.getUnansweredMembers(projectId!, pollId!),
         enabled: !!projectId && !!pollId,
     });
-
-    useEffect(() => {
-        if (unansweredMembers) {
-            setTargetUserIds(unansweredMembers.map(m => m.user_id));
-        }
-    }, [unansweredMembers]);
 
     const stopReminderMutation = useMutation({
         mutationFn: () => schedulePollApi.stopAutoReminder(projectId!, pollId!),
@@ -128,6 +141,51 @@ export const SchedulePollDetailPage: React.FC = () => {
         enabled: !!projectId
     });
 
+    const memberRoles = useMemo(() => {
+        if (!members) return [];
+        const roleSet = new Set<string>();
+        members.forEach(member => {
+            if (member.default_staff_role) {
+                roleSet.add(member.default_staff_role);
+            }
+        });
+        return Array.from(roleSet).sort();
+    }, [members]);
+
+    const currentRequiredRoles = useMemo(() => {
+        if (!poll?.required_roles) return [];
+        return poll.required_roles.split(',').map(role => role.trim()).filter(Boolean);
+    }, [poll]);
+
+    const requiredRolesDraftValue = requiredRolesDraft ?? currentRequiredRoles;
+
+    const availableRequiredRoleOptions = useMemo(() => {
+        const roleSet = new Set<string>([
+            ...memberRoles,
+            ...currentRequiredRoles,
+            ...requiredRolesDraftValue,
+        ]);
+        return Array.from(roleSet).sort();
+    }, [memberRoles, currentRequiredRoles, requiredRolesDraftValue]);
+
+    const hasRequiredRoleChanges = useMemo(() => {
+        const normalize = (roles: string[]) =>
+            Array.from(new Set(roles.map(role => role.trim()).filter(Boolean))).sort();
+        return normalize(currentRequiredRoles).join('|') !== normalize(requiredRolesDraftValue).join('|');
+    }, [currentRequiredRoles, requiredRolesDraftValue]);
+
+    const toggleRequiredRole = (role: string) => {
+        setRequiredRolesDraft(prev => {
+            const baseRoles = prev ?? currentRequiredRoles;
+            return baseRoles.includes(role)
+                ? baseRoles.filter(r => r !== role)
+                : [...baseRoles, role];
+        });
+    };
+
+    const unansweredUserIds = unansweredMembers?.map(member => member.user_id) ?? [];
+    const targetUserIds = unansweredUserIds.filter(id => !excludedReminderUserIds.includes(id));
+
     const isEditorOrOwner = useMemo(() => {
         if (!members || !user) return false;
         const member = members.find(m => m.user_id === user.id);
@@ -155,7 +213,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                     userMap.set(a.user_id, {
                         id: a.user_id,
                         name: a.display_name || a.discord_username || 'Unknown',
-                        role: (a as any).role
+                        role: a.role
                     });
                 }
             });
@@ -255,6 +313,85 @@ export const SchedulePollDetailPage: React.FC = () => {
                 </button>
             </div>
 
+            {isEditorOrOwner && (
+                <section className="bg-white shadow-xl shadow-gray-200/40 rounded-2xl border border-gray-100 p-5">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-indigo-500" />
+                            <h2 className="text-sm font-bold text-gray-800">
+                                {t('schedulePoll.requiredRolesLabel') || '出席必須の役職（任意）'}
+                            </h2>
+                        </div>
+                        {!isEditingRequiredRoles ? (
+                            <button
+                                onClick={() => {
+                                    setRequiredRolesDraft(currentRequiredRoles);
+                                    setIsEditingRequiredRoles(true);
+                                }}
+                                className="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                                {t('common.edit') || '編集'}
+                            </button>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        setRequiredRolesDraft(null);
+                                        setIsEditingRequiredRoles(false);
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    {t('common.cancel') || 'キャンセル'}
+                                </button>
+                                <button
+                                    onClick={() => updateRequiredRolesMutation.mutate(requiredRolesDraftValue)}
+                                    disabled={!hasRequiredRoleChanges || updateRequiredRolesMutation.isPending}
+                                    className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {updateRequiredRolesMutation.isPending ? '...' : (t('common.save') || '保存')}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {isEditingRequiredRoles ? (
+                        availableRequiredRoleOptions.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {availableRequiredRoleOptions.map(role => (
+                                    <button
+                                        key={role}
+                                        type="button"
+                                        onClick={() => toggleRequiredRole(role)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${requiredRolesDraftValue.includes(role)
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                                            }`}
+                                    >
+                                        {role}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-gray-500">
+                                {t('schedulePoll.requiredRolesNoOptions') || '役職がないため必須役職を選択できません。'}
+                            </p>
+                        )
+                    ) : currentRequiredRoles.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {currentRequiredRoles.map(role => (
+                                <span key={role} className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold border border-indigo-100">
+                                    {role}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-gray-500">
+                            {t('common.none') || '設定なし'}
+                        </p>
+                    )}
+                </section>
+            )}
+
             {viewMode === 'calendar' ? (
                 !analysis ? (
                     <div className="flex justify-center items-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -306,10 +443,10 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             <div className="mb-4">
                                                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">{t('schedulePoll.possibleScenes') || '稽古可能なシーン'}</div>
                                                 <div className="space-y-1">
-                                                    {rec.possible_scenes.map((ps: any) => (
+                                                    {rec.possible_scenes.map((ps) => (
                                                         <div key={ps.scene_id} className="text-[11px] text-gray-700 flex items-center bg-gray-50/50 px-1.5 py-0.5 rounded">
                                                             <span className="font-bold mr-1">#{formatSceneNumber(ps.act_number, ps.scene_number)}</span>
-                                                            <span className="truncate">{ps.heading}</span>
+                                                            <span className="truncate">{ps.scene_heading}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -466,10 +603,10 @@ export const SchedulePollDetailPage: React.FC = () => {
                                     <button
                                         key={member.user_id}
                                         onClick={() => {
-                                            setTargetUserIds(prev =>
-                                                prev.includes(member.user_id)
-                                                    ? prev.filter(id => id !== member.user_id)
-                                                    : [...prev, member.user_id]
+                                            setExcludedReminderUserIds(prev =>
+                                                targetUserIds.includes(member.user_id)
+                                                    ? [...prev, member.user_id]
+                                                    : prev.filter(id => id !== member.user_id)
                                             );
                                         }}
                                         className={`flex items-center space-x-3 px-4 py-2.5 rounded-2xl border transition-all duration-300 ${targetUserIds.includes(member.user_id)

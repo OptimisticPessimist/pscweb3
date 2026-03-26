@@ -28,6 +28,7 @@ from src.schemas.schedule_poll import (
     SchedulePollCreate,
     SchedulePollFinalize,
     SchedulePollResponse,
+    SchedulePollUpdateRequiredRoles,
     UnansweredMemberResponse,
 )
 from src.services.attendance import AttendanceService
@@ -122,6 +123,34 @@ async def get_poll(
         raise HTTPException(status_code=403, detail="アクセス権限がありません")
 
     return poll
+
+
+@router.patch("/projects/{project_id}/polls/{poll_id}", response_model=SchedulePollResponse)
+async def update_poll_required_roles(
+    project_id: UUID,
+    poll_id: UUID,
+    payload: SchedulePollUpdateRequiredRoles,
+    current_user: User = Depends(get_current_user_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ProjectMember).where(
+        ProjectMember.project_id == project_id, ProjectMember.user_id == current_user.id
+    )
+    res = await db.execute(stmt)
+    member = res.scalar_one_or_none()
+    if not member or member.role == "viewer":
+        raise HTTPException(status_code=403, detail="編集権限がありません")
+
+    poll = await db.get(SchedulePoll, poll_id)
+    if not poll or poll.project_id != project_id:
+        raise HTTPException(status_code=404, detail="日程調整が見つかりません")
+
+    poll_service = get_schedule_poll_service(db, None)
+    updated_poll = await poll_service.update_required_roles(poll_id, payload.required_roles)
+    if not updated_poll:
+        raise HTTPException(status_code=404, detail="日程調整が見つかりません")
+
+    return updated_poll
 
 
 @router.get("/projects/{project_id}/polls/{poll_id}/recommendations")

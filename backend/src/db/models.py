@@ -233,6 +233,7 @@ class Scene(Base):
     scene_number: Mapped[int]
     heading: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_custom: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="scenes")
@@ -251,6 +252,7 @@ class Character(Base):
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     order: Mapped[int] = mapped_column(default=0, server_default="0")
+    is_custom: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # リレーション
     script: Mapped["Script"] = relationship(back_populates="characters")
@@ -312,6 +314,7 @@ class SceneCharacterMapping(Base):
     chart_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scene_charts.id"))
     scene_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scenes.id"))
     character_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("characters.id"))
+    is_manual: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     # リレーション
     chart: Mapped["SceneChart"] = relationship(back_populates="mappings")

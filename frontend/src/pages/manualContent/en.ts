@@ -124,6 +124,11 @@ See which characters appear in each scene.
 1. On the script detail page, select the **"Scene Chart"** tab.
 2. Characters appearing in each scene are listed.
 
+> 💡 **How to Read the Chart**
+> - **●**: Appearance based on script dialogue (auto-generated)
+> - **○**: Manually added appearance
+> - **・**: Not appearing
+
 ---
 
 ## 4. Editor Manual
@@ -170,8 +175,40 @@ Create rehearsal or shooting schedules.
 Set which characters appear in each scene.
 
 1. On the script detail page, select the **"Scene Chart"** tab.
-2. Check the characters that appear in each scene's row.
-3. Changes are auto-saved.
+2. Click on each scene row to toggle character appearance:
+   - Click **・** (not appearing) → changes to **○** (manual appearance)
+   - Click **○** (manual appearance) → changes to **・** (not appearing)
+   - **●** (dialogue-based appearance) cannot be clicked (auto-generated from script)
+
+#### Adding Custom Characters
+Add characters that don't exist in the script.
+
+1. Click the **"+ Add Character"** button at the top of the scene chart.
+2. Enter the character name and add.
+3. Custom characters are distinguished by italic, orange-colored headers.
+4. Unnecessary custom characters can be removed with the delete button.
+
+#### Adding Custom Scenes
+Add scenes that don't exist in the script.
+
+1. Click the **"+ Add Scene"** button at the bottom of the scene chart.
+2. Enter the scene heading, act number, and scene number.
+3. Custom scenes are distinguished by an orange background.
+4. Unnecessary custom scenes can be removed with the delete button.
+
+#### Editing Scenes
+Change scene headings and numbers.
+
+1. Click the **pencil icon** at the left of a scene row.
+2. Edit the scene heading, act number, and scene number in the modal.
+
+### 🔄 Resetting Scripts
+Delete existing script data while keeping custom data.
+
+1. Select **"Reset Script"** from the script menu.
+2. A confirmation dialog will appear.
+3. Resetting deletes script-derived characters, scenes, and mappings.
+4. Manually added custom characters, scenes, and manual mappings are preserved.
 
 ### 🎭 Configuring Casting
 Link characters to actors.
@@ -207,6 +244,9 @@ Create a new production or shooting project.
 1. Click **"Create New Project"** on the Dashboard.
 2. Enter the project name (production title, etc.).
 3. Enter a description (optional) and click **"Create"**.
+
+> 💡 **Using Projects Without Scripts**
+> Projects can be used without uploading a script. You can manually add custom characters and scenes to freely configure the scene chart.
 
 ### 📥 Importing Scripts
 Create a new project based on a public script.
@@ -281,6 +321,8 @@ Settings for sending attendance confirmation messages with buttons.
 | **Upload/Edit Scripts** | ☑ | ☑ | - |
 | **Create/Edit Schedules** | ☑ | ☑ | - |
 | **Edit Scene Charts** | ☑ | ☑ | - |
+| **Add Custom Characters/Scenes** | ☑ | ☑ | - |
+| **Reset Script** | ☑ | ☑ | - |
 | **Configure Casting** | ☑ | ☑ | - |
 | **Set Staff Roles** | ☑ | ☑ | - |
 | **Send Attendance Reminders** | ☑ | ☑ | - |

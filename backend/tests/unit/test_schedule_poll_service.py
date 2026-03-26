@@ -71,6 +71,33 @@ async def test_poll_upsert_answer(db, test_user):
 
 
 @pytest.mark.asyncio
+async def test_update_required_roles(db, test_project, test_user):
+    poll = SchedulePoll(
+        project_id=test_project.id,
+        title="Update Roles",
+        creator_id=test_user.id,
+        required_roles="Actor,Director",
+    )
+    db.add(poll)
+    await db.commit()
+
+    service = SchedulePollService(db, MagicMock())
+    updated_poll = await service.update_required_roles(
+        poll.id, [" Director ", "Stage Manager", "Director", ""]
+    )
+
+    assert updated_poll is not None
+    assert updated_poll.required_roles == "Director,Stage Manager"
+
+    await db.refresh(poll)
+    assert poll.required_roles == "Director,Stage Manager"
+
+    cleared_poll = await service.update_required_roles(poll.id, [])
+    assert cleared_poll is not None
+    assert cleared_poll.required_roles is None
+
+
+@pytest.mark.asyncio
 async def test_get_unanswered_members(db, test_project, test_user):
     from sqlalchemy import select
 

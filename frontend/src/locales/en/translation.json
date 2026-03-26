@@ -421,6 +421,7 @@
     "noReachScenes": "No reach scenes for this slot",
     "requiredRolesLabel": "Required Staff Roles (Optional)",
     "requiredRolesHint": "The date will be marked as 'Impossible' if all members of the selected roles are NG.",
+    "requiredRolesNoOptions": "No staff roles are available, so required roles cannot be selected.",
     "unansweredReminder": "Send Reminder to Unanswered Members",
     "reminderDescription": "These members have not yet responded to the schedule poll. Checked members will receive a mention notification on Discord.",
     "sendReminderCount": "Send reminder to {count} member(s)",

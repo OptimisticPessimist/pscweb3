@@ -29,7 +29,11 @@ from src.db.models import (
     User,
 )
 from src.dependencies.auth import get_current_user_dep
-from src.dependencies.permissions import get_project_member_dep, get_script_member_dep
+from src.dependencies.permissions import (
+    get_project_editor_dep,
+    get_project_member_dep,
+    get_script_member_dep,
+)
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.discord import DiscordService, get_discord_service
 from src.services.pdf_generator import generate_script_pdf
@@ -208,6 +212,39 @@ async def download_script_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename_encoded}"},
     )
+
+
+# ===========================
+# Script Reset (Delete)
+# ===========================
+
+
+@router.delete("/{project_id}/scripts")
+async def reset_script(
+    project_id: UUID,
+    editor_member: ProjectMember = Depends(get_project_editor_dep),
+    db: AsyncSession = Depends(get_db),
+):
+    """脚本をリセット（脚本由来のデータを削除、カスタムデータは保持）."""
+    from src.services.script_processor import cleanup_related_data
+
+    result = await db.execute(select(Script).where(Script.project_id == project_id))
+    script = result.scalar_one_or_none()
+    if script is None:
+        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+
+    # 脚本由来データを削除（カスタムデータは保持される）
+    await cleanup_related_data(script, db)
+
+    # スクリプト自体をリセット
+    script.content = ""
+    script.title = ""
+    script.author = None
+    script.revision = 0
+
+    await db.commit()
+
+    return {"status": "reset", "script_id": str(script.id)}
 
 
 # ===========================

@@ -136,6 +136,21 @@ async def create_project(
             logger.warning(
                 f"Source public script not found: {project_data.source_public_script_id}"
             )
+    else:
+        # 公開脚本インポートなしの場合、空のScriptとSceneChartを自動作成
+        from src.db.models import Script
+        from src.services.scene_chart_generator import ensure_scene_chart
+
+        empty_script = Script(
+            project_id=project.id,
+            uploaded_by=current_user.id,
+            title="",
+            content="",
+            revision=0,
+        )
+        db.add(empty_script)
+        await db.flush()
+        await ensure_scene_chart(empty_script, db)
 
     await db.commit()
     await db.refresh(project)

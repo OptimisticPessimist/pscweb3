@@ -56,6 +56,10 @@ class SchedulePollCreate(BaseModel):
     candidates: list[SchedulePollCandidateCreate]
 
 
+class SchedulePollUpdateRequiredRoles(BaseModel):
+    required_roles: list[str] | None
+
+
 class SchedulePollResponse(BaseModel):
     """日程調整レスポンス."""
 

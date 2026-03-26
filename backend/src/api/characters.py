@@ -18,7 +18,7 @@ from src.db.models import (
     User,
 )
 from src.dependencies.permissions import get_project_editor_dep, get_project_member_dep
-from src.schemas.character import CastingCreate, CastingUser, CharacterResponse
+from src.schemas.character import CastingCreate, CastingUser, CharacterCreate, CharacterResponse
 from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
@@ -80,7 +80,9 @@ async def list_project_characters(
                 )
             )
 
-        response.append(CharacterResponse(id=char.id, name=char.name, castings=castings))
+        response.append(
+            CharacterResponse(id=char.id, name=char.name, is_custom=char.is_custom, castings=castings)
+        )
 
     return response
 
@@ -281,3 +283,70 @@ async def remove_casting(
         CastingUser(user_id=c.user.id, discord_username=c.user.display_name, cast_name=c.cast_name)
         for c in character.castings
     ]
+
+
+@router.post("/{project_id}/characters", response_model=CharacterResponse)
+async def create_custom_character(
+    project_id: UUID,
+    data: CharacterCreate,
+    editor_member: ProjectMember = Depends(get_project_editor_dep),
+    db: AsyncSession = Depends(get_db),
+) -> CharacterResponse:
+    """カスタムキャラクターを作成（脚本に存在しない役）."""
+    from sqlalchemy import func
+
+    result = await db.execute(select(Script).where(Script.project_id == project_id))
+    script = result.scalar_one_or_none()
+    if script is None:
+        raise HTTPException(status_code=404, detail="脚本が見つかりません")
+
+    max_order_result = await db.execute(
+        select(func.coalesce(func.max(Character.order), 0)).where(
+            Character.script_id == script.id
+        )
+    )
+    max_order = max_order_result.scalar_one()
+
+    character = Character(
+        script_id=script.id,
+        name=data.name,
+        description=data.description,
+        order=max_order + 1,
+        is_custom=True,
+    )
+    db.add(character)
+    await db.commit()
+
+    return CharacterResponse(id=character.id, name=character.name, is_custom=True, castings=[])
+
+
+@router.delete("/{project_id}/characters/{character_id}", status_code=204)
+async def delete_custom_character(
+    project_id: UUID,
+    character_id: UUID,
+    editor_member: ProjectMember = Depends(get_project_editor_dep),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """カスタムキャラクターを削除."""
+    result = await db.execute(
+        select(Character)
+        .join(Script)
+        .where(Character.id == character_id, Script.project_id == project_id)
+    )
+    character = result.scalar_one_or_none()
+    if character is None:
+        raise HTTPException(status_code=404, detail="キャラクターが見つかりません")
+
+    if not character.is_custom:
+        raise HTTPException(status_code=400, detail="脚本由来のキャラクターは削除できません")
+
+    # 依存するマッピングを先に削除（FK違反防止）
+    from sqlalchemy import delete
+
+    from src.db.models import SceneCharacterMapping
+
+    await db.execute(
+        delete(SceneCharacterMapping).where(SceneCharacterMapping.character_id == character_id)
+    )
+    await db.delete(character)
+    await db.commit()
