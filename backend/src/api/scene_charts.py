@@ -231,7 +231,7 @@ async def update_scene(
     if scene is None:
         raise HTTPException(status_code=404, detail="シーンが見つかりません")
 
-    if "heading" in data.model_fields_set:
+    if "heading" in data.model_fields_set and data.heading is not None:
         scene.heading = data.heading
     if "act_number" in data.model_fields_set:
         scene.act_number = data.act_number
