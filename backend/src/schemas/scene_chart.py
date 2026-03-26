@@ -53,7 +53,7 @@ class SceneCreate(BaseModel):
 
     heading: str = Field(..., min_length=1, max_length=200, description="シーン見出し")
     act_number: int | None = Field(None, description="幕番号")
-    scene_number: int = Field(..., description="シーン番号")
+    scene_number: int = Field(..., gt=0, description="シーン番号（1以上）")
 
 
 class SceneUpdate(BaseModel):

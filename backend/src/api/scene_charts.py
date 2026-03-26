@@ -231,11 +231,13 @@ async def update_scene(
     if scene is None:
         raise HTTPException(status_code=404, detail="シーンが見つかりません")
 
-    if data.heading is not None:
+    if "heading" in data.model_fields_set:
         scene.heading = data.heading
-    if data.act_number is not None:
+    if "act_number" in data.model_fields_set:
         scene.act_number = data.act_number
-    if data.scene_number is not None:
+    if "scene_number" in data.model_fields_set and data.scene_number is not None:
+        if data.scene_number < 1:
+            raise HTTPException(status_code=400, detail="シーン番号は1以上を指定してください")
         scene.scene_number = data.scene_number
 
     await db.commit()
