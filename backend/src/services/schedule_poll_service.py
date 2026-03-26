@@ -34,6 +34,21 @@ class SchedulePollService:
         self.db = db
         self.discord_service = discord_service
 
+    @staticmethod
+    def _serialize_required_roles(required_roles: list[str] | None) -> str | None:
+        if not required_roles:
+            return None
+
+        normalized_roles: list[str] = []
+        seen: set[str] = set()
+        for role in required_roles:
+            cleaned_role = role.strip()
+            if cleaned_role and cleaned_role not in seen:
+                seen.add(cleaned_role)
+                normalized_roles.append(cleaned_role)
+
+        return ",".join(normalized_roles) if normalized_roles else None
+
     async def create_poll(
         self,
         project: TheaterProject,
@@ -48,7 +63,7 @@ class SchedulePollService:
         poll_id = uuid.uuid4()
 
         # 役職リストをカンマ区切り文字列に変換
-        required_roles_str = ",".join(required_roles) if required_roles else None
+        required_roles_str = self._serialize_required_roles(required_roles)
 
         poll = SchedulePoll(
             id=poll_id,
@@ -191,6 +206,17 @@ class SchedulePollService:
                 poll.message_id = discord_resp.get("id")
                 poll.channel_id = project.discord_channel_id
 
+        await self.db.commit()
+        return await self.get_poll_with_details(poll_id)
+
+    async def update_required_roles(
+        self, poll_id: uuid.UUID, required_roles: list[str] | None
+    ) -> SchedulePoll | None:
+        poll = await self.db.get(SchedulePoll, poll_id)
+        if not poll:
+            return None
+
+        poll.required_roles = self._serialize_required_roles(required_roles)
         await self.db.commit()
         return await self.get_poll_with_details(poll_id)
 

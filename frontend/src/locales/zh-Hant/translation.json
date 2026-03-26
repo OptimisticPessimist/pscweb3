@@ -394,6 +394,7 @@
     "noReachScenes": "此時間段無差1人場景",
     "requiredRolesLabel": "必須出席的職位（可選）",
     "requiredRolesHint": "若選擇了必須出席職位，所有該職位成員均回答「不可出席（NG）」時，該日期將判定為「不可排練」。",
+    "requiredRolesNoOptions": "沒有可用職位，因此無法選擇必須出席職位。",
     "unansweredReminder": "向未回覆成員發送提醒",
     "reminderDescription": "這些成員尚未對日程投票做出回應。被選中的成員將在 Discord 上收到提及通知。",
     "sendReminderCount": "向 {count} 名成員發送提醒",

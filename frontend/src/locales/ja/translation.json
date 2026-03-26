@@ -469,6 +469,7 @@
     "noReachScenes": "リーチ状態のシーンはありません",
     "requiredRolesLabel": "出席必須の役職（任意）",
     "requiredRolesHint": "選択した役職のメンバーが全員 NG の日程は「稽古不可」として判定されます。",
+    "requiredRolesNoOptions": "役職がないため必須役職を選択できません。",
     "unansweredReminder": "未回答者へのリマインド送信",
     "reminderDescription": "まだ日程調整に回答していないメンバーです。チェックを入れたメンバーにDiscordでメンションを飛ばして通知します。",
     "sendReminderCount": "{count}名にリマインドを送信",
