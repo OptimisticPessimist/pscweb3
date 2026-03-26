@@ -29,7 +29,11 @@ from src.db.models import (
     User,
 )
 from src.dependencies.auth import get_current_user_dep
-from src.dependencies.permissions import get_project_editor_dep, get_project_member_dep, get_script_member_dep
+from src.dependencies.permissions import (
+    get_project_editor_dep,
+    get_project_member_dep,
+    get_script_member_dep,
+)
 from src.schemas.script import ScriptListResponse, ScriptResponse
 from src.services.discord import DiscordService, get_discord_service
 from src.services.pdf_generator import generate_script_pdf

@@ -17,7 +17,10 @@ from src.db.models import (
     SceneChart,
     Script,
 )
-from src.dependencies.permissions import get_project_editor_dep, get_project_member_dep, get_script_member_dep
+from src.dependencies.permissions import (
+    get_project_editor_dep,
+    get_script_member_dep,
+)
 from src.schemas.scene_chart import (
     CharacterInScene,
     SceneCharacterMappingToggle,
