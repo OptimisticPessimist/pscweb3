@@ -395,7 +395,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                                     max="720"
                                     value={attendanceReminder1Hours}
                                     onChange={(e) => setAttendanceReminder1Hours(Number(e.target.value))}
-                                    className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="block w-20 min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                                 <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
                             </div>
@@ -411,7 +411,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                                     max="720"
                                     value={attendanceReminder2Hours}
                                     onChange={(e) => setAttendanceReminder2Hours(Number(e.target.value))}
-                                    className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="block w-20 min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                                 <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
                             </div>
@@ -427,7 +427,7 @@ const ProjectUpdateForm: React.FC<{ project: Project, projectId: string, queryCl
                                     max="720"
                                     value={attendanceReminder3Hours}
                                     onChange={(e) => setAttendanceReminder3Hours(Number(e.target.value))}
-                                    className="flex-1 block w-full min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                                    className="block w-20 min-w-0 sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                                 />
                                 <span className="ml-3 text-sm text-gray-500">{t('common.hoursBefore')}</span>
                             </div>

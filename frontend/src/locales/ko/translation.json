@@ -42,7 +42,8 @@
     "download": "다운로드",
     "export": "내보내기",
     "import": "가져오기",
-    "unknown": "알 수 없음"
+    "unknown": "알 수 없음",
+    "hoursBefore": "시간 전"
   },
   "auth": {
     "login": "로그인",

@@ -50,7 +50,8 @@
     "yes": "はい",
     "no": "いいえ",
     "unknown": "不明",
-    "public": "公開"
+    "public": "公開",
+    "hoursBefore": "時間前"
   },
   "invitation": {
     "loading": "招待状を読み込み中...",
