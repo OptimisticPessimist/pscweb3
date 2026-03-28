@@ -42,7 +42,8 @@
     "download": "下載",
     "export": "匯出",
     "import": "匯入",
-    "unknown": "未知"
+    "unknown": "未知",
+    "hoursBefore": "小時前"
   },
   "auth": {
     "login": "登入",

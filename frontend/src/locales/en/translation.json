@@ -44,7 +44,8 @@
     "export": "Export",
     "import": "Import",
     "unknown": "Unknown",
-    "public": "Public"
+    "public": "Public",
+    "hoursBefore": "hours before"
   },
   "auth": {
     "login": "Login",
