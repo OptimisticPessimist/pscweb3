@@ -485,7 +485,11 @@
     "targetVotersOnly": "回答者のみ",
     "targetVotersOnlyDesc": "OKまたはMaybeと回答したメンバー",
     "targetEveryone": "全員",
-    "targetEveryoneDesc": "プロジェクトメンバー全員"
+    "targetEveryoneDesc": "プロジェクトメンバー全員",
+    "finalizedModalTitle": "稽古予定を確定しました",
+    "finalizedModalDescription": "Googleカレンダーに追加して予定を管理できます",
+    "addToGoogleCalendar": "Googleカレンダーに追加",
+    "goToSchedule": "スケジュールへ"
   },
   "userSettings": {
     "title": "ユーザー設定",

@@ -410,7 +410,11 @@
     "targetVotersOnly": "응답자만",
     "targetVotersOnlyDesc": "OK 또는 Maybe로 응답한 멤버",
     "targetEveryone": "모든 멤버",
-    "targetEveryoneDesc": "모든 프로젝트 멤버"
+    "targetEveryoneDesc": "모든 프로젝트 멤버",
+    "finalizedModalTitle": "연습 일정이 확정되었습니다",
+    "finalizedModalDescription": "Google 캘린더에 추가하여 일정을 관리하세요",
+    "addToGoogleCalendar": "Google 캘린더에 추가",
+    "goToSchedule": "일정으로 이동"
   },
   "userSettings": {
     "title": "사용자 설정",
