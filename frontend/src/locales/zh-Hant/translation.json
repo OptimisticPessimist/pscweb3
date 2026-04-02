@@ -409,7 +409,11 @@
     "targetVotersOnly": "僅回答者",
     "targetVotersOnlyDesc": "回答OK或Maybe的成員",
     "targetEveryone": "全員",
-    "targetEveryoneDesc": "所有專案成員"
+    "targetEveryoneDesc": "所有專案成員",
+    "finalizedModalTitle": "排練日程已確定",
+    "finalizedModalDescription": "新增至Google日曆以管理您的日程",
+    "addToGoogleCalendar": "新增至Google日曆",
+    "goToSchedule": "前往日程"
   },
   "userSettings": {
     "title": "使用者設定",

@@ -436,7 +436,11 @@
     "targetVotersOnly": "Voters Only",
     "targetVotersOnlyDesc": "Members who answered OK or Maybe",
     "targetEveryone": "Everyone",
-    "targetEveryoneDesc": "All project members"
+    "targetEveryoneDesc": "All project members",
+    "finalizedModalTitle": "Rehearsal scheduled",
+    "finalizedModalDescription": "Add to Google Calendar to manage your schedule",
+    "addToGoogleCalendar": "Add to Google Calendar",
+    "goToSchedule": "Go to Schedule"
   },
   "userSettings": {
     "title": "User Settings",

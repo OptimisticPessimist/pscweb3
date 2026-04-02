@@ -335,14 +335,9 @@ async def finalize_poll(
             target_user_ids=attendance_targets,
         )
 
-    # Discord通知
-    if project and project.discord_webhook_url:
-        rehearsal_ts = int(rehearsal.date.replace(tzinfo=UTC).timestamp())
-        date_str = f"<t:{rehearsal_ts}:f>"  # User local time
-        content = f"📅 **日程調整の結果、稽古が確定しました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
-        if scene_text:
-            content += f"\nシーン: {scene_text}"
-
+    # Googleカレンダー登録URL生成
+    gcal_url = None
+    if project:
         start_dt = rehearsal.date.astimezone(UTC)
         end_dt = start_dt + timedelta(minutes=rehearsal.duration_minutes)
         gcal_url = build_google_calendar_url(
@@ -352,6 +347,14 @@ async def finalize_poll(
             description=f"日程調整により稽古が確定しました。\n{'シーン: ' + scene_text if scene_text else ''}\n場所: {rehearsal.location or '未定'}",
             location=rehearsal.location or "",
         )
+
+    # Discord通知
+    if project and project.discord_webhook_url:
+        rehearsal_ts = int(rehearsal.date.replace(tzinfo=UTC).timestamp())
+        date_str = f"<t:{rehearsal_ts}:f>"  # User local time
+        content = f"📅 **日程調整の結果、稽古が確定しました**\n日時: {date_str}\n場所: {rehearsal.location or '未定'}"
+        if scene_text:
+            content += f"\nシーン: {scene_text}"
         content += f"\n📎 Googleカレンダーに追加: {gcal_url}"
 
         background_tasks.add_task(
@@ -360,7 +363,7 @@ async def finalize_poll(
             webhook_url=project.discord_webhook_url,
         )
 
-    return {"status": "ok", "rehearsal_id": rehearsal.id}
+    return {"status": "ok", "rehearsal_id": rehearsal.id, "gcal_url": gcal_url}
 
 
 @router.get(

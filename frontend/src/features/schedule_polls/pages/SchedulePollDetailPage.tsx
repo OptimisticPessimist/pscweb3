@@ -68,12 +68,17 @@ export const SchedulePollDetailPage: React.FC = () => {
         },
     });
 
+    const [showFinalizedModal, setShowFinalizedModal] = useState(false);
+    const [gcalUrl, setGcalUrl] = useState<string | null>(null);
+
     const finalizeMutation = useMutation({
         mutationFn: ({ candidateId, sceneIds, attendanceTarget }: { candidateId: string, sceneIds: string[], attendanceTarget?: 'voters_only' | 'everyone' }) =>
             schedulePollApi.finalizePoll(projectId!, pollId!, candidateId, sceneIds, attendanceTarget),
-        onSuccess: () => {
+        onSuccess: (data) => {
             toast.success(t('schedulePoll.finalized') || '稽古予定を作成しました');
-            navigate(`/projects/${projectId}/schedule`);
+            setSelectedCandidateForFinalize(null);
+            setGcalUrl(data.gcal_url);
+            setShowFinalizedModal(true);
         },
     });
 
@@ -728,6 +733,43 @@ export const SchedulePollDetailPage: React.FC = () => {
                     )}
 
                 </>
+            )}
+
+            {showFinalizedModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                            <CheckCircle2 className="h-6 w-6 text-green-600" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            {t('schedulePoll.finalizedModalTitle')}
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            {t('schedulePoll.finalizedModalDescription')}
+                        </p>
+                        <div className="space-y-3">
+                            {gcalUrl && (
+                                <a
+                                    href={gcalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                                >
+                                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V8h14v12z" />
+                                    </svg>
+                                    {t('schedulePoll.addToGoogleCalendar')}
+                                </a>
+                            )}
+                            <button
+                                onClick={() => navigate(`/projects/${projectId}/schedule`)}
+                                className="w-full py-3 px-4 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                {t('schedulePoll.goToSchedule')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

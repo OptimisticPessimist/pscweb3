@@ -129,8 +129,9 @@ export const schedulePollApi = {
     },
 
     // 日程を確定
-    finalizePoll: async (projectId: string, poll_id: string, candidate_id: string, scene_ids: string[], attendance_target: 'voters_only' | 'everyone' = 'voters_only'): Promise<void> => {
-        await apiClient.post(`/projects/${projectId}/polls/${poll_id}/finalize`, { candidate_id, scene_ids, attendance_target });
+    finalizePoll: async (projectId: string, poll_id: string, candidate_id: string, scene_ids: string[], attendance_target: 'voters_only' | 'everyone' = 'voters_only'): Promise<{ status: string; rehearsal_id: string; gcal_url: string }> => {
+        const response = await apiClient.post<{ status: string; rehearsal_id: string; gcal_url: string }>(`/projects/${projectId}/polls/${poll_id}/finalize`, { candidate_id, scene_ids, attendance_target });
+        return response.data;
     },
 
     // 日程調整を作成
