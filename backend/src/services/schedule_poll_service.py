@@ -835,13 +835,13 @@ class SchedulePollService:
 
         content += f"{' '.join(mentions)}\n\n🌐 {web_url}"
 
-        if project.discord_webhook_url:
-            await self.discord_service.send_notification(
-                content=content, webhook_url=project.discord_webhook_url
-            )
-        elif project.discord_channel_id:
+        if project.discord_channel_id:
             await self.discord_service.send_channel_message(
                 channel_id=project.discord_channel_id, content=content
+            )
+        elif project.discord_webhook_url:
+            await self.discord_service.send_notification(
+                content=content, webhook_url=project.discord_webhook_url
             )
 
     async def stop_auto_reminder(self, poll_id: uuid.UUID) -> bool:
