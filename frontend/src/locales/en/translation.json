@@ -388,6 +388,7 @@
     "noPollsMessage": "Create a new schedule poll and share it on Discord.",
     "candidatesCount": "{count} candidates",
     "answerSaved": "Answer saved",
+    "answerFailed": "Failed to save answer. Please try again.",
     "finalized": "Rehearsal schedule created",
     "recommendations": "System Recommendations",
     "finalizeThis": "Finalize this date",

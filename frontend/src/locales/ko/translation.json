@@ -361,6 +361,7 @@
     "noPollsMessage": "새 일정 조율을 생성하고 Discord에 공유하세요.",
     "candidatesCount": "{count}개의 후보 날짜",
     "answerSaved": "답변이 저장되었습니다",
+    "answerFailed": "답변 저장에 실패했습니다. 다시 시도해 주세요.",
     "finalized": "리허설 일정이 생성되었습니다",
     "recommendations": "시스템 추천 일정",
     "finalizeThis": "이 날짜로 확정하기",

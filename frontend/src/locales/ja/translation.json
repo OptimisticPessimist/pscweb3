@@ -436,6 +436,7 @@
     "noPollsMessage": "新しい日程調整を作成して、Discordで共有しましょう。",
     "candidatesCount": "件の候補日",
     "answerSaved": "回答を保存しました",
+    "answerFailed": "回答の保存に失敗しました。もう一度お試しください。",
     "finalized": "稽古予定を作成しました",
     "recommendations": "システムによるおすすめ日程",
     "finalizeThis": "この日で確定する",
