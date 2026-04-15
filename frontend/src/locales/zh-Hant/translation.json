@@ -362,6 +362,7 @@
     "noPollsMessage": "建立一個新的日程投票並分享在 Discord 上。",
     "candidatesCount": "{count} 個候選日期",
     "answerSaved": "回答已儲存",
+    "answerFailed": "回答儲存失敗，請重試。",
     "finalized": "已建立排練日程",
     "recommendations": "系統推薦",
     "finalizeThis": "確認此日期",
