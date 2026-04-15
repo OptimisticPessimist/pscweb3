@@ -302,6 +302,7 @@ class SchedulePollService:
             self.db.add(answer)
 
         await self.db.commit()
+        await self.db.refresh(answer)
 
     async def get_recommendations(self, poll_id: uuid.UUID):
         """優先度アルゴリズムに基づくレコメンドを取得."""

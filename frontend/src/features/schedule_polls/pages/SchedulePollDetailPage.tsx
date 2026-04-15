@@ -66,6 +66,9 @@ export const SchedulePollDetailPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['schedulePoll', projectId, pollId] });
             toast.success(t('schedulePoll.answerSaved') || '回答を保存しました');
         },
+        onError: () => {
+            toast.error(t('schedulePoll.answerFailed') || '回答の保存に失敗しました。もう一度お試しください。');
+        },
     });
 
     const finalizeMutation = useMutation({
