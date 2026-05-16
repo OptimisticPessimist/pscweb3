@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react';
-import { format, parseISO } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { parseISO } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import type { DateKey, SlotIndex } from './types';
 import { TOTAL_SLOTS } from './types';
 
@@ -23,6 +23,7 @@ export const TimelineRow: React.FC<TimelineRowProps> = ({
   onReset,
   onSetAllDay,
 }) => {
+  const { t, i18n } = useTranslation();
   const isDragging = useRef(false);
   const dragStart = useRef<SlotIndex | null>(null);
   const dragMode = useRef<'select' | 'deselect'>('select');
@@ -30,7 +31,11 @@ export const TimelineRow: React.FC<TimelineRowProps> = ({
   const rowRef = useRef<HTMLDivElement>(null);
 
   const dateObj = parseISO(date);
-  const dateLabel = format(dateObj, 'M/d (E)', { locale: ja });
+  const dateLabel = new Intl.DateTimeFormat(i18n.language, {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(dateObj);
 
   const updatePreview = useCallback((start: SlotIndex, end: SlotIndex) => {
     const min = Math.min(start, end);
@@ -136,7 +141,7 @@ export const TimelineRow: React.FC<TimelineRowProps> = ({
             onClick={() => onReset(date)}
             className="text-indigo-500 hover:text-indigo-700"
           >
-            リセット
+            {t('schedulePoll.candidatePicker.resetDate')}
           </button>
           <span className="text-gray-300">|</span>
           <button
@@ -144,7 +149,7 @@ export const TimelineRow: React.FC<TimelineRowProps> = ({
             onClick={() => onSetAllDay(date)}
             className="text-indigo-500 hover:text-indigo-700"
           >
-            終日
+            {t('schedulePoll.candidatePicker.allDay')}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DateKey, SlotIndex } from './types';
 import { TOTAL_SLOTS, TIMELINE_START_HOUR } from './types';
 import { TimelineRow } from './TimelineRow';
@@ -38,16 +39,18 @@ export const TimelineGrid: React.FC<TimelineGridProps> = ({
   setAllDay,
   resetAll,
 }) => {
+  const { t } = useTranslation();
+
   if (selectedDates.length === 0) return null;
 
   return (
     <div className="space-y-3">
       <div>
         <p className="text-xs text-gray-500 mb-2">
-          タイムラインのホワイト部分をクリックまたはドラッグで時間の選択・取り消しができます。
+          {t('schedulePoll.candidatePicker.timelineHintPrimary')}
         </p>
         <p className="text-xs text-gray-500 mb-3">
-          すべての日付を一括で選択したい場合は一括設定が便利です。
+          {t('schedulePoll.candidatePicker.timelineHintSecondary')}
         </p>
 
         <BulkTimeSelector

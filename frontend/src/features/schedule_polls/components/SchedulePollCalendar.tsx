@@ -3,6 +3,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import jaLocale from '@fullcalendar/core/locales/ja';
+import koLocale from '@fullcalendar/core/locales/ko';
+import zhCnLocale from '@fullcalendar/core/locales/zh-cn';
+import zhTwLocale from '@fullcalendar/core/locales/zh-tw';
 import type { PollCandidateAnalysis, SchedulePollCalendarAnalysis } from '../api/schedulePoll';
 import { useTranslation } from 'react-i18next';
 import { formatSceneNumber } from '@/utils/sceneFormatter';
@@ -16,12 +20,20 @@ interface SchedulePollCalendarProps {
 }
 
 export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ analysis, onFinalize }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const calendarRef = useRef<FullCalendar>(null);
     const [selectedAnalysis, setSelectedAnalysis] = useState<PollCandidateAnalysis | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
     const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
+    const fullCalendarLocale = useMemo(() => {
+        const language = i18n.language.toLowerCase();
+        if (language.startsWith('zh-hant')) return 'zh-tw';
+        if (language.startsWith('zh-hans') || language.startsWith('zh')) return 'zh-cn';
+        if (language.startsWith('ko')) return 'ko';
+        if (language.startsWith('ja')) return 'ja';
+        return 'en';
+    }, [i18n.language]);
 
     // Get unique scenes from analysis for filtering
     const scenes = useMemo(() => {
@@ -83,13 +95,15 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
 
         let title = '';
         if (selectedSceneId) {
-            if (filteredStatus === 'possible') title = '🟢 稽古可能';
-            else if (filteredStatus === 'reach') title = '🟡 リーチ';
-            else title = '⚪ 不可';
+            if (filteredStatus === 'possible') title = `🟢 ${t('schedulePoll.statusPossible')}`;
+            else if (filteredStatus === 'reach') title = `🟡 ${t('schedulePoll.statusReach')}`;
+            else title = `⚪ ${t('schedulePoll.statusNone')}`;
         } else {
             title = a.possible_scenes.length > 0
-                ? `🟢 ${a.possible_scenes.length} Scenes`
-                : (a.reach_scenes.length > 0 ? `🟡 ${a.reach_scenes.length} Reach` : '⚪ No matching scenes');
+                ? `🟢 ${t('schedulePoll.calendarPossibleCount', { count: a.possible_scenes.length })}`
+                : (a.reach_scenes.length > 0
+                    ? `🟡 ${t('schedulePoll.calendarReachCount', { count: a.reach_scenes.length })}`
+                    : `⚪ ${t('schedulePoll.calendarNoMatch')}`);
         }
 
         return {
@@ -170,7 +184,8 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                     events={events}
                     eventClick={handleEventClick}
                     height="auto"
-                    locale="ja"
+                    locales={[jaLocale, koLocale, zhCnLocale, zhTwLocale]}
+                    locale={fullCalendarLocale}
                     allDaySlot={false}
                     slotMinTime="08:00:00"
                     slotMaxTime="23:00:00"
@@ -240,7 +255,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                                                 <Clock className="h-16 w-16 text-indigo-600" />
                                                             </div>
-                                                            <div className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-2">Selected Time</div>
+                                                            <div className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-2">{t('schedulePoll.selectedTime')}</div>
                                                             <div className="text-xl font-black text-gray-900 font-mono">
                                                                 {new Date(selectedAnalysis.start_datetime).toLocaleDateString(undefined, { month: 'long', day: 'numeric', weekday: 'long' })}
                                                             </div>
@@ -256,7 +271,9 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center">
                                                                 <Users className="h-4 w-4 mr-2" />
                                                                 {t('schedulePoll.availableMembers') || '参加可能メンバー'}
-                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">{selectedAnalysis.available_members.length}名</span>
+                                                                <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">
+                                                                    {t('schedulePoll.memberCount', { count: selectedAnalysis.available_members.length })}
+                                                                </span>
                                                             </h3>
                                                             <div className="flex flex-wrap gap-2">
                                                                 {selectedAnalysis.available_members.map((member) => {
@@ -282,7 +299,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                                 })}
                                                             </div>
                                                             {selectedAnalysis.available_members.length === 0 && (
-                                                                <p className="text-xs text-gray-400 italic">参加可能なメンバーはいません</p>
+                                                                <p className="text-xs text-gray-400 italic">{t('schedulePoll.noAvailableMembers')}</p>
                                                             )}
                                                         </div>
 
@@ -332,7 +349,7 @@ export const SchedulePollCalendar: React.FC<SchedulePollCalendarProps> = ({ anal
                                                                                 </div>
                                                                             </div>
                                                                             <div className="flex items-center space-x-2 pl-13">
-                                                                                <span className="text-[10px] font-black uppercase text-amber-500 tracking-tighter">Missing:</span>
+                                                                                <span className="text-[10px] font-black uppercase text-amber-500 tracking-tighter">{t('schedulePoll.missingMembers')}</span>
                                                                                 <div className="flex flex-wrap gap-1">
                                                                                     {scene.missing_user_names.map((name, i) => (
                                                                                         <span key={i} className="text-[11px] font-bold text-amber-900 px-2 py-0.5 bg-white border border-amber-200 rounded-full shadow-sm">

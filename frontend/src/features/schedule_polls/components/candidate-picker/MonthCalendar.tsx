@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   startOfMonth,
   endOfMonth,
@@ -11,7 +11,7 @@ import {
   isBefore,
   startOfDay,
 } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import type { DateKey } from './types';
 
 interface MonthCalendarProps {
@@ -19,15 +19,17 @@ interface MonthCalendarProps {
   onToggleDate: (date: DateKey) => void;
 }
 
-const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
-
 function SingleMonth({
   month,
   selectedDates,
+  weekdayLabels,
+  monthFormatter,
   onToggleDate,
 }: {
   month: Date;
   selectedDates: DateKey[];
+  weekdayLabels: string[];
+  monthFormatter: Intl.DateTimeFormat;
   onToggleDate: (date: DateKey) => void;
 }) {
   const monthStart = startOfMonth(month);
@@ -45,11 +47,11 @@ function SingleMonth({
   return (
     <div className="flex-1 min-w-[280px]">
       <h3 className="text-center font-bold text-gray-700 mb-2">
-        {format(month, 'yyyy年M月', { locale: ja })}
+        {monthFormatter.format(month)}
       </h3>
       <div className="grid grid-cols-7 gap-0">
         {/* Weekday headers */}
-        {WEEKDAY_LABELS.map((label, i) => (
+        {weekdayLabels.map((label, i) => (
           <div
             key={label}
             className={`text-center text-xs font-bold py-1 ${
@@ -95,7 +97,20 @@ function SingleMonth({
 }
 
 export const MonthCalendar: React.FC<MonthCalendarProps> = ({ selectedDates, onToggleDate }) => {
+  const { t, i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
+
+  const monthFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long' }),
+    [i18n.language]
+  );
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' });
+    const sunday = new Date(Date.UTC(2024, 0, 7));
+    return Array.from({ length: 7 }, (_, i) =>
+      formatter.format(new Date(sunday.getTime() + i * 24 * 60 * 60 * 1000))
+    );
+  }, [i18n.language]);
 
   const nextMonth = addMonths(currentMonth, 1);
 
@@ -108,33 +123,45 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({ selectedDates, onT
           onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
           className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
         >
-          ← 前の月
+          {t('schedulePoll.candidatePicker.previousMonth')}
         </button>
         <button
           type="button"
           onClick={() => setCurrentMonth(startOfMonth(new Date()))}
           className="text-sm text-gray-600 hover:text-gray-800 font-medium px-3 py-1 border border-gray-200 rounded-lg"
         >
-          今日
+          {t('schedulePoll.candidatePicker.today')}
         </button>
         <button
           type="button"
           onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
           className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
         >
-          次の月 →
+          {t('schedulePoll.candidatePicker.nextMonth')}
         </button>
       </div>
 
       {/* Two months side by side */}
       <div className="flex gap-6 flex-wrap">
-        <SingleMonth month={currentMonth} selectedDates={selectedDates} onToggleDate={onToggleDate} />
-        <SingleMonth month={nextMonth} selectedDates={selectedDates} onToggleDate={onToggleDate} />
+        <SingleMonth
+          month={currentMonth}
+          selectedDates={selectedDates}
+          weekdayLabels={weekdayLabels}
+          monthFormatter={monthFormatter}
+          onToggleDate={onToggleDate}
+        />
+        <SingleMonth
+          month={nextMonth}
+          selectedDates={selectedDates}
+          weekdayLabels={weekdayLabels}
+          monthFormatter={monthFormatter}
+          onToggleDate={onToggleDate}
+        />
       </div>
 
       {selectedDates.length > 0 && (
         <p className="text-xs text-gray-400 mt-3">
-          {selectedDates.length}日選択中
+          {t('schedulePoll.candidatePicker.selectedDays', { count: selectedDates.length })}
         </p>
       )}
     </div>
