@@ -1,6 +1,7 @@
 """日程調整スキーマ."""
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -90,6 +91,43 @@ class SchedulePollFinalize(BaseModel):
     candidate_id: UUID
     scene_ids: list[UUID]
     attendance_target: str = "voters_only"  # "voters_only" or "everyone"
+    rehearsal_title: str | None = None
+    location: str | None = None
+    notes: str | None = None
+
+
+class SchedulePollFinalizeResponse(BaseModel):
+    """日程調整確定レスポンス."""
+
+    status: Literal["created", "already_exists"]
+    rehearsal_id: UUID
+    gcal_url: str | None = None
+
+
+class SchedulePollFinalizeBatchRequest(BaseModel):
+    """日程調整一括確定リクエスト."""
+
+    items: list[SchedulePollFinalize]
+
+
+class SchedulePollFinalizeBatchResult(BaseModel):
+    """日程調整一括確定結果（1件分）."""
+
+    candidate_id: UUID
+    status: Literal["created", "already_exists", "error"]
+    rehearsal_id: UUID | None = None
+    gcal_url: str | None = None
+    error: str | None = None
+
+
+class SchedulePollFinalizeBatchResponse(BaseModel):
+    """日程調整一括確定レスポンス."""
+
+    status: str = "ok"
+    created_count: int
+    already_exists_count: int
+    error_count: int
+    results: list[SchedulePollFinalizeBatchResult]
 
 
 class SceneAvailability(BaseModel):

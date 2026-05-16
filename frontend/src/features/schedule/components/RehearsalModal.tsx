@@ -30,6 +30,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
     const queryClient = useQueryClient();
     const [date, setDate] = useState<string>('');
     const [duration, setDuration] = useState<number>(120);
+    const [title, setTitle] = useState<string>('');
     const [location, setLocation] = useState<string>('');
     const [notes, setNotes] = useState<string>('');
     const [sceneIds, setSceneIds] = useState<string[]>([]);
@@ -131,6 +132,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                 const formattedDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 setDate(formattedDate);
                 setDuration(rehearsal.duration_minutes);
+                setTitle(rehearsal.title || '');
                 setLocation(rehearsal.location || '');
                 setNotes(rehearsal.notes || '');
 
@@ -179,6 +181,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                 }
                 setDate(formattedDate);
                 setDuration(120);
+                setTitle('');
                 setLocation('');
                 setNotes('');
                 setSceneIds([]);
@@ -302,6 +305,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             });
 
             const commonData = {
+                title: title || null,
                 date: new Date(date).toISOString(),
                 duration_minutes: duration,
                 location: location || null,
@@ -374,6 +378,17 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                         value={duration}
                                         onChange={(e) => setDuration(parseInt(e.target.value))}
                                         className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+                                    <input
+                                        type="text"
+                                        id="title"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        placeholder="例: 抜き稽古A"
                                     />
                                 </div>
                                 <div>

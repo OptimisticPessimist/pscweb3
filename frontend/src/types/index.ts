@@ -127,6 +127,7 @@ export interface Rehearsal {
     schedule_id: string;
     scene_id: string | null;
     scene_heading: string | null;
+    title: string | null;
     date: string;
     duration_minutes: number;
     location: string | null;
@@ -160,6 +161,7 @@ export interface RehearsalCastCreate {
 export interface RehearsalCreate {
     scene_id?: string | null; // Deprecated
     scene_ids?: string[];
+    title?: string | null;
     date: string;
     duration_minutes: number;
     location?: string | null;
@@ -173,6 +175,7 @@ export interface RehearsalCreate {
 export interface RehearsalUpdate {
     scene_id?: string | null;
     scene_ids?: string[];
+    title?: string | null;
     date?: string | null;
     duration_minutes?: number | null;
     location?: string | null;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -21,13 +21,24 @@ import {
     Bell,
     UserCheck,
     UserMinus,
-    RefreshCw
+    RefreshCw,
+    Search,
+    Filter,
+    ChevronRight
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PageHead } from '@/components/PageHead';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import toast from 'react-hot-toast';
 import { SchedulePollCalendar } from '../components/SchedulePollCalendar';
+
+interface BatchFinalizeDraftItem {
+    candidateId: string;
+    title: string;
+    location: string;
+    notes: string;
+    sceneIds: string[];
+}
 
 export const SchedulePollDetailPage: React.FC = () => {
     const { t } = useTranslation();
@@ -36,10 +47,22 @@ export const SchedulePollDetailPage: React.FC = () => {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [selectedCandidateForFinalize, setSelectedCandidateForFinalize] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
+    const [selectedSceneIdsForFinalize, setSelectedSceneIdsForFinalize] = useState<string[]>([]);
+    const [viewMode, setViewMode] = useState<'summary' | 'grid' | 'calendar'>('summary');
     const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
+    const [rehearsalTitle, setRehearsalTitle] = useState('');
+    const [rehearsalLocation, setRehearsalLocation] = useState('未定');
+    const [rehearsalNotes, setRehearsalNotes] = useState('');
+    const [selectedCandidateIdsForBatch, setSelectedCandidateIdsForBatch] = useState<string[]>([]);
+    const [showBatchFinalizeModal, setShowBatchFinalizeModal] = useState(false);
+    const [batchAttendanceTarget, setBatchAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
+    const [batchDraftItems, setBatchDraftItems] = useState<BatchFinalizeDraftItem[]>([]);
     const [isEditingRequiredRoles, setIsEditingRequiredRoles] = useState(false);
     const [requiredRolesDraft, setRequiredRolesDraft] = useState<string[] | null>(null);
+    const [participantSearch, setParticipantSearch] = useState('');
+    const [participantRoleFilter, setParticipantRoleFilter] = useState('all');
+    const [showOnlyPendingColumns, setShowOnlyPendingColumns] = useState(false);
+    const gridScrollRef = useRef<HTMLDivElement | null>(null);
 
     const { data: poll, isLoading } = useQuery({
         queryKey: ['schedulePoll', projectId, pollId],
@@ -53,10 +76,28 @@ export const SchedulePollDetailPage: React.FC = () => {
         enabled: !!projectId && !!pollId,
     });
 
+    const { data: members } = useQuery({
+        queryKey: ['projectMembers', projectId],
+        queryFn: () => projectsApi.getProjectMembers(projectId!),
+        enabled: !!projectId
+    });
+
+    const currentMemberRole = useMemo(() => {
+        if (!members || !user) return null;
+        const currentMember = members.find(m => m.user_id === user.id);
+        return currentMember?.role ?? null;
+    }, [members, user]);
+
+    const isViewer = currentMemberRole === 'viewer';
+
     const { data: analysis } = useQuery({
         queryKey: ['schedulePollAnalysis', projectId, pollId],
         queryFn: () => schedulePollApi.getCalendarAnalysis(projectId!, pollId!),
-        enabled: !!projectId && !!pollId && viewMode === 'calendar',
+        enabled:
+            !!projectId &&
+            !!pollId &&
+            !isViewer &&
+            (viewMode === 'calendar' || !!selectedCandidateForFinalize || showBatchFinalizeModal),
     });
 
     const answerMutation = useMutation({
@@ -72,17 +113,77 @@ export const SchedulePollDetailPage: React.FC = () => {
     });
 
     const [showFinalizedModal, setShowFinalizedModal] = useState(false);
+    const [finalizeResultStatus, setFinalizeResultStatus] = useState<'created' | 'already_exists' | null>(null);
     const [gcalUrl, setGcalUrl] = useState<string | null>(null);
 
     const finalizeMutation = useMutation({
-        mutationFn: ({ candidateId, sceneIds, attendanceTarget }: { candidateId: string, sceneIds: string[], attendanceTarget?: 'voters_only' | 'everyone' }) =>
-            schedulePollApi.finalizePoll(projectId!, pollId!, candidateId, sceneIds, attendanceTarget),
+        mutationFn: ({
+            candidateId,
+            sceneIds,
+            attendanceTarget,
+            rehearsalTitle,
+            rehearsalLocation,
+            rehearsalNotes
+        }: {
+            candidateId: string;
+            sceneIds: string[];
+            attendanceTarget?: 'voters_only' | 'everyone';
+            rehearsalTitle?: string;
+            rehearsalLocation?: string;
+            rehearsalNotes?: string;
+        }) =>
+            schedulePollApi.finalizePoll(projectId!, pollId!, {
+                candidate_id: candidateId,
+                scene_ids: sceneIds,
+                attendance_target: attendanceTarget,
+                rehearsal_title: rehearsalTitle,
+                location: rehearsalLocation,
+                notes: rehearsalNotes,
+            }),
         onSuccess: (data) => {
-            toast.success(t('schedulePoll.finalized') || '稽古予定を作成しました');
+            if (data.status === 'already_exists') {
+                toast('同じ内容の稽古予定はすでに登録済みです');
+            } else {
+                toast.success(t('schedulePoll.finalized') || '稽古予定を作成しました');
+            }
             setSelectedCandidateForFinalize(null);
-            setGcalUrl(data.gcal_url);
+            setSelectedSceneIdsForFinalize([]);
+            setFinalizeResultStatus(data.status);
+            setGcalUrl(data.gcal_url ?? null);
             setShowFinalizedModal(true);
         },
+        onError: () => {
+            toast.error('確定処理に失敗しました');
+        },
+    });
+
+    const finalizeBatchMutation = useMutation({
+        mutationFn: (items: BatchFinalizeDraftItem[]) =>
+            schedulePollApi.finalizePollBatch(projectId!, pollId!, {
+                items: items.map(item => ({
+                    candidate_id: item.candidateId,
+                    scene_ids: item.sceneIds,
+                    attendance_target: batchAttendanceTarget,
+                    rehearsal_title: item.title.trim() || undefined,
+                    location: item.location.trim() || undefined,
+                    notes: item.notes.trim() || undefined,
+                }))
+            }),
+        onSuccess: (data) => {
+            if (data.error_count === 0 && data.already_exists_count === 0) {
+                toast.success(`${data.created_count}件の稽古予定を作成しました`);
+            } else if (data.error_count === 0) {
+                toast.success(`新規${data.created_count}件 / 既存${data.already_exists_count}件`);
+            } else {
+                toast.error(`新規${data.created_count}件 / 既存${data.already_exists_count}件 / 失敗${data.error_count}件`);
+            }
+            setShowBatchFinalizeModal(false);
+            setSelectedCandidateIdsForBatch([]);
+            setBatchDraftItems([]);
+        },
+        onError: () => {
+            toast.error('一括登録に失敗しました');
+        }
     });
 
     const deleteMutation = useMutation({
@@ -143,12 +244,6 @@ export const SchedulePollDetailPage: React.FC = () => {
         }
     });
 
-    const { data: members } = useQuery({
-        queryKey: ['projectMembers', projectId],
-        queryFn: () => projectsApi.getProjectMembers(projectId!),
-        enabled: !!projectId
-    });
-
     const memberRoles = useMemo(() => {
         if (!members) return [];
         const roleSet = new Set<string>();
@@ -195,15 +290,12 @@ export const SchedulePollDetailPage: React.FC = () => {
     const targetUserIds = unansweredUserIds.filter(id => !excludedReminderUserIds.includes(id));
 
     const isEditorOrOwner = useMemo(() => {
-        if (!members || !user) return false;
-        const member = members.find(m => m.user_id === user.id);
-        return member && (member.role === 'owner' || member.role === 'editor');
-    }, [members, user]);
+        return currentMemberRole === 'owner' || currentMemberRole === 'editor';
+    }, [currentMemberRole]);
 
     const isMember = useMemo(() => {
-        if (!members || !user) return false;
-        return members.some(m => m.user_id === user.id);
-    }, [members, user]);
+        return !!currentMemberRole;
+    }, [currentMemberRole]);
 
     const handleDelete = () => {
         if (window.confirm(t('schedulePoll.confirmDelete') || 'この日程調整を削除してもよろしいですか？\n削除すると参加者の回答などもすべて消去され復元できません。')) {
@@ -211,23 +303,210 @@ export const SchedulePollDetailPage: React.FC = () => {
         }
     };
 
-    // 参加者のユニークリストを作成（グリッドの列用）
     const participants = useMemo(() => {
-        if (!poll) return [];
-        const userMap = new Map<string, { id: string, name: string, role?: string }>();
-        poll.candidates.forEach(c => {
-            c.answers.forEach(a => {
-                if (!userMap.has(a.user_id)) {
-                    userMap.set(a.user_id, {
-                        id: a.user_id,
-                        name: a.display_name || a.discord_username || 'Unknown',
-                        role: a.role
-                    });
-                }
-            });
+        if (!poll || !members) return [];
+        const sourceMembers =
+            isViewer && user ? members.filter(member => member.user_id === user.id) : members;
+
+        return sourceMembers
+            .map(member => {
+                const answeredCount = poll.candidates.reduce((count, candidate) => {
+                    return count + (candidate.answers.some(answer => answer.user_id === member.user_id) ? 1 : 0);
+                }, 0);
+                return {
+                    id: member.user_id,
+                    name: member.display_name || member.discord_username || 'Unknown',
+                    role: member.default_staff_role || '',
+                    answeredCount,
+                    hasUnanswered: answeredCount < poll.candidates.length,
+                };
+            })
+            .sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    }, [poll, members, isViewer, user]);
+
+    const roleFilterOptions = useMemo(() => {
+        const roleSet = new Set<string>();
+        participants.forEach(p => {
+            if (p.role) {
+                roleSet.add(p.role);
+            }
         });
-        return Array.from(userMap.values());
-    }, [poll]);
+        return Array.from(roleSet).sort((a, b) => a.localeCompare(b, 'ja'));
+    }, [participants]);
+
+    const filteredParticipants = useMemo(() => {
+        const keyword = participantSearch.trim().toLowerCase();
+        return participants.filter(participant => {
+            const matchKeyword =
+                !keyword ||
+                participant.name.toLowerCase().includes(keyword) ||
+                participant.role.toLowerCase().includes(keyword);
+            const matchRole = participantRoleFilter === 'all' || participant.role === participantRoleFilter;
+            const matchPending = !showOnlyPendingColumns || participant.hasUnanswered;
+            return matchKeyword && matchRole && matchPending;
+        });
+    }, [participants, participantSearch, participantRoleFilter, showOnlyPendingColumns]);
+
+    const candidateSummaries = useMemo(() => {
+        if (!poll) return [];
+        return poll.candidates.map(candidate => {
+            const uniqueAnswers = new Map(candidate.answers.map(answer => [answer.user_id, answer.status]));
+            let okCount = 0;
+            let maybeCount = 0;
+            let ngCount = 0;
+            uniqueAnswers.forEach(status => {
+                if (status === 'ok') okCount += 1;
+                if (status === 'maybe') maybeCount += 1;
+                if (status === 'ng') ngCount += 1;
+            });
+            const totalMembers = isViewer ? 1 : (members?.length || 0);
+            const unansweredCount = Math.max(0, totalMembers - uniqueAnswers.size);
+            const recommendation = recommendations?.find(rec => rec.candidate_id === candidate.id);
+            return {
+                candidate,
+                okCount,
+                maybeCount,
+                ngCount,
+                unansweredCount,
+                recommendation,
+            };
+        });
+    }, [poll, members, recommendations, isViewer]);
+
+    const selectedCandidateSetForBatch = useMemo(
+        () => new Set(selectedCandidateIdsForBatch),
+        [selectedCandidateIdsForBatch]
+    );
+
+    const toggleCandidateForBatch = (candidateId: string) => {
+        setSelectedCandidateIdsForBatch(prev =>
+            prev.includes(candidateId)
+                ? prev.filter(id => id !== candidateId)
+                : [...prev, candidateId]
+        );
+    };
+
+    const selectAllCandidatesForBatch = () => {
+        setSelectedCandidateIdsForBatch(candidateSummaries.map(summary => summary.candidate.id));
+    };
+
+    const clearBatchSelection = () => {
+        setSelectedCandidateIdsForBatch([]);
+    };
+
+    const sceneOptionsForFinalize = useMemo(() => {
+        if (analysis?.all_scenes && analysis.all_scenes.length > 0) {
+            return analysis.all_scenes.map(scene => ({
+                id: scene.scene_id,
+                label: `#${formatSceneNumber(scene.act_number, scene.scene_number)} ${scene.heading}`
+            }));
+        }
+
+        if (!selectedCandidateForFinalize || !recommendations) {
+            return [];
+        }
+
+        const rec = recommendations.find(r => r.candidate_id === selectedCandidateForFinalize);
+        if (!rec) {
+            return [];
+        }
+
+        return rec.possible_scenes.map(scene => ({
+            id: scene.scene_id,
+            label: `#${formatSceneNumber(scene.act_number, scene.scene_number)} ${scene.scene_heading}`
+        }));
+    }, [analysis, selectedCandidateForFinalize, recommendations]);
+
+    const openFinalizeModal = (
+        candidateId: string,
+        sceneIds: string[],
+        target: 'voters_only' | 'everyone' = 'voters_only'
+    ) => {
+        const candidate = poll?.candidates.find(c => c.id === candidateId);
+        const start = candidate ? new Date(candidate.start_datetime) : null;
+        const defaultTitle = start
+            ? `${poll?.title || '稽古'} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`
+            : (poll?.title || '');
+
+        setSelectedCandidateForFinalize(candidateId);
+        setSelectedSceneIdsForFinalize(sceneIds);
+        setAttendanceTarget(target);
+        setRehearsalTitle(defaultTitle);
+        setRehearsalLocation('未定');
+        setRehearsalNotes('');
+    };
+
+    const openBatchFinalizeModal = () => {
+        const drafts: BatchFinalizeDraftItem[] = selectedCandidateIdsForBatch
+            .map(candidateId => {
+                const summary = candidateSummaries.find(item => item.candidate.id === candidateId);
+                if (!summary) return null;
+                const start = new Date(summary.candidate.start_datetime);
+                const defaultTitle = `${poll?.title || '稽古'} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`;
+                return {
+                    candidateId,
+                    title: defaultTitle,
+                    location: '未定',
+                    notes: '',
+                    sceneIds: summary.recommendation?.possible_scenes.map(scene => scene.scene_id) || [],
+                };
+            })
+            .filter((draft): draft is BatchFinalizeDraftItem => draft !== null);
+
+        if (drafts.length === 0) {
+            toast.error('一括登録対象を選択してください');
+            return;
+        }
+
+        setBatchDraftItems(drafts);
+        setBatchAttendanceTarget('voters_only');
+        setShowBatchFinalizeModal(true);
+    };
+
+    const updateBatchDraft = (
+        candidateId: string,
+        field: 'title' | 'location' | 'notes',
+        value: string
+    ) => {
+        setBatchDraftItems(prev =>
+            prev.map(item => (item.candidateId === candidateId ? { ...item, [field]: value } : item))
+        );
+    };
+
+    const toggleBatchScene = (candidateId: string, sceneId: string, checked: boolean) => {
+        setBatchDraftItems(prev =>
+            prev.map(item => {
+                if (item.candidateId !== candidateId) return item;
+                return {
+                    ...item,
+                    sceneIds: checked
+                        ? Array.from(new Set([...item.sceneIds, sceneId]))
+                        : item.sceneIds.filter(id => id !== sceneId),
+                };
+            })
+        );
+    };
+
+    const getBatchSceneOptions = (candidateId: string) => {
+        if (analysis?.all_scenes && analysis.all_scenes.length > 0) {
+            return analysis.all_scenes.map(scene => ({
+                id: scene.scene_id,
+                label: `#${formatSceneNumber(scene.act_number, scene.scene_number)} ${scene.heading}`,
+            }));
+        }
+        const recommendation = candidateSummaries.find(summary => summary.candidate.id === candidateId)?.recommendation;
+        return (
+            recommendation?.possible_scenes.map(scene => ({
+                id: scene.scene_id,
+                label: `#${formatSceneNumber(scene.act_number, scene.scene_number)} ${scene.scene_heading}`,
+            })) || []
+        );
+    };
+
+    const scrollGridBy = (delta: number) => {
+        if (!gridScrollRef.current) return;
+        gridScrollRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+    };
 
     if (isLoading || !poll) {
         return (
@@ -306,19 +585,28 @@ export const SchedulePollDetailPage: React.FC = () => {
             {/* 表示モード切替 */}
             <div className="flex bg-gray-100 p-1 rounded-2xl w-fit">
                 <button
+                    onClick={() => setViewMode('summary')}
+                    className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'summary' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    <Filter className="h-4 w-4" />
+                    <span>{t('schedulePoll.summaryView') || '集計'}</span>
+                </button>
+                <button
                     onClick={() => setViewMode('grid')}
                     className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     <LayoutGrid className="h-4 w-4" />
                     <span>{t('schedulePoll.gridView') || '表形式'}</span>
                 </button>
-                <button
-                    onClick={() => setViewMode('calendar')}
-                    className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    <Calendar className="h-4 w-4" />
-                    <span>{t('schedulePoll.calendarView') || 'カレンダー'}</span>
-                </button>
+                {!isViewer && (
+                    <button
+                        onClick={() => setViewMode('calendar')}
+                        className={`flex items-center space-x-2 px-6 py-2 rounded-xl font-bold transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Calendar className="h-4 w-4" />
+                        <span>{t('schedulePoll.calendarView') || 'カレンダー'}</span>
+                    </button>
+                )}
             </div>
 
             {isEditorOrOwner && (
@@ -409,13 +697,13 @@ export const SchedulePollDetailPage: React.FC = () => {
                 ) : (
                     <SchedulePollCalendar
                         analysis={analysis}
-                        onFinalize={(candidateId, sceneIds) => finalizeMutation.mutate({ candidateId, sceneIds })}
+                        onFinalize={(candidateId, sceneIds, target) => openFinalizeModal(candidateId, sceneIds, target)}
                     />
                 )
             ) : (
                 <>
                     {/* おすすめ日程セクション */}
-                    {recommendations && recommendations.length > 0 && (
+                    {!isViewer && recommendations && recommendations.length > 0 && (
                         <section className="bg-violet-50/50 border border-violet-100 rounded-2xl p-6 shadow-sm">
                             <div className="flex items-center space-x-2 mb-4">
                                 <Sparkles className="h-5 w-5 text-violet-600" />
@@ -461,7 +749,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             </div>
                                         )}
                                         <button
-                                            onClick={() => setSelectedCandidateForFinalize(rec.candidate_id)}
+                                            onClick={() => openFinalizeModal(rec.candidate_id, rec.possible_scenes.map(scene => scene.scene_id))}
                                             className="w-full py-2 bg-violet-600 text-white text-xs font-bold rounded-lg hover:bg-violet-700 transition-colors flex items-center justify-center"
                                         >
                                             {t('schedulePoll.finalizeThis') || 'この日で確定する'}
@@ -472,95 +760,262 @@ export const SchedulePollDetailPage: React.FC = () => {
                             </div>
                         </section>
                     )}
-
-                    {/* 回答グリッド */}
-                    <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                                        <th className="px-6 py-5 text-sm font-bold text-gray-700 w-64 sticky left-0 bg-white z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
-                                            {t('schedulePoll.dateColumn') || '候補日時'}
-                                        </th>
-                                        {participants.map(p => (
-                                            <th key={p.id} className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[120px]">
-                                                <div className="flex flex-col items-center">
-                                                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mb-1">
-                                                        <User className="h-4 w-4 text-indigo-600" />
-                                                    </div>
-                                                    <span className="truncate max-w-[100px]">{p.name}</span>
-                                                    {p.role && (
-                                                        <span className="text-[10px] text-gray-400 mt-0.5 max-w-[100px] truncate block font-normal leading-tight">
-                                                            {p.role}
-                                                        </span>
+                    {viewMode === 'summary' ? (
+                        <section className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-6">
+                            <div className="flex flex-col gap-3 mb-4">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-lg font-bold text-gray-900">{t('schedulePoll.summaryView') || '集計ビュー'}</h2>
+                                    <span className="text-xs text-gray-500">
+                                        {t('schedulePoll.summaryHint') || '候補ごとの人数集計を優先表示しています'}
+                                    </span>
+                                </div>
+                                {isEditorOrOwner && (
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <button
+                                            onClick={selectAllCandidatesForBatch}
+                                            className="px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            すべて選択
+                                        </button>
+                                        <button
+                                            onClick={clearBatchSelection}
+                                            className="px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                        >
+                                            選択解除
+                                        </button>
+                                        <button
+                                            onClick={openBatchFinalizeModal}
+                                            disabled={selectedCandidateIdsForBatch.length === 0}
+                                            className="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                        >
+                                            一括登録 ({selectedCandidateIdsForBatch.length})
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {candidateSummaries.map(({ candidate, okCount, maybeCount, ngCount, unansweredCount, recommendation }) => {
+                                    const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
+                                    return (
+                                        <div key={candidate.id} className="border border-gray-200 rounded-xl p-4 bg-white">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    {isEditorOrOwner && (
+                                                        <label className="inline-flex items-center gap-2 text-xs text-gray-600 mb-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedCandidateSetForBatch.has(candidate.id)}
+                                                                onChange={() => toggleCandidateForBatch(candidate.id)}
+                                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                            />
+                                                            一括対象
+                                                        </label>
                                                     )}
-                                                </div>
-                                            </th>
-                                        ))}
-                                        {isMember && (
-                                            <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
-                                                {t('schedulePoll.myAnswer') || 'あなたの回答'}
-                                            </th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {poll.candidates.map((candidate) => {
-                                        const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
-                                        return (
-                                            <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors group">
-                                                <td className="px-6 py-5 sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
                                                     <div className="text-sm font-bold text-gray-900">
                                                         {new Date(candidate.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 flex items-center mt-1">
-                                                        <Clock className="h-3 w-3 mr-1" />
+                                                    <div className="text-xs text-gray-500 mt-1">
                                                         {new Date(candidate.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                                         {' - '}
                                                         {new Date(candidate.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
-                                                </td>
-                                                {participants.map(p => {
-                                                    const status = candidate.answers.find(a => a.user_id === p.id)?.status;
-                                                    return (
-                                                        <td key={p.id} className="px-6 py-5 text-center">
-                                                            <div className="flex justify-center">
-                                                                {getStatusIcon(status)}
+                                                </div>
+                                                {isEditorOrOwner && (
+                                                    <button
+                                                        onClick={() => openFinalizeModal(candidate.id, recommendation?.possible_scenes.map(scene => scene.scene_id) || [])}
+                                                        className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                                                    >
+                                                        {t('schedulePoll.finalizeThis') || 'この日で確定する'}
+                                                        <ChevronRight className="h-3 w-3" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+                                                <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">OK {okCount}</span>
+                                                <span className="px-2 py-1 rounded bg-amber-50 text-amber-700 border border-amber-100">Maybe {maybeCount}</span>
+                                                <span className="px-2 py-1 rounded bg-rose-50 text-rose-700 border border-rose-100">NG {ngCount}</span>
+                                                <span className="px-2 py-1 rounded bg-gray-50 text-gray-600 border border-gray-200">{t('schedulePoll.unansweredReminder') || '未回答'} {unansweredCount}</span>
+                                            </div>
+                                            {recommendation?.reason && (
+                                                <p className="mt-3 text-xs text-violet-800 bg-violet-50 border border-violet-100 rounded-lg px-2 py-1.5">
+                                                    {recommendation.reason}
+                                                </p>
+                                            )}
+                                            {isMember && (
+                                                <div className="mt-4 flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
+                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 shadow-sm' : 'hover:bg-emerald-50'}`}
+                                                    >
+                                                        <CheckCircle2 className={`h-5 w-5 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
+                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 shadow-sm' : 'hover:bg-amber-50'}`}
+                                                    >
+                                                        <HelpCircle className={`h-5 w-5 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
+                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 shadow-sm' : 'hover:bg-rose-50'}`}
+                                                    >
+                                                        <XCircle className={`h-5 w-5 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ) : (
+                        <>
+                            <section className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-5">
+                                <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+                                    <div className="flex-1">
+                                        <label className="text-xs font-bold text-gray-500 mb-1 block">{t('common.search') || '検索'}</label>
+                                        <div className="relative">
+                                            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                            <input
+                                                type="text"
+                                                value={participantSearch}
+                                                onChange={(e) => setParticipantSearch(e.target.value)}
+                                                placeholder={t('attendance.searchPlaceholder') || '名前・役職で検索...'}
+                                                className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="w-full lg:w-52">
+                                        <label className="text-xs font-bold text-gray-500 mb-1 block">{t('schedulePoll.requiredRolesLabel') || '役職'}</label>
+                                        <select
+                                            value={participantRoleFilter}
+                                            onChange={(e) => setParticipantRoleFilter(e.target.value)}
+                                            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                        >
+                                            <option value="all">{t('common.all') || 'すべて'}</option>
+                                            {roleFilterOptions.map(role => (
+                                                <option key={role} value={role}>{role}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 px-3 py-2.5 border border-gray-200 rounded-xl bg-gray-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={showOnlyPendingColumns}
+                                            onChange={(e) => setShowOnlyPendingColumns(e.target.checked)}
+                                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span>{t('schedulePoll.unansweredReminder') || '未回答'}のみ</span>
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => scrollGridBy(-420)}
+                                            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50"
+                                        >
+                                            ←
+                                        </button>
+                                        <button
+                                            onClick={() => scrollGridBy(420)}
+                                            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50"
+                                        >
+                                            →
+                                        </button>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-3">
+                                    {filteredParticipants.length}/{participants.length} {t('schedulePoll.summaryView') || '表示'}
+                                </p>
+                            </section>
+
+                            <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 overflow-hidden">
+                                <div ref={gridScrollRef} className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                                                <th className="px-6 py-5 text-sm font-bold text-gray-700 w-64 sticky left-0 bg-white z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                                                    {t('schedulePoll.dateColumn') || '候補日時'}
+                                                </th>
+                                                {filteredParticipants.map(p => (
+                                                    <th key={p.id} className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[120px]">
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mb-1">
+                                                                <User className="h-4 w-4 text-indigo-600" />
                                                             </div>
-                                                        </td>
-                                                    );
-                                                })}
-                                                {isMember && (
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex justify-center items-center space-x-2">
-                                                            <button
-                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
-                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
-                                                            >
-                                                                <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
-                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
-                                                            >
-                                                                <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
-                                                                className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
-                                                            >
-                                                                <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
-                                                            </button>
+                                                            <span className="truncate max-w-[100px]">{p.name}</span>
+                                                            {p.role && (
+                                                                <span className="text-[10px] text-gray-400 mt-0.5 max-w-[100px] truncate block font-normal leading-tight">
+                                                                    {p.role}
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                    </td>
+                                                    </th>
+                                                ))}
+                                                {isMember && (
+                                                    <th className="px-6 py-5 text-sm font-bold text-gray-700 text-center min-w-[150px]">
+                                                        {t('schedulePoll.myAnswer') || 'あなたの回答'}
+                                                    </th>
                                                 )}
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {poll.candidates.map((candidate) => {
+                                                const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
+                                                return (
+                                                    <tr key={candidate.id} className="hover:bg-gray-50/50 transition-colors group">
+                                                        <td className="px-6 py-5 sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                                                            <div className="text-sm font-bold text-gray-900">
+                                                                {new Date(candidate.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500 flex items-center mt-1">
+                                                                <Clock className="h-3 w-3 mr-1" />
+                                                                {new Date(candidate.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                                                {' - '}
+                                                                {new Date(candidate.end_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                        </td>
+                                                        {filteredParticipants.map(p => {
+                                                            const status = candidate.answers.find(a => a.user_id === p.id)?.status;
+                                                            return (
+                                                                <td key={p.id} className="px-6 py-5 text-center">
+                                                                    <div className="flex justify-center">
+                                                                        {getStatusIcon(status)}
+                                                                    </div>
+                                                                </td>
+                                                            );
+                                                        })}
+                                                        {isMember && (
+                                                            <td className="px-6 py-5">
+                                                                <div className="flex justify-center items-center space-x-2">
+                                                                    <button
+                                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ok' })}
+                                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'ok' ? 'bg-emerald-100 scale-110 shadow-sm' : 'hover:bg-emerald-50'}`}
+                                                                    >
+                                                                        <CheckCircle2 className={`h-6 w-6 ${myAnswer === 'ok' ? 'text-emerald-600' : 'text-gray-300'}`} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'maybe' })}
+                                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'maybe' ? 'bg-amber-100 scale-110 shadow-sm' : 'hover:bg-amber-50'}`}
+                                                                    >
+                                                                        <HelpCircle className={`h-6 w-6 ${myAnswer === 'maybe' ? 'text-amber-600' : 'text-gray-300'}`} />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => answerMutation.mutate({ candidateId: candidate.id, status: 'ng' })}
+                                                                        className={`p-2 rounded-lg transition-all ${myAnswer === 'ng' ? 'bg-rose-100 scale-110 shadow-sm' : 'hover:bg-rose-50'}`}
+                                                                    >
+                                                                        <XCircle className={`h-6 w-6 ${myAnswer === 'ng' ? 'text-rose-600' : 'text-gray-300'}`} />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     {/* 未回答メンバーセクション */}
                     {unansweredMembers && unansweredMembers.length > 0 && (
@@ -646,10 +1101,10 @@ export const SchedulePollDetailPage: React.FC = () => {
                         </section>
                     )}
 
-                    {/* 確定用モーダル（簡易版） */}
+                    {/* 確定用モーダル（詳細入力ステップ付き） */}
                     {selectedCandidateForFinalize && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
-                            <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl animate-in zoom-in duration-300">
+                            <div className="bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl animate-in zoom-in duration-300">
                                 <div className="flex flex-col space-y-6">
                                     <div className="flex items-center space-x-3 mb-2">
                                         <div className="p-3 bg-violet-100 rounded-2xl">
@@ -666,6 +1121,76 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.start_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                                             {' - '}
                                             {new Date(poll.candidates.find(c => c.id === selectedCandidateForFinalize)?.end_datetime || '').toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-700">
+                                            {t('schedulePoll.titleLabel') || 'タイトル'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={rehearsalTitle}
+                                            onChange={(e) => setRehearsalTitle(e.target.value)}
+                                            placeholder="例: 5月後半 抜き稽古"
+                                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-700">
+                                            {t('schedule.location') || '場所'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={rehearsalLocation}
+                                            onChange={(e) => setRehearsalLocation(e.target.value)}
+                                            placeholder="例: 第2稽古場"
+                                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-700">
+                                            {t('schedule.notes') || 'メモ'}
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={rehearsalNotes}
+                                            onChange={(e) => setRehearsalNotes(e.target.value)}
+                                            placeholder="連絡事項や当日のメモ"
+                                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none resize-y"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-gray-700">
+                                            {t('schedulePoll.possibleScenes') || '稽古シーン'}
+                                        </label>
+                                        <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-xl p-3 space-y-2">
+                                            {sceneOptionsForFinalize.length === 0 ? (
+                                                <p className="text-xs text-gray-500">
+                                                    {t('schedulePoll.noPossibleScenes') || '選択可能なシーンがありません。'}
+                                                </p>
+                                            ) : (
+                                                sceneOptionsForFinalize.map(scene => (
+                                                    <label key={scene.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedSceneIdsForFinalize.includes(scene.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedSceneIdsForFinalize(prev => [...prev, scene.id]);
+                                                                } else {
+                                                                    setSelectedSceneIdsForFinalize(prev => prev.filter(id => id !== scene.id));
+                                                                }
+                                                            }}
+                                                            className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                                                        />
+                                                        <span>{scene.label}</span>
+                                                    </label>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
 
@@ -704,23 +1229,28 @@ export const SchedulePollDetailPage: React.FC = () => {
                                     </div>
 
                                     <p className="text-sm text-gray-500 leading-relaxed">
-                                        {t('schedulePoll.finalizeConfirm') || 'この日程で稽古予定を作成します。紐付けるシーンはおすすめに含まれるものが自動的に選択されますが、詳細は後の画面で調整可能です。'}
+                                        {t('schedulePoll.finalizeConfirm') || 'この内容で稽古予定を作成します。'}
                                     </p>
 
                                     <div className="flex space-x-3 pt-2">
                                         <button
-                                            onClick={() => setSelectedCandidateForFinalize(null)}
+                                            onClick={() => {
+                                                setSelectedCandidateForFinalize(null);
+                                                setSelectedSceneIdsForFinalize([]);
+                                            }}
                                             className="flex-1 py-3 border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
                                         >
                                             {t('common.cancel')}
                                         </button>
                                         <button
                                             onClick={() => {
-                                                const rec = recommendations?.find(r => r.candidate_id === selectedCandidateForFinalize);
                                                 finalizeMutation.mutate({
                                                     candidateId: selectedCandidateForFinalize,
-                                                    sceneIds: rec?.possible_scenes.map(s => s.scene_id) || [],
-                                                    attendanceTarget: attendanceTarget
+                                                    sceneIds: selectedSceneIdsForFinalize,
+                                                    attendanceTarget: attendanceTarget,
+                                                    rehearsalTitle: rehearsalTitle.trim() || undefined,
+                                                    rehearsalLocation: rehearsalLocation.trim() || undefined,
+                                                    rehearsalNotes: rehearsalNotes.trim() || undefined,
                                                 });
                                             }}
                                             disabled={finalizeMutation.isPending}
@@ -730,6 +1260,129 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             <Check className="h-4 w-4 ml-2" />
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showBatchFinalizeModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
+                            <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl animate-in zoom-in duration-300">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-gray-900">一括登録の詳細設定</h2>
+                                    <button
+                                        onClick={() => setShowBatchFinalizeModal(false)}
+                                        className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                    >
+                                        閉じる
+                                    </button>
+                                </div>
+
+                                <div className="mb-4 p-3 border border-indigo-100 bg-indigo-50 rounded-xl">
+                                    <label className="text-sm font-bold text-gray-700 block mb-2">{t('schedulePoll.attendanceTargetLabel') || '出欠確認の対象者'}</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <label className={`flex items-center gap-2 p-2 rounded-lg border ${batchAttendanceTarget === 'voters_only' ? 'border-indigo-400 bg-white' : 'border-gray-200 bg-white'}`}>
+                                            <input
+                                                type="radio"
+                                                name="batch_attendance_target"
+                                                checked={batchAttendanceTarget === 'voters_only'}
+                                                onChange={() => setBatchAttendanceTarget('voters_only')}
+                                                className="text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span className="text-sm">{t('schedulePoll.targetVotersOnly') || '回答者のみ'}</span>
+                                        </label>
+                                        <label className={`flex items-center gap-2 p-2 rounded-lg border ${batchAttendanceTarget === 'everyone' ? 'border-indigo-400 bg-white' : 'border-gray-200 bg-white'}`}>
+                                            <input
+                                                type="radio"
+                                                name="batch_attendance_target"
+                                                checked={batchAttendanceTarget === 'everyone'}
+                                                onChange={() => setBatchAttendanceTarget('everyone')}
+                                                className="text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span className="text-sm">{t('schedulePoll.targetEveryone') || '全員'}</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="max-h-[55vh] overflow-y-auto space-y-4 pr-1">
+                                    {batchDraftItems.map(item => {
+                                        const candidate = poll.candidates.find(c => c.id === item.candidateId);
+                                        const sceneOptions = getBatchSceneOptions(item.candidateId);
+                                        return (
+                                            <div key={item.candidateId} className="border border-gray-200 rounded-xl p-4">
+                                                <div className="text-sm font-bold text-gray-900 mb-2">
+                                                    {candidate
+                                                        ? `${new Date(candidate.start_datetime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', weekday: 'short' })} ${new Date(candidate.start_datetime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+                                                        : item.candidateId}
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-xs font-bold text-gray-600">タイトル</label>
+                                                        <input
+                                                            type="text"
+                                                            value={item.title}
+                                                            onChange={(e) => updateBatchDraft(item.candidateId, 'title', e.target.value)}
+                                                            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-bold text-gray-600">{t('schedule.location') || '場所'}</label>
+                                                        <input
+                                                            type="text"
+                                                            value={item.location}
+                                                            onChange={(e) => updateBatchDraft(item.candidateId, 'location', e.target.value)}
+                                                            className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-3">
+                                                    <label className="text-xs font-bold text-gray-600">{t('schedule.notes') || 'メモ'}</label>
+                                                    <textarea
+                                                        rows={2}
+                                                        value={item.notes}
+                                                        onChange={(e) => updateBatchDraft(item.candidateId, 'notes', e.target.value)}
+                                                        className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y"
+                                                    />
+                                                </div>
+                                                <div className="mt-3">
+                                                    <label className="text-xs font-bold text-gray-600">{t('schedulePoll.possibleScenes') || '稽古シーン'}</label>
+                                                    <div className="mt-1 max-h-28 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1">
+                                                        {sceneOptions.length === 0 ? (
+                                                            <div className="text-xs text-gray-500">{t('schedulePoll.noPossibleScenes') || '選択可能なシーンがありません。'}</div>
+                                                        ) : (
+                                                            sceneOptions.map(scene => (
+                                                                <label key={scene.id} className="flex items-center gap-2 text-xs text-gray-700">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={item.sceneIds.includes(scene.id)}
+                                                                        onChange={(e) => toggleBatchScene(item.candidateId, scene.id, e.target.checked)}
+                                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                                    />
+                                                                    <span>{scene.label}</span>
+                                                                </label>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-5 flex justify-end gap-3">
+                                    <button
+                                        onClick={() => setShowBatchFinalizeModal(false)}
+                                        className="px-4 py-2 border border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-50"
+                                    >
+                                        {t('common.cancel') || 'キャンセル'}
+                                    </button>
+                                    <button
+                                        onClick={() => finalizeBatchMutation.mutate(batchDraftItems)}
+                                        disabled={finalizeBatchMutation.isPending || batchDraftItems.length === 0}
+                                        className="px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                    >
+                                        {finalizeBatchMutation.isPending ? '...' : `一括登録する (${batchDraftItems.length})`}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -745,10 +1398,14 @@ export const SchedulePollDetailPage: React.FC = () => {
                             <CheckCircle2 className="h-6 w-6 text-green-600" />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            {t('schedulePoll.finalizedModalTitle')}
+                            {finalizeResultStatus === 'already_exists'
+                                ? '同じ予定がすでに登録されています'
+                                : t('schedulePoll.finalizedModalTitle')}
                         </h3>
                         <p className="text-sm text-gray-500 mb-6">
-                            {t('schedulePoll.finalizedModalDescription')}
+                            {finalizeResultStatus === 'already_exists'
+                                ? '重複登録は行われませんでした。既存の稽古予定を利用してください。'
+                                : t('schedulePoll.finalizedModalDescription')}
                         </p>
                         <div className="space-y-3">
                             {gcalUrl && (

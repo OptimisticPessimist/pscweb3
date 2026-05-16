@@ -43,6 +43,7 @@ class RehearsalResponse(BaseModel):
     schedule_id: UUID = Field(..., description="スケジュールID")
     scene_id: UUID | None = Field(None, description="シーンID")
     scene_heading: str | None = Field(None, description="シーン見出し")
+    title: str | None = Field(None, description="稽古タイトル")
     date: datetime = Field(..., description="稽古日時")
     duration_minutes: int = Field(..., description="稽古時間（分）")
     location: str | None = Field(None, description="場所")
@@ -67,6 +68,7 @@ class RehearsalCreate(BaseModel):
         None, description="シーンID（非推奨: scene_idsを使用してください）"
     )
     scene_ids: list[UUID] = Field(default_factory=list, description="シーンIDリスト")
+    title: str | None = Field(None, description="稽古タイトル")
     date: datetime = Field(..., description="稽古日時")
     duration_minutes: int = Field(120, description="稽古時間（分）")
     location: str | None = Field(None, description="場所")
@@ -106,6 +108,7 @@ class RehearsalUpdate(BaseModel):
 
     scene_id: UUID | None = Field(None, description="シーンID（非推奨）")
     scene_ids: list[UUID] | None = Field(None, description="シーンIDリスト")
+    title: str | None = Field(None, description="稽古タイトル")
     date: datetime | None = Field(None, description="稽古日時")
     duration_minutes: int | None = Field(None, description="稽古時間（分）")
     location: str | None = Field(None, description="場所")

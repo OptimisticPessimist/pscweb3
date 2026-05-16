@@ -80,9 +80,11 @@ export const SchedulePage: React.FC = () => {
 
             return {
                 id: rehearsal.id,
-                title: rehearsal.scene_heading
-                    ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
-                    : `Rehearsal (${rehearsal.location || 'TBD'})`,
+                title: rehearsal.title
+                    ? `${rehearsal.title} (${rehearsal.location || 'TBD'})`
+                    : rehearsal.scene_heading
+                        ? `${rehearsal.scene_heading} (${rehearsal.location || 'TBD'})`
+                        : `Rehearsal (${rehearsal.location || 'TBD'})`,
                 start: rehearsal.date,
                 end: displayEnd.toISOString(),
                 allDay: false, // 時間イベントとして扱う
