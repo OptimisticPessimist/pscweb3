@@ -42,6 +42,8 @@ interface BatchFinalizeDraftItem {
 
 export const SchedulePollDetailPage: React.FC = () => {
     const { t } = useTranslation();
+    const defaultRehearsalTitle = t('schedulePoll.defaultRehearsalTitle');
+    const defaultLocation = t('schedulePoll.defaultLocation');
     const { projectId, pollId } = useParams<{ projectId: string, pollId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -51,7 +53,7 @@ export const SchedulePollDetailPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<'summary' | 'grid' | 'calendar'>('summary');
     const [attendanceTarget, setAttendanceTarget] = useState<'voters_only' | 'everyone'>('voters_only');
     const [rehearsalTitle, setRehearsalTitle] = useState('');
-    const [rehearsalLocation, setRehearsalLocation] = useState('未定');
+    const [rehearsalLocation, setRehearsalLocation] = useState(defaultLocation);
     const [rehearsalNotes, setRehearsalNotes] = useState('');
     const [selectedCandidateIdsForBatch, setSelectedCandidateIdsForBatch] = useState<string[]>([]);
     const [showBatchFinalizeModal, setShowBatchFinalizeModal] = useState(false);
@@ -143,7 +145,7 @@ export const SchedulePollDetailPage: React.FC = () => {
             }),
         onSuccess: (data) => {
             if (data.status === 'already_exists') {
-                toast('同じ内容の稽古予定はすでに登録済みです');
+                toast(t('schedulePoll.alreadyExistsToast'));
             } else {
                 toast.success(t('schedulePoll.finalized') || '稽古予定を作成しました');
             }
@@ -154,7 +156,7 @@ export const SchedulePollDetailPage: React.FC = () => {
             setShowFinalizedModal(true);
         },
         onError: () => {
-            toast.error('確定処理に失敗しました');
+            toast.error(t('schedulePoll.finalizeFailed'));
         },
     });
 
@@ -172,18 +174,25 @@ export const SchedulePollDetailPage: React.FC = () => {
             }),
         onSuccess: (data) => {
             if (data.error_count === 0 && data.already_exists_count === 0) {
-                toast.success(`${data.created_count}件の稽古予定を作成しました`);
+                toast.success(t('schedulePoll.batchCreatedOnly', { created: data.created_count }));
             } else if (data.error_count === 0) {
-                toast.success(`新規${data.created_count}件 / 既存${data.already_exists_count}件`);
+                toast.success(t('schedulePoll.batchCreatedWithExisting', {
+                    created: data.created_count,
+                    existing: data.already_exists_count,
+                }));
             } else {
-                toast.error(`新規${data.created_count}件 / 既存${data.already_exists_count}件 / 失敗${data.error_count}件`);
+                toast.error(t('schedulePoll.batchCreatedWithErrors', {
+                    created: data.created_count,
+                    existing: data.already_exists_count,
+                    error: data.error_count,
+                }));
             }
             setShowBatchFinalizeModal(false);
             setSelectedCandidateIdsForBatch([]);
             setBatchDraftItems([]);
         },
         onError: () => {
-            toast.error('一括登録に失敗しました');
+            toast.error(t('schedulePoll.batchFinalizeFailed'));
         }
     });
 
@@ -212,7 +221,7 @@ export const SchedulePollDetailPage: React.FC = () => {
             toast.success(t('common.saved') || '保存しました');
         },
         onError: () => {
-            toast.error('必須役職の更新に失敗しました');
+            toast.error(t('schedulePoll.updateRequiredRolesFailed'));
         },
     });
 
@@ -238,10 +247,10 @@ export const SchedulePollDetailPage: React.FC = () => {
     const remindMutation = useMutation({
         mutationFn: () => schedulePollApi.remindUnansweredMembers(projectId!, pollId!, targetUserIds),
         onSuccess: () => {
-            toast.success('リマインドを送信しました');
+            toast.success(t('schedulePoll.reminderSent'));
         },
         onError: () => {
-            toast.error('リマインドの送信に失敗しました');
+            toast.error(t('schedulePoll.reminderSendFailed'));
         }
     });
 
@@ -435,14 +444,14 @@ export const SchedulePollDetailPage: React.FC = () => {
         const candidate = poll?.candidates.find(c => c.id === candidateId);
         const start = candidate ? new Date(candidate.start_datetime) : null;
         const defaultTitle = start
-            ? `${poll?.title || '稽古'} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`
+            ? `${poll?.title || defaultRehearsalTitle} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`
             : (poll?.title || '');
 
         setSelectedCandidateForFinalize(candidateId);
         setSelectedSceneIdsForFinalize(sceneIds);
         setAttendanceTarget(target);
         setRehearsalTitle(defaultTitle);
-        setRehearsalLocation('未定');
+        setRehearsalLocation(defaultLocation);
         setRehearsalNotes('');
     };
 
@@ -452,11 +461,11 @@ export const SchedulePollDetailPage: React.FC = () => {
                 const summary = candidateSummaries.find(item => item.candidate.id === candidateId);
                 if (!summary) return null;
                 const start = new Date(summary.candidate.start_datetime);
-                const defaultTitle = `${poll?.title || '稽古'} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`;
+                const defaultTitle = `${poll?.title || defaultRehearsalTitle} ${start.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`;
                 return {
                     candidateId,
                     title: defaultTitle,
-                    location: '未定',
+                    location: defaultLocation,
                     notes: '',
                     sceneIds: summary.recommendation?.possible_scenes.map(scene => scene.scene_id) || [],
                 };
@@ -464,7 +473,7 @@ export const SchedulePollDetailPage: React.FC = () => {
             .filter((draft): draft is BatchFinalizeDraftItem => draft !== null);
 
         if (drafts.length === 0) {
-            toast.error('一括登録対象を選択してください');
+            toast.error(t('schedulePoll.batchSelectRequired'));
             return;
         }
 
@@ -568,7 +577,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                         {poll.required_roles && (
                             <div className="flex items-center space-x-2 mt-2">
                                 <Shield className="h-4 w-4 text-indigo-500" />
-                                <span className="text-xs font-bold text-gray-400">出席必須:</span>
+                                <span className="text-xs font-bold text-gray-400">{t('schedulePoll.requiredLabel')}</span>
                                 <div className="flex flex-wrap gap-1">
                                     {poll.required_roles.split(',').map(role => (
                                         <span key={role} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-md text-[10px] font-bold border border-indigo-100">
@@ -702,7 +711,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                 !analysis ? (
                     <div className="flex justify-center items-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mr-3"></div>
-                        <span className="text-gray-500 font-bold">分析データを読み込み中...</span>
+                        <span className="text-gray-500 font-bold">{t('schedulePoll.loadingAnalysis')}</span>
                     </div>
                 ) : (
                     <SchedulePollCalendar
@@ -785,20 +794,20 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             onClick={selectAllCandidatesForBatch}
                                             className="px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
                                         >
-                                            すべて選択
+                                            {t('schedulePoll.selectAll')}
                                         </button>
                                         <button
                                             onClick={clearBatchSelection}
                                             className="px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50"
                                         >
-                                            選択解除
+                                            {t('schedulePoll.clearSelection')}
                                         </button>
                                         <button
                                             onClick={openBatchFinalizeModal}
                                             disabled={selectedCandidateIdsForBatch.length === 0}
                                             className="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                                         >
-                                            一括登録 ({selectedCandidateIdsForBatch.length})
+                                            {t('schedulePoll.batchFinalizeSelected', { count: selectedCandidateIdsForBatch.length })}
                                         </button>
                                     </div>
                                 )}
@@ -880,7 +889,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                                 onChange={() => toggleCandidateForBatch(candidate.id)}
                                                                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                             />
-                                                            一括対象
+                                                            {t('schedulePoll.batchTarget')}
                                                         </label>
                                                     )}
                                                     <div className="text-sm font-bold text-gray-900">
@@ -903,7 +912,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                 )}
                                             </div>
                                             <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
-                                                <span>{`回答率 ${responseRate}%`}</span>
+                                                <span>{t('schedulePoll.responseRate', { rate: responseRate })}</span>
                                                 <span>{`${answeredCount}/${totalMembers}`}</span>
                                             </div>
                                             <div className="mt-2 h-2.5 overflow-hidden rounded-full border border-gray-200 bg-gray-100 flex">
@@ -946,7 +955,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                     return (
                                                         <div key={panelKey} className="border border-gray-200 rounded-lg bg-gray-50/70">
                                                             <div className="px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-700">
-                                                                {item.label}メンバー ({item.members.length}名)
+                                                                {t('schedulePoll.memberListWithCount', { label: item.label, count: item.members.length })}
                                                             </div>
                                                             <ul className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                                                 {item.members.map(member => (
@@ -1031,7 +1040,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             onChange={(e) => setShowOnlyPendingColumns(e.target.checked)}
                                             className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        <span>{t('schedulePoll.unansweredReminder') || '未回答'}のみ</span>
+                                        <span>{t('schedulePoll.pendingOnly')}</span>
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <button
@@ -1049,7 +1058,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-3">
-                                    {filteredParticipants.length}/{participants.length} {t('schedulePoll.summaryView') || '表示'}
+                                    {t('schedulePoll.visibleCount', { filtered: filteredParticipants.length, total: participants.length })}
                                 </p>
                             </section>
 
@@ -1150,7 +1159,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                 <div className="flex items-center space-x-2">
                                     <Bell className="h-5 w-5 text-amber-500" />
                                     <h2 className="text-lg font-bold text-gray-900">
-                                        {t('schedulePoll.unansweredReminder') || '未回答メンバーのリマインド'} ({unansweredMembers.length}名)
+                                        {t('schedulePoll.unansweredReminderTitle', { count: unansweredMembers.length })}
                                     </h2>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -1258,7 +1267,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             type="text"
                                             value={rehearsalTitle}
                                             onChange={(e) => setRehearsalTitle(e.target.value)}
-                                            placeholder="例: 5月後半 抜き稽古"
+                                            placeholder={t('schedulePoll.finalizeTitlePlaceholder')}
                                             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
                                         />
                                     </div>
@@ -1271,7 +1280,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             type="text"
                                             value={rehearsalLocation}
                                             onChange={(e) => setRehearsalLocation(e.target.value)}
-                                            placeholder="例: 第2稽古場"
+                                            placeholder={t('schedulePoll.finalizeLocationPlaceholder')}
                                             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
                                         />
                                     </div>
@@ -1284,7 +1293,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                             rows={3}
                                             value={rehearsalNotes}
                                             onChange={(e) => setRehearsalNotes(e.target.value)}
-                                            placeholder="連絡事項や当日のメモ"
+                                            placeholder={t('schedulePoll.finalizeNotesPlaceholder')}
                                             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none resize-y"
                                         />
                                     </div>
@@ -1395,12 +1404,12 @@ export const SchedulePollDetailPage: React.FC = () => {
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-y-auto">
                             <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl animate-in zoom-in duration-300">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-bold text-gray-900">一括登録の詳細設定</h2>
+                                    <h2 className="text-xl font-bold text-gray-900">{t('schedulePoll.batchModalTitle')}</h2>
                                     <button
                                         onClick={() => setShowBatchFinalizeModal(false)}
                                         className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
                                     >
-                                        閉じる
+                                        {t('common.close')}
                                     </button>
                                 </div>
 
@@ -1443,7 +1452,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     <div>
-                                                        <label className="text-xs font-bold text-gray-600">タイトル</label>
+                                                        <label className="text-xs font-bold text-gray-600">{t('schedulePoll.titleLabel')}</label>
                                                         <input
                                                             type="text"
                                                             value={item.title}
@@ -1507,7 +1516,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                                         disabled={finalizeBatchMutation.isPending || batchDraftItems.length === 0}
                                         className="px-5 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                                     >
-                                        {finalizeBatchMutation.isPending ? '...' : `一括登録する (${batchDraftItems.length})`}
+                                        {finalizeBatchMutation.isPending ? '...' : t('schedulePoll.batchFinalizeButton', { count: batchDraftItems.length })}
                                     </button>
                                 </div>
                             </div>
@@ -1525,12 +1534,12 @@ export const SchedulePollDetailPage: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
                             {finalizeResultStatus === 'already_exists'
-                                ? '同じ予定がすでに登録されています'
+                                ? t('schedulePoll.duplicateResultTitle')
                                 : t('schedulePoll.finalizedModalTitle')}
                         </h3>
                         <p className="text-sm text-gray-500 mb-6">
                             {finalizeResultStatus === 'already_exists'
-                                ? '重複登録は行われませんでした。既存の稽古予定を利用してください。'
+                                ? t('schedulePoll.duplicateResultDescription')
                                 : t('schedulePoll.finalizedModalDescription')}
                         </p>
                         <div className="space-y-3">

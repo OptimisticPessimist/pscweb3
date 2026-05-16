@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { SlotIndex } from './types';
 import { TOTAL_SLOTS, slotToTimeLabel, timeLabelToSlot } from './types';
 
@@ -23,6 +24,7 @@ export const BulkTimeSelector: React.FC<BulkTimeSelectorProps> = ({
   onResetAll,
   disabled,
 }) => {
+  const { t } = useTranslation();
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('19:00');
 
@@ -65,7 +67,7 @@ export const BulkTimeSelector: React.FC<BulkTimeSelectorProps> = ({
         ))}
       </select>
 
-      <span className="text-gray-400">まで</span>
+      <span className="text-gray-400">{t('schedulePoll.candidatePicker.rangeUntil')}</span>
 
       <button
         type="button"
@@ -73,7 +75,7 @@ export const BulkTimeSelector: React.FC<BulkTimeSelectorProps> = ({
         disabled={disabled}
         className="text-indigo-600 hover:text-indigo-800 font-medium disabled:text-gray-300"
       >
-        一括設定する
+        {t('schedulePoll.candidatePicker.applyBulk')}
       </button>
 
       <span className="text-gray-300">|</span>
@@ -84,7 +86,7 @@ export const BulkTimeSelector: React.FC<BulkTimeSelectorProps> = ({
         disabled={disabled}
         className="text-gray-500 hover:text-gray-700 disabled:text-gray-300"
       >
-        全てリセット
+        {t('schedulePoll.candidatePicker.resetAll')}
       </button>
     </div>
   );

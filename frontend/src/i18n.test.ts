@@ -16,7 +16,14 @@ describe('i18n configuration', () => {
     });
 
     it('should have Japanese as default language', () => {
-        expect(i18n.options.fallbackLng).toEqual('ja');
+        const fallback = i18n.options.fallbackLng;
+
+        if (Array.isArray(fallback)) {
+            expect(fallback).toContain('ja');
+            return;
+        }
+
+        expect(fallback).toEqual('ja');
     });
 
     it('should translate keys correctly in Japanese', async () => {

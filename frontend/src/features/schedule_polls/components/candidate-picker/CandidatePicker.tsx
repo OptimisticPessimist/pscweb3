@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MonthCalendar } from './MonthCalendar';
 import { TimelineGrid } from './TimelineGrid';
 import { useTimeSlotSelection } from './useTimeSlotSelection';
@@ -9,6 +10,7 @@ interface CandidatePickerProps {
 }
 
 export const CandidatePicker: React.FC<CandidatePickerProps> = ({ onChange }) => {
+  const { t } = useTranslation();
   const {
     selectedDates,
     slotsByDate,
@@ -32,7 +34,7 @@ export const CandidatePicker: React.FC<CandidatePickerProps> = ({ onChange }) =>
       {/* STEP 1: Date Selection */}
       <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-8">
         <h2 className="text-sm font-bold text-gray-700 mb-4">
-          STEP 1 → 日付を選択
+          {t('schedulePoll.candidatePicker.step1')}
         </h2>
         <MonthCalendar selectedDates={selectedDates} onToggleDate={toggleDate} />
       </div>
@@ -41,7 +43,7 @@ export const CandidatePicker: React.FC<CandidatePickerProps> = ({ onChange }) =>
       {selectedDates.length > 0 && (
         <div className="bg-white shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 p-8">
           <h2 className="text-sm font-bold text-gray-700 mb-4">
-            STEP 2 → 時間を選択
+            {t('schedulePoll.candidatePicker.step2')}
           </h2>
           <TimelineGrid
             selectedDates={selectedDates}
