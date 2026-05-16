@@ -62,6 +62,7 @@ export const SchedulePollDetailPage: React.FC = () => {
     const [participantSearch, setParticipantSearch] = useState('');
     const [participantRoleFilter, setParticipantRoleFilter] = useState('all');
     const [showOnlyPendingColumns, setShowOnlyPendingColumns] = useState(false);
+    const [expandedStatusMemberLists, setExpandedStatusMemberLists] = useState<Record<string, boolean>>({});
     const gridScrollRef = useRef<HTMLDivElement | null>(null);
 
     const { data: poll, isLoading } = useQuery({
@@ -368,10 +369,19 @@ export const SchedulePollDetailPage: React.FC = () => {
                 maybeCount,
                 ngCount,
                 unansweredCount,
+                totalMembers,
                 recommendation,
             };
         });
     }, [poll, members, recommendations, isViewer]);
+
+    const toggleStatusMemberList = (candidateId: string, statusKey: string) => {
+        const panelKey = `${candidateId}:${statusKey}`;
+        setExpandedStatusMemberLists(prev => ({
+            ...prev,
+            [panelKey]: !prev[panelKey],
+        }));
+    };
 
     const selectedCandidateSetForBatch = useMemo(
         () => new Set(selectedCandidateIdsForBatch),
@@ -794,8 +804,70 @@ export const SchedulePollDetailPage: React.FC = () => {
                                 )}
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                {candidateSummaries.map(({ candidate, okCount, maybeCount, ngCount, unansweredCount, recommendation }) => {
+                                {candidateSummaries.map(({ candidate, okCount, maybeCount, ngCount, unansweredCount, totalMembers, recommendation }) => {
                                     const myAnswer = candidate.answers.find(a => a.user_id === user?.id)?.status;
+                                    const answerByUserId = new Map(candidate.answers.map(answer => [answer.user_id, answer.status]));
+                                    const statusMembers = {
+                                        ok: [] as typeof participants,
+                                        maybe: [] as typeof participants,
+                                        ng: [] as typeof participants,
+                                        unanswered: [] as typeof participants,
+                                    };
+                                    participants.forEach(participant => {
+                                        const status = answerByUserId.get(participant.id);
+                                        if (status === 'ok') {
+                                            statusMembers.ok.push(participant);
+                                            return;
+                                        }
+                                        if (status === 'maybe') {
+                                            statusMembers.maybe.push(participant);
+                                            return;
+                                        }
+                                        if (status === 'ng') {
+                                            statusMembers.ng.push(participant);
+                                            return;
+                                        }
+                                        statusMembers.unanswered.push(participant);
+                                    });
+                                    const unansweredLabel = t('schedulePoll.unansweredReminder') || '未回答';
+                                    const statusBreakdown = [
+                                        {
+                                            key: 'ok',
+                                            label: 'OK',
+                                            count: okCount,
+                                            chipClass: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+                                            barClass: 'bg-emerald-500',
+                                            members: statusMembers.ok,
+                                        },
+                                        {
+                                            key: 'maybe',
+                                            label: 'Maybe',
+                                            count: maybeCount,
+                                            chipClass: 'bg-amber-50 text-amber-700 border border-amber-100',
+                                            barClass: 'bg-amber-400',
+                                            members: statusMembers.maybe,
+                                        },
+                                        {
+                                            key: 'ng',
+                                            label: 'NG',
+                                            count: ngCount,
+                                            chipClass: 'bg-rose-50 text-rose-700 border border-rose-100',
+                                            barClass: 'bg-rose-500',
+                                            members: statusMembers.ng,
+                                        },
+                                        {
+                                            key: 'unanswered',
+                                            label: unansweredLabel,
+                                            count: unansweredCount,
+                                            chipClass: 'bg-gray-50 text-gray-600 border border-gray-200',
+                                            barClass: 'bg-gray-300',
+                                            members: statusMembers.unanswered,
+                                        },
+                                    ];
+                                    const answeredCount = okCount + maybeCount + ngCount;
+                                    const responseRate = totalMembers > 0
+                                        ? Math.round((answeredCount / totalMembers) * 100)
+                                        : 0;
                                     return (
                                         <div key={candidate.id} className="border border-gray-200 rounded-xl p-4 bg-white">
                                             <div className="flex items-start justify-between gap-3">
@@ -830,11 +902,65 @@ export const SchedulePollDetailPage: React.FC = () => {
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
-                                                <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">OK {okCount}</span>
-                                                <span className="px-2 py-1 rounded bg-amber-50 text-amber-700 border border-amber-100">Maybe {maybeCount}</span>
-                                                <span className="px-2 py-1 rounded bg-rose-50 text-rose-700 border border-rose-100">NG {ngCount}</span>
-                                                <span className="px-2 py-1 rounded bg-gray-50 text-gray-600 border border-gray-200">{t('schedulePoll.unansweredReminder') || '未回答'} {unansweredCount}</span>
+                                            <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
+                                                <span>{`回答率 ${responseRate}%`}</span>
+                                                <span>{`${answeredCount}/${totalMembers}`}</span>
+                                            </div>
+                                            <div className="mt-2 h-2.5 overflow-hidden rounded-full border border-gray-200 bg-gray-100 flex">
+                                                {statusBreakdown.map(item => (
+                                                    <div
+                                                        key={item.key}
+                                                        className={item.barClass}
+                                                        style={{ width: totalMembers > 0 ? `${(item.count / totalMembers) * 100}%` : '0%' }}
+                                                        title={`${item.label}: ${item.count}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                                                {statusBreakdown.map(item => {
+                                                    const ratio = totalMembers > 0
+                                                        ? Math.round((item.count / totalMembers) * 100)
+                                                        : 0;
+                                                    const panelKey = `${candidate.id}:${item.key}`;
+                                                    const isExpanded = !!expandedStatusMemberLists[panelKey];
+                                                    return (
+                                                        <button
+                                                            key={item.key}
+                                                            type="button"
+                                                            disabled={item.count === 0}
+                                                            onClick={() => toggleStatusMemberList(candidate.id, item.key)}
+                                                            className={`px-2 py-1 rounded transition ${item.chipClass} ${item.count > 0 ? 'cursor-pointer hover:opacity-85' : 'cursor-not-allowed opacity-60'} ${isExpanded ? 'ring-2 ring-offset-1 ring-indigo-200' : ''}`}
+                                                        >
+                                                            {item.label} {item.count} ({ratio}%){item.count > 0 ? (isExpanded ? ' ▲' : ' ▼') : ''}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="mt-2 space-y-2">
+                                                {statusBreakdown.map(item => {
+                                                    const panelKey = `${candidate.id}:${item.key}`;
+                                                    const isExpanded = !!expandedStatusMemberLists[panelKey] && item.count > 0;
+                                                    if (!isExpanded) {
+                                                        return null;
+                                                    }
+                                                    return (
+                                                        <div key={panelKey} className="border border-gray-200 rounded-lg bg-gray-50/70">
+                                                            <div className="px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-700">
+                                                                {item.label}メンバー ({item.members.length}名)
+                                                            </div>
+                                                            <ul className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                                {item.members.map(member => (
+                                                                    <li key={`${panelKey}:${member.id}`} className="px-2 py-1.5 bg-white border border-gray-200 rounded text-xs leading-tight">
+                                                                        <div className="font-semibold text-gray-800 truncate">{member.name}</div>
+                                                                        {member.role && (
+                                                                            <div className="text-[10px] text-gray-500 truncate">{member.role}</div>
+                                                                        )}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                             {recommendation?.reason && (
                                                 <p className="mt-3 text-xs text-violet-800 bg-violet-50 border border-violet-100 rounded-lg px-2 py-1.5">
