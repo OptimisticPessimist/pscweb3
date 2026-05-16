@@ -1,0 +1,85 @@
+[2025-12-07 03:17:42.373107] Helper started
+[2025-12-07 03:17:42.373560] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'gKyCUBWGlQsEs08IVgWAAvMOGt3Ii8']
+[2025-12-07 03:18:48.869733] Helper started
+[2025-12-07 03:18:48.869950] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'RxJDgycHdeqAnTTnOPkcg9VWzNv3p0']
+[2025-12-07 03:18:48.870903] Entering exchange_token
+[2025-12-07 03:18:48.871026] Importing logic done, starting AsyncClient
+[2025-12-07 03:18:49.054482] AsyncClient created
+[2025-12-07 03:18:49.054688] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:21:09.221295] Helper started
+[2025-12-07 03:21:09.221602] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_c7aa6b8de65c464e81771449dd507952.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'hKOU02CzV2HT9nwdikBYlcvOEDEUlG']
+[2025-12-07 03:21:09.222949] Entering exchange_token
+[2025-12-07 03:21:09.223107] Importing logic done, starting AsyncClient
+[2025-12-07 03:21:09.412316] AsyncClient created
+[2025-12-07 03:21:09.412523] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:21:09.925811] Success! Writing to result file.
+[2025-12-07 03:22:33.405606] Helper started
+[2025-12-07 03:22:33.405810] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_a2bb54b0790042a28c1bb01c3a3eb011.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'Dysu13r5yqG5BJCXWmrZhrJbTvCWGu']
+[2025-12-07 03:22:33.406709] Entering exchange_token
+[2025-12-07 03:22:33.406838] Importing logic done, starting AsyncClient
+[2025-12-07 03:22:33.600774] AsyncClient created
+[2025-12-07 03:22:33.601000] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:22:34.371141] Success! Writing to result file.
+[2025-12-07 03:23:55.741085] Helper started
+[2025-12-07 03:23:55.741349] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_05f27f80bb064179bd56313fb6674913.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'yXpWJ91dHJyad5aoxH3GxULqJSBhvm']
+[2025-12-07 03:23:55.742213] Entering exchange_token
+[2025-12-07 03:23:55.742369] Importing logic done, starting AsyncClient
+[2025-12-07 03:23:55.932810] AsyncClient created
+[2025-12-07 03:23:55.933016] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:23:56.487135] Success! Writing to result file.
+[2025-12-07 03:24:57.603064] Helper started
+[2025-12-07 03:24:57.603263] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_c393fad33554427ba3ce971d954d064f.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'O5Yqr3Zmhxb7b1RVUgnPlESdQW4Rfo']
+[2025-12-07 03:24:57.604121] Entering exchange_token
+[2025-12-07 03:24:57.604278] Importing logic done, starting AsyncClient
+[2025-12-07 03:24:57.793896] AsyncClient created
+[2025-12-07 03:24:57.794109] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:24:58.387566] Success! Writing to result file.
+[2025-12-07 03:26:21.231478] Helper started
+[2025-12-07 03:26:21.231687] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_1f0447d0859b4649ad29f41843542e64.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', '1O7bg2SyhqoGz0yD6Q18pAHjoZBDXK']
+[2025-12-07 03:26:21.233429] Entering exchange_token
+[2025-12-07 03:26:21.233657] Importing logic done, starting AsyncClient
+[2025-12-07 03:26:21.428943] AsyncClient created
+[2025-12-07 03:26:21.429171] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:26:21.953147] Success! Writing to result file.
+[2025-12-07 03:26:44.017234] Helper started
+[2025-12-07 03:26:44.017550] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_39830f580ee4453aac2e9885bbe5eb6f.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'ot8aQa2nZ2E3lzmndTCKXxlLcftju4']
+[2025-12-07 03:26:44.018710] Entering exchange_token
+[2025-12-07 03:26:44.018868] Importing logic done, starting AsyncClient
+[2025-12-07 03:26:44.216861] AsyncClient created
+[2025-12-07 03:26:44.217160] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:26:44.788058] Success! Writing to result file.
+[2025-12-07 03:30:09.112868] Helper started
+[2025-12-07 03:30:09.113117] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_d8c24e188e9443aeb6061eb2722ca683.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'A6Kz4MUaOvlWwJye3asfteXoRm4AFs']
+[2025-12-07 03:30:09.113983] Entering exchange_token
+[2025-12-07 03:30:09.114112] Importing logic done, starting AsyncClient
+[2025-12-07 03:30:09.311768] AsyncClient created
+[2025-12-07 03:30:09.312037] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:30:09.842787] Success! Writing to result file.
+[2025-12-07 03:31:59.939522] Helper started
+[2025-12-07 03:31:59.939727] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_ddf43c3d492846c2ad85b77de27cf1f6.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'eliEEucMQmVqAlEmI1tAy1GxJrt97e']
+[2025-12-07 03:31:59.940582] Entering exchange_token
+[2025-12-07 03:31:59.940702] Importing logic done, starting AsyncClient
+[2025-12-07 03:32:00.194313] AsyncClient created
+[2025-12-07 03:32:00.194632] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:32:00.757278] Success! Writing to result file.
+[2025-12-07 03:33:26.556339] Helper started
+[2025-12-07 03:33:26.556563] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_d01be127715544ee88f79e2d06da2c53.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'RLWUV9cW5zM3s2qDxw5mbjkGajp3DT']
+[2025-12-07 03:33:26.557415] Entering exchange_token
+[2025-12-07 03:33:26.557536] Importing logic done, starting AsyncClient
+[2025-12-07 03:33:26.751608] AsyncClient created
+[2025-12-07 03:33:26.751808] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:33:27.376620] Success! Writing to result file.
+[2025-12-07 03:35:23.203732] Helper started
+[2025-12-07 03:35:23.204098] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_43327e39e7e643c2a69ee49606487166.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', '3hKM0hmCcKDTykf9V5gXaYivPmEwIB']
+[2025-12-07 03:35:23.205069] Entering exchange_token
+[2025-12-07 03:35:23.205197] Importing logic done, starting AsyncClient
+[2025-12-07 03:35:23.392534] AsyncClient created
+[2025-12-07 03:35:23.392716] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:35:23.892604] Success! Writing to result file.
+[2025-12-07 03:37:02.353505] Helper started
+[2025-12-07 03:37:02.353721] Args: ['F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_helper.py', 'F:\\src\\PythonProject\\pscweb3-1\\src\\api\\auth_result_6344eeb7bd6a46418a8219235bd10bcd.json', 'https://discord.com/api/v10/oauth2/token', '1446909324357144749', 'oJETQwIIZ_2UBw-R-oCWWOaHZWxMzvl-', 'http://localhost:8000/auth/callback', 'EHFvdUvJ4vmvDTcX7rx6NQNa57kUsZ']
+[2025-12-07 03:37:02.355460] Entering exchange_token
+[2025-12-07 03:37:02.355628] Importing logic done, starting AsyncClient
+[2025-12-07 03:37:02.548399] AsyncClient created
+[2025-12-07 03:37:02.548592] POSTing to https://discord.com/api/v10/oauth2/token
+[2025-12-07 03:37:03.190865] Success! Writing to result file.

@@ -1,0 +1,278 @@
+﻿uv : F:\src\PythonPro
+ject\pscweb3-1\backen
+d\src\db\models.py:40
+8: SAWarning: This de
+clarative base alread
+y contains a class wi
+th the same class nam
+e and module name as 
+src.db.models.SceneCh
+aracterMapping, and w
+ill be replaced in th
+e string-lookup table
+.
+At line:1 char:1
++ uv run alembic revi
+sion --autogenerate -
+m "add location to mi
+lestones ...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (F:\src\   
+ PythonPr...g-loo    
+kup table.:Strin    g
+) [], RemoteExc    ep
+tion
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  class SceneCharacte
+rMapping(Base):
+Traceback (most recen
+t call last):
+  File "<frozen runpy
+>", line 198, in _run
+_module_as_main
+  File "<frozen runpy
+>", line 88, in _run_
+code
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Scripts\al
+embic.exe\__main__.py
+", line 8, in <module
+>
+    sys.exit(main())
+             ~~~~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\confi
+g.py", line 1033, in 
+main
+    CommandLine(prog=
+prog).main(argv=argv)
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\confi
+g.py", line 1023, in 
+main
+    self.run_cmd(cfg,
+ options)
+    ~~~~~~~~~~~~^^^^^
+^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\confi
+g.py", line 957, in r
+un_cmd
+    fn(
+    ~~^
+        config,
+        ^^^^^^^
+        *[getattr(opt
+ions, k, None) for k 
+in positional],
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+        **{k: getattr
+(options, k, None) fo
+r k in kwarg},
+        ^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\comma
+nd.py", line 309, in 
+revision
+    script_directory.
+run_env()
+    ~~~~~~~~~~~~~~~~~
+~~~~~~~^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\scrip
+t\base.py", line 545,
+ in run_env
+    util.load_python_
+file(self.dir, "env.p
+y")
+    ~~~~~~~~~~~~~~~~~
+~~~~^^^^^^^^^^^^^^^^^
+^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\util\
+pyfiles.py", line 116
+, in load_python_file
+    module = load_mod
+ule_py(module_id, pat
+h)
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\alembic\util\
+pyfiles.py", line 136
+, in load_module_py
+    spec.loader.exec_
+module(module)  # typ
+e: ignore
+    ~~~~~~~~~~~~~~~~~
+~~~~~~^^^^^^^^
+  File "<frozen impor
+tlib._bootstrap_exter
+nal>", line 1026, in 
+exec_module
+  File "<frozen impor
+tlib._bootstrap>", li
+ne 488, in _call_with
+_frames_removed
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\alembic\env.py",
+ line 13, in <module>
+    from src.db.model
+s import (  # noqa: F
+401 - \u30e2\u30c7\u3
+0eb\u3092\u30a4\u30f3
+\u30dd\u30fc\u30c8\u3
+057\u3066\u30de\u30a4
+\u30b0\u30ec\u30fc\u3
+0b7\u30e7\u30f3\u5bfe
+\u8c61\u306b\u3059\u3
+08b
+    ...<15 lines>...
+    )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\src\db\models.py
+", line 408, in <modu
+le>
+    class SceneCharac
+terMapping(Base):
+    ...<17 lines>...
+        )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\decl_api.py", line 
+846, in __init_subcla
+ss__
+    _as_declarative(c
+ls._sa_registry, cls,
+ cls.__dict__)
+    ~~~~~~~~~~~~~~~^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\decl_base.py", line
+ 245, in _as_declarat
+ive
+    return _MapperCon
+fig.setup_mapping(reg
+istry, cls, dict_, No
+ne, {})
+           ~~~~~~~~~~
+~~~~~~~~~~~~~~~~~^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\decl_base.py", line
+ 326, in setup_mappin
+g
+    return _ClassScan
+MapperConfig(
+        registry, cls
+_, dict_, table, mapp
+er_kw
+    )
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\decl_base.py", line
+ 577, in __init__
+    self._setup_table
+(table)
+    ~~~~~~~~~~~~~~~~~
+^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\or
+m\decl_base.py", line
+ 1762, in _setup_tabl
+e
+    table_cls(
+    ~~~~~~~~~^
+        tablename,
+        ^^^^^^^^^^
+    ...<3 lines>...
+        **table_kw,
+        ^^^^^^^^^^^
+    ),
+    ^
+  File "<string>", li
+ne 2, in __new__
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\ut
+il\deprecations.py", 
+line 281, in warned
+    return fn(*args, 
+**kwargs)  # type: ig
+nore[no-any-return]
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\sq
+l\schema.py", line 42
+9, in __new__
+    return cls._new(*
+args, **kw)
+           ~~~~~~~~^^
+^^^^^^^^^^^
+  File "F:\src\Python
+Project\pscweb3-1\bac
+kend\.venv\Lib\site-p
+ackages\sqlalchemy\sq
+l\schema.py", line 46
+1, in _new
+    raise exc.Invalid
+RequestError(
+    ...<5 lines>...
+    )
+sqlalchemy.exc.Invali
+dRequestError: Table 
+'scene_character_mapp
+ings' is already defi
+ned for this MetaData
+ instance.  Specify '
+extend_existing=True'
+ to redefine options 
+and columns on an exi
+sting Table object.

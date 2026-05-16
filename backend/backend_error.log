@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\rehearsals.py", line 155, in get_rehearsal_schedule
+    schedule = result.scalar_one_or_none()
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\result.py", line 1492, in scalar_one_or_none
+    return self._only_one_row(
+           ~~~~~~~~~~~~~~~~~~^
+        raise_for_second_row=True, raise_for_none=False, scalar=True
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\result.py", line 813, in _only_one_row
+    raise exc.MultipleResultsFound(
+    ...<4 lines>...
+    )
+sqlalchemy.exc.MultipleResultsFound: Multiple rows were found when one or none was required

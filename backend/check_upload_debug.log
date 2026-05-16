@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\check_upload_issue.py", line 66, in main
+    await parse_fountain_and_create_models(script, fountain_text, db)
+  File "F:\src\PythonProject\pscweb3-1\backend\src\services\fountain_parser.py", line 22, in parse_fountain_and_create_models
+    f = fountain.Fountain(fountain_content)
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\fountain\fountain.py", line 53, in __init__
+    self.parse()
+    ~~~~~~~~~~^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\fountain\fountain.py", line 63, in parse
+    self._parse_head(script_head.splitlines())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\fountain\fountain.py", line 74, in _parse_head
+    if line[0].isspace():
+       ~~~~^^^
+IndexError: string index out of range

@@ -1,0 +1,52 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.0.1, pluggy-1.6.0 -- F:\src\PythonProject\pscweb3-1\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\src\PythonProject\pscweb3-1
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.12.0, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/unit/test_services.py::test_parse_simple_fountain_script FAILED    [ 33%]
+tests/unit/test_services.py::test_parse_fountain_with_multiple_scenes FAILED [ 66%]
+tests/unit/test_services.py::test_parse_fountain_empty_script PASSED     [100%]
+
+================================== FAILURES ===================================
+______________________ test_parse_simple_fountain_script ______________________
+tests\unit\test_services.py:42: in test_parse_simple_fountain_script
+    await parse_fountain_and_create_models(script, fountain_content, db)
+src\services\fountain_parser.py:20: in parse_fountain_and_create_models
+    f = fountain.Fountain(fountain_content)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fountain\fountain.py:53: in __init__
+    self.parse()
+.venv\Lib\site-packages\fountain\fountain.py:66: in parse
+    self._parse_head(contents.splitlines())
+.venv\Lib\site-packages\fountain\fountain.py:74: in _parse_head
+    if line[0].isspace():
+       ^^^^^^^
+E   IndexError: string index out of range
+__________________ test_parse_fountain_with_multiple_scenes ___________________
+tests\unit\test_services.py:85: in test_parse_fountain_with_multiple_scenes
+    await parse_fountain_and_create_models(script, fountain_content, db)
+src\services\fountain_parser.py:20: in parse_fountain_and_create_models
+    f = fountain.Fountain(fountain_content)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fountain\fountain.py:53: in __init__
+    self.parse()
+.venv\Lib\site-packages\fountain\fountain.py:66: in parse
+    self._parse_head(contents.splitlines())
+.venv\Lib\site-packages\fountain\fountain.py:74: in _parse_head
+    if line[0].isspace():
+       ^^^^^^^
+E   IndexError: string index out of range
+============================== warnings summary ===============================
+tests/unit/test_services.py: 12 warnings
+  F:\src\PythonProject\pscweb3-1\.venv\Lib\site-packages\sqlalchemy\sql\schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_services.py::test_parse_simple_fountain_script - IndexError: string index out of range
+FAILED tests/unit/test_services.py::test_parse_fountain_with_multiple_scenes - IndexError: string index out of range
+================== 2 failed, 1 passed, 12 warnings in 0.19s ===================
