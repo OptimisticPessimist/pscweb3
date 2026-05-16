@@ -316,6 +316,7 @@ async def get_rehearsal_schedule(
                 schedule_id=rehearsal.schedule_id,
                 scene_id=rehearsal.scene_id,
                 scene_heading=scene_heading,
+                title=rehearsal.title,
                 date=rehearsal.date,
                 duration_minutes=rehearsal.duration_minutes,
                 location=rehearsal.location,
@@ -397,6 +398,7 @@ async def add_rehearsal(
         # scene_idは非推奨だが、互換性のためにセット（最初の1つまたは指定されたもの）
         scene_id=rehearsal_data.scene_id
         or (rehearsal_data.scene_ids[0] if rehearsal_data.scene_ids else None),
+        title=rehearsal_data.title,
         date=rehearsal_data.date,  # Adjusted to use aware datetime
         duration_minutes=rehearsal_data.duration_minutes,
         location=rehearsal_data.location,
@@ -623,6 +625,7 @@ async def add_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,  # Deprecated
         scene_heading=scene_text,  # Join headings
+        title=rehearsal.title,
         date=rehearsal.date,
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,
@@ -691,6 +694,8 @@ async def update_rehearsal(
     # 更新
     if rehearsal_data.scene_id is not None:
         rehearsal.scene_id = rehearsal_data.scene_id
+    if rehearsal_data.title is not None:
+        rehearsal.title = rehearsal_data.title
 
     # 複数シーン更新
     if rehearsal_data.scene_ids is not None:
@@ -888,6 +893,7 @@ async def update_rehearsal(
         schedule_id=rehearsal.schedule_id,
         scene_id=rehearsal.scene_id,
         scene_heading=scene_heading,
+        title=rehearsal.title,
         date=rehearsal.date,
         duration_minutes=rehearsal.duration_minutes,
         location=rehearsal.location,

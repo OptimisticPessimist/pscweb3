@@ -98,6 +98,41 @@ export interface UnansweredMember {
     discord_id: string | null;
 }
 
+export interface SchedulePollFinalizePayload {
+    candidate_id: string;
+    scene_ids: string[];
+    attendance_target?: 'voters_only' | 'everyone';
+    rehearsal_title?: string;
+    location?: string;
+    notes?: string;
+}
+
+export interface SchedulePollFinalizeResponse {
+    status: 'created' | 'already_exists';
+    rehearsal_id: string;
+    gcal_url?: string | null;
+}
+
+export interface SchedulePollFinalizeBatchPayload {
+    items: SchedulePollFinalizePayload[];
+}
+
+export interface SchedulePollFinalizeBatchResult {
+    candidate_id: string;
+    status: 'created' | 'already_exists' | 'error';
+    rehearsal_id?: string | null;
+    gcal_url?: string | null;
+    error?: string | null;
+}
+
+export interface SchedulePollFinalizeBatchResponse {
+    status: string;
+    created_count: number;
+    already_exists_count: number;
+    error_count: number;
+    results: SchedulePollFinalizeBatchResult[];
+}
+
 export const schedulePollApi = {
     // 日程調整一覧を取得
     getPolls: async (projectId: string): Promise<SchedulePollResponse[]> => {
@@ -129,8 +164,27 @@ export const schedulePollApi = {
     },
 
     // 日程を確定
-    finalizePoll: async (projectId: string, poll_id: string, candidate_id: string, scene_ids: string[], attendance_target: 'voters_only' | 'everyone' = 'voters_only'): Promise<{ status: string; rehearsal_id: string; gcal_url: string }> => {
-        const response = await apiClient.post<{ status: string; rehearsal_id: string; gcal_url: string }>(`/projects/${projectId}/polls/${poll_id}/finalize`, { candidate_id, scene_ids, attendance_target });
+    finalizePoll: async (
+        projectId: string,
+        poll_id: string,
+        payload: SchedulePollFinalizePayload
+    ): Promise<SchedulePollFinalizeResponse> => {
+        const response = await apiClient.post<SchedulePollFinalizeResponse>(
+            `/projects/${projectId}/polls/${poll_id}/finalize`,
+            payload
+        );
+        return response.data;
+    },
+
+    finalizePollBatch: async (
+        projectId: string,
+        poll_id: string,
+        payload: SchedulePollFinalizeBatchPayload
+    ): Promise<SchedulePollFinalizeBatchResponse> => {
+        const response = await apiClient.post<SchedulePollFinalizeBatchResponse>(
+            `/projects/${projectId}/polls/${poll_id}/finalize-batch`,
+            payload
+        );
         return response.data;
     },
 

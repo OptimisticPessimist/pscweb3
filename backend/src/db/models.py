@@ -388,6 +388,7 @@ class Rehearsal(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     schedule_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("rehearsal_schedules.id"))
     scene_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("scenes.id"), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     duration_minutes: Mapped[int] = mapped_column(default=120)  # 稽古時間（分）
     location: Mapped[str | None] = mapped_column(String(200), nullable=True)
