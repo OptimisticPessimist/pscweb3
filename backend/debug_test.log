@@ -1,0 +1,3 @@
+Calling API...
+API Response Status: 200
+API Response Body: {"id":1,"character_id":1,"character_name":"主人公","user_id":1,"user_name":"testuser","cast_name":"Aキャスト"}

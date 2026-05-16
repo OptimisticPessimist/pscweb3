@@ -6,7 +6,11 @@
       "Bash(uv run:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(find f:/src/PythonProject/pscweb3-1 -type f -name *.py ! -path */.venv/* ! -path */site-packages/*)"
+      "Bash(find f:/src/PythonProject/pscweb3-1 -type f -name *.py ! -path */.venv/* ! -path */site-packages/*)",
+      "Bash(gh pr:*)",
+      "WebFetch(domain:zenn.dev)",
+      "Bash(gh api:*)",
+      "Bash(grep -E '^v[0-9]+$')"
     ]
   }
 }

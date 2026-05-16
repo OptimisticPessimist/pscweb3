@@ -1,0 +1,780 @@
+[2025-12-07 02:35:00.456061] Application Startup!
+[2025-12-07 02:35:00.466219] Application Startup!
+[2025-12-07 02:36:36.746652] Application Startup!
+[2025-12-07 02:36:43.397830] Application Startup!
+[2025-12-07 02:37:55.076560] Application Startup!
+[2025-12-07 02:37:55.077084] Application Startup!
+[2025-12-07 02:37:57.874834] Auth Error: authlib.integrations.base_client.async_app.AsyncOAuth2Mixin.fetch_access_token() got multiple values for keyword argument 'redirect_uri'
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 41, in callback
+    token = await oauth.discord.authorize_access_token(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\.venv\Lib\site-packages\authlib\integrations\starlette_client\apps.py", line 95, in authorize_access_token
+    token = await self.fetch_access_token(**params, **kwargs)
+                  ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+TypeError: authlib.integrations.base_client.async_app.AsyncOAuth2Mixin.fetch_access_token() got multiple values for keyword argument 'redirect_uri'
+
+[2025-12-07 02:38:09.833103] Auth Error: authlib.integrations.base_client.async_app.AsyncOAuth2Mixin.fetch_access_token() got multiple values for keyword argument 'redirect_uri'
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 41, in callback
+    token = await oauth.discord.authorize_access_token(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\.venv\Lib\site-packages\authlib\integrations\starlette_client\apps.py", line 95, in authorize_access_token
+    token = await self.fetch_access_token(**params, **kwargs)
+                  ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+TypeError: authlib.integrations.base_client.async_app.AsyncOAuth2Mixin.fetch_access_token() got multiple values for keyword argument 'redirect_uri'
+
+[2025-12-07 02:39:07.466840] Application Startup!
+[2025-12-07 02:39:07.510561] Application Startup!
+[2025-12-07 02:40:56.742074] Application Startup!
+[2025-12-07 02:40:56.759161] Application Startup!
+[2025-12-07 02:41:00.796522] Application Startup!
+[2025-12-07 02:41:00.868406] Application Startup!
+[2025-12-07 02:41:18.063636] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:41:23.943426] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:41:23.944434] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:43:33.908200] Application Startup!
+[2025-12-07 02:43:34.033117] Application Startup!
+[2025-12-07 02:43:34.932850] Application Startup!
+[2025-12-07 02:43:35.032755] Application Startup!
+[2025-12-07 02:44:41.003040] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:44:47.953743] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:44:47.954770] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:45:45.700532] Application Startup!
+[2025-12-07 02:45:45.702317] Application Startup!
+[2025-12-07 02:46:07.374970] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:46:13.315383] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:46:13.316394] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:46:13.316404] DEBUG: Session Keys: ['_state_discord_SJKbpqTyo1BkharlcWOWOIaa8SjLkG'], State in Query: SJKbpqTyo1BkharlcWOWOIaa8SjLkG
+[2025-12-07 02:47:18.080158] Application Startup!
+[2025-12-07 02:47:18.371457] Application Startup!
+[2025-12-07 02:47:54.450548] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:48:01.431157] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:48:01.432113] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:48:01.432118] DEBUG: Session Keys: ['_state_discord_aDnbXBlTtnuBk5pul5lRkHYfPbZzu8'], State in Query: aDnbXBlTtnuBk5pul5lRkHYfPbZzu8
+[2025-12-07 02:49:06.988796] Application Startup!
+[2025-12-07 02:49:06.989213] Application Startup!
+[2025-12-07 02:49:27.840147] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:49:34.001400] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:49:34.002565] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:49:34.002571] DEBUG: Session Keys: ['_state_discord_DIAc74PCd5tbNBCuvwBiPUl1jfTZV2'], State in Query: DIAc74PCd5tbNBCuvwBiPUl1jfTZV2
+[2025-12-07 02:51:10.922137] Application Startup!
+[2025-12-07 02:51:10.957514] Application Startup!
+[2025-12-07 02:51:29.519132] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:51:35.156441] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:51:35.157410] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:51:35.157416] DEBUG: Session Keys: ['_state_discord_RA35WTODEvrHlNyJ3Ex5LV1o6GawJP'], State in Query: RA35WTODEvrHlNyJ3Ex5LV1o6GawJP
+[2025-12-07 02:52:23.646888] Application Startup!
+[2025-12-07 02:52:23.649063] Application Startup!
+[2025-12-07 02:53:26.772758] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:53:34.215174] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:53:34.216191] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:53:34.216196] DEBUG: Session Keys: ['_state_discord_XEZxScH6vdbz0so26NjMsFzlFk37Xo'], State in Query: XEZxScH6vdbz0so26NjMsFzlFk37Xo
+[2025-12-07 02:53:34.216977] Auth Error: No module named 'requests'
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 59, in callback
+    import requests
+ModuleNotFoundError: No module named 'requests'
+
+[2025-12-07 02:54:29.610956] Application Startup!
+[2025-12-07 02:54:29.669363] Application Startup!
+[2025-12-07 02:54:48.062780] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:54:53.654511] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:54:53.655432] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:54:53.655437] DEBUG: Session Keys: ['_state_discord_9m1yv7E6Cl8tXE9zths6Ye0qLEppMf'], State in Query: 9m1yv7E6Cl8tXE9zths6Ye0qLEppMf
+[2025-12-07 02:56:13.558841] Application Startup!
+[2025-12-07 02:56:13.575214] Application Startup!
+[2025-12-07 02:56:38.157896] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:56:43.486841] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:56:43.487697] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:56:43.487702] DEBUG: Session Keys: ['_state_discord_qR6uIXcySuL9R1ZcNKLk3OiPnyl9ID'], State in Query: qR6uIXcySuL9R1ZcNKLk3OiPnyl9ID
+[2025-12-07 02:57:21.199967] Application Startup!
+[2025-12-07 02:57:21.201312] Application Startup!
+[2025-12-07 02:57:46.810409] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:57:53.115785] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:57:53.116737] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:57:53.116742] DEBUG: Session Keys: ['_state_discord_lUxnG1o47IRPPVOkGVWVy4zOb4gsSf'], State in Query: lUxnG1o47IRPPVOkGVWVy4zOb4gsSf
+[2025-12-07 02:57:53.147939] Auth Error: name 'asyncio' is not defined
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 74, in callback
+    loop = asyncio.get_event_loop()
+           ^^^^^^^
+NameError: name 'asyncio' is not defined. Did you forget to import 'asyncio'?
+
+[2025-12-07 02:58:12.056216] Application Startup!
+[2025-12-07 02:58:12.081828] Application Startup!
+[2025-12-07 02:58:37.822890] DEBUG: Middleware received request: /auth/login
+[2025-12-07 02:58:43.500591] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 02:58:43.501457] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 02:58:43.501462] DEBUG: Session Keys: ['_state_discord_Enhx3obwwttXiI8LdJbiZ7LG0zrLXO'], State in Query: Enhx3obwwttXiI8LdJbiZ7LG0zrLXO
+[2025-12-07 03:00:25.250006] Application Startup!
+[2025-12-07 03:00:25.284384] Application Startup!
+[2025-12-07 03:00:44.568857] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:00:50.199729] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:00:50.200642] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:00:50.200648] DEBUG: Session Keys: ['_state_discord_TDcAPNTTVp3UblfpcBuzDjwvUGkyp1'], State in Query: TDcAPNTTVp3UblfpcBuzDjwvUGkyp1
+[2025-12-07 03:00:50.245351] Auth Error: 
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 103, in callback
+    proc = await asyncio.create_subprocess_exec(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\subprocess.py", line 224, in create_subprocess_exec
+    transport, protocol = await loop.subprocess_exec(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        stderr=stderr, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 1787, in subprocess_exec
+    transport = await self._make_subprocess_transport(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        protocol, popen_args, False, stdin, stdout, stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 534, in _make_subprocess_transport
+    raise NotImplementedError
+NotImplementedError
+
+[2025-12-07 03:01:29.691045] Application Startup!
+[2025-12-07 03:01:29.711256] Application Startup!
+[2025-12-07 03:01:53.141358] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:01:58.348269] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:01:58.349786] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:01:58.349797] DEBUG: Session Keys: ['_state_discord_8hA9VbrgrAP36PmMdb9Y5osznZXlup'], State in Query: 8hA9VbrgrAP36PmMdb9Y5osznZXlup
+[2025-12-07 03:01:58.390660] Auth Error: 
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 103, in callback
+    proc = await asyncio.create_subprocess_exec(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\subprocess.py", line 224, in create_subprocess_exec
+    transport, protocol = await loop.subprocess_exec(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        stderr=stderr, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 1787, in subprocess_exec
+    transport = await self._make_subprocess_transport(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        protocol, popen_args, False, stdin, stdout, stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 534, in _make_subprocess_transport
+    raise NotImplementedError
+NotImplementedError
+
+[2025-12-07 03:02:31.163321] Application Startup!
+[2025-12-07 03:02:31.164994] Application Startup!
+[2025-12-07 03:02:57.738241] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:03:02.527335] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:03:02.528227] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:03:02.528233] DEBUG: Session Keys: ['_state_discord_b9ycnf34RQipmYdez6k6DtyRHUEmci'], State in Query: b9ycnf34RQipmYdez6k6DtyRHUEmci
+[2025-12-07 03:03:02.559615] Auth Error: 
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 103, in callback
+    proc = await asyncio.create_subprocess_exec(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\subprocess.py", line 224, in create_subprocess_exec
+    transport, protocol = await loop.subprocess_exec(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        stderr=stderr, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 1787, in subprocess_exec
+    transport = await self._make_subprocess_transport(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        protocol, popen_args, False, stdin, stdout, stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\words\AppData\Roaming\uv\python\cpython-3.13.1-windows-x86_64-none\Lib\asyncio\base_events.py", line 534, in _make_subprocess_transport
+    raise NotImplementedError
+NotImplementedError
+
+[2025-12-07 03:03:41.397542] Application Startup!
+[2025-12-07 03:03:41.398310] Application Startup!
+[2025-12-07 03:04:44.097682] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:04:49.150025] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:04:49.150942] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:04:49.150948] DEBUG: Session Keys: ['_state_discord_R3mJiswWKys64eMOB1WpMZzUEtR1bL'], State in Query: R3mJiswWKys64eMOB1WpMZzUEtR1bL
+[2025-12-07 03:04:49.243583] Auth Error: Subprocess returned empty. Stderr: Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+    import requests
+ModuleNotFoundError: No module named 'requests'
+
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\src\api\auth.py", line 131, in callback
+    raise Exception(f"Subprocess returned empty. Stderr: {stderr}")
+Exception: Subprocess returned empty. Stderr: Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+    import requests
+ModuleNotFoundError: No module named 'requests'
+
+
+[2025-12-07 03:05:11.635162] Application Startup!
+[2025-12-07 03:05:11.637293] Application Startup!
+[2025-12-07 03:05:37.748353] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:05:43.118831] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:05:43.119814] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:05:43.119820] DEBUG: Session Keys: ['_state_discord_w45tBQJlPZ0HDxbBHEGIQxHFrbHr3q'], State in Query: w45tBQJlPZ0HDxbBHEGIQxHFrbHr3q
+[2025-12-07 03:07:49.387751] Application Startup!
+[2025-12-07 03:07:49.430703] Application Startup!
+[2025-12-07 03:08:03.217789] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:08:08.704916] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:08:08.705909] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:08:08.705916] DEBUG: Session Keys: ['_state_discord_nkDv2qoyAVkZ2YzjYRUrOdZCfVV3S5'], State in Query: nkDv2qoyAVkZ2YzjYRUrOdZCfVV3S5
+[2025-12-07 03:08:55.328899] Application Startup!
+[2025-12-07 03:08:55.351205] Application Startup!
+[2025-12-07 03:09:16.029064] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:09:23.755350] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:09:23.756562] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:09:23.756570] DEBUG: Session Keys: ['_state_discord_WXWvDr6YBWYZGVw1fFcWEckpOkctSS'], State in Query: WXWvDr6YBWYZGVw1fFcWEckpOkctSS
+[2025-12-07 03:11:22.540955] Application Startup!
+[2025-12-07 03:11:22.561405] Application Startup!
+[2025-12-07 03:11:23.538498] Application Startup!
+[2025-12-07 03:11:23.558849] Application Startup!
+[2025-12-07 03:11:26.853361] Application Startup!
+[2025-12-07 03:11:26.946469] Application Startup!
+[2025-12-07 03:12:14.215700] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:12:19.585318] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:12:19.586306] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:12:19.586312] DEBUG: Session Keys: ['_state_discord_vnNVmgCibNgNjRi2Tp57463fj1JCBI'], State in Query: vnNVmgCibNgNjRi2Tp57463fj1JCBI
+[2025-12-07 03:13:05.373835] Application Startup!
+[2025-12-07 03:13:05.421317] Application Startup!
+[2025-12-07 03:13:35.562899] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:13:40.869104] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:13:40.869986] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:13:40.869991] DEBUG: Session Keys: ['_state_discord_IHD7ctS6IkUqnu5vqPlsyDlsUPxKe9'], State in Query: IHD7ctS6IkUqnu5vqPlsyDlsUPxKe9
+[2025-12-07 03:14:34.572389] Application Startup!
+[2025-12-07 03:14:34.680680] Application Startup!
+[2025-12-07 03:14:51.804197] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:14:57.067366] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:14:57.068737] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:14:57.068746] DEBUG: Session Keys: ['_state_discord_9zTDaIpcDrwl8eXlAlbm8P81EgfC3R'], State in Query: 9zTDaIpcDrwl8eXlAlbm8P81EgfC3R
+[2025-12-07 03:15:56.049086] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:16:01.148711] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:16:01.149679] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:16:01.149686] DEBUG: Session Keys: ['_state_discord_dFUsauDruAAP79qtFXzMulxlQdMEp3'], State in Query: dFUsauDruAAP79qtFXzMulxlQdMEp3
+[2025-12-07 03:16:31.740285] Application Startup!
+[2025-12-07 03:16:31.755823] Application Startup!
+[2025-12-07 03:16:40.003206] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:16:45.924238] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:16:45.926016] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:16:45.926029] DEBUG: Session Keys: ['_state_discord_ChkiObAlQi4Lc3p8iGX2v8nAyjOY29'], State in Query: ChkiObAlQi4Lc3p8iGX2v8nAyjOY29
+[2025-12-07 03:17:18.571510] Application Startup!
+[2025-12-07 03:17:18.624289] Application Startup!
+[2025-12-07 03:17:36.771492] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:17:42.181503] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:17:42.183208] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:17:42.183215] DEBUG: Session Keys: ['_state_discord_6fYoVs1bDGDOV8H5Dl3Zlah6vEXOFK'], State in Query: 6fYoVs1bDGDOV8H5Dl3Zlah6vEXOFK
+[2025-12-07 03:18:14.617914] Application Startup!
+[2025-12-07 03:18:14.667000] Application Startup!
+[2025-12-07 03:18:42.856196] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:18:48.688851] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:18:48.689815] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:18:48.689821] DEBUG: Session Keys: ['_state_discord_mmIwtP7f7eltX6G7vUenZhCtiUe2Oh'], State in Query: mmIwtP7f7eltX6G7vUenZhCtiUe2Oh
+[2025-12-07 03:19:30.072587] Application Startup!
+[2025-12-07 03:19:30.076285] Application Startup!
+[2025-12-07 03:20:39.431292] Application Startup!
+[2025-12-07 03:20:39.432014] Application Startup!
+[2025-12-07 03:21:02.937580] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:21:08.485092] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:21:08.486032] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:21:08.486039] DEBUG: Session Keys: ['_state_discord_sUYSr1Vb6aNHe3d5ULKl4U3yjyyJL2'], State in Query: sUYSr1Vb6aNHe3d5ULKl4U3yjyyJL2
+[2025-12-07 03:22:01.564739] Application Startup!
+[2025-12-07 03:22:01.582783] Application Startup!
+[2025-12-07 03:22:27.074216] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:22:32.742168] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:22:32.743278] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:22:32.743283] DEBUG: Session Keys: ['_state_discord_RI6rPmUbVBpJmqx7wsyqavbEyHOZAS'], State in Query: RI6rPmUbVBpJmqx7wsyqavbEyHOZAS
+[2025-12-07 03:23:49.799300] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:23:55.102563] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:23:55.103582] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:23:55.103588] DEBUG: Session Keys: ['_state_discord_sKmwmrnpyzDxwGlgogaCgPqW8oyqAJ'], State in Query: sKmwmrnpyzDxwGlgogaCgPqW8oyqAJ
+[2025-12-07 03:24:40.155408] Application Startup!
+[2025-12-07 03:24:40.172243] Application Startup!
+[2025-12-07 03:24:52.193935] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:24:56.925462] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:24:56.926329] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:24:56.926333] DEBUG: Session Keys: ['_state_discord_JQyIb19ZQhQavQSgseP8G8AUzPszuA'], State in Query: JQyIb19ZQhQavQSgseP8G8AUzPszuA
+[2025-12-07 03:24:59.022572] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:24:59.022884] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:25:01.246635] DEBUG: DB Error in get_or_create: 'email' is an invalid keyword argument for User
+[2025-12-07 03:25:57.694020] Application Startup!
+[2025-12-07 03:25:57.771708] Application Startup!
+[2025-12-07 03:26:14.549591] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:26:20.544845] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:26:20.545984] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:26:20.545991] DEBUG: Session Keys: ['_state_discord_87K6vha5mmZbBLzQMqgOnDD05pHkTU'], State in Query: 87K6vha5mmZbBLzQMqgOnDD05pHkTU
+[2025-12-07 03:26:22.623307] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:26:22.623560] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:26:26.658479] DEBUG: User retrieved/created: 1
+[2025-12-07 03:26:26.664396] DEBUG: JWT Token created
+[2025-12-07 03:26:26.665140] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDM4Nn0.kdalWZsNBvYgahuWqnNqSqjj2gjmPGHvj8SsSueC0PQ
+[2025-12-07 03:26:27.422847] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:26:37.225238] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:26:43.365738] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:26:43.367376] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:26:43.367384] DEBUG: Session Keys: ['_state_discord_hUWSxXn7CUazgn0gigM5Kbnj459pzh'], State in Query: hUWSxXn7CUazgn0gigM5Kbnj459pzh
+[2025-12-07 03:26:45.424888] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:26:45.425103] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:26:47.690181] DEBUG: User retrieved/created: 1
+[2025-12-07 03:26:47.690798] DEBUG: JWT Token created
+[2025-12-07 03:26:47.691104] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDQwN30.kZvB3Y5f5Miiv63COBFpzJNAF37d8W4vAfZLDyVMKHs
+[2025-12-07 03:26:48.223828] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:29:40.935222] Application Startup!
+[2025-12-07 03:29:41.022067] Application Startup!
+[2025-12-07 03:30:03.514943] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:30:08.405092] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:30:08.406490] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:30:08.406495] DEBUG: Session Keys: ['_state_discord_Gdtb1Z8xzLJqEJUxxz0g0Q1uGHRi2T'], State in Query: Gdtb1Z8xzLJqEJUxxz0g0Q1uGHRi2T
+[2025-12-07 03:30:10.491396] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:30:10.491675] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:30:12.933917] Application Startup!
+[2025-12-07 03:30:14.967334] DEBUG: User retrieved/created: 1
+[2025-12-07 03:30:14.971180] DEBUG: JWT Token created
+[2025-12-07 03:30:14.971389] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDYxNH0.wbGbJr_jwG7YID-Rggt_bv_xUUa8QHewqR52DMnbO1A
+[2025-12-07 03:30:16.439084] Application Startup!
+[2025-12-07 03:30:16.445220] DEBUG: Middleware received request: /auth/me
+[2025-12-07 03:30:18.198967] Application Startup!
+[2025-12-07 03:30:18.228859] Application Startup!
+[2025-12-07 03:30:20.265982] Application Startup!
+[2025-12-07 03:30:20.301665] Application Startup!
+[2025-12-07 03:31:53.301067] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:31:59.323438] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:31:59.324449] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:31:59.324455] DEBUG: Session Keys: ['_state_discord_HfEX5Vf0fbDHu8lFq8QuOk2auWqJUz'], State in Query: HfEX5Vf0fbDHu8lFq8QuOk2auWqJUz
+[2025-12-07 03:32:01.392903] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:32:01.393209] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:32:05.875338] DEBUG: User retrieved/created: 1
+[2025-12-07 03:32:05.879408] DEBUG: JWT Token created
+[2025-12-07 03:32:05.879812] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDcyNX0.3sGViYJOPV8TqhbtxortPk3EsTy8_O06YvLltYQbwSs
+[2025-12-07 03:32:06.573175] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:32:56.969601] Application Startup!
+[2025-12-07 03:33:20.732697] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:33:25.865274] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:33:25.866309] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:33:25.866314] DEBUG: Session Keys: ['_state_discord_cTcLM40fIUqYSwt8W0H8ZtCJTRXbdT'], State in Query: cTcLM40fIUqYSwt8W0H8ZtCJTRXbdT
+[2025-12-07 03:33:27.950331] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:33:27.950561] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:33:32.417873] DEBUG: User retrieved/created: 1
+[2025-12-07 03:33:32.422086] DEBUG: JWT Token created
+[2025-12-07 03:33:32.422365] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDgxMn0.D7ycJxqfDUusDeT4oQeFEBSv2xghSaoIltU6d8qs10s
+[2025-12-07 03:33:33.132863] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:34:34.362077] Application Startup!
+[2025-12-07 03:34:34.451841] Application Startup!
+[2025-12-07 03:34:37.656419] Application Startup!
+[2025-12-07 03:34:37.696134] Application Startup!
+[2025-12-07 03:34:41.557053] Application Startup!
+[2025-12-07 03:34:41.602440] Application Startup!
+[2025-12-07 03:35:16.977220] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:35:17.143028] DEBUG: Middleware response: 302 for /auth/login
+[2025-12-07 03:35:22.531280] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:35:22.532393] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:35:22.532402] DEBUG: Session Keys: ['_state_discord_6PuUWYRqImn2fD29SfCrxL8TpPHqSr'], State in Query: 6PuUWYRqImn2fD29SfCrxL8TpPHqSr
+[2025-12-07 03:35:24.619627] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:35:24.619977] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:35:29.117713] DEBUG: User retrieved/created: 1
+[2025-12-07 03:35:29.121994] DEBUG: JWT Token created
+[2025-12-07 03:35:29.122275] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImV4cCI6MTc2NTY1MDkyOX0.7lbeosMuk5UKiIIoTxeW2iWneLtfABZsfSMUN5jOVrQ
+[2025-12-07 03:35:29.122886] DEBUG: Middleware response: 307 for /auth/callback
+[2025-12-07 03:35:29.791169] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:35:29.792799] DEBUG: Calling get_current_user with token: eyJhbGciOi...
+[2025-12-07 03:35:29.793642] DEBUG: JWT Decode Error: Subject must be a string.
+[2025-12-07 03:35:29.794763] DEBUG: Middleware response: 401 for /users/me
+[2025-12-07 03:36:19.015097] Application Startup!
+[2025-12-07 03:36:19.027396] Application Startup!
+[2025-12-07 03:36:21.979129] Application Startup!
+[2025-12-07 03:36:21.996127] Application Startup!
+[2025-12-07 03:36:56.319456] DEBUG: Middleware received request: /auth/login
+[2025-12-07 03:36:56.486657] DEBUG: Middleware response: 302 for /auth/login
+[2025-12-07 03:37:01.729769] DEBUG: Middleware received request: /auth/callback
+[2025-12-07 03:37:01.731255] DEBUG: Client ID: 1446909324357144749, Secret: oJET***
+[2025-12-07 03:37:01.731262] DEBUG: Session Keys: ['_state_discord_36x8hzdTwYcaVh9XMUjetALgtYYWVm'], State in Query: 36x8hzdTwYcaVh9XMUjetALgtYYWVm
+[2025-12-07 03:37:03.813853] DEBUG: Token and User Data acquired. User ID: 603062052155817994
+[2025-12-07 03:37:03.814077] DEBUG: Calling get_or_create_user_from_discord
+[2025-12-07 03:37:08.239769] DEBUG: User retrieved/created: 1
+[2025-12-07 03:37:08.243348] DEBUG: JWT Token created
+[2025-12-07 03:37:08.243718] DEBUG: Redirecting to http://localhost:5173/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY1NjUxMDI4fQ.gWUv5JHGlFBvtghDc8zwJgq1xoBdAaxTBdf1xEavqqk
+[2025-12-07 03:37:08.244377] DEBUG: Middleware response: 307 for /auth/callback
+[2025-12-07 03:37:08.930256] DEBUG: Middleware received request: /users/me
+[2025-12-07 03:37:08.931094] DEBUG: Calling get_current_user with token: eyJhbGciOi...
+[2025-12-07 03:37:08.931473] DEBUG: JWT Decoded. UserID(str): 1
+[2025-12-07 03:37:09.828155] DEBUG: DB Search Result: Found
+[2025-12-07 03:37:09.829706] DEBUG: Middleware response: 200 for /users/me
+[2025-12-07 03:37:09.838354] DEBUG: Middleware received request: /projects
+[2025-12-07 03:37:09.839749] DEBUG: Middleware response: 307 for /projects
+[2025-12-07 03:37:09.844029] DEBUG: Middleware received request: /projects/
+[2025-12-07 03:37:09.844956] DEBUG: Middleware response: 422 for /projects/
+[2025-12-07 03:37:10.857019] DEBUG: Middleware received request: /projects
+[2025-12-07 03:37:10.857760] DEBUG: Middleware response: 307 for /projects
+[2025-12-07 03:37:10.859243] DEBUG: Middleware received request: /projects/
+[2025-12-07 03:37:10.860001] DEBUG: Middleware response: 422 for /projects/
+[2025-12-07 03:37:48.200860] Application Startup!
+[2025-12-07 03:37:48.261180] Application Startup!
+[2025-12-07 03:37:55.390810] Application Startup!
+[2025-12-07 03:37:55.403162] Application Startup!
+[2025-12-07 03:37:58.192348] Application Startup!
+[2025-12-07 03:37:58.198296] Application Startup!
+[2025-12-10 15:56:00.458377] Script Upload Error: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\scripts.py", line 208, in upload_script
+    await generate_scene_chart(script, db)
+  File "F:\src\PythonProject\pscweb3-1\backend\src\services\scene_chart_generator.py", line 36, in generate_scene_chart
+    character_ids = {line.character_id for line in scene.lines}
+                                                   ^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 569, in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1096, in get
+    value = self._fire_loader_callables(state, key, passive)
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1131, in _fire_loader_callables
+    return self.callable_(state, passive)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 978, in _load_for_state
+    return self._emit_lazyload(
+           ~~~~~~~~~~~~~~~~~~~^
+        session,
+        ^^^^^^^^
+    ...<7 lines>...
+        execution_options,
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 1141, in _emit_lazyload
+    result = session.execute(
+        stmt, params, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2358, in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 123, in await_only
+    raise exc.MissingGreenlet(
+    ...<2 lines>...
+    )
+sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+
+[2025-12-10 15:56:06.092251] Script Upload Error: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\scripts.py", line 208, in upload_script
+    await generate_scene_chart(script, db)
+  File "F:\src\PythonProject\pscweb3-1\backend\src\services\scene_chart_generator.py", line 36, in generate_scene_chart
+    character_ids = {line.character_id for line in scene.lines}
+                                                   ^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 569, in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1096, in get
+    value = self._fire_loader_callables(state, key, passive)
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1131, in _fire_loader_callables
+    return self.callable_(state, passive)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 978, in _load_for_state
+    return self._emit_lazyload(
+           ~~~~~~~~~~~~~~~~~~~^
+        session,
+        ^^^^^^^^
+    ...<7 lines>...
+        execution_options,
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 1141, in _emit_lazyload
+    result = session.execute(
+        stmt, params, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2358, in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 123, in await_only
+    raise exc.MissingGreenlet(
+    ...<2 lines>...
+    )
+sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+
+[2025-12-10 15:58:04.250074] Script Upload Error: cannot access local variable 'Scene' where it is not associated with a value
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\scripts.py", line 209, in upload_script
+    selectinload(Scene.lines).options(
+                 ^^^^^
+UnboundLocalError: cannot access local variable 'Scene' where it is not associated with a value
+
+[2025-12-10 15:58:27.158619] Script Upload Error: cannot access local variable 'Scene' where it is not associated with a value
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\scripts.py", line 209, in upload_script
+    selectinload(Scene.lines).options(
+                 ^^^^^
+UnboundLocalError: cannot access local variable 'Scene' where it is not associated with a value
+
+[2025-12-10 16:09:01.281327] Script Upload Error: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+Traceback (most recent call last):
+  File "F:\src\PythonProject\pscweb3-1\backend\src\api\scripts.py", line 208, in upload_script
+    await generate_scene_chart(script, db)
+  File "F:\src\PythonProject\pscweb3-1\backend\src\services\scene_chart_generator.py", line 34, in generate_scene_chart
+    for scene in script.scenes:
+                 ^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 569, in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1096, in get
+    value = self._fire_loader_callables(state, key, passive)
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\attributes.py", line 1131, in _fire_loader_callables
+    return self.callable_(state, passive)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 978, in _load_for_state
+    return self._emit_lazyload(
+           ~~~~~~~~~~~~~~~~~~~^
+        session,
+        ^^^^^^^^
+    ...<7 lines>...
+        execution_options,
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\strategies.py", line 1141, in _emit_lazyload
+    result = session.execute(
+        stmt, params, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+        statement, params or {}, execution_options=execution_options
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2358, in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._prepare_and_execute(operation, parameters)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "F:\src\PythonProject\pscweb3-1\backend\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 123, in await_only
+    raise exc.MissingGreenlet(
+    ...<2 lines>...
+    )
+sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+
