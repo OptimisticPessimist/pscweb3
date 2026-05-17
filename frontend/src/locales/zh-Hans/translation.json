@@ -289,7 +289,20 @@
     "selectScriptForSchedule": "选择作为日程基础的剧本：",
     "noScriptsFound": "未找到剧本。",
     "uploadScriptFirst": "请先在剧本部分上传剧本。",
-    "loadingSchedule": "正在加载日程..."
+    "loadingSchedule": "正在加载日程...",
+    "durationMin": "时长（分钟）",
+    "rehearsalTitle": "标题",
+    "scenes": "场景",
+    "nameColumn": "姓名",
+    "roleColumn": "角色",
+    "cast": "演员",
+    "sendAttendanceCheck": "发送出勤确认",
+    "attendanceCheckDescription": "通过Discord向选定的参与者发送@提及消息。",
+    "deadline": "截止时间（30分钟单位）",
+    "deadlineHelp": "※ 自动调整为整点或半点",
+    "deleteRehearsal": "删除排练",
+    "deleteRehearsalConfirm": "确定要删除此排练吗？",
+    "detailedManagement": "详细管理（旧界面）"
   },
   "attendance": {
     "title": "考勤",

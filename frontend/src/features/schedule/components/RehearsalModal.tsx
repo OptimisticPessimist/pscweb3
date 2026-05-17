@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { rehearsalsApi } from '../api/rehearsals';
 import { scriptsApi } from '@/features/scripts/api/scripts';
 import { projectsApi } from '@/features/projects/api/projects';
@@ -27,6 +28,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
     initialDate,
     rehearsal,
 }) => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [date, setDate] = useState<string>('');
     const [duration, setDuration] = useState<number>(120);
@@ -350,14 +352,14 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             <div style={{ position: 'relative', backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 <div>
                     <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        {rehearsal ? 'Edit Rehearsal' : 'New Rehearsal'}
+                        {rehearsal ? t('schedule.editRehearsal') : t('schedule.addRehearsal')}
                     </h3>
                     <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Left Column: Basic Info */}
                             <div className="space-y-4">
                                 <div>
-                                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date & Time</label>
+                                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">{t('schedule.date')}</label>
                                     <input
                                         type="datetime-local"
                                         id="date"
@@ -368,7 +370,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Duration (min)</label>
+                                    <label htmlFor="duration" className="block text-sm font-medium text-gray-700">{t('schedule.durationMin')}</label>
                                     <input
                                         type="number"
                                         id="duration"
@@ -381,7 +383,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
+                                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">{t('schedule.rehearsalTitle')}</label>
                                     <input
                                         type="text"
                                         id="title"
@@ -392,7 +394,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
+                                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">{t('schedule.location')}</label>
                                     <input
                                         type="text"
                                         id="location"
@@ -402,7 +404,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notes</label>
+                                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">{t('schedule.notes')}</label>
                                     <textarea
                                         id="notes"
                                         rows={2}
@@ -414,7 +416,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
 
                                 {/* Scene Selection */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Scenes</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('schedule.scenes')}</label>
                                     <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2 bg-gray-50">
                                         {script?.scenes && script.scenes.map((scene: any) => (
                                             <div key={scene.id} className="flex items-center mb-1">
@@ -442,13 +444,13 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
 
                             {/* Right Column: Participants */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Participants</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('schedule.participants')}</label>
                                 <div className="max-h-[500px] overflow-y-auto border border-gray-300 rounded-md bg-white">
                                     <table className="min-w-full divide-y divide-gray-200">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('schedule.nameColumn')}</th>
+                                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('schedule.roleColumn')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -474,7 +476,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                                                     <span>{member.display_name || member.discord_username}</span>
                                                                     {state.isCast && (
                                                                         <span className="text-xs text-blue-600 bg-blue-100 px-1 rounded inline-block w-fit">
-                                                                            🎭 Cast
+                                                                            🎭 {t('schedule.cast')}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -483,7 +485,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                                                             <input
                                                                 type="text"
-                                                                placeholder={state.isCast ? "(Cast)" : "Role..."}
+                                                                placeholder={state.isCast ? `(${t('schedule.cast')})` : `${t('schedule.roleColumn')}...`}
                                                                 value={state.staffRole || ''}
                                                                 onChange={(e) => {
                                                                     setParticipantsState(prev => ({
@@ -518,13 +520,13 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                         />
                                     </div>
                                     <div className="ml-3 text-sm">
-                                        <label htmlFor="create_attendance" className="font-medium text-gray-700">Send Attendance Check</label>
-                                        <p className="text-gray-500 text-xs">Send a mention message to selected participants via Discord.</p>
+                                        <label htmlFor="create_attendance" className="font-medium text-gray-700">{t('schedule.sendAttendanceCheck')}</label>
+                                        <p className="text-gray-500 text-xs">{t('schedule.attendanceCheckDescription')}</p>
                                     </div>
                                 </div>
                                 {createAttendance && (
                                     <div className="mt-2 ml-7">
-                                        <label htmlFor="attendance_deadline" className="block text-xs font-medium text-gray-700">Deadline (30分単位)</label>
+                                        <label htmlFor="attendance_deadline" className="block text-xs font-medium text-gray-700">{t('schedule.deadline')}</label>
                                         <input
                                             type="datetime-local"
                                             id="attendance_deadline"
@@ -556,7 +558,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                             }}
                                             className="mt-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">※00分または30分に自動補正されます</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t('schedule.deadlineHelp')}</p>
                                     </div>
                                 )}
                             </div>
@@ -567,14 +569,14 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                 type="submit"
                                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
                             >
-                                {rehearsal ? 'Update' : 'Create'}
+                                {rehearsal ? t('project.update') : t('common.create')}
                             </button>
                             <button
                                 type="button"
                                 onClick={onClose}
                                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                         </div>
 
@@ -590,20 +592,20 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        if (window.confirm('Are you sure you want to delete this rehearsal?')) {
+                                        if (window.confirm(t('schedule.deleteRehearsalConfirm'))) {
                                             deleteMutation.mutate();
                                         }
                                     }}
                                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
                                 >
-                                    Delete Rehearsal
+                                    {t('schedule.deleteRehearsal')}
                                 </button>
                             </div>
                         )}
 
                         {rehearsal && (
                             <div className="mt-4 border-t pt-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Detailed Management (Old UI)</h4>
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">{t('schedule.detailedManagement')}</h4>
                                 <RehearsalParticipants
                                     rehearsal={'scenes' in rehearsal ? rehearsal : { ...rehearsal, scenes: [] }}
                                     projectId={projectId}
