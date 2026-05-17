@@ -289,7 +289,20 @@
     "selectScriptForSchedule": "選擇作為行程基礎的劇本：",
     "noScriptsFound": "未找到劇本。",
     "uploadScriptFirst": "請先在劇本部分上傳劇本。",
-    "loadingSchedule": "正在讀取行程..."
+    "loadingSchedule": "正在讀取行程...",
+    "durationMin": "時長（分鐘）",
+    "rehearsalTitle": "標題",
+    "scenes": "場景",
+    "nameColumn": "姓名",
+    "roleColumn": "角色",
+    "cast": "演員",
+    "sendAttendanceCheck": "發送出席確認",
+    "attendanceCheckDescription": "透過Discord向選定的參與者發送@提及訊息。",
+    "deadline": "截止時間（30分鐘單位）",
+    "deadlineHelp": "※ 自動調整為整點或半點",
+    "deleteRehearsal": "刪除排練",
+    "deleteRehearsalConfirm": "確定要刪除此排練嗎？",
+    "detailedManagement": "詳細管理（舊介面）"
   },
   "attendance": {
     "title": "考勤",

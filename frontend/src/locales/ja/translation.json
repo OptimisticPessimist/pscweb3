@@ -364,7 +364,20 @@
     "selectScriptForSchedule": "スケジュールの基礎とする脚本を選択：",
     "noScriptsFound": "脚本が見つかりません。",
     "uploadScriptFirst": "まず脚本セクションで脚本をアップロードしてください。",
-    "loadingSchedule": "スケジュールを読み込み中..."
+    "loadingSchedule": "スケジュールを読み込み中...",
+    "durationMin": "時間（分）",
+    "rehearsalTitle": "タイトル",
+    "scenes": "シーン",
+    "nameColumn": "名前",
+    "roleColumn": "役割",
+    "cast": "キャスト",
+    "sendAttendanceCheck": "出欠確認を送信",
+    "attendanceCheckDescription": "選択した参加者にDiscordでメンションメッセージを送信します。",
+    "deadline": "締切（30分単位）",
+    "deadlineHelp": "※00分または30分に自動補正されます",
+    "deleteRehearsal": "稽古を削除",
+    "deleteRehearsalConfirm": "この稽古を削除してもよろしいですか？",
+    "detailedManagement": "詳細管理（旧UI）"
   },
   "attendance": {
     "title": "出欠確認",

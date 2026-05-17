@@ -289,7 +289,20 @@
     "selectScriptForSchedule": "일정의 기초로 할 대본 선택:",
     "noScriptsFound": "대본을 찾을 수 없습니다.",
     "uploadScriptFirst": "먼저 대본 섹션에서 대본을 업로드하십시오.",
-    "loadingSchedule": "일정을 불러오는 중..."
+    "loadingSchedule": "일정을 불러오는 중...",
+    "durationMin": "시간（분）",
+    "rehearsalTitle": "제목",
+    "scenes": "장면",
+    "nameColumn": "이름",
+    "roleColumn": "역할",
+    "cast": "캐스트",
+    "sendAttendanceCheck": "출석 확인 보내기",
+    "attendanceCheckDescription": "Discord를 통해 선택된 참가자에게 멘션 메시지를 보냅니다.",
+    "deadline": "마감 시간（30분 단위）",
+    "deadlineHelp": "※ 00분 또는 30분으로 자동 보정됩니다",
+    "deleteRehearsal": "리허설 삭제",
+    "deleteRehearsalConfirm": "이 리허설을 삭제하시겠습니까?",
+    "detailedManagement": "상세 관리（구 UI）"
   },
   "attendance": {
     "title": "출석",

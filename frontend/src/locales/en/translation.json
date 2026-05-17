@@ -315,7 +315,20 @@
     "selectScriptForSchedule": "Select a script to base the schedule on:",
     "noScriptsFound": "No scripts found.",
     "uploadScriptFirst": "Please upload a script in the Scripts section first.",
-    "loadingSchedule": "Loading schedule..."
+    "loadingSchedule": "Loading schedule...",
+    "durationMin": "Duration (min)",
+    "rehearsalTitle": "Title",
+    "scenes": "Scenes",
+    "nameColumn": "Name",
+    "roleColumn": "Role",
+    "cast": "Cast",
+    "sendAttendanceCheck": "Send Attendance Check",
+    "attendanceCheckDescription": "Send a mention message to selected participants via Discord.",
+    "deadline": "Deadline (30 min intervals)",
+    "deadlineHelp": "* Auto-rounded to :00 or :30",
+    "deleteRehearsal": "Delete Rehearsal",
+    "deleteRehearsalConfirm": "Are you sure you want to delete this rehearsal?",
+    "detailedManagement": "Detailed Management (Legacy)"
   },
   "attendance": {
     "title": "Attendance",
