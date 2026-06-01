@@ -1,6 +1,6 @@
 """稽古スケジュール管理APIエンドポイント."""
 
-from datetime import UTC, timedelta
+from datetime import UTC, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -521,7 +521,7 @@ async def add_rehearsal(
 
         await attendance_service.create_attendance_event(
             project=project,
-            title=f"稽古: {rehearsal_data.date.astimezone().strftime('%m/%d %H:%M')}"
+            title=f"稽古: {rehearsal_data.date.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=9))).strftime('%m/%d %H:%M')}"
             + (f" ({scene_text})" if scene_text else ""),
             deadline=deadline,
             schedule_date=schedule_date,
