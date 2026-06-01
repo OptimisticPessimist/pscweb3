@@ -1,6 +1,6 @@
 """日程調整APIエンドポイント."""
 
-from datetime import UTC, timedelta
+from datetime import UTC, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -185,7 +185,7 @@ async def _finalize_poll_candidate(
         attendance_title = (
             f"稽古: {rehearsal.title}"
             if rehearsal.title
-            else f"稽古: {rehearsal.date.astimezone().strftime('%m/%d %H:%M')}"
+            else f"稽古: {rehearsal.date.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=9))).strftime('%m/%d %H:%M')}"
             + (f" ({scene_text})" if scene_text else "")
         )
 
