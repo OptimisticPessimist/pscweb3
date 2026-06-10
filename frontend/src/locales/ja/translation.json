@@ -101,7 +101,9 @@
     "authenticating": "認証中...",
     "rateLimited": "Discord認証が混み合っています。しばらく待ってから再度お試しください。",
     "rateLimitedWithWait": "Discord認証が混み合っています。約{minutes}分待ってから再度お試しください。",
-    "loginFailed": "Discord認証に失敗しました。ログインからやり直してください。"
+    "loginFailed": "Discord認証に失敗しました。ログインからやり直してください。",
+    "loginExpired": "Discord認証の有効期限が切れたか、認証コードが既に使用されています。お手数ですが、もう一度ログインしてください。",
+    "loginConfigError": "Discord認証の設定に問題があります。お手数ですが管理者にお問い合わせください。"
   },
   "dashboard": {
     "title": "ダッシュボード",

@@ -56,7 +56,9 @@
     "authenticating": "Authenticating...",
     "rateLimited": "Discord authentication is temporarily rate limited. Please wait and try again.",
     "rateLimitedWithWait": "Discord authentication is temporarily rate limited. Please wait about {minutes} minute(s) and try again.",
-    "loginFailed": "Discord authentication failed. Please start the login process again."
+    "loginFailed": "Discord authentication failed. Please start the login process again.",
+    "loginExpired": "Your Discord login expired or the authorization code was already used. Please log in again.",
+    "loginConfigError": "There is a problem with the Discord authentication settings. Please contact the administrator."
   },
   "invitation": {
     "loading": "Loading invitation...",

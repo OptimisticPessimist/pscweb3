@@ -53,7 +53,9 @@
     "welcomeMessage": "연극 제작 관리 시스템",
     "rateLimited": "Discord 인증 요청이 일시적으로 제한되었습니다. 잠시 후 다시 시도해 주세요.",
     "rateLimitedWithWait": "Discord 인증 요청이 일시적으로 제한되었습니다. 약 {minutes}분 후 다시 시도해 주세요.",
-    "loginFailed": "Discord 인증에 실패했습니다. 로그인부터 다시 시도해 주세요."
+    "loginFailed": "Discord 인증에 실패했습니다. 로그인부터 다시 시도해 주세요.",
+    "loginExpired": "Discord 인증이 만료되었거나 인증 코드가 이미 사용되었습니다. 번거로우시겠지만 다시 로그인해 주세요.",
+    "loginConfigError": "Discord 인증 설정에 문제가 있습니다. 관리자에게 문의해 주세요."
   },
   "invitation": {
     "loading": "초대장 불러오는 중...",

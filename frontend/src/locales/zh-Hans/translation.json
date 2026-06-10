@@ -53,7 +53,9 @@
     "welcomeMessage": "戏剧制作管理系统",
     "rateLimited": "Discord 身份验证暂时受到速率限制，请稍后重试。",
     "rateLimitedWithWait": "Discord 身份验证暂时受到速率限制，请等待约 {minutes} 分钟后重试。",
-    "loginFailed": "Discord 身份验证失败，请重新开始登录。"
+    "loginFailed": "Discord 身份验证失败，请重新开始登录。",
+    "loginExpired": "Discord 授权已过期或已被使用，请重新登录。",
+    "loginConfigError": "Discord 身份验证配置存在问题，请联系管理员。"
   },
   "invitation": {
     "loading": "正在加载邀请...",
