@@ -62,6 +62,10 @@ def test_discord_retry_after_uses_response_body() -> None:
     assert _discord_retry_after_seconds({}, {"retry_after": 45.5}, fallback=2) == 45.5
 
 
+def test_discord_retry_after_accepts_lowercase_header() -> None:
+    assert _discord_retry_after_seconds({"retry-after": "600"}, None, fallback=5) == 600
+
+
 def test_rate_limit_redirect_includes_wait_time(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("src.api.auth.settings.frontend_url", "https://example.com/")
     response = _discord_auth_error_redirect(

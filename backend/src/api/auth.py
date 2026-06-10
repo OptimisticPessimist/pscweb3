@@ -35,7 +35,10 @@ def _discord_retry_after_seconds(
     fallback: float,
 ) -> float:
     """Discordの429レスポンスから再試行待機秒数を取得する."""
-    raw_value: object | None = headers.get("Retry-After")
+    raw_value: object | None = next(
+        (value for key, value in headers.items() if key.casefold() == "retry-after"),
+        None,
+    )
     if raw_value is None and response_body:
         raw_value = response_body.get("retry_after")
 
