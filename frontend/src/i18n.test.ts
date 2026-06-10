@@ -63,4 +63,15 @@ describe('i18n configuration', () => {
         await i18n.changeLanguage('ko');
         expect(i18n.language).toBe('ko');
     });
+
+    it.each(['ja', 'en', 'ko', 'zh-Hans', 'zh-Hant'])(
+        'should interpolate the Discord rate limit wait time in %s',
+        async (language) => {
+            await i18n.changeLanguage(language);
+            const translated = i18n.t('auth.rateLimitedWithWait', { minutes: 10 });
+
+            expect(translated).toContain('10');
+            expect(translated).not.toContain('{minutes}');
+        },
+    );
 });

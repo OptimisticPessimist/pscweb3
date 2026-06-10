@@ -52,7 +52,7 @@
     "welcome": "PSC Web 3에 오신 것을 환영합니다",
     "welcomeMessage": "연극 제작 관리 시스템",
     "rateLimited": "Discord 인증 요청이 일시적으로 제한되었습니다. 잠시 후 다시 시도해 주세요.",
-    "rateLimitedWithWait": "Discord 인증 요청이 일시적으로 제한되었습니다. 약 {{minutes}}분 후 다시 시도해 주세요.",
+    "rateLimitedWithWait": "Discord 인증 요청이 일시적으로 제한되었습니다. 약 {minutes}분 후 다시 시도해 주세요.",
     "loginFailed": "Discord 인증에 실패했습니다. 로그인부터 다시 시도해 주세요."
   },
   "invitation": {

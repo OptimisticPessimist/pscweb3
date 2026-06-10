@@ -55,7 +55,7 @@
     "welcomeMessage": "Theater Production Management System",
     "authenticating": "Authenticating...",
     "rateLimited": "Discord authentication is temporarily rate limited. Please wait and try again.",
-    "rateLimitedWithWait": "Discord authentication is temporarily rate limited. Please wait about {{minutes}} minute(s) and try again.",
+    "rateLimitedWithWait": "Discord authentication is temporarily rate limited. Please wait about {minutes} minute(s) and try again.",
     "loginFailed": "Discord authentication failed. Please start the login process again."
   },
   "invitation": {
