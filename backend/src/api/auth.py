@@ -139,7 +139,14 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> Redi
         from src.core.logger import get_logger
 
         logger = get_logger(__name__)
-        logger.error(f"Auth error: {str(e)}", exc_info=True)
+        error_type = type(e).__name__
+        # DB接続エラーはDiscordエラーと区別してログ出力
+        if any(
+            kw in error_type.lower() for kw in ("operational", "connection", "interface", "database")
+        ) or "asyncpg" in str(type(e).__module__):
+            logger.error(f"Database connection error during auth: {error_type}: {str(e)}", exc_info=True)
+        else:
+            logger.error(f"Auth error: {error_type}: {str(e)}", exc_info=True)
         return _discord_auth_error_redirect(
             HTTPException(status_code=400, detail="Discord認証に失敗しました")
         )
