@@ -8,6 +8,8 @@ from starlette.requests import Request
 from src.api.auth import (
     _discord_auth_error_redirect,
     _discord_oauth_error_detail,
+    _discord_oauth_error_headers,
+    _discord_oauth_error_reason,
     _discord_retry_after_seconds,
     _fetch_discord_token_standard,
     callback,
@@ -44,6 +46,56 @@ def test_discord_oauth_error_detail_handles_missing_response() -> None:
     assert (
         _discord_oauth_error_detail(None)
         == "Discord認証に失敗しました。ログインからやり直してください"
+    )
+
+
+def test_discord_oauth_error_reason_maps_known_codes() -> None:
+    assert _discord_oauth_error_reason({"error": "invalid_grant"}) == "expired"
+    assert _discord_oauth_error_reason({"error": "invalid_client"}) == "config"
+
+
+def test_discord_oauth_error_reason_returns_none_for_unknown() -> None:
+    assert _discord_oauth_error_reason({"error": "unexpected"}) is None
+    assert _discord_oauth_error_reason(None) is None
+
+
+def test_discord_oauth_error_headers_includes_reason() -> None:
+    assert _discord_oauth_error_headers({"error": "invalid_grant"}) == {
+        "X-Auth-Error-Reason": "expired"
+    }
+
+
+def test_discord_oauth_error_headers_omitted_for_unknown() -> None:
+    assert _discord_oauth_error_headers({"error": "unexpected"}) is None
+
+
+def test_failed_redirect_includes_reason(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("src.api.auth.settings.frontend_url", "https://example.com/")
+    response = _discord_auth_error_redirect(
+        HTTPException(
+            status_code=400,
+            detail="expired",
+            headers={"X-Auth-Error-Reason": "expired"},
+        )
+    )
+
+    assert response.headers["location"] == (
+        "https://example.com/login?auth_error=failed&reason=expired"
+    )
+
+
+def test_rate_limit_redirect_ignores_reason(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("src.api.auth.settings.frontend_url", "https://example.com/")
+    response = _discord_auth_error_redirect(
+        HTTPException(
+            status_code=429,
+            detail="rate limited",
+            headers={"Retry-After": "120", "X-Auth-Error-Reason": "expired"},
+        )
+    )
+
+    assert response.headers["location"] == (
+        "https://example.com/login?auth_error=rate_limited&retry_after=120"
     )
 
 

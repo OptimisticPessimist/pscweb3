@@ -29,6 +29,22 @@ def _discord_oauth_error_detail(response_body: Mapping[str, object] | None) -> s
     return "Discord認証に失敗しました。ログインからやり直してください"
 
 
+def _discord_oauth_error_reason(response_body: Mapping[str, object] | None) -> str | None:
+    """Discord OAuthエラーをフロントエンド向けの機械可読な理由コードへ変換する."""
+    error_code = response_body.get("error") if response_body else None
+    if error_code == "invalid_grant":
+        return "expired"
+    if error_code == "invalid_client":
+        return "config"
+    return None
+
+
+def _discord_oauth_error_headers(response_body: Mapping[str, object] | None) -> dict[str, str] | None:
+    """理由コードをHTTPExceptionヘッダーへ載せ、リダイレクト時に伝播できるようにする."""
+    reason = _discord_oauth_error_reason(response_body)
+    return {"X-Auth-Error-Reason": reason} if reason else None
+
+
 def _discord_retry_after_seconds(
     headers: Mapping[str, str],
     response_body: Mapping[str, object] | None,
@@ -61,9 +77,14 @@ def _discord_rate_limit_error(retry_after: float) -> HTTPException:
 def _discord_auth_error_redirect(error: HTTPException) -> RedirectResponse:
     """認証失敗をフロントエンドのログイン画面へ安全に戻す."""
     params = {"auth_error": "rate_limited" if error.status_code == 429 else "failed"}
-    retry_after = (error.headers or {}).get("Retry-After")
+    error_headers = error.headers or {}
+    retry_after = error_headers.get("Retry-After")
     if retry_after:
         params["retry_after"] = retry_after
+
+    reason = error_headers.get("X-Auth-Error-Reason")
+    if reason and error.status_code != 429:
+        params["reason"] = reason
 
     login_url = f"{settings.frontend_url.rstrip('/')}/login?{urlencode(params)}"
     return RedirectResponse(url=login_url)
@@ -201,11 +222,11 @@ async def _fetch_discord_token_windows(code: str) -> dict:
 
     if status_code >= 400:
         response_body = result.get("body")
+        parsed_body = response_body if isinstance(response_body, dict) else None
         raise HTTPException(
             status_code=400,
-            detail=_discord_oauth_error_detail(
-                response_body if isinstance(response_body, dict) else None
-            ),
+            detail=_discord_oauth_error_detail(parsed_body),
+            headers=_discord_oauth_error_headers(parsed_body),
         )
 
     return result
@@ -275,6 +296,7 @@ async def _fetch_discord_token_standard(code: str) -> dict:
                 raise HTTPException(
                     status_code=400,
                     detail=_discord_oauth_error_detail(response_body),
+                    headers=_discord_oauth_error_headers(response_body),
                 )
 
             token_data = resp.json()

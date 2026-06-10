@@ -10,17 +10,23 @@ export const LoginPage = () => {
     const [searchParams] = useSearchParams();
     const { t } = useTranslation();
     const authError = searchParams.get('auth_error');
+    const authErrorReason = searchParams.get('reason');
     const retryAfterParam = searchParams.get('retry_after');
     const retryAfterSeconds = retryAfterParam ? Number(retryAfterParam) : Number.NaN;
     const retryAfterMinutes = Number.isFinite(retryAfterSeconds)
         ? Math.max(1, Math.ceil(retryAfterSeconds / 60))
         : null;
+    const failedMessageKey = authErrorReason === 'expired'
+        ? 'auth.loginExpired'
+        : authErrorReason === 'config'
+            ? 'auth.loginConfigError'
+            : 'auth.loginFailed';
     const authErrorMessage = authError === 'rate_limited'
         ? retryAfterMinutes
             ? t('auth.rateLimitedWithWait', { minutes: retryAfterMinutes })
             : t('auth.rateLimited')
         : authError
-            ? t('auth.loginFailed')
+            ? t(failedMessageKey)
             : null;
 
     // 既にログイン済みならダッシュボードへ

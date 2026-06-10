@@ -53,7 +53,9 @@
     "welcomeMessage": "戲劇製作管理系統",
     "rateLimited": "Discord 驗證暫時受到速率限制，請稍後再試。",
     "rateLimitedWithWait": "Discord 驗證暫時受到速率限制，請等待約 {minutes} 分鐘後再試。",
-    "loginFailed": "Discord 驗證失敗，請重新開始登入。"
+    "loginFailed": "Discord 驗證失敗，請重新開始登入。",
+    "loginExpired": "Discord 授權已過期或已被使用，請重新登入。",
+    "loginConfigError": "Discord 驗證設定發生問題，請聯絡管理員。"
   },
   "invitation": {
     "loading": "正在載入邀請...",
