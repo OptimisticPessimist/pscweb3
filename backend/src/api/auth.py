@@ -1,6 +1,8 @@
 """認証APIエンドポイント."""
 
+import math
 from collections.abc import Mapping
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -13,6 +15,8 @@ from src.config import settings
 from src.db import get_db
 
 router = APIRouter()
+DISCORD_MAX_RETRIES = 3
+DISCORD_MAX_INLINE_RETRY_AFTER_SECONDS = 5.0
 
 
 def _discord_oauth_error_detail(response_body: Mapping[str, object] | None) -> str:
@@ -23,6 +27,46 @@ def _discord_oauth_error_detail(response_body: Mapping[str, object] | None) -> s
     if error_code == "invalid_client":
         return "Discord認証の設定に問題があります。管理者に連絡してください"
     return "Discord認証に失敗しました。ログインからやり直してください"
+
+
+def _discord_retry_after_seconds(
+    headers: Mapping[str, str],
+    response_body: Mapping[str, object] | None,
+    fallback: float,
+) -> float:
+    """Discordの429レスポンスから再試行待機秒数を取得する."""
+    raw_value: object | None = next(
+        (value for key, value in headers.items() if key.casefold() == "retry-after"),
+        None,
+    )
+    if raw_value is None and response_body:
+        raw_value = response_body.get("retry_after")
+
+    try:
+        return max(0.0, float(raw_value)) if raw_value is not None else fallback
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _discord_rate_limit_error(retry_after: float) -> HTTPException:
+    """Discordのレート制限を再試行可能な認証エラーへ変換する."""
+    retry_after_seconds = max(1, math.ceil(retry_after))
+    return HTTPException(
+        status_code=429,
+        detail="Discord認証が混み合っています。しばらく待ってからログインし直してください",
+        headers={"Retry-After": str(retry_after_seconds)},
+    )
+
+
+def _discord_auth_error_redirect(error: HTTPException) -> RedirectResponse:
+    """認証失敗をフロントエンドのログイン画面へ安全に戻す."""
+    params = {"auth_error": "rate_limited" if error.status_code == 429 else "failed"}
+    retry_after = (error.headers or {}).get("Retry-After")
+    if retry_after:
+        params["retry_after"] = retry_after
+
+    login_url = f"{settings.frontend_url.rstrip('/')}/login?{urlencode(params)}"
+    return RedirectResponse(url=login_url)
 
 
 @router.get("/login")
@@ -46,7 +90,6 @@ async def login(request: Request) -> RedirectResponse:
 @router.get("/callback")
 async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> RedirectResponse:
     """Discord OAuth コールバック."""
-    # OSに応じた方法でDiscordからトークンとユーザー情報を取得
     try:
         import sys
 
@@ -65,23 +108,20 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)) -> Redi
         if not token_data or not discord_user_data:
             raise HTTPException(status_code=500, detail="認証データが不完全です")
 
-    except HTTPException as he:
-        raise he
+        user = await get_or_create_user_from_discord(discord_user_data, db)
+        jwt_token = create_access_token({"sub": str(user.id)})
+        redirect_url = f"{settings.frontend_url}/auth/callback?token={jwt_token}"
+        return RedirectResponse(url=redirect_url)
+    except HTTPException as error:
+        return _discord_auth_error_redirect(error)
     except Exception as e:
         from src.core.logger import get_logger
 
         logger = get_logger(__name__)
         logger.error(f"Auth error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=400, detail=f"認証処理中にエラーが発生しました: {e}")
-
-    # ユーザーを取得または作成
-    user = await get_or_create_user_from_discord(discord_user_data, db)
-
-    # JWT トークンを生成
-    jwt_token = create_access_token({"sub": str(user.id)})
-
-    redirect_url = f"{settings.frontend_url}/auth/callback?token={jwt_token}"
-    return RedirectResponse(url=redirect_url)
+        return _discord_auth_error_redirect(
+            HTTPException(status_code=400, detail="Discord認証に失敗しました")
+        )
 
 
 async def _fetch_discord_token_windows(code: str) -> dict:
@@ -149,8 +189,24 @@ async def _fetch_discord_token_windows(code: str) -> dict:
     if "error" in result:
         raise HTTPException(status_code=400, detail=f"認証エラー: {result['error']}")
 
-    if result.get("status_code", 200) >= 400:
-        raise HTTPException(status_code=400, detail=f"Discord API エラー: {result.get('body')}")
+    status_code = int(result.get("status_code", 200))
+    if status_code == 429:
+        response_body = result.get("body")
+        retry_after = _discord_retry_after_seconds(
+            result.get("headers", {}),
+            response_body if isinstance(response_body, dict) else None,
+            fallback=5.0,
+        )
+        raise _discord_rate_limit_error(retry_after)
+
+    if status_code >= 400:
+        response_body = result.get("body")
+        raise HTTPException(
+            status_code=400,
+            detail=_discord_oauth_error_detail(
+                response_body if isinstance(response_body, dict) else None
+            ),
+        )
 
     return result
 
@@ -176,17 +232,33 @@ async def _fetch_discord_token_standard(code: str) -> dict:
 
     async with httpx.AsyncClient() as client:
         # 1. トークン交換 (リトライ付き)
-        max_retries = 3
         token_data = None
-        for i in range(max_retries + 1):
+        for i in range(DISCORD_MAX_RETRIES + 1):
             resp = await client.post(token_endpoint, data=data)
             if resp.status_code == 429:
-                retry_after = float(resp.headers.get("Retry-After", 2 ** (i + 1)))
+                try:
+                    parsed_body = resp.json()
+                except ValueError:
+                    parsed_body = None
+                response_body = parsed_body if isinstance(parsed_body, dict) else None
+                retry_after = _discord_retry_after_seconds(
+                    resp.headers,
+                    response_body,
+                    fallback=2 ** (i + 1),
+                )
+                can_retry_inline = (
+                    i < DISCORD_MAX_RETRIES
+                    and retry_after <= DISCORD_MAX_INLINE_RETRY_AFTER_SECONDS
+                )
                 logger.warning(
-                    f"Discord Token API Rate Limited (429). Retrying in {retry_after}s...",
+                    "Discord Token API Rate Limited (429)",
                     headers=dict(resp.headers),
                     body=resp.text,
+                    retry_after=retry_after,
+                    retrying=can_retry_inline,
                 )
+                if not can_retry_inline:
+                    raise _discord_rate_limit_error(retry_after)
                 await asyncio.sleep(retry_after)
                 continue
 
@@ -209,24 +281,41 @@ async def _fetch_discord_token_standard(code: str) -> dict:
             break
 
         if not token_data:
-            raise HTTPException(status_code=500, detail="Discordトークンの取得に失敗しました")
+            raise HTTPException(status_code=502, detail="Discordトークンの取得に失敗しました")
 
         access_token = token_data.get("access_token")
 
         # 2. ユーザー情報取得 (リトライ付き)
         discord_user_data = None
-        for i in range(max_retries + 1):
+        for i in range(DISCORD_MAX_RETRIES + 1):
             user_resp = await client.get(
                 "https://discord.com/api/v10/users/@me",
                 headers={"Authorization": f"Bearer {access_token}"},
             )
             if user_resp.status_code == 429:
-                retry_after = float(user_resp.headers.get("Retry-After", 2 ** (i + 1)))
+                try:
+                    parsed_body = user_resp.json()
+                except ValueError:
+                    parsed_body = None
+                response_body = parsed_body if isinstance(parsed_body, dict) else None
+                retry_after = _discord_retry_after_seconds(
+                    user_resp.headers,
+                    response_body,
+                    fallback=2 ** (i + 1),
+                )
+                can_retry_inline = (
+                    i < DISCORD_MAX_RETRIES
+                    and retry_after <= DISCORD_MAX_INLINE_RETRY_AFTER_SECONDS
+                )
                 logger.warning(
-                    f"Discord User Info API Rate Limited (429). Retrying in {retry_after}s...",
+                    "Discord User Info API Rate Limited (429)",
                     headers=dict(user_resp.headers),
                     body=user_resp.text,
+                    retry_after=retry_after,
+                    retrying=can_retry_inline,
                 )
+                if not can_retry_inline:
+                    raise _discord_rate_limit_error(retry_after)
                 await asyncio.sleep(retry_after)
                 continue
 

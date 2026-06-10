@@ -4,34 +4,58 @@ import sys
 
 import httpx
 
+MAX_RETRIES = 3
+MAX_INLINE_RETRY_AFTER_SECONDS = 5.0
+
+
+def get_retry_after(response, fallback):
+    try:
+        body = response.json()
+    except ValueError:
+        body = None
+
+    raw_value = response.headers.get("Retry-After")
+    if raw_value is None and isinstance(body, dict):
+        raw_value = body.get("retry_after")
+
+    try:
+        return max(0.0, float(raw_value)) if raw_value is not None else fallback
+    except (TypeError, ValueError):
+        return fallback
+
+
+def write_error_response(response, step):
+    with open(result_file_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "status_code": response.status_code,
+                "body": response.json()
+                if response.headers.get("content-type") == "application/json"
+                else response.text,
+                "step": step,
+                "headers": dict(response.headers),
+            },
+            f,
+        )
+
 
 async def exchange_token(token_endpoint, data):
-    max_retries = 3
     try:
         async with httpx.AsyncClient() as client:
             # 1. トークン取得 (リトライ付き)
             token_data = None
-            for i in range(max_retries + 1):
+            for i in range(MAX_RETRIES + 1):
                 resp = await client.post(token_endpoint, data=data, timeout=15.0)
                 if resp.status_code == 429:
-                    retry_after = float(resp.headers.get("Retry-After", 2 ** (i + 1)))
-                    # ヘルパーは標準出力で進捗を出さない設計なのでログ記録は困難だが、待機は実行する
+                    retry_after = get_retry_after(resp, 2 ** (i + 1))
+                    if i >= MAX_RETRIES or retry_after > MAX_INLINE_RETRY_AFTER_SECONDS:
+                        write_error_response(resp, "token_exchange")
+                        return
                     await asyncio.sleep(retry_after)
                     continue
 
                 if resp.status_code >= 400:
-                    with open(result_file_path, "w", encoding="utf-8") as f:
-                        json.dump(
-                            {
-                                "status_code": resp.status_code,
-                                "body": resp.json()
-                                if resp.headers.get("content-type") == "application/json"
-                                else resp.text,
-                                "step": "token_exchange",
-                                "headers": dict(resp.headers),
-                            },
-                            f,
-                        )
+                    write_error_response(resp, "token_exchange")
                     return
 
                 token_data = resp.json()
@@ -49,30 +73,22 @@ async def exchange_token(token_endpoint, data):
 
             # 2. ユーザー情報取得 (リトライ付き)
             user_data = None
-            for i in range(max_retries + 1):
+            for i in range(MAX_RETRIES + 1):
                 user_resp = await client.get(
                     "https://discord.com/api/v10/users/@me",
                     headers={"Authorization": f"Bearer {access_token}"},
                     timeout=15.0,
                 )
                 if user_resp.status_code == 429:
-                    retry_after = float(user_resp.headers.get("Retry-After", 2 ** (i + 1)))
+                    retry_after = get_retry_after(user_resp, 2 ** (i + 1))
+                    if i >= MAX_RETRIES or retry_after > MAX_INLINE_RETRY_AFTER_SECONDS:
+                        write_error_response(user_resp, "user_info")
+                        return
                     await asyncio.sleep(retry_after)
                     continue
 
                 if user_resp.status_code >= 400:
-                    with open(result_file_path, "w", encoding="utf-8") as f:
-                        json.dump(
-                            {
-                                "status_code": user_resp.status_code,
-                                "body": user_resp.json()
-                                if user_resp.headers.get("content-type") == "application/json"
-                                else user_resp.text,
-                                "step": "user_info",
-                                "headers": dict(user_resp.headers),
-                            },
-                            f,
-                        )
+                    write_error_response(user_resp, "user_info")
                     return
 
                 user_data = user_resp.json()

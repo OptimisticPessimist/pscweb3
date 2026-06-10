@@ -98,7 +98,10 @@
     "loginWithDiscord": "Discordでログイン",
     "welcome": "ようこそ",
     "welcomeMessage": "演劇制作管理システム",
-    "authenticating": "認証中..."
+    "authenticating": "認証中...",
+    "rateLimited": "Discord認証が混み合っています。しばらく待ってから再度お試しください。",
+    "rateLimitedWithWait": "Discord認証が混み合っています。約{minutes}分待ってから再度お試しください。",
+    "loginFailed": "Discord認証に失敗しました。ログインからやり直してください。"
   },
   "dashboard": {
     "title": "ダッシュボード",
