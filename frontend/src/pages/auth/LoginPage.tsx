@@ -1,13 +1,27 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export const LoginPage = () => {
     const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { t } = useTranslation();
+    const authError = searchParams.get('auth_error');
+    const retryAfterParam = searchParams.get('retry_after');
+    const retryAfterSeconds = retryAfterParam ? Number(retryAfterParam) : Number.NaN;
+    const retryAfterMinutes = Number.isFinite(retryAfterSeconds)
+        ? Math.max(1, Math.ceil(retryAfterSeconds / 60))
+        : null;
+    const authErrorMessage = authError === 'rate_limited'
+        ? retryAfterMinutes
+            ? t('auth.rateLimitedWithWait', { minutes: retryAfterMinutes })
+            : t('auth.rateLimited')
+        : authError
+            ? t('auth.loginFailed')
+            : null;
 
     // 既にログイン済みならダッシュボードへ
     useEffect(() => {
@@ -42,6 +56,14 @@ export const LoginPage = () => {
                     </p>
                 </div>
                 <div className="mt-8 space-y-6">
+                    {authErrorMessage && (
+                        <p
+                            role="alert"
+                            className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+                        >
+                            {authErrorMessage}
+                        </p>
+                    )}
                     <button
                         onClick={handleLogin}
                         className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#5865F2] hover:bg-[#4752C4] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 shadow-lg"
