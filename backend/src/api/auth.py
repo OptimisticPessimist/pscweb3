@@ -1,5 +1,7 @@
 """認証APIエンドポイント."""
 
+from collections.abc import Mapping
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +13,16 @@ from src.config import settings
 from src.db import get_db
 
 router = APIRouter()
+
+
+def _discord_oauth_error_detail(response_body: Mapping[str, object] | None) -> str:
+    """Discord OAuthエラーを利用者向けの安全なメッセージへ変換する."""
+    error_code = response_body.get("error") if response_body else None
+    if error_code == "invalid_grant":
+        return "Discord認証の有効期限が切れたか、認証コードが既に使用されています。ログインからやり直してください"
+    if error_code == "invalid_client":
+        return "Discord認証の設定に問題があります。管理者に連絡してください"
+    return "Discord認証に失敗しました。ログインからやり直してください"
 
 
 @router.get("/login")
@@ -179,9 +191,20 @@ async def _fetch_discord_token_standard(code: str) -> dict:
                 continue
 
             if resp.status_code >= 400:
-                logger.error(f"Discord Token API Error: {resp.status_code}", body=resp.text)
+                try:
+                    parsed_body = resp.json()
+                except ValueError:
+                    parsed_body = None
+                response_body = parsed_body if isinstance(parsed_body, dict) else None
+                logger.error(
+                    f"Discord Token API Error: {resp.status_code}",
+                    body=resp.text,
+                )
+                raise HTTPException(
+                    status_code=400,
+                    detail=_discord_oauth_error_detail(response_body),
+                )
 
-            resp.raise_for_status()
             token_data = resp.json()
             break
 
