@@ -29,9 +29,10 @@ def upgrade() -> None:
         sa.Column("message_id", sa.String(length=50), nullable=False),
         sa.Column("channel_id", sa.String(length=50), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("deadline", sa.DateTime(), nullable=False),
+        sa.Column("schedule_date", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("deadline", sa.DateTime(timezone=True), nullable=False),
         sa.Column("completed", sa.Boolean(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["project_id"],
             ["theater_projects.id"],
