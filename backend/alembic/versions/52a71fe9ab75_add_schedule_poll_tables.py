@@ -32,6 +32,7 @@ def upgrade() -> None:
         sa.Column("channel_id", sa.String(length=50), nullable=True),
         sa.Column("creator_id", sa.Uuid(), nullable=False),
         sa.Column("is_closed", sa.Boolean(), nullable=False),
+        sa.Column("required_roles", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["creator_id"],
