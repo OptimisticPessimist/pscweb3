@@ -1,18 +1,36 @@
 """データベース接続モジュール."""
 
 from collections.abc import AsyncGenerator
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.config import settings
 
+
+def _prepare_asyncpg_url(url: str) -> tuple[str, dict]:
+    """asyncpgはsslmodeクエリパラメータを受け付けないため、connect_argsに変換する."""
+    connect_args: dict = {"statement_cache_size": 0}
+    if "sslmode" not in url:
+        return url, connect_args
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query, keep_blank_values=True)
+    sslmode = params.pop("sslmode", [""])[0]
+    if sslmode == "require":
+        connect_args["ssl"] = True
+    new_query = urlencode({k: v[0] for k, v in params.items()})
+    return urlunparse(parsed._replace(query=new_query)), connect_args
+
+
+_db_url, _connect_args = _prepare_asyncpg_url(settings.database_url)
+
 # 非同期エンジンの作成
 engine = create_async_engine(
-    settings.database_url,
+    _db_url,
     echo=settings.environment == "development",
     pool_pre_ping=True,
     # Supabase Transaction Pooler (PgBouncer) does not support prepared statements
-    connect_args={"statement_cache_size": 0},
+    connect_args=_connect_args,
 )
 
 # 非同期セッションファクトリ

@@ -67,12 +67,14 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """非同期でマイグレーションを実行."""
-    # DATABASE_URLを直接使用して特殊文字のエスケープ問題を回避
+    from src.db import _prepare_asyncpg_url
+
+    _url, _connect_args = _prepare_asyncpg_url(settings.database_url)
     connectable = async_engine_from_config(
-        {"sqlalchemy.url": settings.database_url},
+        {"sqlalchemy.url": _url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={"statement_cache_size": 0},
+        connect_args=_connect_args,
     )
 
     async with connectable.connect() as connection:
