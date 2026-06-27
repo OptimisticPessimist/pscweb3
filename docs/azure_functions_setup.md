@@ -131,12 +131,27 @@ Function Appが作成されたら、以下の環境変数を設定します：
 
 ## 4. 動作確認
 
+### 4-0. コールドスタート対策
+
+このリポジトリの現在のデプロイ経路は `.github/workflows/azure-deploy.yml` の `Deploy to Azure Functions` です。
+Azure Functions の従量課金プランは、アイドル時に 0 インスタンスへスケールできるため、HTTP API の初回アクセスでコールドスタートが発生することがあります。
+
+無料枠内でレスポンス受付を安定させるため、`backend/function_app.py` に `keep_api_warm` Timer Trigger を追加しています。
+
+- 実行間隔: 5分ごと
+- 処理内容: DB や外部 API に触れず、同一プロセス内で `/api/health` を実行して Functions ホストと FastAPI ルーティング層を温める
+- 月間実行回数目安: 約 8,640 回/月
+- 無料枠との関係: 従量課金プランの無料実行回数 1,000,000 回/月に対して 1% 未満
+
+> [!NOTE]
+> これは無料枠でできるベストエフォートのウォームアップです。完全な Always On が必要な場合は Premium plan の always-ready instances や App Service の Always On 対応プランが必要ですが、無料枠外になります。
+
 ### 4-1. Azure Portal で Timer 実行を確認
 
 1. Function App のリソースページに移動します。
 2. 左サイドバーの **「関数」** をクリックします。
-3. `schedule_attendance_reminder` 関数が表示されていることを確認します。
-4. **「監視」** → **「ログストリーム」** を開き、30分ごとにログが出力されることを確認します。
+3. `keep_api_warm` と `schedule_attendance_reminder` 関数が表示されていることを確認します。
+4. **「監視」** → **「ログストリーム」** を開き、`Keep-warm timer completed` が5分ごとに出力されることを確認します。
 
 ### 4-2. テスト実行（オプション）
 

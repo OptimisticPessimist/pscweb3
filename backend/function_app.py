@@ -56,6 +56,26 @@ except Exception as e:
     app = func.AsgiFunctionApp(app=error_app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
 
+@app.schedule(schedule="0 */5 * * * *", arg_name="timer", run_on_startup=False, use_monitor=False)
+async def keep_api_warm(timer: func.TimerRequest) -> None:
+    """HTTP API のコールドスタートを抑えるため、軽量に ASGI ルートを実行する."""
+    if timer.past_due:
+        logging.info("Keep-warm timer is past due.")
+
+    if "fastapi_app" not in globals():
+        logging.warning("Keep-warm timer skipped because FastAPI failed to load.")
+        return
+
+    import httpx
+
+    transport = httpx.ASGITransport(app=fastapi_app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://warmup.local") as client:
+        response = await client.get("/api/health")
+        response.raise_for_status()
+
+    logging.info("Keep-warm timer completed.")
+
+
 # Timer Trigger: Runs every 30 minutes
 @app.schedule(schedule="0 */30 * * * *", arg_name="timer", run_on_startup=False, use_monitor=False)
 async def schedule_attendance_reminder(timer: func.TimerRequest) -> None:
