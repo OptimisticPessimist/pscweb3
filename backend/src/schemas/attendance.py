@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AttendanceStats(BaseModel):
@@ -63,10 +63,12 @@ class AttendanceExportTarget(BaseModel):
 class AttendanceExportResponse(BaseModel):
     """外部連携用出欠JSONレスポンス."""
 
-    schemaVersion: int
+    model_config = ConfigDict(populate_by_name=True)
+
+    schema_version: int = Field(alias="schemaVersion")
     source: str
-    eventName: str
-    generatedAt: str
+    event_name: str = Field(alias="eventName")
+    generated_at: str = Field(alias="generatedAt")
     attendances: list[AttendanceExportTarget]
 
 
