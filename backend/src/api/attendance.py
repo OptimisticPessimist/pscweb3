@@ -87,6 +87,23 @@ def build_attendance_export_filename(event: AttendanceEvent) -> str:
     return f"attendance-{date_part}-{event.id}.json"
 
 
+async def build_display_name_map(
+    project_id: UUID,
+    user_ids: list[UUID],
+    db: AsyncSession,
+) -> dict[UUID, str | None]:
+    """指定 user_id に絞った ProjectMember から表示名マップを構築する."""
+    if not user_ids:
+        return {}
+    stmt = select(ProjectMember).where(
+        ProjectMember.project_id == project_id,
+        ProjectMember.user_id.in_(user_ids),
+    )
+    result = await db.execute(stmt)
+    members = result.scalars().all()
+    return {m.user_id: m.display_name for m in members}
+
+
 async def build_attendance_export_response(
     project_id: UUID,
     event_id: UUID,
@@ -104,10 +121,8 @@ async def build_attendance_export_response(
     if not event:
         raise HTTPException(status_code=404, detail="Attendance event not found")
 
-    member_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
-    member_result = await db.execute(member_stmt)
-    members = member_result.scalars().all()
-    display_name_map = {m.user_id: m.display_name for m in members}
+    target_user_ids = [t.user_id for t in event.targets]
+    display_name_map = await build_display_name_map(project_id, target_user_ids, db)
 
     attendances = []
     for target in sorted(
@@ -173,10 +188,8 @@ async def get_attendance_event(
         raise HTTPException(status_code=404, detail="Attendance event not found")
 
     # ユーザー表示名マップ作成
-    member_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
-    member_result = await db.execute(member_stmt)
-    members = member_result.scalars().all()
-    display_name_map = {m.user_id: m.display_name for m in members}
+    target_user_ids = [t.user_id for t in event.targets]
+    display_name_map = await build_display_name_map(project_id, target_user_ids, db)
 
     # ターゲットリスト作成
     targets_response = []
