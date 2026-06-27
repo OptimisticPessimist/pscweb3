@@ -565,6 +565,9 @@ class AttendanceEvent(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("theater_projects.id"))
+    rehearsal_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("rehearsals.id", ondelete="SET NULL"), nullable=True, index=True
+    )  # 紐付く稽古（外部キー）
     message_id: Mapped[str] = mapped_column(String(50))  # Discord Message ID
     channel_id: Mapped[str] = mapped_column(String(50))  # Discord Channel ID
     title: Mapped[str] = mapped_column(String(200))  # イベント名
@@ -588,6 +591,7 @@ class AttendanceEvent(Base):
 
     # リレーション
     project: Mapped["TheaterProject"] = relationship(back_populates="attendance_events")
+    rehearsal: Mapped["Rehearsal | None"] = relationship()
     targets: Mapped[list["AttendanceTarget"]] = relationship(
         back_populates="event", cascade="all, delete-orphan"
     )

@@ -4,19 +4,20 @@ import type { Project } from '@/types';
 export const canExportAttendance = (role?: Project['role'] | null) =>
     role === 'owner' || role === 'editor';
 
-export const findAttendanceEventsForScheduleDate = (
+export const findAttendanceEventsForRehearsal = (
     events: AttendanceEventResponse[],
+    rehearsalId: string | null | undefined,
     scheduleDate: string | null | undefined,
 ) => {
-    if (!scheduleDate) return [];
-
-    const targetTime = parseApiDateAsUtcTime(scheduleDate);
-    if (Number.isNaN(targetTime)) return [];
-
     return events.filter((event) => {
-        if (!event.schedule_date) return false;
+        if (event.rehearsal_id !== null && event.rehearsal_id !== undefined) {
+            return rehearsalId != null && event.rehearsal_id === rehearsalId;
+        }
+        // rehearsal_id 未設定の既存データはタイムスタンプで照合
+        if (!scheduleDate || !event.schedule_date) return false;
+        const targetTime = parseApiDateAsUtcTime(scheduleDate);
         const eventTime = parseApiDateAsUtcTime(event.schedule_date);
-        return !Number.isNaN(eventTime) && Math.abs(eventTime - targetTime) < 1000;
+        return !Number.isNaN(targetTime) && !Number.isNaN(eventTime) && Math.abs(eventTime - targetTime) < 1000;
     });
 };
 
