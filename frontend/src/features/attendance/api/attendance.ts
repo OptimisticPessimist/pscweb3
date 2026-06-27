@@ -10,6 +10,7 @@ export interface AttendanceStats {
 export interface AttendanceEventResponse {
     id: string;
     project_id: string;
+    rehearsal_id: string | null;
     title: string;
     schedule_date: string | null;
     deadline: string | null;

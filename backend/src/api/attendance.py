@@ -202,6 +202,7 @@ async def get_attendance_event(
     return AttendanceEventDetailResponse(
         id=event.id,
         project_id=event.project_id,
+        rehearsal_id=event.rehearsal_id,
         title=event.title,
         schedule_date=ensure_utc(event.schedule_date),
         deadline=ensure_utc(event.deadline),
@@ -310,6 +311,7 @@ async def list_attendance_events(
             AttendanceEventResponse(
                 id=event.id,
                 project_id=event.project_id,
+                rehearsal_id=event.rehearsal_id,
                 title=event.title,
                 schedule_date=ensure_utc(event.schedule_date),
                 deadline=ensure_utc(event.deadline),

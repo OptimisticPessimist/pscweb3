@@ -20,6 +20,7 @@ class AttendanceEventResponse(BaseModel):
 
     id: UUID
     project_id: UUID
+    rehearsal_id: UUID | None
     title: str
     schedule_date: datetime | None
     deadline: datetime | None
@@ -42,6 +43,7 @@ class AttendanceEventDetailResponse(BaseModel):
 
     id: UUID
     project_id: UUID
+    rehearsal_id: UUID | None
     title: str
     schedule_date: datetime | None
     deadline: datetime | None

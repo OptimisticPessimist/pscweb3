@@ -5,7 +5,7 @@ import { scriptsApi } from '../scripts/api/scripts';
 import { dashboardApi } from '../dashboard/api/dashboard';
 import { attendanceApi } from '../attendance/api/attendance';
 import { AttendanceExportControl } from '../attendance/components/AttendanceExportControl';
-import { canExportAttendance, findAttendanceEventsForScheduleDate } from '../attendance/utils/attendanceExport';
+import { canExportAttendance, findAttendanceEventsForRehearsal } from '../attendance/utils/attendanceExport';
 import { AlertCircle, Calendar, Clock, MapPin, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,7 +40,11 @@ export const ProjectDetailsPage = () => {
     });
 
     const nextRehearsalAttendanceEvents = dashboard?.next_rehearsal
-        ? findAttendanceEventsForScheduleDate(attendanceEvents, dashboard.next_rehearsal.start_time)
+        ? findAttendanceEventsForRehearsal(
+              attendanceEvents,
+              dashboard.next_rehearsal.id,
+              dashboard.next_rehearsal.start_time,
+          )
         : [];
 
     if (isProjectLoading) {

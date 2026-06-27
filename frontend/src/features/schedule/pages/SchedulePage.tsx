@@ -12,7 +12,7 @@ import { RehearsalModal } from '../components/RehearsalModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useTranslation } from 'react-i18next';
 import { attendanceApi } from '@/features/attendance/api/attendance';
-import { canExportAttendance, findAttendanceEventsForScheduleDate } from '@/features/attendance/utils/attendanceExport';
+import { canExportAttendance, findAttendanceEventsForRehearsal } from '@/features/attendance/utils/attendanceExport';
 
 export const SchedulePage: React.FC = () => {
     const { t, i18n } = useTranslation();
@@ -45,7 +45,7 @@ export const SchedulePage: React.FC = () => {
         ? schedule?.rehearsals.find(r => r.id === selectedRehearsalId) || null
         : null;
     const activeRehearsalAttendanceEvents = activeRehearsal && canExportAttendance(project?.role)
-        ? findAttendanceEventsForScheduleDate(attendanceEvents, activeRehearsal.date)
+        ? findAttendanceEventsForRehearsal(attendanceEvents, selectedRehearsalId, activeRehearsal.date)
         : [];
 
     const { data: scripts } = useQuery({
