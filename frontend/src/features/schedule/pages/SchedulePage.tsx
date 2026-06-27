@@ -44,7 +44,7 @@ export const SchedulePage: React.FC = () => {
     const activeRehearsal = selectedRehearsalId
         ? schedule?.rehearsals.find(r => r.id === selectedRehearsalId) || null
         : null;
-    const activeRehearsalAttendanceEvents = activeRehearsal
+    const activeRehearsalAttendanceEvents = activeRehearsal && canExportAttendance(project?.role)
         ? findAttendanceEventsForScheduleDate(attendanceEvents, activeRehearsal.date)
         : [];
 
