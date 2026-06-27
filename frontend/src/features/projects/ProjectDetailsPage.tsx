@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { projectsApi } from './api/projects';
 import { scriptsApi } from '../scripts/api/scripts';
 import { dashboardApi } from '../dashboard/api/dashboard';
+import { attendanceApi } from '../attendance/api/attendance';
+import { AttendanceExportControl } from '../attendance/components/AttendanceExportControl';
+import { canExportAttendance, findAttendanceEventsForScheduleDate } from '../attendance/utils/attendanceExport';
 import { AlertCircle, Calendar, Clock, MapPin, ShieldAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +30,18 @@ export const ProjectDetailsPage = () => {
         queryFn: () => dashboardApi.getDashboard(projectId!),
         enabled: !!projectId,
     });
+
+    const canShowAttendanceExport = canExportAttendance(project?.role);
+
+    const { data: attendanceEvents = [] } = useQuery({
+        queryKey: ['attendance', projectId],
+        queryFn: () => attendanceApi.getAttendanceEvents(projectId!),
+        enabled: !!projectId && canShowAttendanceExport,
+    });
+
+    const nextRehearsalAttendanceEvents = dashboard?.next_rehearsal
+        ? findAttendanceEventsForScheduleDate(attendanceEvents, dashboard.next_rehearsal.start_time)
+        : [];
 
     if (isProjectLoading) {
         return (
@@ -182,6 +197,15 @@ export const ProjectDetailsPage = () => {
                                 <div className="flex items-center text-sm text-gray-600">
                                     <MapPin className="h-4 w-4 mr-2" />
                                     {dashboard.next_rehearsal.location}
+                                </div>
+                            )}
+                            {canShowAttendanceExport && nextRehearsalAttendanceEvents.length > 0 && (
+                                <div className="pt-2">
+                                    <AttendanceExportControl
+                                        projectId={projectId!}
+                                        events={nextRehearsalAttendanceEvents}
+                                        compact
+                                    />
                                 </div>
                             )}
                         </div>

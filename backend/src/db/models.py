@@ -601,7 +601,7 @@ class AttendanceTarget(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("attendance_events.id"))
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, reacted, reminded
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # "ok", "ng", "pending"
 
     # リレーション
     event: Mapped["AttendanceEvent"] = relationship(back_populates="targets")

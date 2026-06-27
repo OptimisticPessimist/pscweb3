@@ -51,6 +51,23 @@ class AttendanceEventDetailResponse(BaseModel):
     targets: list[AttendanceTargetResponse]
 
 
+class AttendanceExportTarget(BaseModel):
+    """外部連携用出欠対象者."""
+
+    name: str
+    status: str
+
+
+class AttendanceExportResponse(BaseModel):
+    """外部連携用出欠JSONレスポンス."""
+
+    schemaVersion: int
+    source: str
+    eventName: str
+    generatedAt: str
+    attendances: list[AttendanceExportTarget]
+
+
 class AttendanceTargetUpdate(BaseModel):
     """出席確認ターゲット更新."""
 

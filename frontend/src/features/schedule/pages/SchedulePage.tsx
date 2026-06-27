@@ -11,6 +11,8 @@ import { projectsApi } from '@/features/projects/api/projects';
 import { RehearsalModal } from '../components/RehearsalModal';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useTranslation } from 'react-i18next';
+import { attendanceApi } from '@/features/attendance/api/attendance';
+import { canExportAttendance, findAttendanceEventsForScheduleDate } from '@/features/attendance/utils/attendanceExport';
 
 export const SchedulePage: React.FC = () => {
     const { t, i18n } = useTranslation();
@@ -26,6 +28,12 @@ export const SchedulePage: React.FC = () => {
         enabled: !!projectId,
     });
 
+    const { data: attendanceEvents = [] } = useQuery({
+        queryKey: ['attendance', projectId],
+        queryFn: () => attendanceApi.getAttendanceEvents(projectId!),
+        enabled: !!projectId && canExportAttendance(project?.role),
+    });
+
     const { data: schedule, isLoading: isScheduleLoading, error: scheduleError } = useQuery({
         queryKey: ['rehearsalSchedule', projectId],
         queryFn: () => rehearsalsApi.getSchedule(projectId!),
@@ -36,6 +44,9 @@ export const SchedulePage: React.FC = () => {
     const activeRehearsal = selectedRehearsalId
         ? schedule?.rehearsals.find(r => r.id === selectedRehearsalId) || null
         : null;
+    const activeRehearsalAttendanceEvents = activeRehearsal && canExportAttendance(project?.role)
+        ? findAttendanceEventsForScheduleDate(attendanceEvents, activeRehearsal.date)
+        : [];
 
     const { data: scripts } = useQuery({
         queryKey: ['scripts', projectId],
@@ -201,6 +212,7 @@ export const SchedulePage: React.FC = () => {
                             scriptId={schedule.script_id}
                             initialDate={selectedDate}
                             rehearsal={activeRehearsal}
+                            attendanceExportEvents={activeRehearsalAttendanceEvents}
                         />
                     </ErrorBoundary>
                 </div>
