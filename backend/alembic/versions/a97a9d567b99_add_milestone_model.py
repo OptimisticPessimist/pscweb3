@@ -27,8 +27,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("project_id", sa.Uuid(), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("start_date", sa.DateTime(), nullable=False),
-        sa.Column("end_date", sa.DateTime(), nullable=True),
+        sa.Column("start_date", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("end_date", sa.DateTime(timezone=True), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("color", sa.String(length=20), nullable=True),
         sa.ForeignKeyConstraint(

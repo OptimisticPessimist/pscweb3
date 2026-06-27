@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column("project_id", sa.Uuid(), nullable=True),
         sa.Column("details", sa.Text(), nullable=True),
         sa.Column("ip_address", sa.String(length=50), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["project_id"],
             ["theater_projects.id"],
