@@ -10,14 +10,29 @@ export const findAttendanceEventsForScheduleDate = (
 ) => {
     if (!scheduleDate) return [];
 
-    const targetTime = new Date(scheduleDate).getTime();
+    const targetTime = parseApiDateAsUtcTime(scheduleDate);
     if (Number.isNaN(targetTime)) return [];
 
     return events.filter((event) => {
         if (!event.schedule_date) return false;
-        const eventTime = new Date(event.schedule_date).getTime();
+        const eventTime = parseApiDateAsUtcTime(event.schedule_date);
         return !Number.isNaN(eventTime) && Math.abs(eventTime - targetTime) < 1000;
     });
+};
+
+const parseApiDateAsUtcTime = (value: string) => {
+    const trimmedValue = value.trim();
+    const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+    const timezonePattern = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
+    let normalizedValue = trimmedValue;
+
+    if (dateOnlyPattern.test(trimmedValue)) {
+        normalizedValue = `${trimmedValue}T00:00:00Z`;
+    } else if (!timezonePattern.test(trimmedValue)) {
+        normalizedValue = `${trimmedValue}Z`;
+    }
+
+    return new Date(normalizedValue).getTime();
 };
 
 const buildFallbackFilename = (event: AttendanceEventResponse) => {
