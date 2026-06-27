@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from structlog import get_logger
 
 from src.db import get_db
 from src.db.models import AttendanceEvent, AttendanceTarget, ProjectMember
@@ -24,6 +25,7 @@ from src.schemas.attendance import (
 )
 
 router = APIRouter()
+logger = get_logger(__name__)
 JST = timezone(timedelta(hours=9))
 ATTENDANCE_EXPORT_SOURCE = "PSCWEB3"
 ATTENDANCE_EXPORT_STATUS_LABELS = {
@@ -31,6 +33,26 @@ ATTENDANCE_EXPORT_STATUS_LABELS = {
     "ng": "欠席",
     "pending": "未回答",
 }
+# 想定外のステータスを「未回答」に黙って丸めると外部アプリ側で誤解されるため、
+# 区別可能なラベルを用い、警告ログを残す。
+ATTENDANCE_EXPORT_UNKNOWN_STATUS_LABEL = "不明"
+
+
+def resolve_export_status_label(status: str, *, event_id: UUID, user_id: UUID) -> str:
+    """出欠ステータスを外部出力用ラベルに変換する.
+
+    未知のステータスは「未回答」に丸めず、区別可能なラベルにして警告を残す。
+    """
+    label = ATTENDANCE_EXPORT_STATUS_LABELS.get(status)
+    if label is None:
+        logger.warning(
+            "attendance_export_unknown_status",
+            status=status,
+            event_id=str(event_id),
+            user_id=str(user_id),
+        )
+        return ATTENDANCE_EXPORT_UNKNOWN_STATUS_LABEL
+    return label
 
 
 def ensure_utc(dt: datetime | None) -> datetime | None:
@@ -95,7 +117,9 @@ async def build_attendance_export_response(
         attendances.append(
             AttendanceExportTarget(
                 name=display_name_map.get(target.user_id) or target.user.display_name,
-                status=ATTENDANCE_EXPORT_STATUS_LABELS.get(target.status, "未回答"),
+                status=resolve_export_status_label(
+                    target.status, event_id=event.id, user_id=target.user_id
+                ),
             )
         )
 
@@ -108,7 +132,10 @@ async def build_attendance_export_response(
     )
 
 
-@router.get("/{project_id}/attendance/{event_id}/export")
+@router.get(
+    "/{project_id}/attendance/{event_id}/export",
+    response_model=AttendanceExportResponse,
+)
 async def export_attendance_event(
     project_id: UUID,
     event_id: UUID,

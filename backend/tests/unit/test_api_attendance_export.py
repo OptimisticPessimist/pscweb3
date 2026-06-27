@@ -175,3 +175,119 @@ async def test_export_attendance_event_rejects_other_project(
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_export_attendance_event_sorts_by_name(
+    client: AsyncClient,
+    db: AsyncSession,
+    test_project: TheaterProject,
+    test_user_token: str,
+) -> None:
+    """出力は投入順ではなく表示名の昇順でソートされる."""
+    users = [
+        User(discord_id="3003", discord_username="zeta", screen_name="Zeta"),
+        User(discord_id="3001", discord_username="alpha", screen_name="Alpha"),
+        User(discord_id="3002", discord_username="mike", screen_name="Mike"),
+    ]
+    db.add_all(users)
+    await db.flush()
+
+    db.add_all(
+        [
+            ProjectMember(
+                project_id=test_project.id,
+                user_id=users[0].id,
+                role="viewer",
+                display_name="Zeta",
+            ),
+            ProjectMember(
+                project_id=test_project.id,
+                user_id=users[1].id,
+                role="viewer",
+                display_name="Alpha",
+            ),
+            ProjectMember(
+                project_id=test_project.id,
+                user_id=users[2].id,
+                role="viewer",
+                display_name="Mike",
+            ),
+        ]
+    )
+
+    event = AttendanceEvent(
+        project_id=test_project.id,
+        message_id="777",
+        channel_id="666",
+        title="ソート確認",
+        schedule_date=datetime(2026, 6, 27, 10, 0, tzinfo=UTC),
+        deadline=datetime(2026, 6, 26, 10, 0, tzinfo=UTC),
+        completed=False,
+        created_at=datetime(2026, 6, 25, 10, 0, tzinfo=UTC),
+    )
+    db.add(event)
+    await db.flush()
+    db.add_all(
+        [
+            AttendanceTarget(event_id=event.id, user_id=users[0].id, status="ok"),
+            AttendanceTarget(event_id=event.id, user_id=users[1].id, status="ng"),
+            AttendanceTarget(event_id=event.id, user_id=users[2].id, status="pending"),
+        ]
+    )
+    await db.commit()
+
+    response = await client.get(
+        f"/api/projects/{test_project.id}/attendance/{event.id}/export",
+        headers={"Authorization": f"Bearer {test_user_token}"},
+    )
+
+    assert response.status_code == 200
+    names = [target["name"] for target in response.json()["attendances"]]
+    assert names == ["Alpha", "Mike", "Zeta"]
+
+
+@pytest.mark.asyncio
+async def test_export_attendance_event_unknown_status_label(
+    client: AsyncClient,
+    db: AsyncSession,
+    test_project: TheaterProject,
+    test_user_token: str,
+) -> None:
+    """想定外のステータスは「未回答」に丸めず区別可能なラベルで出力する."""
+    user = User(discord_id="4001", discord_username="legacy", screen_name="Legacy User")
+    db.add(user)
+    await db.flush()
+    db.add(
+        ProjectMember(
+            project_id=test_project.id,
+            user_id=user.id,
+            role="viewer",
+            display_name="Legacy User",
+        )
+    )
+
+    event = AttendanceEvent(
+        project_id=test_project.id,
+        message_id="555",
+        channel_id="444",
+        title="未知ステータス",
+        schedule_date=datetime(2026, 6, 27, 10, 0, tzinfo=UTC),
+        deadline=datetime(2026, 6, 26, 10, 0, tzinfo=UTC),
+        completed=False,
+        created_at=datetime(2026, 6, 25, 10, 0, tzinfo=UTC),
+    )
+    db.add(event)
+    await db.flush()
+    db.add(AttendanceTarget(event_id=event.id, user_id=user.id, status="reacted"))
+    await db.commit()
+
+    response = await client.get(
+        f"/api/projects/{test_project.id}/attendance/{event.id}/export",
+        headers={"Authorization": f"Bearer {test_user_token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["attendances"] == [
+        {"name": "Legacy User", "status": "不明"},
+    ]
