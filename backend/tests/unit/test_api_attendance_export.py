@@ -93,7 +93,7 @@ async def test_export_attendance_event_json(
     assert data["schemaVersion"] == 1
     assert data["source"] == "PSCWEB3"
     assert data["eventName"] == "イベント名"
-    assert data["generatedAt"].endswith("+09:00")
+    assert data["generatedAt"].endswith("+00:00")
     assert data["attendances"] == [
         {"name": "External Player A", "status": "出席"},
         {"name": "External Player B", "status": "欠席"},

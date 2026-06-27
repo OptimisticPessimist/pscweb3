@@ -1,6 +1,6 @@
 """出席確認APIエンドポイント."""
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,7 +26,6 @@ from src.schemas.attendance import (
 
 router = APIRouter()
 logger = get_logger(__name__)
-JST = timezone(timedelta(hours=9))
 ATTENDANCE_EXPORT_SOURCE = "PSCWEB3"
 ATTENDANCE_EXPORT_STATUS_LABELS = {
     "ok": "出席",
@@ -69,22 +68,9 @@ def ensure_utc(dt: datetime | None) -> datetime | None:
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
 
 
-def ensure_jst(dt: datetime | None) -> datetime | None:
-    """Ensure datetime has JST timezone."""
-    if dt is None:
-        return None
-    dt_utc = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
-    return dt_utc.astimezone(JST)
-
-
 def build_attendance_export_filename(event: AttendanceEvent) -> str:
     """Build a stable JSON export filename."""
-    base_dt = ensure_jst(event.schedule_date or event.created_at)
-    if base_dt:
-        date_part = base_dt.strftime("%Y%m%d-%H%M")
-    else:
-        date_part = datetime.now(JST).strftime("%Y%m%d-%H%M")
-    return f"attendance-{date_part}-{event.id}.json"
+    return f"attendance-{event.id}.json"
 
 
 async def build_display_name_map(
@@ -142,7 +128,7 @@ async def build_attendance_export_response(
         schema_version=1,
         source=ATTENDANCE_EXPORT_SOURCE,
         event_name=event.title,
-        generated_at=datetime.now(JST).replace(microsecond=0).isoformat(),
+        generated_at=datetime.now(UTC).replace(microsecond=0).isoformat(),
         attendances=attendances,
     )
 

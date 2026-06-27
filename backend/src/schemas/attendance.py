@@ -75,7 +75,8 @@ class AttendanceExportResponse(BaseModel):
 class AttendanceTargetUpdate(BaseModel):
     """出席確認ターゲット更新."""
 
-    user_ids: list[str]
+    remove_user_ids: list[str] = []
+    add_user_ids: list[str] = []
 
 
 class AttendanceStatusUpdate(BaseModel):

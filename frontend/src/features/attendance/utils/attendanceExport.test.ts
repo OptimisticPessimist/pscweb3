@@ -39,28 +39,19 @@ describe('buildFallbackFilename', () => {
         stats: { ok: 0, ng: 0, pending: 0, total: 0 },
     };
 
-    it('uses JST (UTC+9) for the date part', () => {
-        // 2026-01-01T15:00:00Z = 2026-01-02T00:00:00+09:00 in JST
+    it('returns attendance-{id}.json regardless of schedule_date', () => {
         const event = { ...baseEvent, schedule_date: '2026-01-01T15:00:00Z' };
         const filename = buildFallbackFilename(event);
-        expect(filename).toBe(`attendance-20260102-0000-${event.id}.json`);
+        expect(filename).toBe(`attendance-${event.id}.json`);
     });
 
-    it('includes event.id in filename to match backend convention', () => {
-        const event = { ...baseEvent, schedule_date: '2026-06-27T10:00:00Z' };
-        const filename = buildFallbackFilename(event);
-        expect(filename).toContain(event.id);
-        expect(filename).toMatch(/^attendance-\d{8}-\d{4}-event-uuid-1234\.json$/);
-    });
-
-    it('falls back to created_at when schedule_date is null', () => {
-        // created_at = 2026-06-27T00:00:00Z = 2026-06-27T09:00:00+09:00 in JST
+    it('returns attendance-{id}.json when schedule_date is null', () => {
         const event = { ...baseEvent, schedule_date: null };
         const filename = buildFallbackFilename(event);
-        expect(filename).toBe(`attendance-20260627-0900-${event.id}.json`);
+        expect(filename).toBe(`attendance-${event.id}.json`);
     });
 
-    it('falls back to event.id only when date is invalid', () => {
+    it('returns attendance-{id}.json even when dates are invalid', () => {
         const event = { ...baseEvent, schedule_date: 'invalid-date', created_at: 'also-bad' };
         const filename = buildFallbackFilename(event);
         expect(filename).toBe(`attendance-${event.id}.json`);
