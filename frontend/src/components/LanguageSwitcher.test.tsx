@@ -1,30 +1,37 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import '@testing-library/jest-dom';
-// Mock i18next
+
+const mockChangeLanguage = vi.fn();
+
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         i18n: {
             language: 'ja',
-            changeLanguage: vi.fn(),
+            changeLanguage: mockChangeLanguage,
         },
     }),
 }));
 
 describe('LanguageSwitcher Component', () => {
+    beforeEach(() => {
+        mockChangeLanguage.mockClear();
+    });
+
     it('should render language switcher button', () => {
         render(<LanguageSwitcher />);
         expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('should display all 5 language options when clicked', async () => {
+    it('should display all 5 language options when clicked', () => {
         render(<LanguageSwitcher />);
         const button = screen.getByRole('button');
 
         fireEvent.click(button);
 
-        expect(screen.getByText(/日本語/)).toBeInTheDocument();
+        // 日本語 appears in both the trigger button and the menu item when language='ja'
+        expect(screen.getAllByText(/日本語/).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText(/English/)).toBeInTheDocument();
         expect(screen.getByText(/한국어/)).toBeInTheDocument();
         expect(screen.getByText(/简体中文/)).toBeInTheDocument();
@@ -36,9 +43,7 @@ describe('LanguageSwitcher Component', () => {
         expect(screen.getByText(/日本語/)).toBeInTheDocument();
     });
 
-    it('should call changeLanguage when a language is selected', async () => {
-        const { i18n } = await import('react-i18next').then(m => m.useTranslation());
-
+    it('should call changeLanguage when a language is selected', () => {
         render(<LanguageSwitcher />);
         const button = screen.getByRole('button');
 
@@ -47,10 +52,10 @@ describe('LanguageSwitcher Component', () => {
         const englishOption = screen.getByText(/English/);
         fireEvent.click(englishOption);
 
-        expect(i18n.changeLanguage).toHaveBeenCalledWith('en');
+        expect(mockChangeLanguage).toHaveBeenCalledWith('en');
     });
 
-    it('should save selected language to localStorage', async () => {
+    it('should save selected language to localStorage', () => {
         const localStorageMock = {
             getItem: vi.fn(),
             setItem: vi.fn(),
@@ -73,8 +78,6 @@ describe('LanguageSwitcher Component', () => {
         const koreanOption = screen.getByText(/한국어/);
         fireEvent.click(koreanOption);
 
-        // i18next-browser-languagedetector will handle localStorage
-        // This test verifies the interaction happens
         expect(button).toBeInTheDocument();
     });
 });
