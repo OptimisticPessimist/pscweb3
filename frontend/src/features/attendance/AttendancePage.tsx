@@ -3,8 +3,11 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi } from '@/features/attendance/api/attendance';
+import { AttendanceExportControl } from '@/features/attendance/components/AttendanceExportControl';
+import { canExportAttendance } from '@/features/attendance/utils/attendanceExport';
 import { Calendar, Clock, AlertCircle, Bell } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { projectsApi } from '@/features/projects/api/projects';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +24,12 @@ export const AttendancePage: React.FC = () => {
     const { data: events, isLoading } = useQuery({
         queryKey: ['attendance', projectId],
         queryFn: () => attendanceApi.getAttendanceEvents(projectId!),
+        enabled: !!projectId,
+    });
+
+    const { data: project } = useQuery({
+        queryKey: ['project', projectId],
+        queryFn: () => projectsApi.getProject(projectId!),
         enabled: !!projectId,
     });
 
@@ -289,7 +298,14 @@ export const AttendancePage: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="ml-4 flex flex-col space-y-2">
+                                        <div className="ml-4 flex flex-col items-end space-y-2">
+                                            {projectId && canExportAttendance(project?.role) && (
+                                                <AttendanceExportControl
+                                                    projectId={projectId}
+                                                    events={[event]}
+                                                    compact
+                                                />
+                                            )}
                                             <button
                                                 onClick={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
                                                 className="text-sm text-indigo-600 hover:text-indigo-500"

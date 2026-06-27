@@ -342,7 +342,11 @@
     "attending": "Attending",
     "absent": "Absent",
     "tentative": "Tentative",
-    "markAttendance": "Mark Attendance"
+    "markAttendance": "Mark Attendance",
+    "exportJson": "Export JSON",
+    "exportEventSelect": "Attendance event to export",
+    "exportSuccess": "Attendance JSON exported",
+    "exportFailed": "Failed to export attendance JSON"
   },
   "language": {
     "ja": "日本語",

@@ -311,7 +311,11 @@
     "pending": "待定",
     "ok": "出席",
     "ng": "缺席",
-    "all": "全部"
+    "all": "全部",
+    "exportJson": "匯出 JSON",
+    "exportEventSelect": "要匯出的考勤活動",
+    "exportSuccess": "考勤 JSON 已匯出",
+    "exportFailed": "考勤 JSON 匯出失敗"
   },
   "language": {
     "ja": "日本語",

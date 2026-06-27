@@ -386,7 +386,11 @@
     "pending": "未回答",
     "ok": "OK",
     "ng": "NG",
-    "all": "全て"
+    "all": "全て",
+    "exportJson": "JSON出力",
+    "exportEventSelect": "出力する出欠イベント",
+    "exportSuccess": "出欠JSONを出力しました",
+    "exportFailed": "出欠JSONの出力に失敗しました"
   },
   "language": {
     "ja": "日本語",

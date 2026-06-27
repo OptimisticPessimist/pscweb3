@@ -311,7 +311,11 @@
     "pending": "미응답",
     "ok": "출석",
     "ng": "결석",
-    "all": "전체"
+    "all": "전체",
+    "exportJson": "JSON 내보내기",
+    "exportEventSelect": "내보낼 출석 이벤트",
+    "exportSuccess": "출석 JSON을 내보냈습니다",
+    "exportFailed": "출석 JSON 내보내기에 실패했습니다"
   },
   "language": {
     "ja": "日本語",

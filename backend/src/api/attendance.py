@@ -1,17 +1,20 @@
 """出席確認APIエンドポイント."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.db import get_db
 from src.db.models import AttendanceEvent, AttendanceTarget, ProjectMember
-from src.dependencies.permissions import get_project_member_dep
+from src.dependencies.permissions import check_role, get_project_member_dep
 from src.schemas.attendance import (
+    AttendanceExportResponse,
+    AttendanceExportTarget,
     AttendanceEventDetailResponse,
     AttendanceEventResponse,
     AttendanceStats,
@@ -21,6 +24,13 @@ from src.schemas.attendance import (
 )
 
 router = APIRouter()
+JST = timezone(timedelta(hours=9))
+ATTENDANCE_EXPORT_SOURCE = "PSCWEB3"
+ATTENDANCE_EXPORT_STATUS_LABELS = {
+    "ok": "出席",
+    "ng": "欠席",
+    "pending": "未回答",
+}
 
 
 def ensure_utc(dt: datetime | None) -> datetime | None:
@@ -35,6 +45,84 @@ def ensure_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+
+
+def ensure_jst(dt: datetime | None) -> datetime | None:
+    """Ensure datetime has JST timezone."""
+    if dt is None:
+        return None
+    dt_utc = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+    return dt_utc.astimezone(JST)
+
+
+def build_attendance_export_filename(event: AttendanceEvent) -> str:
+    """Build a stable JSON export filename."""
+    base_dt = ensure_jst(event.schedule_date or event.created_at)
+    if base_dt:
+        date_part = base_dt.strftime("%Y%m%d-%H%M")
+    else:
+        date_part = datetime.now(JST).strftime("%Y%m%d-%H%M")
+    return f"attendance-{date_part}-{event.id}.json"
+
+
+async def build_attendance_export_response(
+    project_id: UUID,
+    event_id: UUID,
+    db: AsyncSession,
+) -> tuple[AttendanceEvent, AttendanceExportResponse]:
+    """Build external attendance JSON export payload."""
+    stmt = (
+        select(AttendanceEvent)
+        .where(AttendanceEvent.id == event_id, AttendanceEvent.project_id == project_id)
+        .options(selectinload(AttendanceEvent.targets).options(selectinload(AttendanceTarget.user)))
+    )
+    result = await db.execute(stmt)
+    event = result.scalar_one_or_none()
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Attendance event not found")
+
+    member_stmt = select(ProjectMember).where(ProjectMember.project_id == project_id)
+    member_result = await db.execute(member_stmt)
+    members = member_result.scalars().all()
+    display_name_map = {m.user_id: m.display_name for m in members}
+
+    attendances = []
+    for target in sorted(
+        event.targets,
+        key=lambda t: display_name_map.get(t.user_id) or t.user.display_name,
+    ):
+        attendances.append(
+            AttendanceExportTarget(
+                name=display_name_map.get(target.user_id) or target.user.display_name,
+                status=ATTENDANCE_EXPORT_STATUS_LABELS.get(target.status, "未回答"),
+            )
+        )
+
+    return event, AttendanceExportResponse(
+        schemaVersion=1,
+        source=ATTENDANCE_EXPORT_SOURCE,
+        eventName=event.title,
+        generatedAt=datetime.now(JST).replace(microsecond=0).isoformat(),
+        attendances=attendances,
+    )
+
+
+@router.get("/{project_id}/attendance/{event_id}/export")
+async def export_attendance_event(
+    project_id: UUID,
+    event_id: UUID,
+    _current_member: ProjectMember = Depends(check_role(["owner", "editor"])),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """出席確認イベントを外部連携用JSONとして出力."""
+    event, payload = await build_attendance_export_response(project_id, event_id, db)
+    filename = build_attendance_export_filename(event)
+
+    return JSONResponse(
+        content=payload.model_dump(mode="json"),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{project_id}/attendance/{event_id}", response_model=AttendanceEventDetailResponse)

@@ -8,6 +8,8 @@ import { projectsApi } from '@/features/projects/api/projects';
 import { formatSceneNumber } from '@/utils/sceneFormatter';
 import type { Rehearsal, RehearsalCreate, RehearsalUpdate, RehearsalParticipantCreate, RehearsalCastCreate } from '@/types';
 import { RehearsalParticipants } from './RehearsalParticipants';
+import { AttendanceExportControl } from '@/features/attendance/components/AttendanceExportControl';
+import type { AttendanceEventResponse } from '@/features/attendance/api/attendance';
 
 interface RehearsalModalProps {
     isOpen: boolean;
@@ -17,6 +19,7 @@ interface RehearsalModalProps {
     scriptId: string;
     initialDate?: Date | null;
     rehearsal?: Rehearsal | null;
+    attendanceExportEvents?: AttendanceEventResponse[];
 }
 
 export const RehearsalModal: React.FC<RehearsalModalProps> = ({
@@ -27,6 +30,7 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
     scriptId,
     initialDate,
     rehearsal,
+    attendanceExportEvents = [],
 }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
@@ -351,9 +355,18 @@ export const RehearsalModal: React.FC<RehearsalModalProps> = ({
             />
             <div style={{ position: 'relative', backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                 <div>
-                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                        {rehearsal ? t('schedule.editRehearsal') : t('schedule.addRehearsal')}
-                    </h3>
+                    <div className="flex items-start justify-between gap-4">
+                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            {rehearsal ? t('schedule.editRehearsal') : t('schedule.addRehearsal')}
+                        </h3>
+                        {rehearsal && attendanceExportEvents.length > 0 && (
+                            <AttendanceExportControl
+                                projectId={projectId}
+                                events={attendanceExportEvents}
+                                compact
+                            />
+                        )}
+                    </div>
                     <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Left Column: Basic Info */}

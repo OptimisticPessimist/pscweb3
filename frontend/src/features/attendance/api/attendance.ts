@@ -42,6 +42,22 @@ export const attendanceApi = {
         return response.data;
     },
 
+    // 出欠確認を外部連携用JSONとして出力
+    exportAttendanceEvent: async (projectId: string, eventId: string): Promise<{ blob: Blob; filename: string | null }> => {
+        const response = await apiClient.get<Blob>(`/projects/${projectId}/attendance/${eventId}/export`, {
+            responseType: 'blob',
+        });
+        const disposition = response.headers['content-disposition'];
+        const filenameMatch = typeof disposition === 'string'
+            ? disposition.match(/filename="([^"]+)"/)
+            : null;
+
+        return {
+            blob: response.data,
+            filename: filenameMatch?.[1] ?? null,
+        };
+    },
+
     // Pendingユーザーにリマインダー送信
     remindPendingUsers: async (projectId: string, eventId: string): Promise<{ message: string }> => {
         const response = await apiClient.post<{ message: string }>(`/projects/${projectId}/attendance/${eventId}/remind-pending`);
