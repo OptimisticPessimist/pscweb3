@@ -139,10 +139,10 @@ async def build_attendance_export_response(
         )
 
     return event, AttendanceExportResponse(
-        schemaVersion=1,
+        schema_version=1,
         source=ATTENDANCE_EXPORT_SOURCE,
-        eventName=event.title,
-        generatedAt=datetime.now(JST).replace(microsecond=0).isoformat(),
+        event_name=event.title,
+        generated_at=datetime.now(JST).replace(microsecond=0).isoformat(),
         attendances=attendances,
     )
 
@@ -162,7 +162,7 @@ async def export_attendance_event(
     filename = build_attendance_export_filename(event)
 
     return JSONResponse(
-        content=payload.model_dump(mode="json"),
+        content=payload.model_dump(by_alias=True, mode="json"),
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
