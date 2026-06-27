@@ -36,14 +36,21 @@ const parseApiDateAsUtcTime = (value: string) => {
     return new Date(normalizedValue).getTime();
 };
 
-const buildFallbackFilename = (event: AttendanceEventResponse) => {
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+export const buildFallbackFilename = (event: AttendanceEventResponse) => {
     const baseDate = event.schedule_date || event.created_at;
     const date = new Date(baseDate);
-    const datePart = Number.isNaN(date.getTime())
-        ? event.id
-        : `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`;
-
-    return `attendance-${datePart}.json`;
+    if (Number.isNaN(date.getTime())) {
+        return `attendance-${event.id}.json`;
+    }
+    const jst = new Date(date.getTime() + JST_OFFSET_MS);
+    const year = jst.getUTCFullYear();
+    const month = String(jst.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(jst.getUTCDate()).padStart(2, '0');
+    const hours = String(jst.getUTCHours()).padStart(2, '0');
+    const minutes = String(jst.getUTCMinutes()).padStart(2, '0');
+    return `attendance-${year}${month}${day}-${hours}${minutes}-${event.id}.json`;
 };
 
 export const downloadAttendanceExport = async (

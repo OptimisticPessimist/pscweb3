@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { AttendanceEventResponse } from '@/features/attendance/api/attendance';
-import { findAttendanceEventsForRehearsal } from '@/features/attendance/utils/attendanceExport';
+import {
+    buildFallbackFilename,
+    findAttendanceEventsForRehearsal,
+} from '@/features/attendance/utils/attendanceExport';
 
 const createEvent = (
     id: string,
@@ -21,6 +24,47 @@ const createEvent = (
         pending: 0,
         total: 0,
     },
+});
+
+describe('buildFallbackFilename', () => {
+    const baseEvent: AttendanceEventResponse = {
+        id: 'event-uuid-1234',
+        project_id: 'project-1',
+        rehearsal_id: null,
+        title: 'test',
+        schedule_date: null,
+        deadline: null,
+        completed: false,
+        created_at: '2026-06-27T00:00:00Z',
+        stats: { ok: 0, ng: 0, pending: 0, total: 0 },
+    };
+
+    it('uses JST (UTC+9) for the date part', () => {
+        // 2026-01-01T15:00:00Z = 2026-01-02T00:00:00+09:00 in JST
+        const event = { ...baseEvent, schedule_date: '2026-01-01T15:00:00Z' };
+        const filename = buildFallbackFilename(event);
+        expect(filename).toBe(`attendance-20260102-0000-${event.id}.json`);
+    });
+
+    it('includes event.id in filename to match backend convention', () => {
+        const event = { ...baseEvent, schedule_date: '2026-06-27T10:00:00Z' };
+        const filename = buildFallbackFilename(event);
+        expect(filename).toContain(event.id);
+        expect(filename).toMatch(/^attendance-\d{8}-\d{4}-event-uuid-1234\.json$/);
+    });
+
+    it('falls back to created_at when schedule_date is null', () => {
+        // created_at = 2026-06-27T00:00:00Z = 2026-06-27T09:00:00+09:00 in JST
+        const event = { ...baseEvent, schedule_date: null };
+        const filename = buildFallbackFilename(event);
+        expect(filename).toBe(`attendance-20260627-0900-${event.id}.json`);
+    });
+
+    it('falls back to event.id only when date is invalid', () => {
+        const event = { ...baseEvent, schedule_date: 'invalid-date', created_at: 'also-bad' };
+        const filename = buildFallbackFilename(event);
+        expect(filename).toBe(`attendance-${event.id}.json`);
+    });
 });
 
 describe('findAttendanceEventsForRehearsal', () => {

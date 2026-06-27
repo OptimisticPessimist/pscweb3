@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -156,13 +156,14 @@ async def export_attendance_event(
     event_id: UUID,
     _current_member: ProjectMember = Depends(check_role(["owner", "editor"])),
     db: AsyncSession = Depends(get_db),
-) -> JSONResponse:
+) -> Response:
     """出席確認イベントを外部連携用JSONとして出力."""
     event, payload = await build_attendance_export_response(project_id, event_id, db)
     filename = build_attendance_export_filename(event)
 
-    return JSONResponse(
-        content=payload.model_dump(by_alias=True, mode="json"),
+    return Response(
+        content=payload.model_dump_json(by_alias=True),
+        media_type="application/json",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
