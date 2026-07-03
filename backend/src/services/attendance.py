@@ -1,10 +1,11 @@
 """出席確認サービス."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from structlog import get_logger
 
 from src.db.models import (
@@ -17,6 +18,172 @@ from src.db.models import (
 from src.services.discord import DiscordService
 
 logger = get_logger(__name__)
+
+JST = timezone(timedelta(hours=9))
+
+
+def to_utc(dt: datetime | None) -> datetime | None:
+    """naive datetime は UTC とみなし、aware datetime は UTC へ変換する.
+
+    `.replace(tzinfo=UTC)` は aware な非UTC日時（例: +09:00）を壊すため、
+    タイムスタンプ計算前の正規化には必ずこちらを使う。
+    """
+    if dt is None:
+        return None
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+
+
+def _rehearsal_event_conditions(
+    rehearsal_id: uuid.UUID,
+    old_schedule_date: datetime | None,
+):
+    """稽古に紐づく出欠イベントの照合条件を構築する.
+
+    rehearsal_id で直接紐づくものに加え、rehearsal_id 未設定の既存データは
+    旧稽古日時との一致で照合する（フロントエンドの照合ロジックと同じ規則）。
+    """
+    conditions = [AttendanceEvent.rehearsal_id == rehearsal_id]
+    old_dt = to_utc(old_schedule_date)
+    if old_dt is not None:
+        conditions.append(
+            and_(
+                AttendanceEvent.rehearsal_id.is_(None),
+                AttendanceEvent.schedule_date == old_dt,
+            )
+        )
+    return or_(*conditions)
+
+
+async def sync_rehearsal_attendance_events(
+    db: AsyncSession,
+    rehearsal_id: uuid.UUID,
+    project_id: uuid.UUID,
+    old_schedule_date: datetime | None,
+    new_schedule_date: datetime | None = None,
+    target_user_ids: set[uuid.UUID] | None = None,
+) -> int:
+    """稽古の変更内容を、紐づく未完了の出欠確認イベントへ同期する.
+
+    - 日時変更時: schedule_date を更新し、回答期限を同じ差分だけ移動、
+      リマインダー送信済みフラグをリセットする。タイトルに旧日時(JST)表記が
+      含まれる場合は新日時へ置換する。
+    - 対象者変更時 (target_user_ids is not None): 既存の回答は保持したまま、
+      追加されたメンバーを pending で追加し、対象から外れたメンバーを削除する。
+      （作成時と同様、Discord連携済みユーザーのみを対象とする）
+    - rehearsal_id 未設定の既存イベントには rehearsal_id を補完する。
+
+    呼び出し元で commit すること。
+
+    Returns:
+        int: 同期した出欠イベント数
+    """
+    stmt = (
+        select(AttendanceEvent)
+        .where(
+            AttendanceEvent.project_id == project_id,
+            AttendanceEvent.completed == False,  # noqa: E712
+            _rehearsal_event_conditions(rehearsal_id, old_schedule_date),
+        )
+        .options(selectinload(AttendanceEvent.targets))
+    )
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+
+    if not events:
+        return 0
+
+    desired_ids: set[uuid.UUID] | None = None
+    if target_user_ids is not None:
+        if target_user_ids:
+            users_result = await db.execute(
+                select(User.id).where(
+                    User.id.in_(target_user_ids), User.discord_id.isnot(None)
+                )
+            )
+            desired_ids = set(users_result.scalars().all())
+        else:
+            desired_ids = set()
+
+    new_dt = to_utc(new_schedule_date)
+
+    for event in events:
+        # rehearsal_id 未設定の既存データを補完
+        event.rehearsal_id = rehearsal_id
+
+        # 稽古日時の同期
+        current_dt = to_utc(event.schedule_date)
+        if new_dt is not None and current_dt != new_dt:
+            if current_dt is not None:
+                delta = new_dt - current_dt
+                if event.deadline is not None:
+                    event.deadline = to_utc(event.deadline) + delta
+                # タイトル中の旧日時表記(JST)を新日時へ置換
+                old_label = current_dt.astimezone(JST).strftime("%m/%d %H:%M")
+                new_label = new_dt.astimezone(JST).strftime("%m/%d %H:%M")
+                if event.title and old_label in event.title:
+                    event.title = event.title.replace(old_label, new_label)
+            event.schedule_date = new_dt
+            # 新しい日時基準でリマインダーを再送できるようリセット
+            event.reminder_1_sent_at = None
+            event.reminder_2_sent_at = None
+            event.reminder_3_sent_at = None
+            logger.info(
+                "attendance_event_schedule_synced",
+                event_id=str(event.id),
+                rehearsal_id=str(rehearsal_id),
+                new_schedule_date=new_dt.isoformat(),
+            )
+
+        # 対象者の同期（既存回答は保持）
+        if desired_ids is not None:
+            existing = {t.user_id: t for t in event.targets}
+            for user_id, target in existing.items():
+                if user_id not in desired_ids:
+                    await db.delete(target)
+            for user_id in desired_ids - existing.keys():
+                db.add(
+                    AttendanceTarget(event_id=event.id, user_id=user_id, status="pending")
+                )
+            logger.info(
+                "attendance_event_targets_synced",
+                event_id=str(event.id),
+                rehearsal_id=str(rehearsal_id),
+                target_count=len(desired_ids),
+            )
+
+    return len(events)
+
+
+async def complete_rehearsal_attendance_events(
+    db: AsyncSession,
+    rehearsal_id: uuid.UUID,
+    project_id: uuid.UUID,
+    schedule_date: datetime | None,
+) -> int:
+    """稽古削除時に、紐づく出欠確認イベントを完了扱いにしてリマインダーを停止する.
+
+    呼び出し元で commit すること。
+
+    Returns:
+        int: 完了扱いにした出欠イベント数
+    """
+    stmt = select(AttendanceEvent).where(
+        AttendanceEvent.project_id == project_id,
+        AttendanceEvent.completed == False,  # noqa: E712
+        _rehearsal_event_conditions(rehearsal_id, schedule_date),
+    )
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+
+    for event in events:
+        event.completed = True
+        logger.info(
+            "attendance_event_completed_by_rehearsal_delete",
+            event_id=str(event.id),
+            rehearsal_id=str(rehearsal_id),
+        )
+
+    return len(events)
 
 
 class AttendanceService:
@@ -41,6 +208,7 @@ class AttendanceService:
         location: str | None = None,
         description: str | None = None,
         target_user_ids: list[uuid.UUID] | None = None,
+        rehearsal_id: uuid.UUID | None = None,
     ) -> AttendanceEvent | None:
         """出席確認イベントを作成し、Disocrdに通知を送信する.
 
@@ -52,6 +220,7 @@ class AttendanceService:
             location: 場所（オプション）
             description: 説明（オプション）
             target_user_ids: 対象ユーザーIDのリスト（Noneの場合は全メンバー）
+            rehearsal_id: 紐付く稽古ID（稽古由来の出欠確認の場合）
 
         Returns:
             Optional[AttendanceEvent]: 作成されたイベント、失敗時はNone
@@ -93,8 +262,8 @@ class AttendanceService:
 
         # メンション作成
         mentions = [f"<@{u.discord_id}>" for u in valid_users]
-        deadline_ts = int(deadline.replace(tzinfo=UTC).timestamp())
-        schedule_ts = int(schedule_date.replace(tzinfo=UTC).timestamp())
+        deadline_ts = int(to_utc(deadline).timestamp())
+        schedule_ts = int(to_utc(schedule_date).timestamp())
         deadline_str = f"<t:{deadline_ts}:f>"
         schedule_str = f"<t:{schedule_ts}:f>"
 
@@ -159,11 +328,12 @@ class AttendanceService:
         attendance_event = AttendanceEvent(
             id=event_id,
             project_id=project.id,
+            rehearsal_id=rehearsal_id,
             message_id=discord_resp["id"],
             channel_id=project.discord_channel_id,
             title=title,
-            schedule_date=schedule_date,
-            deadline=deadline,
+            schedule_date=to_utc(schedule_date),
+            deadline=to_utc(deadline),
             completed=False,
         )
         self.db.add(attendance_event)
