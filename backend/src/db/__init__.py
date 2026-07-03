@@ -16,7 +16,11 @@ def _prepare_asyncpg_url(url: str) -> tuple[str, dict]:
     """
     import ssl as _ssl
 
-    connect_args: dict = {"statement_cache_size": 0}
+    # statement_cache_size は asyncpg 専用。sqlite 等の他ドライバに渡すと
+    # 接続エラーになるため、asyncpg の場合のみ設定する。
+    connect_args: dict = {}
+    if url.startswith("postgresql+asyncpg"):
+        connect_args["statement_cache_size"] = 0
     if "sslmode" not in url:
         return url, connect_args
     parsed = urlparse(url)

@@ -36,12 +36,47 @@ from src.schemas.rehearsal import (
     RehearsalScheduleResponse,
     RehearsalUpdate,
 )
-from src.services.attendance import AttendanceService
+from src.services.attendance import (
+    AttendanceService,
+    complete_rehearsal_attendance_events,
+    sync_rehearsal_attendance_events,
+    to_utc,
+)
 from src.services.calendar_url import build_google_calendar_url
 from src.services.discord import DiscordService, get_discord_service
 
 router = APIRouter()
 project_router = APIRouter()
+
+
+async def _sync_attendance_targets_from_db(
+    db: AsyncSession,
+    rehearsal: Rehearsal,
+    project_id: UUID,
+) -> None:
+    """DB上の現在の参加者+キャストを出欠確認イベントの対象者へ再同期する.
+
+    参加者・キャストの個別追加/削除後に呼ぶ。既存の回答は保持される。
+    """
+    p_result = await db.execute(
+        select(RehearsalParticipant.user_id).where(
+            RehearsalParticipant.rehearsal_id == rehearsal.id
+        )
+    )
+    c_result = await db.execute(
+        select(RehearsalCast.user_id).where(RehearsalCast.rehearsal_id == rehearsal.id)
+    )
+    target_ids = set(p_result.scalars().all()) | set(c_result.scalars().all())
+
+    synced = await sync_rehearsal_attendance_events(
+        db,
+        rehearsal_id=rehearsal.id,
+        project_id=project_id,
+        old_schedule_date=rehearsal.date,
+        target_user_ids=target_ids,
+    )
+    if synced:
+        await db.commit()
 
 
 @project_router.post("/{project_id}/rehearsal-schedule", response_model=RehearsalScheduleResponse)
@@ -521,13 +556,14 @@ async def add_rehearsal(
 
         await attendance_service.create_attendance_event(
             project=project,
-            title=f"稽古: {rehearsal_data.date.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=9))).strftime('%m/%d %H:%M')}"
+            title=f"稽古: {to_utc(rehearsal_data.date).astimezone(timezone(timedelta(hours=9))).strftime('%m/%d %H:%M')}"
             + (f" ({scene_text})" if scene_text else ""),
             deadline=deadline,
             schedule_date=schedule_date,
             location=rehearsal_data.location,
             description=rehearsal_data.notes,
             target_user_ids=attendance_targets,
+            rehearsal_id=rehearsal.id,
         )
 
     # Display Name Map for manual response construction (if needed)
@@ -691,6 +727,9 @@ async def update_rehearsal(
     if member is None or member.role == "viewer":
         raise HTTPException(status_code=403, detail="稽古更新の権限がありません")
 
+    # 出欠確認イベント同期用に更新前の稽古日時を退避
+    old_rehearsal_date = rehearsal.date
+
     # 更新
     if rehearsal_data.scene_id is not None:
         rehearsal.scene_id = rehearsal_data.scene_id
@@ -748,6 +787,8 @@ async def update_rehearsal(
 
     await db.commit()
     # Re-fetch rehearsal with full options to ensure relationships are loaded for response
+    # populate_existing: lazy="selectin" でロード済みの旧 participants/casts コレクションを
+    # 更新後の内容で上書きする（これがないと置換前の参加者リストが返り、同期もズレる）
     result = await db.execute(
         select(Rehearsal)
         .where(Rehearsal.id == rehearsal_id)
@@ -758,8 +799,27 @@ async def update_rehearsal(
                 selectinload(RehearsalCast.character), selectinload(RehearsalCast.user)
             ),
         )
+        .execution_options(populate_existing=True)
     )
     rehearsal = result.scalar_one()
+
+    # 紐づく出欠確認イベントを稽古の変更内容（日時・対象者）に同期する。
+    # これを行わないと、Web上で更新した内容と Discord 通知・JSON出力がズレる。
+    attendance_target_ids = None
+    if rehearsal_data.participants is not None or rehearsal_data.casts is not None:
+        attendance_target_ids = {p.user_id for p in rehearsal.participants} | {
+            c.user_id for c in rehearsal.casts
+        }
+    synced = await sync_rehearsal_attendance_events(
+        db,
+        rehearsal_id=rehearsal.id,
+        project_id=schedule.project_id,
+        old_schedule_date=old_rehearsal_date,
+        new_schedule_date=rehearsal.date,
+        target_user_ids=attendance_target_ids,
+    )
+    if synced:
+        await db.commit()
 
     # シーン情報 & キャスト構成
     scene_headings = []
@@ -972,6 +1032,9 @@ async def add_participant(
         # 既に参加済みの場合は無視する (Idempotent)
         await db.rollback()
 
+    # 出欠確認イベントの対象者にも反映（既存回答は保持）
+    await _sync_attendance_targets_from_db(db, rehearsal, project_id)
+
     return {"message": "参加者を追加しました"}
 
 
@@ -1050,6 +1113,15 @@ async def delete_rehearsal(
 
     mentions = [f"<@{uid}>" for uid in target_discord_ids]
     mention_str = " ".join(mentions)
+
+    # 紐づく出欠確認イベントを完了扱いにし、削除済み稽古へのリマインダー送信を停止する
+    # （FKは ondelete=SET NULL のため、先に完了マークしないと照合できなくなる）
+    await complete_rehearsal_attendance_events(
+        db,
+        rehearsal_id=rehearsal.id,
+        project_id=schedule.project_id,
+        schedule_date=rehearsal.date,
+    )
 
     # 削除
     await db.delete(rehearsal)
@@ -1200,6 +1272,9 @@ async def delete_participant(
     await db.delete(participant)
     await db.commit()
 
+    # 出欠確認イベントの対象者からも除外（キャスト等で残っている場合は維持）
+    await _sync_attendance_targets_from_db(db, rehearsal, project_id)
+
     return {"message": "参加者を削除しました"}
 
 
@@ -1272,6 +1347,9 @@ async def add_cast(
     db.add(cast)
     await db.commit()
 
+    # 出欠確認イベントの対象者にも反映（既存回答は保持）
+    await _sync_attendance_targets_from_db(db, rehearsal, project_id)
+
     return {"message": "キャストを割り当てました"}
 
 
@@ -1337,5 +1415,8 @@ async def delete_cast(
     # 削除
     await db.delete(cast)
     await db.commit()
+
+    # 出欠確認イベントの対象者からも除外（スタッフ等で残っている場合は維持）
+    await _sync_attendance_targets_from_db(db, rehearsal, project_id)
 
     return {"message": "キャスト割り当てを解除しました"}

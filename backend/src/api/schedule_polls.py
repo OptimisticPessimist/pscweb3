@@ -197,6 +197,7 @@ async def _finalize_poll_candidate(
             location=rehearsal.location,
             description=rehearsal.notes,
             target_user_ids=attendance_targets,
+            rehearsal_id=rehearsal.id,
         )
 
     gcal_url = None

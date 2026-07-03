@@ -38,7 +38,9 @@ class InteractionData(BaseModel):
 class InteractionUser(BaseModel):
     id: str
     username: str
-    discriminator: str
+    # Discordはdiscriminatorを廃止済み。必須にするとペイロードに含まれない場合に
+    # パース失敗→ボタン回答が丸ごと失われるため、オプションにする。
+    discriminator: str | None = None
 
 
 class InteractionMember(BaseModel):
@@ -171,6 +173,11 @@ async def handle_button_interaction(interaction: Interaction, db: AsyncSession):
 
 async def handle_attendance_interaction(user, event_id: UUID, status: str, db: AsyncSession):
     """Handle attendance button clicks."""
+    # 不正なcustom_id経由で想定外のステータスがDBに書き込まれるのを防ぐ
+    if status not in ("ok", "ng", "pending"):
+        logger.warning("Invalid attendance status in interaction", status=status)
+        return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
+
     stmt = select(AttendanceTarget).where(
         AttendanceTarget.event_id == event_id, AttendanceTarget.user_id == user.id
     )
@@ -204,6 +211,10 @@ async def handle_attendance_interaction(user, event_id: UUID, status: str, db: A
 
 async def handle_poll_interaction(user, candidate_id: UUID, status: str, db: AsyncSession):
     """Handle schedule poll button clicks."""
+    if status not in ("ok", "maybe", "ng"):
+        logger.warning("Invalid poll status in interaction", status=status)
+        return {"type": RESPONSE_TYPE_UPDATE_MESSAGE}
+
     from sqlalchemy.orm import selectinload
 
     from src.db.models import ProjectMember, SchedulePollAnswer, SchedulePollCandidate
