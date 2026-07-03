@@ -3,8 +3,13 @@ name: Setup Branch Protection
 on:
   workflow_dispatch:
 
+# NOTE: ブランチ保護APIには管理者権限が必要だが、GITHUB_TOKEN には
+# administration 権限を付与できない（workflow permissions に存在しないスコープで、
+# 指定するとワークフロー自体がパースエラーになる）。
+# リポジトリ管理者権限を持つ Fine-grained PAT (Administration: Read and write) を
+# BRANCH_PROTECTION_TOKEN シークレットに登録して実行すること。
 permissions:
-  administration: write
+  contents: read
 
 jobs:
   configure:
@@ -12,8 +17,13 @@ jobs:
     steps:
       - name: Configure required status checks on main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::BRANCH_PROTECTION_TOKEN シークレットが未設定です。管理者権限のPATを登録してください。"
+            exit 1
+          fi
+
           EXISTING=$(gh api \
             "repos/${{ github.repository }}/branches/main/protection" \
             2>/dev/null || echo '{}')
