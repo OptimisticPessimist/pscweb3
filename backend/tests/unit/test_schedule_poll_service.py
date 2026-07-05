@@ -157,6 +157,43 @@ async def test_get_unanswered_members(db, test_project, test_user):
 
 
 @pytest.mark.asyncio
+async def test_get_unanswered_members_uses_poll_targets(db, test_project, test_user):
+    from src.db.models import ProjectMember, SchedulePollTarget, User
+
+    user2 = User(discord_id="uid2", discord_username="user2")
+    db.add(user2)
+    await db.flush()
+
+    db.add(
+        ProjectMember(
+            project_id=test_project.id, user_id=user2.id, display_name="User2", role="editor"
+        )
+    )
+
+    poll = SchedulePoll(
+        id=uuid4(), project_id=test_project.id, title="Targeted List", creator_id=test_user.id
+    )
+    db.add(poll)
+    await db.flush()
+
+    candidate = SchedulePollCandidate(
+        id=uuid4(),
+        poll_id=poll.id,
+        start_datetime=datetime.now(UTC),
+        end_datetime=datetime.now(UTC),
+    )
+    db.add(candidate)
+    db.add(SchedulePollTarget(poll_id=poll.id, user_id=test_user.id))
+    await db.commit()
+
+    service = SchedulePollService(db, MagicMock())
+    unanswered = await service.get_unanswered_members(poll.id)
+
+    assert len(unanswered) == 1
+    assert unanswered[0]["user_id"] == test_user.id
+
+
+@pytest.mark.asyncio
 async def test_send_reminder(db, mock_discord_service, test_project, test_user):
     test_project.discord_channel_id = "12345"
     await db.commit()
@@ -178,3 +215,96 @@ async def test_send_reminder(db, mock_discord_service, test_project, test_user):
     call_args = mock_discord_service.send_channel_message.call_args[1]
     assert call_args["channel_id"] == "12345"
     assert "Reminder Test" in call_args["content"]
+
+
+@pytest.mark.asyncio
+async def test_apply_poll_attendees_to_rehearsal_creates_participants_and_casts(
+    db, test_project, test_user
+):
+    from sqlalchemy import select
+
+    from src.api.schedule_polls import _apply_poll_attendees_to_rehearsal
+    from src.db.models import (
+        Character,
+        CharacterCasting,
+        Line,
+        ProjectMember,
+        Rehearsal,
+        RehearsalCast,
+        RehearsalParticipant,
+        RehearsalSchedule,
+        Scene,
+        Script,
+        User,
+    )
+
+    cast_user = User(discord_id="cast-discord", discord_username="cast")
+    staff_user = User(discord_id="staff-discord", discord_username="staff")
+    db.add_all([cast_user, staff_user])
+    await db.flush()
+
+    db.add_all(
+        [
+            ProjectMember(project_id=test_project.id, user_id=cast_user.id, role="viewer"),
+            ProjectMember(
+                project_id=test_project.id,
+                user_id=staff_user.id,
+                role="editor",
+                default_staff_role="演出",
+            ),
+        ]
+    )
+
+    script = Script(
+        project_id=test_project.id,
+        uploaded_by=test_user.id,
+        title="Script",
+        content="content",
+    )
+    db.add(script)
+    await db.flush()
+
+    scene = Scene(script_id=script.id, scene_number=1, heading="Scene")
+    character = Character(script_id=script.id, name="Role")
+    db.add_all([scene, character])
+    await db.flush()
+
+    db.add_all(
+        [
+            Line(scene_id=scene.id, character_id=character.id, content="line", order=1),
+            CharacterCasting(character_id=character.id, user_id=cast_user.id),
+        ]
+    )
+    schedule = RehearsalSchedule(project_id=test_project.id, script_id=script.id)
+    db.add(schedule)
+    await db.flush()
+    rehearsal = Rehearsal(schedule_id=schedule.id, date=datetime.now(UTC), duration_minutes=120)
+    db.add(rehearsal)
+    await db.flush()
+
+    await _apply_poll_attendees_to_rehearsal(
+        db=db,
+        rehearsal_id=rehearsal.id,
+        project_id=test_project.id,
+        scene_ids=[scene.id],
+        attendee_statuses={cast_user.id: "ok", staff_user.id: "maybe"},
+    )
+    await db.flush()
+
+    cast_rows = (
+        await db.execute(select(RehearsalCast).where(RehearsalCast.rehearsal_id == rehearsal.id))
+    ).scalars().all()
+    participant_rows = (
+        await db.execute(
+            select(RehearsalParticipant).where(
+                RehearsalParticipant.rehearsal_id == rehearsal.id
+            )
+        )
+    ).scalars().all()
+
+    assert [(row.character_id, row.user_id) for row in cast_rows] == [
+        (character.id, cast_user.id)
+    ]
+    assert [(row.user_id, row.staff_role) for row in participant_rows] == [
+        (staff_user.id, "演出")
+    ]

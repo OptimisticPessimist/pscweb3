@@ -27,6 +27,7 @@ export interface SchedulePollResponse {
     required_roles: string | null;
     deadline?: string;
     auto_reminder_stopped: boolean;
+    target_user_ids: string[];
     candidates: SchedulePollCandidateResponse[];
 }
 
@@ -194,6 +195,7 @@ export const schedulePollApi = {
         description?: string,
         required_roles?: string[],
         deadline?: string,
+        target_user_ids?: string[],
         candidates: { start_datetime: string, end_datetime: string }[]
     }): Promise<SchedulePollResponse> => {
         const response = await apiClient.post<SchedulePollResponse>(`/projects/${projectId}/polls`, data);

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
         SchedulePoll,
         SchedulePollAnswer,
         SchedulePollCandidate,
+        SchedulePollTarget,
         Script,
     )
 
@@ -652,6 +653,14 @@ class SchedulePoll(Base):
         cascade="all, delete-orphan",
         order_by="SchedulePollCandidate.start_datetime",
     )
+    targets: Mapped[list["SchedulePollTarget"]] = relationship(
+        back_populates="poll", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+    @property
+    def target_user_ids(self) -> list[uuid.UUID]:
+        """回答対象者ID一覧。空の場合は既存互換で全員対象扱い."""
+        return [target.user_id for target in self.targets]
 
 
 class SchedulePollCandidate(Base):
@@ -692,3 +701,18 @@ class SchedulePollAnswer(Base):
 
     # ユニーク制約
     __table_args__ = (UniqueConstraint("candidate_id", "user_id", name="uq_poll_candidate_user"),)
+
+
+class SchedulePollTarget(Base):
+    """日程調整の回答対象者."""
+
+    __tablename__ = "schedule_poll_targets"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    poll_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_polls.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+
+    poll: Mapped["SchedulePoll"] = relationship(back_populates="targets")
+    user: Mapped["User"] = relationship()
+
+    __table_args__ = (UniqueConstraint("poll_id", "user_id", name="uq_schedule_poll_target_user"),)

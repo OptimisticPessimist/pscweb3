@@ -217,7 +217,12 @@ async def handle_poll_interaction(user, candidate_id: UUID, status: str, db: Asy
 
     from sqlalchemy.orm import selectinload
 
-    from src.db.models import ProjectMember, SchedulePollAnswer, SchedulePollCandidate
+    from src.db.models import (
+        ProjectMember,
+        SchedulePollAnswer,
+        SchedulePollCandidate,
+        SchedulePollTarget,
+    )
 
     # 候補から日程調整とプロジェクトIDを取得
     stmt = (
@@ -241,6 +246,18 @@ async def handle_poll_interaction(user, candidate_id: UUID, status: str, db: Asy
             "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
             "data": {
                 "content": "⚠️ あなたはこのプロジェクトのメンバーではないため、回答できません。",
+                "flags": 64,  # Ephemeral
+            },
+        }
+
+    target_stmt = select(SchedulePollTarget).where(SchedulePollTarget.poll_id == candidate.poll_id)
+    target_res = await db.execute(target_stmt)
+    target_user_ids = {target.user_id for target in target_res.scalars().all()}
+    if target_user_ids and user.id not in target_user_ids:
+        return {
+            "type": RESPONSE_TYPE_CHANNEL_MESSAGE_WITH_SOURCE,
+            "data": {
+                "content": "⚠️ あなたはこの日程調整の対象者ではありません。",
                 "flags": 64,  # Ephemeral
             },
         }
