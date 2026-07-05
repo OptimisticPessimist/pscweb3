@@ -164,6 +164,15 @@ async def _apply_poll_attendees_to_rehearsal(
             )
 
 
+def _poll_answer_to_attendance_status(status: str | None) -> str:
+    """日程調整回答を出欠確認ステータスへ変換."""
+    if status == "ok":
+        return "ok"
+    if status == "ng":
+        return "ng"
+    return "pending"
+
+
 async def _finalize_poll_candidate(
     *,
     project_id: UUID,
@@ -249,8 +258,9 @@ async def _finalize_poll_candidate(
 
     await db.commit()
 
+    answer_statuses = {a.user_id: a.status for a in candidate.answers}
     attendee_statuses = {
-        a.user_id: a.status for a in candidate.answers if a.status in ("ok", "maybe")
+        user_id: status for user_id, status in answer_statuses.items() if status in ("ok", "maybe")
     }
     await _apply_poll_attendees_to_rehearsal(
         db=db,
@@ -265,6 +275,10 @@ async def _finalize_poll_candidate(
     if payload.attendance_target == "voters_only":
         answered_users = list(attendee_statuses)
         attendance_targets = answered_users if answered_users else []
+    attendance_initial_statuses = {
+        user_id: _poll_answer_to_attendance_status(status)
+        for user_id, status in answer_statuses.items()
+    }
 
     scenes_db = await db.execute(select(Scene).where(Scene.id.in_(scene_ids)))
     scenes = scenes_db.scalars().all()
@@ -293,6 +307,7 @@ async def _finalize_poll_candidate(
             description=rehearsal.notes,
             target_user_ids=attendance_targets,
             rehearsal_id=rehearsal.id,
+            initial_status_by_user_id=attendance_initial_statuses,
         )
 
     gcal_url = None

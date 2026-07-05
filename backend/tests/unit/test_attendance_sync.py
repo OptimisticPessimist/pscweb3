@@ -16,6 +16,10 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from scripts.repair_schedule_poll_consistency import (
+    DesiredRehearsalState,
+    _apply_attendance_state,
+)
 from src.db.models import (
     AttendanceEvent,
     AttendanceTarget,
@@ -297,6 +301,91 @@ async def test_create_attendance_event_sets_rehearsal_id(
     targets = result.scalars().all()
     assert len(targets) == 1
     assert targets[0].status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_create_attendance_event_uses_initial_statuses(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """日程調整由来の初期回答を出欠確認ステータスへ反映する."""
+    test_project.discord_channel_id = "ch-1"
+    ok_user = await _create_member_user(db, test_project, "2101", "ok_member")
+    ng_user = await _create_member_user(db, test_project, "2102", "ng_member")
+    pending_user = await _create_member_user(db, test_project, "2103", "pending_member")
+    await db.commit()
+
+    discord_service = AsyncMock()
+    discord_service.send_channel_message.return_value = {"id": "msg-1"}
+    service = AttendanceService(db, discord_service)
+
+    event = await service.create_attendance_event(
+        project=test_project,
+        title="稽古: 10/11 19:00",
+        deadline=datetime(2026, 10, 10, 10, 0, tzinfo=UTC),
+        schedule_date=datetime(2026, 10, 11, 10, 0, tzinfo=UTC),
+        target_user_ids=[ok_user.id, ng_user.id, pending_user.id],
+        initial_status_by_user_id={
+            ok_user.id: "ok",
+            ng_user.id: "ng",
+            pending_user.id: "maybe",
+        },
+    )
+
+    assert event is not None
+    result = await db.execute(
+        select(AttendanceTarget).where(AttendanceTarget.event_id == event.id)
+    )
+    statuses = {target.user_id: target.status for target in result.scalars().all()}
+    assert statuses == {
+        ok_user.id: "ok",
+        ng_user.id: "ng",
+        pending_user.id: "pending",
+    }
+
+
+@pytest.mark.asyncio
+async def test_repair_updates_only_pending_attendance_statuses(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """既存補正は未回答だけ日程調整回答で埋め、出欠確認側の回答済み状態は保持する."""
+    event = await _create_event(
+        db,
+        test_project,
+        rehearsal_id=uuid.uuid4(),
+        schedule_date=datetime(2026, 10, 12, 10, 0, tzinfo=UTC),
+        deadline=datetime(2026, 10, 11, 10, 0, tzinfo=UTC),
+    )
+    pending_ok_user = await _create_member_user(db, test_project, "2201", "pending_ok")
+    answered_ng_user = await _create_member_user(db, test_project, "2202", "answered_ng")
+    new_ok_user = await _create_member_user(db, test_project, "2203", "new_ok")
+    await db.flush()
+    db.add(AttendanceTarget(event_id=event.id, user_id=pending_ok_user.id, status="pending"))
+    db.add(AttendanceTarget(event_id=event.id, user_id=answered_ng_user.id, status="ng"))
+    await db.commit()
+
+    await db.refresh(event, attribute_names=["targets"])
+    desired = DesiredRehearsalState(
+        participant_roles={},
+        cast_assignments={},
+        attendance_target_ids={pending_ok_user.id, answered_ng_user.id, new_ok_user.id},
+        attendance_statuses={
+            pending_ok_user.id: "ok",
+            answered_ng_user.id: "ok",
+            new_ok_user.id: "ok",
+        },
+    )
+    await _apply_attendance_state(db, event, desired)
+    await db.commit()
+
+    result = await db.execute(
+        select(AttendanceTarget).where(AttendanceTarget.event_id == event.id)
+    )
+    statuses = {target.user_id: target.status for target in result.scalars().all()}
+    assert statuses == {
+        pending_ok_user.id: "ok",
+        answered_ng_user.id: "ng",
+        new_ok_user.id: "ok",
+    }
 
 
 @pytest.mark.asyncio

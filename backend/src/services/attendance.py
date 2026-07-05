@@ -1,6 +1,7 @@
 """出席確認サービス."""
 
 import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 
 from sqlalchemy import and_, or_, select
@@ -20,6 +21,7 @@ from src.services.discord import DiscordService
 logger = get_logger(__name__)
 
 JST = timezone(timedelta(hours=9))
+ATTENDANCE_STATUSES = {"ok", "ng", "pending"}
 
 
 def to_utc(dt: datetime | None) -> datetime | None:
@@ -31,6 +33,11 @@ def to_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+
+
+def normalize_attendance_status(status: str | None) -> str:
+    """出欠確認のDBステータスとして保存できる値へ正規化する."""
+    return status if status in ATTENDANCE_STATUSES else "pending"
 
 
 def _rehearsal_event_conditions(
@@ -209,6 +216,7 @@ class AttendanceService:
         description: str | None = None,
         target_user_ids: list[uuid.UUID] | None = None,
         rehearsal_id: uuid.UUID | None = None,
+        initial_status_by_user_id: Mapping[uuid.UUID, str] | None = None,
     ) -> AttendanceEvent | None:
         """出席確認イベントを作成し、Disocrdに通知を送信する.
 
@@ -221,6 +229,7 @@ class AttendanceService:
             description: 説明（オプション）
             target_user_ids: 対象ユーザーIDのリスト（Noneの場合は全メンバー）
             rehearsal_id: 紐付く稽古ID（稽古由来の出欠確認の場合）
+            initial_status_by_user_id: 対象者ごとの初期ステータス
 
         Returns:
             Optional[AttendanceEvent]: 作成されたイベント、失敗時はNone
@@ -340,8 +349,11 @@ class AttendanceService:
         await self.db.flush()
 
         for user in valid_users:
+            initial_status = normalize_attendance_status(
+                initial_status_by_user_id.get(user.id) if initial_status_by_user_id else None
+            )
             target = AttendanceTarget(
-                event_id=attendance_event.id, user_id=user.id, status="pending"
+                event_id=attendance_event.id, user_id=user.id, status=initial_status
             )
             self.db.add(target)
 

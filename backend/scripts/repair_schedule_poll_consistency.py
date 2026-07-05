@@ -45,6 +45,15 @@ class DesiredRehearsalState:
     participant_roles: dict[UUID, str | None]
     cast_assignments: dict[UUID, UUID]
     attendance_target_ids: set[UUID]
+    attendance_statuses: dict[UUID, str]
+
+
+def _poll_answer_to_attendance_status(status: str | None) -> str:
+    if status == "ok":
+        return "ok"
+    if status == "ng":
+        return "ng"
+    return "pending"
 
 
 def _to_naive_utc(value: datetime) -> datetime:
@@ -91,8 +100,9 @@ async def _build_desired_state(
     answers: list[SchedulePollAnswer],
     attendance_policy: str,
 ) -> DesiredRehearsalState:
+    answer_statuses = {answer.user_id: answer.status for answer in answers}
     attendee_statuses = {
-        answer.user_id: answer.status for answer in answers if answer.status in ("ok", "maybe")
+        user_id: status for user_id, status in answer_statuses.items() if status in ("ok", "maybe")
     }
     attendee_ids = set(attendee_statuses)
     member_map = await _get_project_member_map(db, project_id)
@@ -143,11 +153,16 @@ async def _build_desired_state(
     attendance_target_ids = attendee_ids
     if attendance_policy == "all-poll-targets":
         attendance_target_ids = set(member_map)
+    attendance_statuses = {
+        user_id: _poll_answer_to_attendance_status(answer_statuses.get(user_id))
+        for user_id in attendance_target_ids
+    }
 
     return DesiredRehearsalState(
         participant_roles=participant_roles,
         cast_assignments=cast_assignments,
         attendance_target_ids=attendance_target_ids,
+        attendance_statuses=attendance_statuses,
     )
 
 
@@ -246,17 +261,21 @@ async def _apply_rehearsal_state(
 
 
 async def _apply_attendance_state(
-    db: AsyncSession, event: AttendanceEvent, desired_target_ids: set[UUID]
+    db: AsyncSession, event: AttendanceEvent, desired: DesiredRehearsalState
 ) -> None:
     current_targets = {target.user_id: target for target in event.targets}
 
     for user_id, target in current_targets.items():
-        if user_id not in desired_target_ids:
+        if user_id not in desired.attendance_target_ids:
             await db.delete(target)
 
-    for user_id in desired_target_ids:
-        if user_id not in current_targets:
-            db.add(AttendanceTarget(event_id=event.id, user_id=user_id, status="pending"))
+    for user_id in desired.attendance_target_ids:
+        desired_status = desired.attendance_statuses.get(user_id, "pending")
+        target = current_targets.get(user_id)
+        if target is None:
+            db.add(AttendanceTarget(event_id=event.id, user_id=user_id, status=desired_status))
+        elif target.status == "pending" and desired_status != "pending":
+            target.status = desired_status
 
 
 async def repair(args: argparse.Namespace) -> int:
@@ -332,17 +351,25 @@ async def repair(args: argparse.Namespace) -> int:
                     continue
 
                 event = events[0]
-                current_target_ids = {target.user_id for target in event.targets}
+                current_statuses = {target.user_id: target.status for target in event.targets}
+                current_target_ids = set(current_statuses)
                 add_targets = desired.attendance_target_ids - current_target_ids
                 remove_targets = current_target_ids - desired.attendance_target_ids
-                if add_targets or remove_targets:
+                update_statuses = {
+                    user_id
+                    for user_id in desired.attendance_target_ids & current_target_ids
+                    if current_statuses[user_id] == "pending"
+                    and desired.attendance_statuses.get(user_id, "pending") != "pending"
+                }
+                if add_targets or remove_targets or update_statuses:
                     changed += 1
                     print(
                         f"attendance_event={event.id} rehearsal={rehearsal.id} "
-                        f"targets +{len(add_targets)} -{len(remove_targets)}"
+                        f"targets +{len(add_targets)} -{len(remove_targets)} "
+                        f"status_updates={len(update_statuses)}"
                     )
                     if apply:
-                        await _apply_attendance_state(db, event, desired.attendance_target_ids)
+                        await _apply_attendance_state(db, event, desired)
 
         if apply:
             await db.commit()
