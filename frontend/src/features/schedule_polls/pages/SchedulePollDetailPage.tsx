@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -144,6 +145,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                 notes: rehearsalNotes,
             }),
         onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
             if (data.status === 'already_exists') {
                 toast(t('schedulePoll.alreadyExistsToast'));
             } else {
@@ -155,8 +157,11 @@ export const SchedulePollDetailPage: React.FC = () => {
             setGcalUrl(data.gcal_url ?? null);
             setShowFinalizedModal(true);
         },
-        onError: () => {
-            toast.error(t('schedulePoll.finalizeFailed'));
+        onError: (error: unknown) => {
+            const detail = axios.isAxiosError<{ detail?: string }>(error)
+                ? error.response?.data?.detail
+                : null;
+            toast.error(detail || t('schedulePoll.finalizeFailed'));
         },
     });
 
@@ -171,8 +176,9 @@ export const SchedulePollDetailPage: React.FC = () => {
                     location: item.location.trim() || undefined,
                     notes: item.notes.trim() || undefined,
                 }))
-            }),
+        }),
         onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['rehearsalSchedule', projectId] });
             if (data.error_count === 0 && data.already_exists_count === 0) {
                 toast.success(t('schedulePoll.batchCreatedOnly', { created: data.created_count }));
             } else if (data.error_count === 0) {
@@ -191,8 +197,11 @@ export const SchedulePollDetailPage: React.FC = () => {
             setSelectedCandidateIdsForBatch([]);
             setBatchDraftItems([]);
         },
-        onError: () => {
-            toast.error(t('schedulePoll.batchFinalizeFailed'));
+        onError: (error: unknown) => {
+            const detail = axios.isAxiosError<{ detail?: string }>(error)
+                ? error.response?.data?.detail
+                : null;
+            toast.error(detail || t('schedulePoll.batchFinalizeFailed'));
         }
     });
 
@@ -315,8 +324,12 @@ export const SchedulePollDetailPage: React.FC = () => {
 
     const participants = useMemo(() => {
         if (!poll || !members) return [];
+        const targetUserIdSet = new Set(poll.target_user_ids ?? []);
+        const pollMembers = targetUserIdSet.size > 0
+            ? members.filter(member => targetUserIdSet.has(member.user_id))
+            : members;
         const sourceMembers =
-            isViewer && user ? members.filter(member => member.user_id === user.id) : members;
+            isViewer && user ? pollMembers.filter(member => member.user_id === user.id) : pollMembers;
 
         return sourceMembers
             .map(member => {
@@ -359,8 +372,13 @@ export const SchedulePollDetailPage: React.FC = () => {
 
     const candidateSummaries = useMemo(() => {
         if (!poll) return [];
+        const participantIds = new Set(participants.map(participant => participant.id));
         return poll.candidates.map(candidate => {
-            const uniqueAnswers = new Map(candidate.answers.map(answer => [answer.user_id, answer.status]));
+            const uniqueAnswers = new Map(
+                candidate.answers
+                    .filter(answer => participantIds.has(answer.user_id))
+                    .map(answer => [answer.user_id, answer.status])
+            );
             let okCount = 0;
             let maybeCount = 0;
             let ngCount = 0;
@@ -369,7 +387,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                 if (status === 'maybe') maybeCount += 1;
                 if (status === 'ng') ngCount += 1;
             });
-            const totalMembers = isViewer ? 1 : (members?.length || 0);
+            const totalMembers = participants.length;
             const unansweredCount = Math.max(0, totalMembers - uniqueAnswers.size);
             const recommendation = recommendations?.find(rec => rec.candidate_id === candidate.id);
             return {
@@ -382,7 +400,7 @@ export const SchedulePollDetailPage: React.FC = () => {
                 recommendation,
             };
         });
-    }, [poll, members, recommendations, isViewer]);
+    }, [poll, participants, recommendations]);
 
     const toggleStatusMemberList = (candidateId: string, statusKey: string) => {
         const panelKey = `${candidateId}:${statusKey}`;

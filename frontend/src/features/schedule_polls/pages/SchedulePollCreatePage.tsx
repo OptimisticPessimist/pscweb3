@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { schedulePollApi } from '../api/schedulePoll';
@@ -29,6 +29,8 @@ export const SchedulePollCreatePage: React.FC = () => {
     const [pickerCandidates, setPickerCandidates] = useState<CandidateSlot[]>([]);
     const [deadlineDate, setDeadlineDate] = useState('');
     const [deadlineTime, setDeadlineTime] = useState('18:00');
+    const [targetUserIds, setTargetUserIds] = useState<string[]>([]);
+    const [targetsInitialized, setTargetsInitialized] = useState(false);
 
     const { data: members } = useQuery({
         queryKey: ['projectMembers', projectId],
@@ -45,8 +47,15 @@ export const SchedulePollCreatePage: React.FC = () => {
         return Array.from(uniqueRoles).sort();
     }, [members]);
 
+    useEffect(() => {
+        if (members && members.length > 0 && !targetsInitialized) {
+            setTargetUserIds(members.map(member => member.user_id));
+            setTargetsInitialized(true);
+        }
+    }, [members, targetsInitialized]);
+
     const createMutation = useMutation({
-        mutationFn: (data: { title: string, description?: string, required_roles?: string[], deadline?: string, candidates: { start_datetime: string, end_datetime: string }[] }) =>
+        mutationFn: (data: { title: string, description?: string, required_roles?: string[], deadline?: string, target_user_ids?: string[], candidates: { start_datetime: string, end_datetime: string }[] }) =>
             schedulePollApi.createPoll(projectId!, data),
         onSuccess: (newPoll) => {
             queryClient.invalidateQueries({ queryKey: ['schedulePolls', projectId] });
@@ -76,6 +85,11 @@ export const SchedulePollCreatePage: React.FC = () => {
             return;
         }
 
+        if (targetUserIds.length === 0) {
+            toast.error(t('schedulePoll.targetRequired') || '対象者を1人以上選択してください');
+            return;
+        }
+
         const deadline = deadlineDate && deadlineTime
             ? new Date(`${deadlineDate}T${deadlineTime}:00`).toISOString()
             : undefined;
@@ -85,6 +99,7 @@ export const SchedulePollCreatePage: React.FC = () => {
             description,
             required_roles: requiredRoles,
             deadline,
+            target_user_ids: targetUserIds,
             candidates: pickerCandidates
         });
     };
@@ -95,6 +110,20 @@ export const SchedulePollCreatePage: React.FC = () => {
         } else {
             setRequiredRoles([...requiredRoles, role]);
         }
+    };
+
+    const toggleTargetUser = (userId: string) => {
+        setTargetUserIds(prev =>
+            prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+        );
+    };
+
+    const selectAllTargets = () => {
+        setTargetUserIds(members?.map(member => member.user_id) ?? []);
+    };
+
+    const clearTargets = () => {
+        setTargetUserIds([]);
     };
 
     return (
@@ -171,6 +200,59 @@ export const SchedulePollCreatePage: React.FC = () => {
                             </p>
                         </div>
                     )}
+
+                    <div>
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                            <label className="flex items-center text-sm font-bold text-gray-700">
+                                <Users className="h-4 w-4 mr-2 text-indigo-500" />
+                                {t('schedulePoll.targetMembersLabel') || '回答対象者'}
+                            </label>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={selectAllTargets}
+                                    className="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100"
+                                >
+                                    {t('schedulePoll.selectAll') || '全員選択'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={clearTargets}
+                                    className="px-3 py-1.5 text-xs font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                >
+                                    {t('schedulePoll.clearSelection') || '選択解除'}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {(members ?? []).map(member => {
+                                const checked = targetUserIds.includes(member.user_id);
+                                const displayName = member.display_name || member.discord_username || 'Unknown';
+                                return (
+                                    <button
+                                        key={member.user_id}
+                                        type="button"
+                                        onClick={() => toggleTargetUser(member.user_id)}
+                                        className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-all ${checked
+                                            ? 'border-indigo-500 bg-indigo-50 text-indigo-900 ring-1 ring-indigo-500'
+                                            : 'border-gray-200 bg-white text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/30'
+                                            }`}
+                                    >
+                                        <span className="min-w-0">
+                                            <span className="block truncate text-sm font-bold">{displayName}</span>
+                                            {member.default_staff_role && (
+                                                <span className="block truncate text-xs text-gray-400">{member.default_staff_role}</span>
+                                            )}
+                                        </span>
+                                        <span className={`h-5 w-5 rounded-full border flex-shrink-0 ${checked ? 'border-indigo-600 bg-indigo-600' : 'border-gray-300'}`} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                            {t('schedulePoll.targetMembersHint') || '選択したメンバーだけにDiscordで通知し、回答・未回答集計の対象にします。'}
+                        </p>
+                    </div>
 
                     <div className="pt-4 border-t border-gray-50">
                         <label className="block text-sm font-bold text-gray-700 mb-2">

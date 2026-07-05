@@ -10,8 +10,12 @@ from sqlalchemy.orm import selectinload
 
 from src.db import get_db
 from src.db.models import (
+    Character,
+    Line,
     ProjectMember,
     Rehearsal,
+    RehearsalCast,
+    RehearsalParticipant,
     RehearsalScene,
     RehearsalSchedule,
     Scene,
@@ -79,6 +83,85 @@ async def _get_or_create_rehearsal_schedule(
     db.add(schedule)
     await db.flush()
     return schedule
+
+
+async def _apply_poll_attendees_to_rehearsal(
+    *,
+    db: AsyncSession,
+    rehearsal_id: UUID,
+    project_id: UUID,
+    scene_ids: list[UUID],
+    attendee_statuses: dict[UUID, str],
+) -> None:
+    """日程調整のOK/Maybe回答者を稽古参加者・キャストへ反映."""
+    attendee_user_ids = set(attendee_statuses)
+    if not attendee_user_ids:
+        return
+
+    member_result = await db.execute(
+        select(ProjectMember).where(
+            ProjectMember.project_id == project_id,
+            ProjectMember.user_id.in_(attendee_user_ids),
+        )
+    )
+    members = member_result.scalars().all()
+    member_by_user_id = {member.user_id: member for member in members}
+
+    cast_character_by_user_id: dict[UUID, UUID] = {}
+    if scene_ids:
+        scene_result = await db.execute(
+            select(Scene)
+            .where(Scene.id.in_(scene_ids))
+            .options(
+                selectinload(Scene.lines).options(
+                    selectinload(Line.character).options(selectinload(Character.castings))
+                )
+            )
+        )
+        scenes = scene_result.scalars().all()
+
+        characters: dict[UUID, Character] = {}
+        for scene in scenes:
+            for line in scene.lines:
+                if line.character_id and line.character:
+                    characters[line.character_id] = line.character
+
+        for character_id, character in characters.items():
+            candidate_castings = [
+                casting
+                for casting in character.castings
+                if casting.user_id in attendee_user_ids
+            ]
+            if not candidate_castings:
+                continue
+
+            candidate_castings.sort(
+                key=lambda casting: (
+                    0 if attendee_statuses.get(casting.user_id) == "ok" else 1,
+                    str(casting.user_id),
+                )
+            )
+            selected_casting = candidate_castings[0]
+            cast_character_by_user_id[selected_casting.user_id] = character_id
+            db.add(
+                RehearsalCast(
+                    rehearsal_id=rehearsal_id,
+                    character_id=character_id,
+                    user_id=selected_casting.user_id,
+                )
+            )
+
+    for user_id in attendee_user_ids:
+        member = member_by_user_id.get(user_id)
+        staff_role = member.default_staff_role if member else None
+        if staff_role or user_id not in cast_character_by_user_id:
+            db.add(
+                RehearsalParticipant(
+                    rehearsal_id=rehearsal_id,
+                    user_id=user_id,
+                    staff_role=staff_role,
+                )
+            )
 
 
 async def _finalize_poll_candidate(
@@ -166,9 +249,21 @@ async def _finalize_poll_candidate(
 
     await db.commit()
 
+    attendee_statuses = {
+        a.user_id: a.status for a in candidate.answers if a.status in ("ok", "maybe")
+    }
+    await _apply_poll_attendees_to_rehearsal(
+        db=db,
+        rehearsal_id=rehearsal.id,
+        project_id=project_id,
+        scene_ids=scene_ids,
+        attendee_statuses=attendee_statuses,
+    )
+    await db.commit()
+
     attendance_targets = None  # 全員対象
     if payload.attendance_target == "voters_only":
-        answered_users = [a.user_id for a in candidate.answers if a.status in ("ok", "maybe")]
+        answered_users = list(attendee_statuses)
         attendance_targets = answered_users if answered_users else []
 
     scenes_db = await db.execute(select(Scene).where(Scene.id.in_(scene_ids)))
@@ -253,6 +348,24 @@ async def create_poll(
     if not project:
         raise HTTPException(status_code=404, detail="プロジェクトが見つかりません")
 
+    target_user_ids = payload.target_user_ids
+    if target_user_ids is not None:
+        normalized_target_user_ids = list(dict.fromkeys(target_user_ids))
+        if not normalized_target_user_ids:
+            raise HTTPException(status_code=400, detail="対象者を1人以上選択してください")
+
+        target_members_result = await db.execute(
+            select(ProjectMember.user_id).where(
+                ProjectMember.project_id == project_id,
+                ProjectMember.user_id.in_(normalized_target_user_ids),
+            )
+        )
+        valid_target_user_ids = set(target_members_result.scalars().all())
+        invalid_target_user_ids = set(normalized_target_user_ids) - valid_target_user_ids
+        if invalid_target_user_ids:
+            raise HTTPException(status_code=400, detail="対象者にプロジェクト外のメンバーが含まれています")
+        target_user_ids = normalized_target_user_ids
+
     poll_service = get_schedule_poll_service(db, discord_service)
     candidates_data = [c.model_dump() for c in payload.candidates]
 
@@ -264,6 +377,7 @@ async def create_poll(
         creator_id=current_user.id,
         required_roles=payload.required_roles,
         deadline=payload.deadline,
+        target_user_ids=target_user_ids,
     )
     return poll
 
@@ -287,12 +401,21 @@ async def list_polls(
     stmt = (
         select(SchedulePoll)
         .where(SchedulePoll.project_id == project_id)
-        .options(selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers))
+        .options(
+            selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers),
+            selectinload(SchedulePoll.targets),
+        )
         .order_by(SchedulePoll.created_at.desc())
     )
 
     result = await db.execute(stmt)
     polls = result.scalars().all()
+    if member.role == "viewer":
+        polls = [
+            poll
+            for poll in polls
+            if not poll.target_user_ids or current_user.id in poll.target_user_ids
+        ]
     return [_serialize_poll_for_member(poll, member, current_user.id) for poll in polls]
 
 
@@ -316,6 +439,8 @@ async def get_poll(
     member = res.scalar_one_or_none()
     if not member:
         raise HTTPException(status_code=403, detail="アクセス権限がありません")
+    if member.role == "viewer" and poll.target_user_ids and current_user.id not in poll.target_user_ids:
+        raise HTTPException(status_code=403, detail="この日程調整の対象者ではありません")
 
     return _serialize_poll_for_member(poll, member, current_user.id)
 
@@ -409,6 +534,7 @@ async def get_poll_calendar_analysis(
 @router.post("/projects/{project_id}/polls/{poll_id}/candidates/{candidate_id}/answer")
 async def answer_poll(
     project_id: UUID,
+    poll_id: UUID,
     candidate_id: UUID,
     payload: SchedulePollAnswerUpdate,
     current_user: User = Depends(get_current_user_dep),
@@ -424,7 +550,19 @@ async def answer_poll(
     if not member:
         raise HTTPException(status_code=403, detail="プロジェクトメンバーではありません")
 
+    candidate_stmt = (
+        select(SchedulePollCandidate)
+        .where(SchedulePollCandidate.id == candidate_id)
+        .options(selectinload(SchedulePollCandidate.poll).selectinload(SchedulePoll.targets))
+    )
+    candidate = (await db.execute(candidate_stmt)).scalar_one_or_none()
+    if not candidate or candidate.poll_id != poll_id or candidate.poll.project_id != project_id:
+        raise HTTPException(status_code=404, detail="候補日程が見つかりません")
+
     poll_service = get_schedule_poll_service(db, None)
+    if not await poll_service.is_poll_target(candidate.poll, current_user.id):
+        raise HTTPException(status_code=403, detail="この日程調整の対象者ではありません")
+
     await poll_service.upsert_answer(candidate_id, current_user.id, payload.status)
     return {"status": "ok"}
 

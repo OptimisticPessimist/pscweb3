@@ -18,6 +18,7 @@ from src.db.models import (
     SchedulePoll,
     SchedulePollAnswer,
     SchedulePollCandidate,
+    SchedulePollTarget,
     Script,
     TheaterProject,
     User,
@@ -58,6 +59,7 @@ class SchedulePollService:
         creator_id: uuid.UUID,
         required_roles: list[str] | None = None,
         deadline: datetime | None = None,
+        target_user_ids: list[uuid.UUID] | None = None,
     ) -> SchedulePoll:
         """日程調整を作成し、Discordに送信."""
         poll_id = uuid.uuid4()
@@ -76,6 +78,12 @@ class SchedulePollService:
             deadline=deadline,
         )
         self.db.add(poll)
+
+        normalized_target_user_ids: list[uuid.UUID] | None = None
+        if target_user_ids is not None:
+            normalized_target_user_ids = list(dict.fromkeys(target_user_ids))
+            for user_id in normalized_target_user_ids:
+                self.db.add(SchedulePollTarget(poll_id=poll_id, user_id=user_id))
 
         candidates = []
         for c_data in candidates_data:
@@ -107,9 +115,15 @@ class SchedulePollService:
             result = await self.db.execute(stmt)
             all_members = result.scalars().all()
 
-            # メンション対象の抽出（全メンバー）
+            if normalized_target_user_ids is None:
+                target_members = all_members
+            else:
+                target_user_id_set = set(normalized_target_user_ids)
+                target_members = [m for m in all_members if m.user_id in target_user_id_set]
+
+            # メンション対象の抽出
             mentions = []
-            for m in all_members:
+            for m in target_members:
                 if m.user.discord_id:
                     mentions.append(f"<@{m.user.discord_id}>")
 
@@ -228,7 +242,8 @@ class SchedulePollService:
             .options(
                 selectinload(SchedulePoll.candidates)
                 .selectinload(SchedulePollCandidate.answers)
-                .selectinload(SchedulePollAnswer.user)
+                .selectinload(SchedulePollAnswer.user),
+                selectinload(SchedulePoll.targets),
             )
         )
         result = await self.db.execute(stmt)
@@ -286,6 +301,17 @@ class SchedulePollService:
                 answer.role = " / ".join(roles) if roles else None
 
         return poll
+
+    async def is_poll_target(self, poll: SchedulePoll, user_id: uuid.UUID) -> bool:
+        """対象者指定があるPollでユーザーが対象に含まれるか確認."""
+        if poll.targets:
+            return any(target.user_id == user_id for target in poll.targets)
+
+        member_stmt = select(ProjectMember).where(
+            ProjectMember.project_id == poll.project_id,
+            ProjectMember.user_id == user_id,
+        )
+        return (await self.db.execute(member_stmt)).scalar_one_or_none() is not None
 
     async def upsert_answer(self, candidate_id: uuid.UUID, user_id: uuid.UUID, status: str):
         """回答を登録/更新."""
@@ -763,7 +789,8 @@ class SchedulePollService:
             select(SchedulePoll)
             .where(SchedulePoll.id == poll_id)
             .options(
-                selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers)
+                selectinload(SchedulePoll.candidates).selectinload(SchedulePollCandidate.answers),
+                selectinload(SchedulePoll.targets),
             )
         )
         result = await self.db.execute(stmt)
@@ -777,12 +804,16 @@ class SchedulePollService:
             for answer in candidate.answers:
                 answered_user_ids.add(answer.user_id)
 
-        # プロジェクトメンバー全員を取得
+        target_user_ids = {target.user_id for target in poll.targets}
+
+        # 対象メンバーを取得。既存Pollなど対象者行がない場合は全員対象。
         member_stmt = (
             select(ProjectMember)
             .where(ProjectMember.project_id == poll.project_id)
             .options(selectinload(ProjectMember.user))
         )
+        if target_user_ids:
+            member_stmt = member_stmt.where(ProjectMember.user_id.in_(target_user_ids))
         member_result = await self.db.execute(member_stmt)
         members = member_result.scalars().all()
 
