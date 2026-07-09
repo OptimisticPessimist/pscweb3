@@ -27,6 +27,8 @@ from src.db.models import (
     Rehearsal,
     RehearsalParticipant,
     RehearsalSchedule,
+    SchedulePoll,
+    SchedulePollCandidate,
     Script,
     TheaterProject,
     User,
@@ -34,6 +36,8 @@ from src.db.models import (
 from src.services.attendance import (
     AttendanceService,
     complete_rehearsal_attendance_events,
+    poll_answer_to_attendance_status,
+    sync_poll_answer_to_attendance_status,
     sync_rehearsal_attendance_events,
     to_utc,
 )
@@ -491,3 +495,235 @@ async def test_delete_rehearsal_api_completes_attendance_event(
 
     await db.refresh(event)
     assert event.completed is True
+
+
+def test_poll_answer_to_attendance_status_mapping():
+    """日程調整回答→出欠確認ステータスの変換規則."""
+    assert poll_answer_to_attendance_status("ok") == "ok"
+    assert poll_answer_to_attendance_status("ng") == "ng"
+    assert poll_answer_to_attendance_status("maybe") == "pending"
+    assert poll_answer_to_attendance_status(None) == "pending"
+
+
+async def _create_poll_sync_event(
+    db: AsyncSession,
+    project: TheaterProject,
+    schedule_date: datetime,
+    *,
+    completed: bool = False,
+) -> AttendanceEvent:
+    event = await _create_event(
+        db,
+        project,
+        rehearsal_id=uuid.uuid4(),
+        schedule_date=schedule_date,
+        deadline=schedule_date - timedelta(days=1),
+    )
+    if completed:
+        event.completed = True
+    return event
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_upgrades_pending_to_ok(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """pending の対象者が poll回答 ok で ok に更新される."""
+    schedule_date = datetime(2026, 12, 1, 10, 0, tzinfo=UTC)
+    event = await _create_poll_sync_event(db, test_project, schedule_date)
+    user = await _create_member_user(db, test_project, "4001", "u_ok")
+    await db.flush()
+    target = AttendanceTarget(event_id=event.id, user_id=user.id, status="pending")
+    db.add(target)
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=schedule_date,
+        user_id=user.id,
+        poll_status="ok",
+    )
+    await db.commit()
+    await db.refresh(target)
+
+    assert updated == 1
+    assert target.status == "ok"
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_upgrades_pending_to_ng(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """pending の対象者が poll回答 ng で ng に更新される."""
+    schedule_date = datetime(2026, 12, 2, 10, 0, tzinfo=UTC)
+    event = await _create_poll_sync_event(db, test_project, schedule_date)
+    user = await _create_member_user(db, test_project, "4002", "u_ng")
+    await db.flush()
+    target = AttendanceTarget(event_id=event.id, user_id=user.id, status="pending")
+    db.add(target)
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=schedule_date,
+        user_id=user.id,
+        poll_status="ng",
+    )
+    await db.commit()
+    await db.refresh(target)
+
+    assert updated == 1
+    assert target.status == "ng"
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_maybe_keeps_pending(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """poll回答 maybe は pending のまま（格上げしない）."""
+    schedule_date = datetime(2026, 12, 3, 10, 0, tzinfo=UTC)
+    event = await _create_poll_sync_event(db, test_project, schedule_date)
+    user = await _create_member_user(db, test_project, "4003", "u_maybe")
+    await db.flush()
+    target = AttendanceTarget(event_id=event.id, user_id=user.id, status="pending")
+    db.add(target)
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=schedule_date,
+        user_id=user.id,
+        poll_status="maybe",
+    )
+    await db.commit()
+    await db.refresh(target)
+
+    assert updated == 0
+    assert target.status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_does_not_overwrite_explicit_status(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """明示的に入力済み(ng)のステータスは poll回答 ok でも上書きしない."""
+    schedule_date = datetime(2026, 12, 4, 10, 0, tzinfo=UTC)
+    event = await _create_poll_sync_event(db, test_project, schedule_date)
+    user = await _create_member_user(db, test_project, "4004", "u_explicit")
+    await db.flush()
+    target = AttendanceTarget(event_id=event.id, user_id=user.id, status="ng")
+    db.add(target)
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=schedule_date,
+        user_id=user.id,
+        poll_status="ok",
+    )
+    await db.commit()
+    await db.refresh(target)
+
+    assert updated == 0
+    assert target.status == "ng"
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_ignores_completed_event(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """完了済みイベントの対象者は poll回答 ok でも更新されない."""
+    schedule_date = datetime(2026, 12, 5, 10, 0, tzinfo=UTC)
+    event = await _create_poll_sync_event(db, test_project, schedule_date, completed=True)
+    user = await _create_member_user(db, test_project, "4005", "u_completed")
+    await db.flush()
+    target = AttendanceTarget(event_id=event.id, user_id=user.id, status="pending")
+    db.add(target)
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=schedule_date,
+        user_id=user.id,
+        poll_status="ok",
+    )
+    await db.commit()
+    await db.refresh(target)
+
+    assert updated == 0
+    assert target.status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_poll_sync_no_matching_event_returns_zero(
+    db: AsyncSession, test_project: TheaterProject
+):
+    """一致する出欠イベントが無い日時では 0 を返し、エラーにならない."""
+    schedule_date = datetime(2026, 12, 6, 10, 0, tzinfo=UTC)
+    await _create_poll_sync_event(db, test_project, schedule_date)
+    user = await _create_member_user(db, test_project, "4006", "u_nomatch")
+    await db.commit()
+
+    updated = await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=test_project.id,
+        schedule_date=datetime(2027, 1, 1, 10, 0, tzinfo=UTC),
+        user_id=user.id,
+        poll_status="ok",
+    )
+    await db.commit()
+
+    assert updated == 0
+
+
+@pytest.mark.asyncio
+async def test_answer_poll_api_syncs_attendance_status(
+    client: AsyncClient,
+    db: AsyncSession,
+    test_project: TheaterProject,
+    test_user: User,
+    test_user_token: str,
+):
+    """日程調整の回答APIが、確定済み稽古の出欠ステータスを pending→ok に同期する（回帰テスト）.
+
+    ユニットテストは同期関数を直接呼ぶだけなので、ここでは HTTP 経路
+    (upsert_answer → sync → commit) と、候補日時と出欠イベントの schedule_date が
+    DB往復後も一致することを end-to-end で検証する。
+    """
+    schedule_date = datetime(2026, 12, 20, 10, 0, tzinfo=UTC)
+
+    # 対象者指定なし（=全メンバー対象）の日程調整と候補日を作成
+    poll = SchedulePoll(project_id=test_project.id, title="日程調整", creator_id=test_user.id)
+    db.add(poll)
+    await db.flush()
+    candidate = SchedulePollCandidate(
+        poll_id=poll.id,
+        start_datetime=schedule_date,
+        end_datetime=schedule_date + timedelta(hours=2),
+    )
+    db.add(candidate)
+    await db.flush()
+
+    # 確定済み稽古由来の出欠イベント（test_user は未回答=pending）
+    event = await _create_poll_sync_event(db, test_project, to_utc(schedule_date))
+    target = AttendanceTarget(event_id=event.id, user_id=test_user.id, status="pending")
+    db.add(target)
+    await db.commit()
+
+    # 日程調整に「参加(ok)」で回答
+    response = await client.post(
+        f"/api/projects/{test_project.id}/polls/{poll.id}"
+        f"/candidates/{candidate.id}/answer",
+        headers={"Authorization": f"Bearer {test_user_token}"},
+        json={"status": "ok"},
+    )
+    assert response.status_code == 200, response.text
+
+    # 出欠ステータスが pending → ok へ同期される
+    await db.refresh(target)
+    assert target.status == "ok"

@@ -40,7 +40,11 @@ from src.schemas.schedule_poll import (
     SchedulePollUpdateRequiredRoles,
     UnansweredMemberResponse,
 )
-from src.services.attendance import AttendanceService
+from src.services.attendance import (
+    AttendanceService,
+    poll_answer_to_attendance_status,
+    sync_poll_answer_to_attendance_status,
+)
 from src.services.calendar_url import build_google_calendar_url
 from src.services.discord import DiscordService, get_discord_service
 from src.services.schedule_poll_service import get_schedule_poll_service
@@ -164,15 +168,6 @@ async def _apply_poll_attendees_to_rehearsal(
             )
 
 
-def _poll_answer_to_attendance_status(status: str | None) -> str:
-    """日程調整回答を出欠確認ステータスへ変換."""
-    if status == "ok":
-        return "ok"
-    if status == "ng":
-        return "ng"
-    return "pending"
-
-
 async def _finalize_poll_candidate(
     *,
     project_id: UUID,
@@ -276,7 +271,7 @@ async def _finalize_poll_candidate(
         answered_users = list(attendee_statuses)
         attendance_targets = answered_users if answered_users else []
     attendance_initial_statuses = {
-        user_id: _poll_answer_to_attendance_status(status)
+        user_id: poll_answer_to_attendance_status(status)
         for user_id, status in answer_statuses.items()
     }
 
@@ -579,6 +574,14 @@ async def answer_poll(
         raise HTTPException(status_code=403, detail="この日程調整の対象者ではありません")
 
     await poll_service.upsert_answer(candidate_id, current_user.id, payload.status)
+    await sync_poll_answer_to_attendance_status(
+        db,
+        project_id=project_id,
+        schedule_date=candidate.start_datetime,
+        user_id=current_user.id,
+        poll_status=payload.status,
+    )
+    await db.commit()
     return {"status": "ok"}
 
 

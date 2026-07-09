@@ -40,6 +40,15 @@ def normalize_attendance_status(status: str | None) -> str:
     return status if status in ATTENDANCE_STATUSES else "pending"
 
 
+def poll_answer_to_attendance_status(status: str | None) -> str:
+    """日程調整回答(ok/maybe/ng)を出欠確認ステータス(ok/ng/pending)へ変換."""
+    if status == "ok":
+        return "ok"
+    if status == "ng":
+        return "ng"
+    return "pending"
+
+
 def _rehearsal_event_conditions(
     rehearsal_id: uuid.UUID,
     old_schedule_date: datetime | None,
@@ -159,6 +168,59 @@ async def sync_rehearsal_attendance_events(
             )
 
     return len(events)
+
+
+async def sync_poll_answer_to_attendance_status(
+    db: AsyncSession,
+    *,
+    project_id: uuid.UUID,
+    schedule_date: datetime,
+    user_id: uuid.UUID,
+    poll_status: str | None,
+) -> int:
+    """日程調整の1件の回答を、対応する未完了の出欠イベントの当該ユーザーのステータスへ反映する.
+
+    確定済み稽古から作られた出欠イベント（schedule_date が候補日時と一致）を対象に、
+    当該ユーザーの AttendanceTarget が pending のときのみ、pending 以外のステータスへ更新する。
+    Discord ボタン等で明示的に入力済み(ok/ng)のステータスは上書きしない。
+    呼び出し元で commit すること。
+
+    Returns:
+        int: 更新した出欠イベント数
+    """
+    desired = poll_answer_to_attendance_status(poll_status)
+    if desired == "pending":
+        # pending へ「格上げ」する余地はないため何もしない
+        return 0
+
+    normalized_date = to_utc(schedule_date)
+    stmt = (
+        select(AttendanceEvent)
+        .where(
+            AttendanceEvent.project_id == project_id,
+            AttendanceEvent.completed == False,  # noqa: E712
+            AttendanceEvent.schedule_date == normalized_date,
+        )
+        .options(selectinload(AttendanceEvent.targets))
+    )
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+
+    updated = 0
+    for event in events:
+        target = next((t for t in event.targets if t.user_id == user_id), None)
+        if target is None or target.status != "pending":
+            continue
+        target.status = desired
+        updated += 1
+        logger.info(
+            "attendance_status_synced_from_poll",
+            event_id=str(event.id),
+            user_id=str(user_id),
+            status=desired,
+        )
+
+    return updated
 
 
 async def complete_rehearsal_attendance_events(
