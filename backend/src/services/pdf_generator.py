@@ -41,6 +41,16 @@ except Exception:
 
 _Size = namedtuple("Size", "w h")
 
+# 縦書き用の文字置換テーブル。
+# HeiseiMin-W3 の縦組み CMap (UniJIS-UCS2-V) は U+2014 EM DASH を縦書き用グリフに
+# マッピングしていないため横棒のまま描画される。JIS のダッシュである U+2015 に寄せる。
+# 1文字→1文字の置換のみ（行数計算 _count_lines と文字数がずれないようにする）。
+_VERTICAL_CHAR_MAP = str.maketrans({"\u2014": "\u2015"})
+
+
+def _to_vertical_text(text: str) -> str:
+    return text.translate(_VERTICAL_CHAR_MAP)
+
 
 class CustomPageMan:
     """PDF ストリーム生成クラス (Customized for Synopsis and Cover Page)"""
@@ -161,7 +171,7 @@ class CustomPageMan:
             # Write raw PDF command for text rendering mode
             self.canvas._code.append("2 Tr")  # Set text rendering mode to Fill+Stroke
 
-        self.canvas.drawString(x, y, text[:max_len])
+        self.canvas.drawString(x, y, _to_vertical_text(text[:max_len]))
 
         if is_bold:
             self.canvas.restoreState()
