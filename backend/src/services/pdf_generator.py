@@ -585,6 +585,64 @@ def _get_h2_letter(h2_count):
     return _get_h2_letter(q) + h2_letters[s]
 
 
+def _get_h2_number(h1_count, h2_count):
+    """シーン見出し(H2)の番号文字列。幕見出し(H1)がまだ無い場合は英字のみ ("0A" を避ける)。"""
+    letter = _get_h2_letter(h2_count)
+    return f"{h1_count}{letter}" if h1_count > 0 else letter
+
+
+_SCENE_HEADING_PREFIXES = ("INT.", "EXT.", "INT/EXT", "I/E")
+
+
+def _scene_headings_to_sections(fountain_content: str) -> str:
+    """Fountain の Scene Heading 行を playscript 用に Section Heading へ書き換える.
+
+    playscript.conv.fountain.psc_from_fountain は Section Heading (#/##) しか扱わず、
+    Scene Heading (INT./EXT. や先頭 "." の強制見出し) を捨ててしまう。
+    DB 側の fountain_parser と同じ規則で Section Heading に寄せる:
+      - ".1X"            -> "# X"  (幕)
+      - ".2X" / ".X"     -> "## X" (シーン)
+      - "INT. X" 等      -> "## INT. X"
+      - "## A" の直後に来た Scene Heading は "## A (X)" に結合する (DB と同じく1シーン扱い)
+    """
+    result: list[str] = []
+    for line in fountain_content.splitlines():
+        stripped = line.strip()
+        is_forced = stripped.startswith(".") and not stripped.startswith("..")
+        is_std = any(stripped.startswith(p) for p in _SCENE_HEADING_PREFIXES)
+        if not (is_forced or is_std):
+            result.append(line)
+            continue
+
+        level = 2
+        if is_forced:
+            body = stripped[1:]
+            if body.startswith("1"):
+                level, body = 1, body[1:]
+            elif body.startswith("2"):
+                body = body[1:]
+            text = body.strip()
+        else:
+            text = stripped
+        if not text:
+            result.append(line)
+            continue
+
+        if level == 2:
+            # 直前の非空行が "##" 見出しなら結合する
+            prev_idx = len(result) - 1
+            while prev_idx >= 0 and not result[prev_idx].strip():
+                prev_idx -= 1
+            if prev_idx >= 0:
+                prev = result[prev_idx].strip()
+                if prev.startswith("##") and not prev.startswith("###"):
+                    result[prev_idx] = f"{prev} ({text})"
+                    continue
+
+        result.append(("# " if level == 1 else "## ") + text)
+    return "\n".join(result)
+
+
 def custom_psc_to_pdf(
     psc,
     size=None,
@@ -732,7 +790,7 @@ def custom_psc_to_pdf(
 
         elif line_type == PScLineType.H2:
             h2_count += 1
-            number = str(h1_count) + _get_h2_letter(h2_count)
+            number = _get_h2_number(h1_count, h2_count)
             l_idx = pm.draw_slugline(l_idx, psc_line, number=number)
 
         elif line_type == PScLineType.H3:
@@ -913,7 +971,7 @@ def horizontal_psc_to_pdf(
 
         elif line_type == PScLineType.H2:
             h2_count += 1
-            number = str(h1_count) + _get_h2_letter(h2_count)
+            number = _get_h2_number(h1_count, h2_count)
             pm.draw_slugline(psc_line, number=number)
 
         elif line_type == PScLineType.H3:
@@ -977,7 +1035,8 @@ def generate_script_pdf(
     f_parser = Fountain(fountain_content)
     metadata = f_parser.metadata
 
-    script = fountain.psc_from_fountain(fountain_content)
+    # playscript は Scene Heading を無視するため、Section Heading に寄せてから渡す
+    script = fountain.psc_from_fountain(_scene_headings_to_sections(fountain_content))
 
     # --- Metadata Injection Logic (Refined) ---
     metadata_parts = []
